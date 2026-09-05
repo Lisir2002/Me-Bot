@@ -248,7 +248,7 @@ class UsageStatsBody extends StatelessWidget {
       children: [
         _RangeChips(range: range, onChanged: onRangeChanged),
         const SizedBox(height: 16),
-        _HeatmapSection(messages: msgs),
+        _HeatmapSection(messages: msgs, range: range),
         const SizedBox(height: 16),
         _OverviewSection(
           conversations: convos.length,
@@ -324,14 +324,47 @@ class _RangeChips extends StatelessWidget {
 // 热力图（GitHub 风格）
 // ----------------------------------------------------------------------------
 
-class _HeatmapSection extends StatelessWidget {
+class _HeatmapSection extends StatefulWidget {
   final List<ChatMessage> messages;
+  final StatsRange range;
 
-  const _HeatmapSection({required this.messages});
+  const _HeatmapSection({required this.messages, required this.range});
+
+  @override
+  State<_HeatmapSection> createState() => _HeatmapSectionState();
+}
+
+/// 根据筛选范围计算热力图展示窗口（含首尾，日粒度）
+({DateTime start, DateTime end}) _heatmapWindow(StatsRange range, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  switch (range) {
+    case StatsRange.all:
+      // GitHub 惯例：最近 53 周
+      return (start: today.subtract(const Duration(days: 53 * 7 - 1)), end: today);
+    case StatsRange.last30:
+      return (start: today.subtract(const Duration(days: 29)), end: today);
+    case StatsRange.lastMonth:
+      return (
+        start: DateTime(now.year, now.month - 1, 1),
+        end: DateTime(now.year, now.month, 0), // 上月最后一天
+      );
+    case StatsRange.lastQuarter:
+      return (
+        start: DateTime(now.year, now.month - 3, 1),
+        end: DateTime(now.year, now.month, 0), // 上季度最后一天（上上月末日）
+      );
+  }
+}
+
+class _HeatmapSectionState extends State<_HeatmapSection> {
+  /// 点击选中的格子日期，用于显示详情气泡
+  DateTime? _selected;
 
   @override
   Widget build(BuildContext context) {
-    // 按天聚合消息数
+    final messages = widget.messages;
+
+    // 按天聚合消息数（messages 已按筛选范围过滤，与热力图窗口一致）
     final dayCounts = <DateTime, int>{};
     for (final m in messages) {
       final d = DateTime(m.timestamp.year, m.timestamp.month, m.timestamp.day);
@@ -341,150 +374,246 @@ class _HeatmapSection extends StatelessWidget {
       return const _SectionCard(title: '聊天热力图', child: _EmptyHint(text: '暂无数据'));
     }
 
-    // 确定展示范围：最近 53 周（GitHub 风格）
+    final cs = Theme.of(context).colorScheme;
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final start = today.subtract(const Duration(days: 53 * 7 - 1));
-    final startWeekday = start.weekday; // 1=Mon..7=Sun
+    final window = _heatmapWindow(widget.range, now);
+
+    // 以窗口起点所在周一为首列，生成覆盖整个窗口的周列（每列固定 7 天）
+    final firstMonday = window.start.subtract(Duration(days: window.start.weekday - 1));
     final weeks = <List<DateTime>>[];
-    var cursor = start.subtract(Duration(days: startWeekday - 1));
-    while (cursor.isBefore(today) || cursor.isAtSameMomentAs(today)) {
-      final week = <DateTime>[];
-      for (int i = 0; i < 7; i++) {
-        week.add(cursor.add(Duration(days: i)));
-      }
-      weeks.add(week);
+    var cursor = firstMonday;
+    while (!cursor.isAfter(window.end)) {
+      weeks.add(List.generate(7, (i) => cursor.add(Duration(days: i))));
       cursor = cursor.add(const Duration(days: 7));
     }
 
     final maxCount = dayCounts.values.isEmpty ? 1 : dayCounts.values.reduce((a, b) => a > b ? a : b);
 
-    // 5 级离散分档（0 空 / 1~4 递增），保证峰值一定落在满档
-    int levelFor(int count) {
-      if (count <= 0) return 0;
-      final t = count / maxCount;
-      if (t <= 0.25) return 1;
-      if (t <= 0.5) return 2;
-      if (t <= 0.75) return 3;
-      return 4;
-    }
+    // 5 级调色板：0 空态 / 1~4 透明度递增
+    final palette = <Color>[
+      cs.surfaceContainerHighest,
+      cs.primary.withValues(alpha: 0.3),
+      cs.primary.withValues(alpha: 0.5),
+      cs.primary.withValues(alpha: 0.75),
+      cs.primary,
+    ];
 
-    Color levelColor(int level) {
-      final cs = Theme.of(context).colorScheme;
-      switch (level) {
-        case 0:
-          return cs.surfaceContainerHighest;
-        case 1:
-          return cs.primary.withValues(alpha: 0.3);
-        case 2:
-          return cs.primary.withValues(alpha: 0.5);
-        case 3:
-          return cs.primary.withValues(alpha: 0.75);
-        default:
-          return cs.primary;
-      }
-    }
-
-    const slotW = 17.0; // 色块 14 + 右间距 3
-    const rowH = 17.0; // 色块 14 + 下间距 3
+    const labelW = 20.0; // 左侧周几标签区
+    const labelH = 18.0; // 顶部月份标签行
+    const colW = 17.0; // 色块 14 + 间距 3
+    const rowH = 17.0;
+    final size = Size(labelW + weeks.length * colW, labelH + 7 * rowH);
 
     return _SectionCard(
       title: '聊天热力图',
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 月份标签：每月首个周槽位显示月份，其余留空，保证与色块列对齐
-            Row(
-              children: [
-                const SizedBox(width: 6),
-                for (int i = 0; i < weeks.length; i++)
-                  SizedBox(
-                    width: slotW,
-                    child: weeks[i][0].month != (i > 0 ? weeks[i - 1][0].month : -1)
-                        ? Text(
-                            '${weeks[i][0].month}月',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                          )
-                        : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: GestureDetector(
+              onTapUp: (d) => _handleTap(d.localPosition, weeks, window),
+              child: SizedBox(
+                width: size.width,
+                height: size.height,
+                child: CustomPaint(
+                  painter: _HeatmapPainter(
+                    weeks: weeks,
+                    dayCounts: dayCounts,
+                    maxCount: maxCount,
+                    selected: _selected,
+                    palette: palette,
+                    textColor: cs.onSurfaceVariant,
+                    highlightColor: cs.primary,
                   ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 周几标签（仅显示周一/周三/周五），行高与色块一致保证对齐
-                Column(
-                  children: [
-                    for (int i = 0; i < 7; i++)
-                      SizedBox(
-                        height: rowH,
-                        child: Text(
-                          (i == 0 || i == 2 || i == 4) ? _weekdayLabel(i) : '',
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                  ],
                 ),
-                const SizedBox(width: 6),
-                for (final week in weeks)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 3),
-                    child: Column(
-                      children: [
-                        for (final day in week)
-                          Container(
-                            width: 14,
-                            height: 14,
-                            margin: const EdgeInsets.only(bottom: 3),
-                            decoration: BoxDecoration(
-                              color: levelColor(levelFor(dayCounts[day] ?? 0)),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-              ],
+              ),
             ),
-            const SizedBox(height: 10),
-            // 图例：4 级色块（1~4），右对齐
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text('少', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                const SizedBox(width: 4),
-                for (int lv = 1; lv <= 4; lv++)
-                  Container(
-                    width: 10,
-                    height: 10,
-                    margin: const EdgeInsets.only(left: 2),
-                    decoration: BoxDecoration(
-                      color: levelColor(lv),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+          ),
+          const SizedBox(height: 10),
+          // 图例：4 级色块（1~4），右对齐
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('少', style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+              const SizedBox(width: 4),
+              for (int lv = 1; lv <= 4; lv++)
+                Container(
+                  width: 10,
+                  height: 10,
+                  margin: const EdgeInsets.only(left: 2),
+                  decoration: BoxDecoration(
+                    color: palette[lv],
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                const SizedBox(width: 4),
-                Text('多', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              ],
-            ),
-          ],
-        ),
+                ),
+              const SizedBox(width: 4),
+              Text('多', style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  String _weekdayLabel(int i) {
-    const labels = ['一', '二', '三', '四', '五', '六', '日'];
-    return labels[i];
+  /// 点击命中换算：画布坐标 → (列, 行) → 具体日期；窗口外或空白处取消选中
+  void _handleTap(Offset pos, List<List<DateTime>> weeks, ({DateTime start, DateTime end}) window) {
+    const labelW = 20.0;
+    const labelH = 18.0;
+    const colW = 17.0;
+    const rowH = 17.0;
+    final col = ((pos.dx - labelW) / colW).floor();
+    final row = ((pos.dy - labelH) / rowH).floor();
+    if (col < 0 || col >= weeks.length || row < 0 || row >= 7) {
+      if (_selected != null) setState(() => _selected = null);
+      return;
+    }
+    final day = weeks[col][row];
+    // 周对齐补位产生的窗口外格子不响应
+    if (day.isBefore(window.start) || day.isAfter(window.end)) {
+      if (_selected != null) setState(() => _selected = null);
+      return;
+    }
+    setState(() => _selected = day);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// 热力图 CustomPainter
+// ----------------------------------------------------------------------------
+
+class _HeatmapPainter extends CustomPainter {
+  final List<List<DateTime>> weeks;
+  final Map<DateTime, int> dayCounts;
+  final int maxCount;
+  final DateTime? selected;
+  final List<Color> palette; // 0 空态 / 1~4 递增
+  final Color textColor;
+  final Color highlightColor;
+
+  _HeatmapPainter({
+    required this.weeks,
+    required this.dayCounts,
+    required this.maxCount,
+    required this.selected,
+    required this.palette,
+    required this.textColor,
+    required this.highlightColor,
+  });
+
+  static const double _cell = 14;
+  static const double _colW = 17; // 色块 + 间距
+  static const double _rowH = 17;
+  static const double _labelW = 20;
+  static const double _labelH = 18;
+
+  int _levelFor(int count) {
+    if (count <= 0) return 0;
+    final t = count / maxCount;
+    if (t <= 0.25) return 1;
+    if (t <= 0.5) return 2;
+    if (t <= 0.75) return 3;
+    return 4;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 顶部月份标签：每月首个周列显示月份（TextPainter 绘制，不会撑破布局）
+    for (int i = 0; i < weeks.length; i++) {
+      final isNewMonth = weeks[i][0].month != (i > 0 ? weeks[i - 1][0].month : -1);
+      if (isNewMonth) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '${weeks[i][0].month}月',
+            style: TextStyle(fontSize: 10, color: textColor),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(_labelW + i * _colW, 0));
+      }
+    }
+
+    // 左侧周几标签（周一/周三/周五）
+    const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
+    for (int r = 0; r < 7; r++) {
+      if (r == 0 || r == 2 || r == 4) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: weekdayLabels[r],
+            style: TextStyle(fontSize: 9, color: textColor),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(0, _labelH + r * _rowH + (_cell - 9) / 2));
+      }
+    }
+
+    // 网格色块
+    final cellPaint = Paint();
+    for (int c = 0; c < weeks.length; c++) {
+      for (int r = 0; r < 7; r++) {
+        final count = dayCounts[weeks[c][r]] ?? 0;
+        cellPaint.color = palette[_levelFor(count)];
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(_labelW + c * _colW, _labelH + r * _rowH, _cell, _cell),
+            const Radius.circular(3),
+          ),
+          cellPaint,
+        );
+      }
+    }
+
+    // 选中格子：描边高亮 + 详情气泡
+    final sel = selected;
+    if (sel != null) {
+      for (int c = 0; c < weeks.length; c++) {
+        for (int r = 0; r < 7; r++) {
+          if (weeks[c][r] == sel) {
+            final rect = Rect.fromLTWH(_labelW + c * _colW, _labelH + r * _rowH, _cell, _cell);
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(4)),
+              Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 1.5
+                ..color = highlightColor,
+            );
+
+            final count = dayCounts[sel] ?? 0;
+            final text = '${sel.year}-${sel.month.toString().padLeft(2, '0')}-'
+                '${sel.day.toString().padLeft(2, '0')} · $count 条消息';
+            final tp = TextPainter(
+              text: TextSpan(text: text, style: const TextStyle(fontSize: 11, color: Colors.white)),
+              textDirection: TextDirection.ltr,
+            )..layout();
+            const pad = 8.0;
+            final bubbleW = tp.width + pad * 2;
+            final bubbleH = tp.height + 12;
+            var bx = rect.center.dx - bubbleW / 2;
+            var by = rect.bottom + 6;
+            bx = bx.clamp(0, size.width - bubbleW);
+            if (by + bubbleH > size.height) by = rect.top - bubbleH - 6;
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                Rect.fromLTWH(bx, by, bubbleW, bubbleH),
+                const Radius.circular(6),
+              ),
+              Paint()..color = Colors.black87,
+            );
+            tp.paint(canvas, Offset(bx + pad, by + 6));
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeatmapPainter old) {
+    return old.selected != selected ||
+        old.maxCount != maxCount ||
+        old.weeks != weeks ||
+        old.dayCounts != dayCounts;
   }
 }
 

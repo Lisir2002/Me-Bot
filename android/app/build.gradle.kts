@@ -62,6 +62,13 @@ android {
             }
         }
     }
+
+    // 从包里彻底剔除老 32 位(armeabi-v7a)的残留插件 JNI 库，进一步减包
+    packaging {
+        jniLibs {
+            excludes += "**/armeabi-v7a/**"
+        }
+    }
 }
 
 flutter {

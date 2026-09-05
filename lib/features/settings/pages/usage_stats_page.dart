@@ -250,8 +250,8 @@ class UsageStatsBody extends StatelessWidget {
         _HeatmapSection(messages: msgs),
         const SizedBox(height: 16),
         _OverviewSection(
-          conversations: convos,
-          messages: msgs,
+          conversations: convos.length,
+          messages: msgs.length,
           promptTokens: totalPrompt,
           completionTokens: totalCompletion,
           cachedTokens: totalCached,
@@ -645,7 +645,7 @@ class _TrendSection extends StatelessWidget {
                         }
                         final label = isShort ? '${date.month}/${date.day}' : '${date.month}月';
                         return SideTitleWidget(
-                          meta: meta,
+                          axisSide: meta.axisSide,
                           child: Text(label, style: const TextStyle(fontSize: 9)),
                         );
                       },

@@ -141,7 +141,7 @@ class MarkdownWithCodeHighlight extends StatelessWidget {
       useDollarSignsForLatex: false,
       onLinkTap: (url, title) => _handleLinkTap(context, url),
       components: components,
-      imageBuilder: (ctx, url) {
+      imageBuilder: (ctx, url, w, h) {
         final imgs = imageUrls.isNotEmpty ? imageUrls : [url];
         final idx = imgs.indexOf(url);
         final initial = idx >= 0 ? idx : 0;

@@ -1,6 +1,6 @@
 import 'package:mcp_client/mcp_client.dart' as mcp;
 
-import 'minime-core_fetch_server.dart';
+import 'minime_fetch_server.dart';
 
 /// Build a function-call-friendly tool name (similar to Cherry Studio strategy)
 String buildFunctionCallToolName(String serverName, String toolName) {
@@ -22,8 +22,8 @@ String buildFunctionCallToolName(String serverName, String toolName) {
 /// Start the in-memory @minime-core/fetch MCP server and connect a client to it.
 /// Returns the connected client and a stop() to dispose both ends.
 Future<({mcp.Client client, Future<void> Function() stop})> startFetchMcpInMemory() async {
-  final server = MiniMe-CoreFetchMcpServerEngine();
-  final transport = MiniMe-CoreInMemoryClientTransport(server);
+  final server = MiniMeCoreFetchMcpServerEngine();
+  final transport = MiniMeCoreInMemoryClientTransport(server);
 
   final client = mcp.McpClient.createClient(
     mcp.McpClient.simpleConfig(name: 'MiniMe-Core App', version: '1.0.0'),

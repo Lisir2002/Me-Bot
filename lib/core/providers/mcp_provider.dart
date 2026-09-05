@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
-import '../services/mcp/minime-core_fetch/minime-core_fetch_server.dart';
+import '../services/mcp/minime_fetch/minime_fetch_server.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -256,10 +256,10 @@ class McpProvider extends ChangeNotifier {
   }
 
   void _ensureBuiltinFetchServerPresent() {
-    final exists = _servers.any((s) => s.transport == McpTransportType.inmemory || s.name == '@minime-core/fetch' || s.id == 'minime-core_fetch');
+    final exists = _servers.any((s) => s.transport == McpTransportType.inmemory || s.name == '@minime-core/fetch' || s.id == 'minime_fetch');
     if (exists) return;
     final cfg = McpServerConfig(
-      id: 'minime-core_fetch',
+      id: 'minime_fetch',
       enabled: true,
       name: '@minime-core/fetch',
       transport: McpTransportType.inmemory,
@@ -422,7 +422,7 @@ class McpProvider extends ChangeNotifier {
         if (builtinSeen) {
           // Append single built-in server with fixed id/name
           next.add(McpServerConfig(
-            id: 'minime-core_fetch',
+            id: 'minime_fetch',
             enabled: builtinEnabled,
             name: '@minime-core/fetch',
             transport: McpTransportType.inmemory,
@@ -621,8 +621,8 @@ class McpProvider extends ChangeNotifier {
 
       // In-memory builtin server path
       if (server.transport == McpTransportType.inmemory) {
-        final engine = MiniMe-CoreFetchMcpServerEngine();
-        final transport = MiniMe-CoreInMemoryClientTransport(engine);
+        final engine = MiniMeCoreFetchMcpServerEngine();
+        final transport = MiniMeCoreInMemoryClientTransport(engine);
         final client = mcp.McpClient.createClient(clientConfig);
         await client.connect(transport);
         _clients[id] = client;

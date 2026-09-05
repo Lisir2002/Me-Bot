@@ -20,14 +20,14 @@ import 'package:mcp_client/mcp_client.dart' as mcp;
 /// isolate as the Flutter app and connect to a standard mcp.Client via an
 /// in-memory ClientTransport.
 
-class MiniMe-CoreFetchRequestPayload {
+class MiniMeCoreFetchRequestPayload {
   final Uri url;
   final Map<String, String> headers;
 
-  MiniMe-CoreFetchRequestPayload({required this.url, Map<String, String>? headers})
+  MiniMeCoreFetchRequestPayload({required this.url, Map<String, String>? headers})
       : headers = headers ?? const {};
 
-  static MiniMe-CoreFetchRequestPayload parse(Object? args) {
+  static MiniMeCoreFetchRequestPayload parse(Object? args) {
     if (args is! Map) {
       throw ArgumentError('Invalid arguments: expected object with url[, headers]');
     }
@@ -45,15 +45,15 @@ class MiniMe-CoreFetchRequestPayload {
         headers[k.toString()] = v.toString();
       });
     }
-    return MiniMe-CoreFetchRequestPayload(url: uri, headers: headers);
+    return MiniMeCoreFetchRequestPayload(url: uri, headers: headers);
   }
 }
 
-class MiniMe-CoreFetcher {
+class MiniMeCoreFetcher {
   static const _defaultUA =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-  static Future<http.Response> _fetch(MiniMe-CoreFetchRequestPayload payload) async {
+  static Future<http.Response> _fetch(MiniMeCoreFetchRequestPayload payload) async {
     try {
       final merged = <String, String>{
         'User-Agent': _defaultUA,
@@ -69,7 +69,7 @@ class MiniMe-CoreFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> html(MiniMe-CoreFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> html(MiniMeCoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final text = resp.body;
@@ -79,7 +79,7 @@ class MiniMe-CoreFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> json(MiniMe-CoreFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> json(MiniMeCoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final raw = resp.body;
@@ -90,7 +90,7 @@ class MiniMe-CoreFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> txt(MiniMe-CoreFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> txt(MiniMeCoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final html = resp.body;
@@ -104,7 +104,7 @@ class MiniMe-CoreFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> markdown(MiniMe-CoreFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> markdown(MiniMeCoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final html = resp.body;
@@ -133,7 +133,7 @@ class MiniMe-CoreFetcher {
 }
 
 /// Minimal JSON-RPC server for MCP that serves @minime-core/fetch tools.
-class MiniMe-CoreFetchMcpServerEngine {
+class MiniMeCoreFetchMcpServerEngine {
   bool _closed = false;
 
   Future<dynamic> handleMessage(dynamic message) async {
@@ -187,24 +187,24 @@ class MiniMe-CoreFetchMcpServerEngine {
               ? (params['arguments'] as Map).cast<String, dynamic>()
               : <String, dynamic>{};
 
-          MiniMe-CoreFetchRequestPayload payload;
+          MiniMeCoreFetchRequestPayload payload;
           try {
-            payload = MiniMe-CoreFetchRequestPayload.parse(arguments);
+            payload = MiniMeCoreFetchRequestPayload.parse(arguments);
           } catch (e) {
-            return _ok(id, result: MiniMe-CoreFetcher._err(e.toString()));
+            return _ok(id, result: MiniMeCoreFetcher._err(e.toString()));
           }
 
           if (name == 'fetch_html') {
-            return _ok(id, result: await MiniMe-CoreFetcher.html(payload));
+            return _ok(id, result: await MiniMeCoreFetcher.html(payload));
           }
           if (name == 'fetch_markdown') {
-            return _ok(id, result: await MiniMe-CoreFetcher.markdown(payload));
+            return _ok(id, result: await MiniMeCoreFetcher.markdown(payload));
           }
           if (name == 'fetch_txt') {
-            return _ok(id, result: await MiniMe-CoreFetcher.txt(payload));
+            return _ok(id, result: await MiniMeCoreFetcher.txt(payload));
           }
           if (name == 'fetch_json') {
-            return _ok(id, result: await MiniMe-CoreFetcher.json(payload));
+            return _ok(id, result: await MiniMeCoreFetcher.json(payload));
           }
           return _error(id, code: -32101, message: 'Tool not found: $name');
 
@@ -278,13 +278,13 @@ class MiniMe-CoreFetchMcpServerEngine {
 }
 
 /// In-memory ClientTransport that directly invokes the local server engine.
-class MiniMe-CoreInMemoryClientTransport implements mcp.ClientTransport {
-  final MiniMe-CoreFetchMcpServerEngine _server;
+class MiniMeCoreInMemoryClientTransport implements mcp.ClientTransport {
+  final MiniMeCoreFetchMcpServerEngine _server;
   final _messageController = StreamController<dynamic>.broadcast();
   final _closeCompleter = Completer<void>();
   bool _closed = false;
 
-  MiniMe-CoreInMemoryClientTransport(this._server);
+  MiniMeCoreInMemoryClientTransport(this._server);
 
   @override
   Stream<dynamic> get onMessage => _messageController.stream;

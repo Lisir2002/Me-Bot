@@ -114,7 +114,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sponsorPageAfdianTitle => 'Afdian';
 
   @override
-  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime-core';
+  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime';
 
   @override
   String get sponsorPageWeChatTitle => 'WeChat Sponsor';

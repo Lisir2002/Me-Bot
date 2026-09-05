@@ -286,16 +286,36 @@ class _RangeChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      children: [
-        for (final r in StatsRange.values)
-          ChoiceChip(
-            label: Text(r.label),
-            selected: range == r,
-            onSelected: (_) => onChanged(r),
-          ),
-      ],
+    final cs = Theme.of(context).colorScheme;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final r in StatsRange.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => onChanged(r),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: range == r ? cs.surfaceContainerHighest : cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    r.label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: range == r ? cs.onSurface : cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -339,12 +359,34 @@ class _HeatmapSection extends StatelessWidget {
 
     final maxCount = dayCounts.values.isEmpty ? 1 : dayCounts.values.reduce((a, b) => a > b ? a : b);
 
-    Color levelColor(int count) {
-      final cs = Theme.of(context).colorScheme;
-      if (count == 0) return cs.surfaceContainerHighest.withOpacity(0.45);
+    // 5 级离散分档（0 空 / 1~4 递增），保证峰值一定落在满档
+    int levelFor(int count) {
+      if (count <= 0) return 0;
       final t = count / maxCount;
-      return Color.lerp(cs.primary.withOpacity(0.35), cs.primary, t)!;
+      if (t <= 0.25) return 1;
+      if (t <= 0.5) return 2;
+      if (t <= 0.75) return 3;
+      return 4;
     }
+
+    Color levelColor(int level) {
+      final cs = Theme.of(context).colorScheme;
+      switch (level) {
+        case 0:
+          return cs.surfaceContainerHighest;
+        case 1:
+          return cs.primary.withValues(alpha: 0.3);
+        case 2:
+          return cs.primary.withValues(alpha: 0.5);
+        case 3:
+          return cs.primary.withValues(alpha: 0.75);
+        default:
+          return cs.primary;
+      }
+    }
+
+    const slotW = 17.0; // 色块 14 + 右间距 3
+    const rowH = 17.0; // 色块 14 + 下间距 3
 
     return _SectionCard(
       title: '聊天热力图',
@@ -353,33 +395,41 @@ class _HeatmapSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 月份标签：每月首个周槽位显示月份，其余留空，保证与色块列对齐
             Row(
               children: [
-                // 左侧月份标签（简化：每个日期首行）
+                const SizedBox(width: 6),
                 for (int i = 0; i < weeks.length; i++)
-                  if (weeks[i][0].month != (i > 0 ? weeks[i - 1][0].month : -1))
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Text(
-                        '${weeks[i][0].month}月',
-                        style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ),
+                  SizedBox(
+                    width: slotW,
+                    child: weeks[i][0].month != (i > 0 ? weeks[i - 1][0].month : -1)
+                        ? Text(
+                            '${weeks[i][0].month}月',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          )
+                        : null,
+                  ),
               ],
             ),
             const SizedBox(height: 6),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 周几标签（仅显示周一/周三/周五）
+                // 周几标签（仅显示周一/周三/周五），行高与色块一致保证对齐
                 Column(
                   children: [
                     for (int i = 0; i < 7; i++)
                       SizedBox(
-                        height: 14,
+                        height: rowH,
                         child: Text(
                           (i == 0 || i == 2 || i == 4) ? _weekdayLabel(i) : '',
-                          style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                   ],
@@ -392,12 +442,12 @@ class _HeatmapSection extends StatelessWidget {
                       children: [
                         for (final day in week)
                           Container(
-                            width: 13,
-                            height: 13,
-                            margin: const EdgeInsets.only(bottom: 2),
+                            width: 14,
+                            height: 14,
+                            margin: const EdgeInsets.only(bottom: 3),
                             decoration: BoxDecoration(
-                              color: levelColor(dayCounts[day] ?? 0),
-                              borderRadius: BorderRadius.circular(3),
+                              color: levelColor(levelFor(dayCounts[day] ?? 0)),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                       ],
@@ -405,18 +455,20 @@ class _HeatmapSection extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+            // 图例：4 级色块（1~4），右对齐
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text('少', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(width: 4),
-                for (int i = 0; i < 5; i++)
+                for (int lv = 1; lv <= 4; lv++)
                   Container(
                     width: 10,
                     height: 10,
                     margin: const EdgeInsets.only(left: 2),
                     decoration: BoxDecoration(
-                      color: levelColor((maxCount * (i + 1) / 5).round()),
+                      color: levelColor(lv),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),

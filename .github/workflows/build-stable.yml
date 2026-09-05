@@ -112,7 +112,7 @@ jobs:
           echo "keyPassword=$KEY_PASSWORD" >> android/key.properties
           echo "✅ 签名配置已写入"
       - name: 🏗️ 构建 APK (Universal + 混淆，防逆 + 减包)
-        run: flutter build apk --release --obfuscate --split-debug-info=build/symbols
+        run: flutter build apk --release --obfuscate --split-debug-info=build/symbols --target-platform android-arm64,android-x64
 
       - name: 📦 重命名 APK
         run: |

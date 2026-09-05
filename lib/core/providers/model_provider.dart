@@ -44,18 +44,165 @@ class ModelInfo {
       );
 }
 
+/// A capability entry in the known-model registry.
+///
+/// `re` is matched (substring, case-normalized) against the model id.
+/// The first matching entry wins, so order matters: list specific models
+/// before their generic families.
+class _CapEntry {
+  final RegExp re;
+  final bool tool;
+  final bool reasoning;
+  final bool vision;
+  const _CapEntry(this.re,
+      {this.tool = false, this.reasoning = false, this.vision = false});
+}
+
 class ModelRegistry {
-  static final RegExp vision = RegExp(
-      r'(gpt-4o|gpt-4-1|o\d|gemini|claude|doubao-1\.6|grok-4|step-3|intern-s1)',
-      caseSensitive: false);
-  static final RegExp tool = RegExp(
-      r'(gpt-4o|gpt-4-1|gpt-oss|o\d|gemini|claude|qwen-3|doubao-1\.6|grok-4|kimi-k2|step-3|intern-s1|glm-4\.5|deepseek-r1|deepseek-v3)'
-          .replaceAll(' ', ''),
-      caseSensitive: false);
-  static final RegExp reasoning = RegExp(
-      r'(gpt-oss|o\d|gemini-2\.5-(flash|pro)|claude|qwen|doubao-1\.6|grok-4|step-3|intern-s1|glm-4\.5|deepseek-r1|gpt-5)'
-          .replaceAll(' ', ''),
-      caseSensitive: false);
+  /// Known-model capability registry.
+  ///
+  /// Industry practice (LobeChat / Cherry Studio) is to declare capabilities
+  /// explicitly instead of guessing from the model id. The entries below cover
+  /// the major model families across providers so that tool calling, reasoning
+  /// and vision are surfaced correctly in the model picker without requiring
+  /// the user to enable them manually.
+  static final List<_CapEntry> _knownModels = [
+    // ---- OpenAI ----
+    _CapEntry(RegExp(r'gpt-5'), tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'gpt-oss'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'o4-mini'), tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'o3'), tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'o1'), tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'gpt-4\.1'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gpt-4o'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gpt-4-turbo'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gpt-4-vision'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gpt-4'), tool: true),
+    _CapEntry(RegExp(r'gpt-3\.5'), tool: true),
+    // ---- Anthropic Claude ----
+    _CapEntry(RegExp(r'claude-(opus|sonnet|haiku)-4'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'claude-3-7|claude-3\.7'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'claude-3-5|claude-3\.5'), tool: true, vision: true),
+    _CapEntry(RegExp(r'claude-3'), tool: true, vision: true),
+    _CapEntry(RegExp(r'claude-2|claude-instant|claude-1'), tool: false),
+    _CapEntry(RegExp(r'claude'), tool: true, vision: true),
+    // ---- Google Gemini ----
+    _CapEntry(RegExp(r'gemini-3'), tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'gemini-2\.5'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'gemini-2'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gemini-1\.5'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gemini-1'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gemini'), tool: true, vision: true),
+    // ---- DeepSeek ----
+    _CapEntry(RegExp(r'deepseek-reasoner|deepseek-r1|deepseek-rs'),
+        tool: true, reasoning: true),
+    _CapEntry(RegExp(r'deepseek-chat|deepseek-v3|deepseek-coder|deepseek-v2'),
+        tool: true),
+    _CapEntry(RegExp(r'deepseek'), tool: true),
+    // ---- Qwen (Alibaba / DashScope) ----
+    _CapEntry(RegExp(r'qwen3.*vl'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'qwen[^/]*vl|qwen[^/]*-omni'), tool: true, vision: true),
+    _CapEntry(RegExp(r'qwq'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'qwen3'), tool: true, reasoning: true),
+    _CapEntry(RegExp(
+        r'qwen2\.5|qwen2|qwen-turbo|qwen-plus|qwen-max|qwen-long|qwen-coder|qwen-math'),
+        tool: true),
+    _CapEntry(RegExp(r'qwen'), tool: true),
+    // ---- Moonshot / Kimi ----
+    _CapEntry(RegExp(r'kimi-k2\.5'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'kimi-k2'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'moonshot-v1.*vision|kimi-vl|kimi-.*vl'),
+        tool: true, vision: true),
+    _CapEntry(RegExp(r'moonshot-v1|kimi-latest|kimi'), tool: true),
+    // ---- Zhipu GLM ----
+    _CapEntry(RegExp(r'glm-4\.5v|glm-4\.6v|glm-4\.5-v|glm-4\.6-v|glm-z1'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'glm-4v|glm-4-v'), tool: true, vision: true),
+    _CapEntry(RegExp(r'glm-4\.6|glm-4\.5'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'glm-4'), tool: true),
+    _CapEntry(RegExp(r'glm'), tool: true),
+    // ---- Doubao (Volcengine) ----
+    _CapEntry(RegExp(r'doubao.*vl|doubao.*vision'), tool: true, vision: true),
+    _CapEntry(RegExp(r'doubao-seed-1\.6|doubao-1\.6|doubao-seed-2'),
+        tool: true, reasoning: true),
+    _CapEntry(RegExp(r'doubao'), tool: true),
+    // ---- xAI Grok ----
+    _CapEntry(RegExp(r'grok-4'), tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'grok-3-reasoner|grok-3-mini-reasoner'),
+        tool: true, reasoning: true, vision: true),
+    _CapEntry(RegExp(r'grok-3'), tool: true, vision: true),
+    _CapEntry(RegExp(r'grok-2'), tool: true, vision: true),
+    _CapEntry(RegExp(r'grok'), tool: true),
+    // ---- Mistral ----
+    _CapEntry(RegExp(r'pixtral'), tool: true, vision: true),
+    _CapEntry(RegExp(r'mistral'), tool: true),
+    // ---- Meta Llama ----
+    _CapEntry(RegExp(r'llama-3\.2.*vision|llama-4-maverick|llama-4-scout'),
+        tool: true, vision: true),
+    _CapEntry(RegExp(r'llama'), tool: true),
+    // ---- InternLM ----
+    _CapEntry(RegExp(r'intern.*s1|intern-s2|intern3|internlm3'),
+        tool: true, reasoning: true),
+    _CapEntry(RegExp(r'intern.*vl|internvl|intern.*vision'),
+        tool: true, vision: true),
+    _CapEntry(RegExp(r'intern'), tool: true),
+    // ---- StepFun ----
+    _CapEntry(RegExp(r'step-4|step-3|step-2'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'step-1v|step-1\.5v'), tool: true, vision: true),
+    _CapEntry(RegExp(r'step-1'), tool: true),
+    // ---- Yi ----
+    _CapEntry(RegExp(r'yi-vl|yi-.*vision'), tool: true, vision: true),
+    _CapEntry(RegExp(r'yi-'), tool: true),
+    // ---- MiniMax ----
+    _CapEntry(RegExp(r'minimax-reasoner'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'minimax.*vl'), tool: true, vision: true),
+    _CapEntry(RegExp(r'minimax'), tool: true),
+    // ---- Baidu Ernie ----
+    _CapEntry(RegExp(r'ernie-x1'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'ernie-4\.5'), tool: true, vision: true),
+    _CapEntry(RegExp(r'ernie'), tool: true),
+    // ---- Tencent Hunyuan ----
+    _CapEntry(RegExp(r'hunyuan-t1'), tool: true, reasoning: true),
+    _CapEntry(RegExp(r'hunyuan.*vl|hunyuan.*vision'), tool: true, vision: true),
+    _CapEntry(RegExp(r'hunyuan'), tool: true),
+    // ---- iFlytek Spark ----
+    _CapEntry(RegExp(r'spark-v4|spark-4'), tool: true),
+    _CapEntry(RegExp(r'spark'), tool: true),
+    // ---- Cohere ----
+    _CapEntry(RegExp(r'command-r'), tool: true),
+    _CapEntry(RegExp(r'command'), tool: true),
+    // ---- Microsoft Phi / Gemma ----
+    _CapEntry(RegExp(r'phi-4-multimodal|phi-3\.5.*vision|phi-4\.1.*vision'),
+        tool: true, vision: true),
+    _CapEntry(RegExp(r'phi'), tool: true),
+    _CapEntry(RegExp(r'gemma-3'), tool: true, vision: true),
+    _CapEntry(RegExp(r'gemma'), tool: true),
+    // ---- Other open / aggregator models ----
+    _CapEntry(RegExp(r'baichuan'), tool: true),
+    _CapEntry(RegExp(r'chatglm'), tool: true),
+    _CapEntry(RegExp(r'ministral'), tool: true),
+    // Image-generation models whose id does not contain "image"
+    _CapEntry(RegExp(r'midjourney|stable-diffusion|sdxl|flux'), tool: false),
+  ];
+
+  /// Legacy instruct / completions models: no function calling.
+  static final RegExp _legacyNoTool = RegExp(
+      r'(-instruct|davinci|curie|babbage|ada-002|text-davinci|text-curie|text-babbage|text-ada|rerank|re-rank)');
+
+  /// Embedding / rerank models: text-only, no tool calling.
+  static final RegExp _embeddingLike = RegExp(
+      r'(embedding|embed-|bge-|m3e-|jina-embedding|text-embedding|rerank)');
+
+  /// Fallback heuristics for reasoning / vision on unrecognized model ids.
+  static final RegExp _fallbackReasoning =
+      RegExp(r'(reasoner|thinking|think-|qwq|z1|s1|r1|r2|t1|x1|step-[2-4])');
+  static final RegExp _fallbackVision =
+      RegExp(r'(-vl|-vision|vision-|omni|pixtral|maverick)');
 
   static ModelInfo infer(ModelInfo base) {
     final id = base.id.toLowerCase();
@@ -71,11 +218,41 @@ class ModelRegistry {
       ab.removeWhere((x) => x == ModelAbility.tool || x == ModelAbility.reasoning);
       return base.copyWith(input: inMods, output: outMods, abilities: ab);
     }
-    if (vision.hasMatch(id)) {
-      if (!inMods.contains(Modality.image)) inMods.add(Modality.image);
+    // Embedding / rerank models expose no tool or reasoning capabilities.
+    if (_embeddingLike.hasMatch(id)) {
+      return base.copyWith(input: inMods, output: outMods, abilities: ab);
     }
-    if (tool.hasMatch(id) && !ab.contains(ModelAbility.tool)) ab.add(ModelAbility.tool);
-    if (reasoning.hasMatch(id) && !ab.contains(ModelAbility.reasoning)) ab.add(ModelAbility.reasoning);
+    // Legacy instruct / completions models expose no function calling.
+    if (_legacyNoTool.hasMatch(id)) {
+      return base.copyWith(input: inMods, output: outMods, abilities: ab);
+    }
+
+    // Known-model capability registry (first match wins).
+    bool tool = false, reasoning = false, vision = false;
+    var matched = false;
+    for (final c in _knownModels) {
+      if (c.re.hasMatch(id)) {
+        tool = c.tool;
+        reasoning = c.reasoning;
+        vision = c.vision;
+        matched = true;
+        break;
+      }
+    }
+
+    // Fallback for unrecognized models:
+    // Chat models on OpenAI-compatible providers almost universally support
+    // function calling, so default tool=true instead of hiding the capability
+    // and forcing the user to enable it manually.
+    if (!matched) {
+      tool = true;
+      reasoning = _fallbackReasoning.hasMatch(id);
+      vision = _fallbackVision.hasMatch(id);
+    }
+
+    if (tool && !ab.contains(ModelAbility.tool)) ab.add(ModelAbility.tool);
+    if (reasoning && !ab.contains(ModelAbility.reasoning)) ab.add(ModelAbility.reasoning);
+    if (vision && !inMods.contains(Modality.image)) inMods.add(Modality.image);
     return base.copyWith(input: inMods, output: outMods, abilities: ab);
   }
 }

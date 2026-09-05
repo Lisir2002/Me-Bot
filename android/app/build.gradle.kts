@@ -31,6 +31,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // 只保留主流真机(arm64-v8a) + 虚拟机(x86_64)，舍弃老 32 位机，显著减小包体
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     val keystorePropertiesFile = rootProject.file("key.properties")

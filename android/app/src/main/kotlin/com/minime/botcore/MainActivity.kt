@@ -1,4 +1,4 @@
-package com.psyche.kelivo
+package com.minime.botcore
 
 import io.flutter.embedding.android.FlutterActivity
 

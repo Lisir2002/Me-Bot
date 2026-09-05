@@ -1,11 +1,11 @@
 {
-    "name": "kelivo",
-    "short_name": "kelivo",
+    "name": "MiniMe-Core",
+    "short_name": "MiniMe-Core",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#0175C2",
-    "description": "An LLM chat client.",
+    "description": "MiniMe-Core - Open Source AI Assistant",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

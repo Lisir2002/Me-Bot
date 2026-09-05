@@ -111,16 +111,13 @@ jobs:
           echo "keyAlias=$KEY_ALIAS" >> android/key.properties
           echo "keyPassword=$KEY_PASSWORD" >> android/key.properties
           echo "✅ 签名配置已写入"
-      - name: 🏗️ 构建 APK
-        run: flutter build apk --release --split-per-abi
+      - name: 🏗️ 构建 APK (Universal，含全部 ABI)
+        run: flutter build apk --release
 
       - name: 📦 重命名 APK
         run: |
           cd build/app/outputs/flutter-apk
-          for file in app-*-release.apk; do
-            abi=$(echo "$file" | sed -E 's/app-(.*)-release\.apk/\1/')
-            mv "$file" "MiniMeCore_android_${VERSION}_${abi}.apk"
-          done
+          mv app-release.apk "MiniMeCore_android_${VERSION}_universal.apk"
       - name: 🚀 发布到 Release
         if: ${{ github.event.inputs.publish_release == 'true' && github.event.inputs.release_tag != '' }}
         uses: softprops/action-gh-release@v2
@@ -129,23 +126,11 @@ jobs:
           name: ${{ github.event.inputs.release_tag }}
           files: build/app/outputs/flutter-apk/MiniMeCore_android_*.apk
 
-      - name: 📤 上传构建产物 (arm64-v8a)
+      - name: 📤 上传构建产物 (Universal APK)
         uses: actions/upload-artifact@v4
         with:
-          name: Android-arm64-v8a
-          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_arm64-v8a.apk
-
-      - name: 📤 上传构建产物 (armeabi-v7a)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Android-armeabi-v7a
-          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_armeabi-v7a.apk
-
-      - name: 📤 上传构建产物 (x86_64)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Android-x86_64
-          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_x86_64.apk
+          name: Android-Universal
+          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_universal.apk
 
   # iOS 构建
   ios:

@@ -334,13 +334,27 @@ class _HeatmapSection extends StatefulWidget {
   State<_HeatmapSection> createState() => _HeatmapSectionState();
 }
 
-/// 根据筛选范围计算热力图展示窗口（含首尾，日粒度）
-({DateTime start, DateTime end}) _heatmapWindow(StatsRange range, DateTime now) {
+/// 根据筛选范围计算热力图展示窗口（含首尾，日粒度）。
+/// [earliest] 为数据最早日期（无数据传 null）。
+({DateTime start, DateTime end}) _heatmapWindow(
+  StatsRange range,
+  DateTime now,
+  DateTime? earliest,
+) {
   final today = DateTime(now.year, now.month, now.day);
   switch (range) {
     case StatsRange.all:
-      // GitHub 惯例：最近 53 周
-      return (start: today.subtract(const Duration(days: 53 * 7 - 1)), end: today);
+      // 动态窗口：首次使用只显示最近 4 个月（含当月），随数据增长向前扩展，
+      // 上限 53 周（GitHub 惯例）
+      final fourMonthsAgo = DateTime(now.year, now.month - 4, 1);
+      final startBound = (earliest != null && earliest.isBefore(fourMonthsAgo))
+          ? earliest
+          : fourMonthsAgo;
+      final minStart = today.subtract(const Duration(days: 53 * 7 - 1));
+      return (
+        start: startBound.isBefore(minStart) ? minStart : startBound,
+        end: today,
+      );
     case StatsRange.last30:
       return (start: today.subtract(const Duration(days: 29)), end: today);
     case StatsRange.lastMonth:
@@ -360,23 +374,41 @@ class _HeatmapSectionState extends State<_HeatmapSection> {
   /// 点击选中的格子日期，用于显示详情气泡
   DateTime? _selected;
 
+  /// 横向滚动控制器：进入页面时定位到当月（窗口右端）
+  final ScrollController _hScroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // 首帧布局完成后跳到最右端（当月所在位置）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_hScroll.hasClients) return;
+      _hScroll.jumpTo(_hScroll.position.maxScrollExtent);
+    });
+  }
+
+  @override
+  void dispose() {
+    _hScroll.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final messages = widget.messages;
 
     // 按天聚合消息数（messages 已按筛选范围过滤，与热力图窗口一致）
     final dayCounts = <DateTime, int>{};
+    DateTime? earliest;
     for (final m in messages) {
       final d = DateTime(m.timestamp.year, m.timestamp.month, m.timestamp.day);
       dayCounts[d] = (dayCounts[d] ?? 0) + 1;
-    }
-    if (dayCounts.isEmpty) {
-      return const _SectionCard(title: '聊天热力图', child: _EmptyHint(text: '暂无数据'));
+      if (earliest == null || d.isBefore(earliest)) earliest = d;
     }
 
     final cs = Theme.of(context).colorScheme;
     final now = DateTime.now();
-    final window = _heatmapWindow(widget.range, now);
+    final window = _heatmapWindow(widget.range, now, earliest);
 
     // 以窗口起点所在周一为首列，生成覆盖整个窗口的周列（每列固定 7 天）
     final firstMonday = window.start.subtract(Duration(days: window.start.weekday - 1));
@@ -411,6 +443,7 @@ class _HeatmapSectionState extends State<_HeatmapSection> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            controller: _hScroll,
             child: GestureDetector(
               onTapUp: (d) => _handleTap(d.localPosition, weeks, window),
               child: SizedBox(

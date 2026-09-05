@@ -97,15 +97,21 @@ jobs:
 
       # 如果有签名密钥，写入密钥文件
       - name: 🔑 写入签名密钥
-        if: ${{ secrets.SIGN_KEYSTORE_BASE64 != '' }}
         env:
           SIGN_KEYSTORE_BASE64: ${{ secrets.SIGN_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          if [ -z "$SIGN_KEYSTORE_BASE64" ]; then
+            echo "⚠️ 未配置签名 secret，跳过签名（产物将使用 debug 签名）"
+            exit 0
+          fi
           echo "$SIGN_KEYSTORE_BASE64" | base64 --decode > android/app/key.jks
           echo "storeFile=key.jks" >> android/key.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "storePassword=$KEYSTORE_PASSWORD" >> android/key.properties
+          echo "keyAlias=$KEY_ALIAS" >> android/key.properties
+          echo "keyPassword=$KEY_PASSWORD" >> android/key.properties
           echo "✅ 签名配置已写入"
 
       - name: 🏗️ 构建 APK

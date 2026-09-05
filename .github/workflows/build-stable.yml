@@ -260,7 +260,9 @@ jobs:
   windows:
     if: ${{ github.event.inputs.build_windows == 'true' }}
     name: 构建 Windows
-    runs-on: windows-latest
+    # windows-latest 自 2026-06 起使用 VS 2026 (major 18)，
+    # Flutter 3.35.7 工具链无法映射其生成器，固定用 windows-2022 (VS 2022)。
+    runs-on: windows-2022
     permissions: write-all
 
     steps:

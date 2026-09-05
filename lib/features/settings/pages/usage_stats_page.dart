@@ -430,41 +430,93 @@ class _HeatmapSectionState extends State<_HeatmapSection> {
       cs.primary,
     ];
 
-    const labelW = 20.0; // 左侧周几标签区
-    const labelH = 18.0; // 顶部月份标签行
+    const labelW = 20.0; // 左侧周几标签区（y 轴，固定）
+    const labelH = 18.0; // 顶部月份标签行（x 轴，固定）
     const colW = 17.0; // 色块 14 + 间距 3
     const rowH = 17.0;
-    final size = Size(labelW + weeks.length * colW, labelH + 7 * rowH);
 
     return _SectionCard(
       title: '聊天热力图',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            controller: _hScroll,
-            child: GestureDetector(
-              onTapUp: (d) => _handleTap(d.localPosition, weeks, window),
-              child: SizedBox(
-                width: size.width,
-                height: size.height,
-                child: CustomPaint(
-                  painter: _HeatmapPainter(
-                    weeks: weeks,
-                    dayCounts: dayCounts,
-                    maxCount: maxCount,
-                    selected: _selected,
-                    palette: palette,
-                    textColor: cs.onSurfaceVariant,
-                    highlightColor: cs.primary,
+          // x 轴：月份标签固定顶部，随网格滚动偏移实时重绘（粘性刻度）
+          Row(
+            children: [
+              const SizedBox(width: labelW),
+              Expanded(
+                child: SizedBox(
+                  height: labelH,
+                  child: ClipRect(
+                    child: AnimatedBuilder(
+                      animation: _hScroll,
+                      builder: (context, _) {
+                        final offset = _hScroll.hasClients ? _hScroll.position.pixels : 0.0;
+                        return CustomPaint(
+                          size: Size.infinite,
+                          painter: _MonthLabelsPainter(
+                            weeks: weeks,
+                            offset: offset,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // 固定 x 轴与滚动网格之间的分隔线（地基样式）
+          Container(height: 1, color: cs.outlineVariant.withValues(alpha: 0.35)),
+          const SizedBox(height: 8),
+          // y 轴（周几标签固定左侧）+ 网格（可横向滚动）
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  for (int i = 0; i < 7; i++)
+                    SizedBox(
+                      height: rowH,
+                      width: labelW,
+                      child: Center(
+                        child: Text(
+                          (i == 0 || i == 2 || i == 4) ? const ['一', '二', '三', '四', '五', '六', '日'][i] : '',
+                          style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  controller: _hScroll,
+                  child: GestureDetector(
+                    onTapUp: (d) => _handleTap(d.localPosition, weeks, window),
+                    child: SizedBox(
+                      width: weeks.length * colW,
+                      height: 7 * rowH,
+                      child: CustomPaint(
+                        painter: _HeatmapPainter(
+                          weeks: weeks,
+                          dayCounts: dayCounts,
+                          maxCount: maxCount,
+                          selected: _selected,
+                          palette: palette,
+                          highlightColor: cs.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
-          // 图例：4 级色块（1~4），右对齐
+          // 图例：4 级色块（1~4），右对齐（固定不滚动）
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -489,14 +541,12 @@ class _HeatmapSectionState extends State<_HeatmapSection> {
     );
   }
 
-  /// 点击命中换算：画布坐标 → (列, 行) → 具体日期；窗口外或空白处取消选中
+  /// 点击命中换算：网格坐标 → (列, 行) → 具体日期；窗口外或空白处取消选中
   void _handleTap(Offset pos, List<List<DateTime>> weeks, ({DateTime start, DateTime end}) window) {
-    const labelW = 20.0;
-    const labelH = 18.0;
     const colW = 17.0;
     const rowH = 17.0;
-    final col = ((pos.dx - labelW) / colW).floor();
-    final row = ((pos.dy - labelH) / rowH).floor();
+    final col = (pos.dx / colW).floor();
+    final row = (pos.dy / rowH).floor();
     if (col < 0 || col >= weeks.length || row < 0 || row >= 7) {
       if (_selected != null) setState(() => _selected = null);
       return;
@@ -521,7 +571,6 @@ class _HeatmapPainter extends CustomPainter {
   final int maxCount;
   final DateTime? selected;
   final List<Color> palette; // 0 空态 / 1~4 递增
-  final Color textColor;
   final Color highlightColor;
 
   _HeatmapPainter({
@@ -530,15 +579,12 @@ class _HeatmapPainter extends CustomPainter {
     required this.maxCount,
     required this.selected,
     required this.palette,
-    required this.textColor,
     required this.highlightColor,
   });
 
   static const double _cell = 14;
   static const double _colW = 17; // 色块 + 间距
   static const double _rowH = 17;
-  static const double _labelW = 20;
-  static const double _labelH = 18;
 
   int _levelFor(int count) {
     if (count <= 0) return 0;
@@ -551,37 +597,7 @@ class _HeatmapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 顶部月份标签：每月首个周列显示月份（TextPainter 绘制，不会撑破布局）
-    for (int i = 0; i < weeks.length; i++) {
-      final isNewMonth = weeks[i][0].month != (i > 0 ? weeks[i - 1][0].month : -1);
-      if (isNewMonth) {
-        final tp = TextPainter(
-          text: TextSpan(
-            text: '${weeks[i][0].month}月',
-            style: TextStyle(fontSize: 10, color: textColor),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        tp.paint(canvas, Offset(_labelW + i * _colW, 0));
-      }
-    }
-
-    // 左侧周几标签（周一/周三/周五）
-    const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
-    for (int r = 0; r < 7; r++) {
-      if (r == 0 || r == 2 || r == 4) {
-        final tp = TextPainter(
-          text: TextSpan(
-            text: weekdayLabels[r],
-            style: TextStyle(fontSize: 9, color: textColor),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        tp.paint(canvas, Offset(0, _labelH + r * _rowH + (_cell - 9) / 2));
-      }
-    }
-
-    // 网格色块
+    // 网格色块（x/y 轴标签已由外部固定渲染，此处仅绘制数据主体）
     final cellPaint = Paint();
     for (int c = 0; c < weeks.length; c++) {
       for (int r = 0; r < 7; r++) {
@@ -589,7 +605,7 @@ class _HeatmapPainter extends CustomPainter {
         cellPaint.color = palette[_levelFor(count)];
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTWH(_labelW + c * _colW, _labelH + r * _rowH, _cell, _cell),
+            Rect.fromLTWH(c * _colW, r * _rowH, _cell, _cell),
             const Radius.circular(3),
           ),
           cellPaint,
@@ -603,7 +619,7 @@ class _HeatmapPainter extends CustomPainter {
       for (int c = 0; c < weeks.length; c++) {
         for (int r = 0; r < 7; r++) {
           if (weeks[c][r] == sel) {
-            final rect = Rect.fromLTWH(_labelW + c * _colW, _labelH + r * _rowH, _cell, _cell);
+            final rect = Rect.fromLTWH(c * _colW, r * _rowH, _cell, _cell);
             canvas.drawRRect(
               RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(4)),
               Paint()
@@ -647,6 +663,51 @@ class _HeatmapPainter extends CustomPainter {
         old.maxCount != maxCount ||
         old.weeks != weeks ||
         old.dayCounts != dayCounts;
+  }
+}
+
+/// 顶部月份标签（x 轴，粘性固定）：不随网格滚动，而是按滚动偏移实时重绘，
+/// 只绘制当前视口内可见的月份刻度，保证与下方色块列始终对齐。
+class _MonthLabelsPainter extends CustomPainter {
+  final List<List<DateTime>> weeks;
+  final double offset; // 网格横向滚动偏移
+  final Color color;
+
+  _MonthLabelsPainter({
+    required this.weeks,
+    required this.offset,
+    required this.color,
+  });
+
+  static const double _colW = 17;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < weeks.length; i++) {
+      final first = weeks[i][0];
+      final isNewMonth = first.month != (i > 0 ? weeks[i - 1][0].month : -1);
+      if (!isNewMonth) continue;
+      final x = i * _colW - offset;
+      // 视口裁剪：只画可见部分
+      if (x < -60 || x > size.width + 20) continue;
+      // 跨年时标注年份，避免只显示月份造成歧义
+      final yearChanged = i > 0 && first.year != weeks[i - 1][0].year;
+      final tp = TextPainter(
+        text: TextSpan(
+          text: yearChanged ? '${first.year}年${first.month}月' : '${first.month}月',
+          style: TextStyle(fontSize: 10, color: color),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      // 右侧边界钳制，避免当月标签被裁切
+      final lx = x + tp.width > size.width ? size.width - tp.width : x;
+      tp.paint(canvas, Offset(lx, 0));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MonthLabelsPainter old) {
+    return old.offset != offset || old.weeks != weeks || old.color != color;
   }
 }
 
@@ -694,7 +755,7 @@ class _OverviewSection extends StatelessWidget {
               padding: const EdgeInsets.all(6),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -750,6 +811,13 @@ class _TrendSection extends StatelessWidget {
     Color(0xFF06B6D4), // 青
     Color(0xFFEC4899), // 粉
   ];
+
+  /// Y 轴刻度格式化：大数以 K/M 缩写，避免长数字溢出
+  String _fmtAxis(double v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
+    return v.round().toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -822,7 +890,7 @@ class _TrendSection extends StatelessWidget {
             height: 180,
             child: BarChart(
               BarChartData(
-                maxY: maxTotal.toDouble(),
+                maxY: maxTotal.toDouble() * 1.2, // 顶部留白
                 alignment: BarChartAlignment.spaceAround,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
@@ -842,26 +910,41 @@ class _TrendSection extends StatelessWidget {
                 ),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 36,
+                      getTitlesWidget: (value, meta) {
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(
+                            _fmtAxis(value),
+                            style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 24,
+                      reservedSize: 28,
                       getTitlesWidget: (value, meta) {
                         final idx = value.toInt();
                         if (idx < 0 || idx >= sortedBuckets.length) return const SizedBox.shrink();
                         final date = sortedBuckets[idx];
                         // 稀疏显示，避免重叠
-                        if (sortedBuckets.length > 8 && idx % (sortedBuckets.length ~/ 4 + 1) != 0) {
+                        if (sortedBuckets.length > 10 && idx % (sortedBuckets.length ~/ 5 + 1) != 0) {
                           return const SizedBox.shrink();
                         }
                         final label = isShort ? '${date.month}/${date.day}' : '${date.month}月';
                         return SideTitleWidget(
                           axisSide: meta.axisSide,
-                          child: Text(label, style: const TextStyle(fontSize: 9)),
+                          child: Text(
+                            label,
+                            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
                         );
                       },
                     ),
@@ -870,8 +953,20 @@ class _TrendSection extends StatelessWidget {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
+                    strokeWidth: 1,
+                    dashArray: [4, 4],
+                  ),
                 ),
-                borderData: FlBorderData(show: false),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                    ),
+                  ),
+                ),
                 barGroups: groups,
               ),
             ),

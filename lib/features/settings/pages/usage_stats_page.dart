@@ -214,6 +214,7 @@ class UsageStatsBody extends StatelessWidget {
   final ValueChanged<StatsRange> onRangeChanged;
 
   const UsageStatsBody({
+    super.key,
     required this.data,
     required this.range,
     required this.onRangeChanged,
@@ -592,7 +593,7 @@ class _TrendSection extends StatelessWidget {
           toY: v.toDouble(),
           width: isShort ? 4 : 8,
           color: modelColors[model],
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
         ));
       }
       groups.add(BarChartGroupData(x: i, barRods: rods));
@@ -711,25 +712,26 @@ class _ModelUsageTable extends StatelessWidget {
           ? const _EmptyHint(text: '暂无数据')
           : Column(
               children: [
+                const _TableHeader(left: '模型', right: '消息数'),
+                const SizedBox(height: 8),
                 for (final e in sorted)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            e.key,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        Text('${e.value} 条', style: const TextStyle(fontSize: 13)),
-                      ],
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _PillRow(
+                      badge: _badgeFor(e.key),
+                      name: e.key,
+                      value: '${e.value} 条',
                     ),
                   ),
               ],
             ),
     );
+  }
+
+  /// 徽章内容：模型名首字符大写
+  String _badgeFor(String name) {
+    if (name.isEmpty) return '?';
+    return name.characters.first.toUpperCase();
   }
 }
 
@@ -770,25 +772,26 @@ class _AssistantUsageTable extends StatelessWidget {
           ? const _EmptyHint(text: '暂无数据')
           : Column(
               children: [
+                const _TableHeader(left: '助手', right: '话题数'),
+                const SizedBox(height: 8),
                 for (final e in sorted)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            nameFor(e.key),
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        Text('${e.value} 个话题', style: const TextStyle(fontSize: 13)),
-                      ],
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _PillRow(
+                      badge: _badgeFor(nameFor(e.key)),
+                      name: nameFor(e.key),
+                      value: '${e.value} 个话题',
                     ),
                   ),
               ],
             ),
     );
+  }
+
+  /// 徽章内容：助手名首字符
+  String _badgeFor(String name) {
+    if (name.isEmpty) return '?';
+    return name.characters.first;
   }
 }
 
@@ -812,20 +815,15 @@ class _TopicUsageTable extends StatelessWidget {
           ? const _EmptyHint(text: '暂无数据')
           : Column(
               children: [
+                const _TableHeader(left: '话题', right: '消息数'),
+                const SizedBox(height: 8),
                 for (final c in sorted.take(20))
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            c.title,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        Text('${c.messageIds.length} 条', style: const TextStyle(fontSize: 13)),
-                      ],
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _PillRow(
+                      badgeIcon: Icons.chat_bubble_outline,
+                      name: c.title.isEmpty ? '（未命名话题）' : c.title,
+                      value: '${c.messageIds.length} 条',
                     ),
                   ),
               ],
@@ -838,6 +836,101 @@ class _TopicUsageTable extends StatelessWidget {
 // 通用组件
 // ----------------------------------------------------------------------------
 
+/// 表头：左列名 + 右列名（小字灰色，两端对齐）
+class _TableHeader extends StatelessWidget {
+  final String left;
+  final String right;
+
+  const _TableHeader({required this.left, required this.right});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final style = TextStyle(fontSize: 12, color: cs.onSurfaceVariant);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Row(
+        children: [
+          Expanded(child: Text(left, style: style)),
+          Text(right, style: style),
+        ],
+      ),
+    );
+  }
+}
+
+/// 胶囊数据行：图标徽章 + 名称 + 数量
+class _PillRow extends StatelessWidget {
+  final String? badge;
+  final IconData? badgeIcon;
+  final String name;
+  final String value;
+
+  const _PillRow({
+    this.badge,
+    this.badgeIcon,
+    required this.name,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final Widget badgeWidget;
+    if (badgeIcon != null) {
+      badgeWidget = Icon(badgeIcon, size: 16, color: cs.primary);
+    } else {
+      badgeWidget = Text(
+        badge ?? '?',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: cs.primary,
+        ),
+      );
+    }
+
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: badgeWidget,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: cs.onSurface),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
@@ -849,20 +942,26 @@ class _SectionCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: cs.onSurface),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: cs.onSurface),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           child,
         ],
       ),

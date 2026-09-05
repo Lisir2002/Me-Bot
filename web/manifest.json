@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#0175C2",
-    "description": "MiniMe-Core - Open Source AI Assistant",
+    "description": "MiniMe-Core - your personal AI assistant",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

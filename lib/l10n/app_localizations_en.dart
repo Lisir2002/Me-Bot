@@ -76,6 +76,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPageBackup => 'Backup';
 
   @override
+  String get settingsPageStats => 'Statistics';
+
+  @override
   String get settingsPageChatStorage => 'Chat Storage';
 
   @override

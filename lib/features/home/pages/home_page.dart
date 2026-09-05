@@ -1831,6 +1831,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           assistantMessage.id,
           content: processedContent,
           totalTokens: totalTokens,
+          promptTokens: usage?.promptTokens,
+          completionTokens: usage?.completionTokens,
+          cachedTokens: usage?.cachedTokens,
           isStreaming: false,
         );
         if (!mounted) return;
@@ -1840,6 +1843,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             _messages[index] = _messages[index].copyWith(
               content: processedContent,
               totalTokens: totalTokens,
+              promptTokens: usage?.promptTokens,
+              completionTokens: usage?.completionTokens,
+              cachedTokens: usage?.cachedTokens,
               isStreaming: false,
             );
           }
@@ -2789,12 +2795,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     Future<void> finish({bool generateTitle = false}) async {
       final processedContent = await MarkdownMediaSanitizer.replaceInlineBase64Images(fullContent);
-      await _chatService.updateMessage(assistantMessage.id, content: processedContent, totalTokens: totalTokens, isStreaming: false);
+      await _chatService.updateMessage(assistantMessage.id, content: processedContent, totalTokens: totalTokens, promptTokens: usage?.promptTokens, completionTokens: usage?.completionTokens, cachedTokens: usage?.cachedTokens, isStreaming: false);
       if (!mounted) return;
       setState(() {
         final index = _messages.indexWhere((m) => m.id == assistantMessage.id);
         if (index != -1) {
-          _messages[index] = _messages[index].copyWith(content: processedContent, totalTokens: totalTokens, isStreaming: false);
+          _messages[index] = _messages[index].copyWith(content: processedContent, totalTokens: totalTokens, promptTokens: usage?.promptTokens, completionTokens: usage?.completionTokens, cachedTokens: usage?.cachedTokens, isStreaming: false);
         }
       });
       _setConversationLoading(assistantMessage.conversationId, false);
@@ -3023,6 +3029,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         assistantMessage.id,
         content: displayContent,
         totalTokens: totalTokens,
+        promptTokens: usage?.promptTokens,
+        completionTokens: usage?.completionTokens,
+        cachedTokens: usage?.cachedTokens,
         isStreaming: false,
       );
 
@@ -3034,6 +3043,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               content: displayContent,
               isStreaming: false,
               totalTokens: totalTokens,
+              promptTokens: usage?.promptTokens,
+              completionTokens: usage?.completionTokens,
+              cachedTokens: usage?.cachedTokens,
             );
           }
         });

@@ -32,6 +32,7 @@ import 'shared/widgets/snackbar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_fonts/system_fonts.dart';
 import 'dart:io' show HttpOverrides, Platform; // kept for global override usage inside provider
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/android_background.dart';
 import 'core/services/notification_service.dart';
 
@@ -54,10 +55,24 @@ Future<void> main() async {
   // logging.Logger.root.onRecord.listen((rec) { ... });
   // Cache current Documents directory to fix sandboxed absolute paths on iOS
   await SandboxPathResolver.init();
+  // Count app launches (feeds the Stats page "app launch" card)
+  await _incrementAppLaunchCount();
   // Enable edge-to-edge to allow content under system bars (Android)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   // Start app (no extra guarded zone logging)
 runApp(const MyApp());
+}
+
+/// Increments the persistent app-launch counter used by the Stats page.
+Future<void> _incrementAppLaunchCount() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'app_launch_count';
+    final prev = prefs.getInt(key) ?? 0;
+    await prefs.setInt(key, prev + 1);
+  } catch (_) {
+    // Best-effort; never block startup on a stats counter.
+  }
 }
 
 Future<void> _initDesktopWindow() async {

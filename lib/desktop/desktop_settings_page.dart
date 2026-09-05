@@ -41,6 +41,7 @@ import 'setting/quick_phrases_pane.dart';
 import 'setting/backup_pane.dart';
 import 'setting/network_proxy_pane.dart';
 import 'setting/about_pane.dart';
+import '../features/settings/pages/usage_stats_page.dart';
 import 'package:system_fonts/system_fonts.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,6 +60,7 @@ class DesktopSettingsPage extends StatefulWidget {
 
 enum _SettingsMenuItem {
   display,
+  stats,
   assistant,
   providers,
   defaultModel,
@@ -97,6 +99,8 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
           return l10n.settingsPageProviders;
         case _SettingsMenuItem.display:
           return l10n.settingsPageDisplay;
+        case _SettingsMenuItem.stats:
+          return l10n.settingsPageStats;
         case _SettingsMenuItem.defaultModel:
           return l10n.settingsPageDefaultModel;
         case _SettingsMenuItem.search:
@@ -164,6 +168,8 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                       switch (_selected) {
                         case _SettingsMenuItem.display:
                           return const _DisplaySettingsBody(key: ValueKey('display'));
+                        case _SettingsMenuItem.stats:
+                          return const DesktopStatsPane(key: ValueKey('stats'));
                         case _SettingsMenuItem.assistant:
                           return const _DesktopAssistantsBody(key: ValueKey('assistants'));
                         case _SettingsMenuItem.providers:
@@ -214,6 +220,7 @@ class _SettingsMenu extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final items = [
       (_SettingsMenuItem.display, lucide.Lucide.Monitor, l10n.settingsPageDisplay),
+      (_SettingsMenuItem.stats, lucide.Lucide.Activity, l10n.settingsPageStats),
       (_SettingsMenuItem.providers, lucide.Lucide.Boxes, l10n.settingsPageProviders),
       (_SettingsMenuItem.assistant, lucide.Lucide.Bot, l10n.settingsPageAssistant),
       (_SettingsMenuItem.defaultModel, lucide.Lucide.Heart, l10n.settingsPageDefaultModel),

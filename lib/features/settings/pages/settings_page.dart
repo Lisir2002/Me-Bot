@@ -17,6 +17,7 @@ import '../../search/pages/search_services_page.dart';
 import '../../backup/pages/backup_page.dart';
 import '../../quick_phrase/pages/quick_phrases_page.dart';
 import 'network_proxy_page.dart';
+import 'usage_stats_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/services/haptics.dart';
@@ -249,6 +250,17 @@ class SettingsPage extends StatelessWidget {
           const SizedBox(height: 12),
           header(l10n.settingsPageDataSection),
           _iosSectionCard(children: [
+            _iosNavRow(
+              context,
+              icon: Lucide.Activity,
+              label: l10n.settingsPageStats,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const UsageStatsPage()),
+                );
+              },
+            ),
+            _iosDivider(context),
             _iosNavRow(
               context,
               icon: Lucide.Database,

@@ -21,6 +21,7 @@
   "settingsPageQuickPhrase": "Quick Phrase",
   "settingsPageDataSection": "Data",
   "settingsPageBackup": "Backup",
+  "settingsPageStats": "Statistics",
   "settingsPageChatStorage": "Chat Storage",
   "settingsPageCalculating": "Calculating…",
   "settingsPageFilesCount": "{count} files · {size}",

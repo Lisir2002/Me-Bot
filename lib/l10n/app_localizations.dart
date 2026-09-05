@@ -232,6 +232,12 @@ abstract class AppLocalizations {
   /// **'Backup'**
   String get settingsPageBackup;
 
+  /// No description provided for @settingsPageStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get settingsPageStats;
+
   /// No description provided for @settingsPageChatStorage.
   ///
   /// In en, this message translates to:

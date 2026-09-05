@@ -75,6 +75,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPageBackup => '数据备份';
 
   @override
+  String get settingsPageStats => '统计';
+
+  @override
   String get settingsPageChatStorage => '聊天记录存储';
 
   @override
@@ -3103,6 +3106,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get settingsPageBackup => '数据备份';
 
   @override
+  String get settingsPageStats => '统计';
+
+  @override
   String get settingsPageChatStorage => '聊天记录存储';
 
   @override
@@ -6129,6 +6135,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsPageBackup => '資料備份';
+
+  @override
+  String get settingsPageStats => '統計';
 
   @override
   String get settingsPageChatStorage => '聊天記錄儲存';

@@ -78,6 +78,9 @@ class ModelRegistry {
     _CapEntry(RegExp(r'gpt-4-turbo'), tool: true, vision: true),
     _CapEntry(RegExp(r'gpt-4-vision'), tool: true, vision: true),
     _CapEntry(RegExp(r'gpt-4'), tool: true),
+    // Legacy completions models expose no function calling.
+    _CapEntry(RegExp(r'gpt-3\.5-turbo-instruct|gpt-3\.5-instruct'),
+        tool: false),
     _CapEntry(RegExp(r'gpt-3\.5'), tool: true),
     // ---- Anthropic Claude ----
     _CapEntry(RegExp(r'claude-(opus|sonnet|haiku)-4'),
@@ -187,7 +190,8 @@ class ModelRegistry {
     _CapEntry(RegExp(r'chatglm'), tool: true),
     _CapEntry(RegExp(r'ministral'), tool: true),
     // Image-generation models whose id does not contain "image"
-    _CapEntry(RegExp(r'midjourney|stable-diffusion|sdxl|flux'), tool: false),
+    _CapEntry(RegExp(r'midjourney|dall-e|stable-diffusion|sdxl|flux'),
+        tool: false),
   ];
 
   /// Legacy instruct / completions models: no function calling.
@@ -222,10 +226,6 @@ class ModelRegistry {
     if (_embeddingLike.hasMatch(id)) {
       return base.copyWith(input: inMods, output: outMods, abilities: ab);
     }
-    // Legacy instruct / completions models expose no function calling.
-    if (_legacyNoTool.hasMatch(id)) {
-      return base.copyWith(input: inMods, output: outMods, abilities: ab);
-    }
 
     // Known-model capability registry (first match wins).
     bool tool = false, reasoning = false, vision = false;
@@ -240,11 +240,15 @@ class ModelRegistry {
       }
     }
 
-    // Fallback for unrecognized models:
-    // Chat models on OpenAI-compatible providers almost universally support
-    // function calling, so default tool=true instead of hiding the capability
-    // and forcing the user to enable it manually.
     if (!matched) {
+      // Legacy instruct / completions models expose no function calling.
+      if (_legacyNoTool.hasMatch(id)) {
+        return base.copyWith(input: inMods, output: outMods, abilities: ab);
+      }
+      // Fallback for unrecognized models:
+      // Chat models on OpenAI-compatible providers almost universally support
+      // function calling, so default tool=true instead of hiding the capability
+      // and forcing the user to enable it manually.
       tool = true;
       reasoning = _fallbackReasoning.hasMatch(id);
       vision = _fallbackVision.hasMatch(id);

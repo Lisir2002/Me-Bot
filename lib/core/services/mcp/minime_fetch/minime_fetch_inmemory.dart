@@ -50,16 +50,18 @@ Future<List<(mcp.Tool tool, String id)>> listFetchTools(mcp.Client client) async
   return tools.map((t) => (t, buildFunctionCallToolName(serverName, t.name))).toList(growable: false);
 }
 
-/// Call one of the in-memory fetch tools.
-/// name must be one of: fetch_html | fetch_markdown | fetch_txt | fetch_json
+/// Call the in-memory fetch tool.
+/// name must be 'fetch'.
 Future<mcp.CallToolResult> callFetchTool(
   mcp.Client client,
   String name,
-  {required String url, Map<String, String>? headers}
+  {required String url, String method = 'GET', Map<String, String>? headers, String? body}
 ) async {
   final result = await client.callTool(name, {
     'url': url,
+    'method': method,
     if (headers != null && headers.isNotEmpty) 'headers': headers,
+    if (body != null) 'body': body,
   });
   return result;
 }

@@ -2,18 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as html_parser;
-import 'package:html/dom.dart' as dom;
 import 'package:html2md/html2md.dart' as html2md;
 import 'package:mcp_client/mcp_client.dart' as mcp;
 
 /// @minime-core/fetch — In-memory MCP server engine and transport (Flutter/Dart)
 ///
-/// Provides four tools:
-/// - fetch_html     → returns raw HTML text
-/// - fetch_markdown → HTML converted to Markdown
-/// - fetch_txt      → plain text (script/style removed, whitespace collapsed)
-/// - fetch_json     → JSON stringified
+/// Provides a single `fetch` tool that mirrors industry practice (e.g. the
+/// kelivo_fetch tool):
+///   - GET or POST (with body)
+///   - Markdown output by default, raw HTML via raw=true
+///   - max_length truncation + start_index pagination
+///   - JSON responses are auto pretty-printed
 ///
 /// The server implements a minimal subset of MCP over JSON-RPC 2.0:
 /// initialize, tools/list, tools/call. It is intended to run in the same
@@ -22,14 +21,26 @@ import 'package:mcp_client/mcp_client.dart' as mcp;
 
 class MiniMeCoreFetchRequestPayload {
   final Uri url;
+  final String method; // 'GET' | 'POST'
   final Map<String, String> headers;
+  final String? body; // POST body
+  final int maxLength; // output char cap
+  final int startIndex; // pagination offset (chars)
+  final bool raw; // if true, return raw HTML; else Markdown
 
-  MiniMeCoreFetchRequestPayload({required this.url, Map<String, String>? headers})
-      : headers = headers ?? const {};
+  MiniMeCoreFetchRequestPayload({
+    required this.url,
+    this.method = 'GET',
+    Map<String, String>? headers,
+    this.body,
+    this.maxLength = 20000,
+    this.startIndex = 0,
+    this.raw = false,
+  }) : headers = headers ?? const {};
 
   static MiniMeCoreFetchRequestPayload parse(Object? args) {
     if (args is! Map) {
-      throw ArgumentError('Invalid arguments: expected object with url[, headers]');
+      throw ArgumentError('Invalid arguments: expected object with url[, method, headers, body, max_length, start_index, raw]');
     }
     final map = args.cast<String, dynamic>();
     final urlRaw = (map['url'] ?? '').toString().trim();
@@ -37,15 +48,28 @@ class MiniMeCoreFetchRequestPayload {
     if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) {
       throw ArgumentError('Invalid url: $urlRaw');
     }
-    final headersAny = map['headers'];
+    final method = (map['method'] ?? 'GET').toString().toUpperCase();
     final headers = <String, String>{};
+    final headersAny = map['headers'];
     if (headersAny is Map) {
       headersAny.forEach((k, v) {
         if (k == null || v == null) return;
         headers[k.toString()] = v.toString();
       });
     }
-    return MiniMeCoreFetchRequestPayload(url: uri, headers: headers);
+    final body = map['body']?.toString();
+    final maxLength = (map['max_length'] as num?)?.toInt() ?? 20000;
+    final startIndex = (map['start_index'] as num?)?.toInt() ?? 0;
+    final raw = map['raw'] == true;
+    return MiniMeCoreFetchRequestPayload(
+      url: uri,
+      method: method == 'POST' ? 'POST' : 'GET',
+      headers: headers,
+      body: body,
+      maxLength: maxLength > 0 ? maxLength : 20000,
+      startIndex: startIndex > 0 ? startIndex : 0,
+      raw: raw,
+    );
   }
 }
 
@@ -59,7 +83,12 @@ class MiniMeCoreFetcher {
         'User-Agent': _defaultUA,
         ...payload.headers,
       };
-      final resp = await http.get(payload.url, headers: merged);
+      final http.Response resp;
+      if (payload.method == 'POST') {
+        resp = await http.post(payload.url, headers: merged, body: payload.body);
+      } else {
+        resp = await http.get(payload.url, headers: merged);
+      }
       if (resp.statusCode < 200 || resp.statusCode >= 300) {
         throw Exception('HTTP ${resp.statusCode}');
       }
@@ -69,47 +98,38 @@ class MiniMeCoreFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> html(MiniMeCoreFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> fetch(MiniMeCoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
-      final text = resp.body;
-      return _ok(text);
-    } catch (e) {
-      return _err(e.toString());
-    }
-  }
+      final contentType = (resp.headers['content-type'] ?? '').toLowerCase();
 
-  static Future<Map<String, dynamic>> json(MiniMeCoreFetchRequestPayload payload) async {
-    try {
-      final resp = await _fetch(payload);
-      final raw = resp.body;
-      final dynamic data = jsonDecode(raw);
-      return _ok(const JsonEncoder.withIndent('  ').convert(data));
-    } catch (e) {
-      return _err(e.toString());
-    }
-  }
+      // Decide output format:
+      //  - JSON response -> pretty JSON
+      //  - raw=true        -> raw HTML
+      //  - otherwise       -> compact Markdown
+      String text;
+      if (contentType.contains('application/json')) {
+        final dynamic data = jsonDecode(resp.body);
+        text = const JsonEncoder.withIndent('  ').convert(data);
+      } else if (payload.raw) {
+        text = resp.body;
+      } else {
+        text = html2md.convert(resp.body);
+      }
 
-  static Future<Map<String, dynamic>> txt(MiniMeCoreFetchRequestPayload payload) async {
-    try {
-      final resp = await _fetch(payload);
-      final html = resp.body;
-      final dom.Document document = html_parser.parse(html);
-      document.querySelectorAll('script,style').forEach((el) => el.remove());
-      final text = document.body?.text ?? '';
-      final normalized = text.replaceAll(RegExp(r'\s+'), ' ').trim();
-      return _ok(normalized);
-    } catch (e) {
-      return _err(e.toString());
-    }
-  }
+      // Truncate + paginate by character index.
+      final total = text.length;
+      final start = payload.startIndex.clamp(0, total);
+      final end = (start + payload.maxLength).clamp(0, total);
+      final chunk = text.substring(start, end);
 
-  static Future<Map<String, dynamic>> markdown(MiniMeCoreFetchRequestPayload payload) async {
-    try {
-      final resp = await _fetch(payload);
-      final html = resp.body;
-      final md = html2md.convert(html);
-      return _ok(md);
+      final buf = StringBuffer();
+      buf.write(chunk);
+      if (end < total) {
+        buf.write('\n\n[... truncated: total $total characters; '
+            're-run with start_index=$end to continue ...]');
+      }
+      return _ok(buf.toString().trim());
     } catch (e) {
       return _err(e.toString());
     }
@@ -167,10 +187,9 @@ class MiniMeCoreFetchMcpServerEngine {
           return _ok(id, result: {
             'serverInfo': {
               'name': '@minime-core/fetch',
-              'version': '0.1.0',
+              'version': '0.2.0',
             },
             'protocolVersion': mcp.McpProtocol.defaultVersion,
-            // Only tools capability is advertised for this minimal server
             'capabilities': {
               'tools': {'listChanged': false},
             },
@@ -187,29 +206,18 @@ class MiniMeCoreFetchMcpServerEngine {
               ? (params['arguments'] as Map).cast<String, dynamic>()
               : <String, dynamic>{};
 
-          MiniMeCoreFetchRequestPayload payload;
-          try {
-            payload = MiniMeCoreFetchRequestPayload.parse(arguments);
-          } catch (e) {
-            return _ok(id, result: MiniMeCoreFetcher._err(e.toString()));
-          }
-
-          if (name == 'fetch_html') {
-            return _ok(id, result: await MiniMeCoreFetcher.html(payload));
-          }
-          if (name == 'fetch_markdown') {
-            return _ok(id, result: await MiniMeCoreFetcher.markdown(payload));
-          }
-          if (name == 'fetch_txt') {
-            return _ok(id, result: await MiniMeCoreFetcher.txt(payload));
-          }
-          if (name == 'fetch_json') {
-            return _ok(id, result: await MiniMeCoreFetcher.json(payload));
+          if (name == 'fetch') {
+            MiniMeCoreFetchRequestPayload payload;
+            try {
+              payload = MiniMeCoreFetchRequestPayload.parse(arguments);
+            } catch (e) {
+              return _ok(id, result: MiniMeCoreFetcher._err(e.toString()));
+            }
+            return _ok(id, result: await MiniMeCoreFetcher.fetch(payload));
           }
           return _error(id, code: -32101, message: 'Tool not found: $name');
 
         default:
-          // Ignore common notifications; respond error for unknown requests
           if (id == null) {
             return _noop();
           }
@@ -242,36 +250,69 @@ class MiniMeCoreFetchMcpServerEngine {
 
   Map<String, dynamic> _noop() => {'jsonrpc': '2.0'};
 
-  List<Map<String, dynamic>> _toolDefinitions() {
-    Map<String, dynamic> schema() => {
-          'type': 'object',
-          'properties': {
-            'url': {'type': 'string', 'description': 'URL of the website to fetch'},
-            'headers': {'type': 'object', 'description': 'Optional headers to include in the request'},
-          },
-          'required': ['url']
-        };
+  static const String _fetchDescription = '''
+Fetch the public contents of a web page or API endpoint.
 
+Guidelines for the model:
+- Only fetch a URL that already appears in the conversation: one provided by
+  the user or returned by a prior web_search, fetch, or other tool.
+- Cannot access content that requires authentication, including private
+  documents or pages behind login walls.
+- By default, HTML is converted to compact Markdown to save tokens. Use
+  raw=true only when the exact HTML source is required.
+- Output is bounded by max_length (default 20000 chars). If the result is
+  truncated, continue by calling fetch again with start_index set to the
+  value shown in the truncation notice.
+- method=POST with a body calls an API endpoint the user has asked for. A
+  POST response cannot be continued with start_index; raise max_length if
+  the response is truncated.
+- If the response Content-Type is JSON, it is automatically pretty-printed.
+''';
+
+  List<Map<String, dynamic>> _toolDefinitions() {
     return [
       {
-        'name': 'fetch_html',
-        'description': 'Fetch a website and return the content as HTML',
-        'inputSchema': schema(),
-      },
-      {
-        'name': 'fetch_markdown',
-        'description': 'Fetch a website and return the content as Markdown',
-        'inputSchema': schema(),
-      },
-      {
-        'name': 'fetch_txt',
-        'description': 'Fetch a website, return the content as plain text (no HTML)',
-        'inputSchema': schema(),
-      },
-      {
-        'name': 'fetch_json',
-        'description': 'Fetch a JSON file from a URL',
-        'inputSchema': schema(),
+        'name': 'fetch',
+        'description': _fetchDescription.trim(),
+        'inputSchema': {
+          'type': 'object',
+          'properties': {
+            'url': {
+              'type': 'string',
+              'description': 'URL of the page or API endpoint to fetch',
+            },
+            'method': {
+              'type': 'string',
+              'enum': ['GET', 'POST'],
+              'default': 'GET',
+              'description': 'HTTP method. Use POST for API calls that need a body.',
+            },
+            'headers': {
+              'type': 'object',
+              'description': 'Optional HTTP headers to include in the request',
+            },
+            'body': {
+              'type': 'string',
+              'description': 'Request body for POST requests',
+            },
+            'max_length': {
+              'type': 'integer',
+              'default': 20000,
+              'description': 'Maximum number of characters to return',
+            },
+            'start_index': {
+              'type': 'integer',
+              'default': 0,
+              'description': 'Character offset to start from, for paginating long content',
+            },
+            'raw': {
+              'type': 'boolean',
+              'default': false,
+              'description': 'If true, return raw HTML instead of Markdown',
+            },
+          },
+          'required': ['url'],
+        },
       },
     ];
   }

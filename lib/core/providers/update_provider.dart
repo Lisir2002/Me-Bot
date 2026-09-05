@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
+/// App 发布仓库（GitHub Releases API 来源）
+const String _repoOwner = 'Lisir2002';
+const String _repoName = 'Me-Bot';
+const String _ghApi = 'https://api.github.com/repos/$_repoOwner/$_repoName/releases';
+
 class UpdateInfo {
   final String app;
   final String version;
@@ -26,7 +31,13 @@ class UpdateInfo {
 
   String? bestDownloadUrl() {
     if (Platform.isIOS) return downloads['ios'] ?? downloads['iosAppStore'] ?? downloads['universal'];
-    if (Platform.isAndroid) return downloads['android'] ?? downloads['universal'];
+    if (Platform.isAndroid) {
+      // CI 按 ABI 拆分产物，优先匹配最常见的 arm64
+      for (final key in const ['android-arm64', 'android', 'android-armv7', 'android-x86_64', 'universal']) {
+        if (downloads[key] != null && downloads[key]!.isNotEmpty) return downloads[key];
+      }
+      return null;
+    }
     if (Platform.isMacOS) return downloads['macos'] ?? downloads['mac'] ?? downloads['darwin'] ?? downloads['universal'];
     if (Platform.isWindows) return downloads['windows'] ?? downloads['win'] ?? downloads['universal'];
     if (Platform.isLinux) return downloads['linux'] ?? downloads['universal'];
@@ -51,6 +62,57 @@ class UpdateInfo {
       downloads: downloads,
     );
   }
+
+  /// 从 GitHub Releases API 的 JSON response 解析
+  factory UpdateInfo.fromGhRelease(Map<String, dynamic> release) {
+    final tag = (release['tag_name'] as String? ?? '').replaceAll(RegExp(r'^v'), ''); // strip leading v
+    final name = (release['name'] as String?) ?? tag;
+    final body = (release['body'] as String?) ?? '';
+    final publishedAt = release['published_at'] as String?;
+
+    // 从 assets 里按文件名推断平台
+    final downloads = <String, String>{};
+    final assets = (release['assets'] as List?) ?? const [];
+    for (final asset in assets) {
+      if (asset is! Map<String, dynamic>) continue;
+      final fileName = (asset['name'] as String? ?? '').toLowerCase();
+      final url = asset['browser_download_url'] as String? ?? '';
+      if (url.isEmpty) continue;
+
+      if (fileName.endsWith('.apk')) {
+        if (fileName.contains('arm64')) downloads['android-arm64'] = url;
+        else if (fileName.contains('armv7')) downloads['android-armv7'] = url;
+        else if (fileName.contains('x86_64')) downloads['android-x86_64'] = url;
+        else downloads['android'] = url; // universal / fat apk
+      } else if (fileName.endsWith('.aab')) {
+        downloads['android-aab'] = url;
+      } else if (fileName.endsWith('.dmg')) {
+        downloads['macos'] = url;
+      } else if (fileName.endsWith('.app')) {
+        downloads['macos-app'] = url;
+      } else if (fileName.endsWith('.exe') || fileName.endsWith('.msi')) {
+        downloads['windows'] = url;
+      } else if (fileName.endsWith('.deb') || fileName.endsWith('.rpm') || fileName.endsWith('.AppImage') || fileName.endsWith('.tar.gz')) {
+        downloads['linux'] = url;
+      } else if (fileName.endsWith('.ipa')) {
+        downloads['ios'] = url;
+      }
+    }
+
+    DateTime? released;
+    if (publishedAt != null) {
+      try { released = DateTime.parse(publishedAt); } catch (_) {}
+    }
+
+    return UpdateInfo(
+      app: 'MiniMe-Core',
+      version: tag.isNotEmpty ? tag : name,
+      releasedAt: released,
+      notes: body,
+      mandatory: false,
+      downloads: downloads,
+    );
+  }
 }
 
 class UpdateProvider extends ChangeNotifier {
@@ -67,19 +129,11 @@ class UpdateProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final url = Uri.parse('https://minime-core.psycheas.top/update.json?minime-core=$ts');
-      final resp = await http.get(url);
-      if (resp.statusCode != 200) {
-        throw Exception('HTTP ${resp.statusCode}');
-      }
-      final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
-      final info = UpdateInfo.fromJson(data);
+      final info = await _fetchLatestRelease();
 
       final pkg = await PackageInfo.fromPlatform();
       final currentVer = pkg.version; // e.g., 1.0.0
 
-      // Compare by version only; ignore build numbers
       final hasNew = _isRemoteNewer(remoteVersion: info.version, currentVersion: currentVer);
       _available = hasNew ? info : null;
     } catch (e) {
@@ -90,13 +144,35 @@ class UpdateProvider extends ChangeNotifier {
     }
   }
 
+  /// 从 GitHub Releases API 拉取最新非 draft、非 prerelease 的版本
+  Future<UpdateInfo> _fetchLatestRelease() async {
+    // GitHub API: /repos/{owner}/{repo}/releases/latest
+    final url = Uri.parse('$_ghApi/latest');
+    final resp = await http.get(url, headers: {
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'MiniMe-Core',
+    });
+
+    if (resp.statusCode == 404) {
+      // 没有 release —— 把 available 设 null 即可
+      throw Exception('No release found');
+    }
+    if (resp.statusCode != 200) {
+      throw Exception('GitHub API ${resp.statusCode}');
+    }
+
+    final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+    return UpdateInfo.fromGhRelease(data);
+  }
+
   bool _isRemoteNewer({
     required String remoteVersion,
     required String currentVersion,
   }) {
-    // Compare semantic versions only (ignore internal build numbers)
     List<int> parseVer(String v) {
-      final parts = v.split('.');
+      final cleaned = v.replaceAll(RegExp(r'^[vV]'), '');
+      final parts = cleaned.split('.');
       final nums = <int>[];
       for (int i = 0; i < 3; i++) {
         nums.add(i < parts.length ? int.tryParse(parts[i]) ?? 0 : 0);

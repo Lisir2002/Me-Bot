@@ -97,7 +97,7 @@ jobs:
 
       # 如果有签名密钥，写入密钥文件
       - name: 🔑 写入签名密钥
-        if: ${{ env.SIGN_KEYSTORE_BASE64 != '' }}
+        if: ${{ secrets.SIGN_KEYSTORE_BASE64 != '' }}
         env:
           SIGN_KEYSTORE_BASE64: ${{ secrets.SIGN_KEYSTORE_BASE64 }}
         run: |

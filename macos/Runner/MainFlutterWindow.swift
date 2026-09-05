@@ -3,7 +3,7 @@ import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
   // Use Cocoa autosave to persist and restore window frame precisely on macOS.
-  private let autosaveName = NSWindow.FrameAutosaveName("KelivoMainWindowFrame")
+  private let autosaveName = NSWindow.FrameAutosaveName("MiniMeCoreMainWindowFrame")
   // Layout helper: re-position the traffic light buttons
   private func layoutTrafficLightButton(titlebarView: NSView, button: NSButton, offsetTop: CGFloat, offsetLeft: CGFloat) {
     button.translatesAutoresizingMaskIntoConstraints = false

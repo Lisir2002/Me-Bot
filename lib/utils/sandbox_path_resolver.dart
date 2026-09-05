@@ -64,7 +64,7 @@ class SandboxPathResolver {
     // Cases we support:
     // - iOS/macOS: .../Documents/<subdir>/...
     // - Android: .../app_flutter/<subdir>/... or .../files/<subdir>/...
-    // - Windows: .../AppData/Local/Kelivo/<subdir>/... or .../Kelivo/<subdir>/...
+    // - Windows: .../AppData/Local/MiniMe-Core/<subdir>/... or .../MiniMe-Core/<subdir>/...
     const subdirs = ['avatars', 'images', 'upload'];
     String? tail; // starts with '/'
     String rootType = 'unknown';
@@ -81,12 +81,12 @@ class SandboxPathResolver {
 
     // Try to match Windows AppData paths (exported from Windows, imported elsewhere)
     if (tail == null) {
-      final int kelivoIdx = raw.indexOf('/kelivo/');
-      if (kelivoIdx != -1) {
-        final candidateTail = raw.substring(kelivoIdx + '/kelivo'.length); // includes leading '/'
+      final int winIdx = raw.indexOf('/com.minime.botcore/');
+      if (winIdx != -1) {
+        final candidateTail = raw.substring(winIdx + '/com.minime.botcore'.length); // includes leading '/'
         if (subdirs.any((s) => candidateTail.startsWith('/$s/'))) {
           tail = candidateTail;
-          rootType = 'windows_kelivo';
+          rootType = 'windows_com_minime_botcore';
         }
       }
     }

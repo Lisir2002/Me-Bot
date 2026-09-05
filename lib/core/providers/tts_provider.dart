@@ -549,7 +549,7 @@ class TtsProvider extends ChangeNotifier {
       // Persist to a temp file with a proper extension for AVPlayer.
       final ext = _extForMime(mime);
       final dir = await getTemporaryDirectory();
-      final path = p.join(dir.path, 'kelivo_tts_${DateTime.now().millisecondsSinceEpoch}.$ext');
+      final path = p.join(dir.path, 'minime-core_tts_${DateTime.now().millisecondsSinceEpoch}.$ext');
       final f = io.File(path);
       await f.writeAsBytes(bytes, flush: true);
       await _player.play(DeviceFileSource(path));

@@ -7,7 +7,7 @@ import 'package:html/dom.dart' as dom;
 import 'package:html2md/html2md.dart' as html2md;
 import 'package:mcp_client/mcp_client.dart' as mcp;
 
-/// @kelivo/fetch — In-memory MCP server engine and transport (Flutter/Dart)
+/// @minime-core/fetch — In-memory MCP server engine and transport (Flutter/Dart)
 ///
 /// Provides four tools:
 /// - fetch_html     → returns raw HTML text
@@ -20,14 +20,14 @@ import 'package:mcp_client/mcp_client.dart' as mcp;
 /// isolate as the Flutter app and connect to a standard mcp.Client via an
 /// in-memory ClientTransport.
 
-class KelivoFetchRequestPayload {
+class MiniMe-CoreFetchRequestPayload {
   final Uri url;
   final Map<String, String> headers;
 
-  KelivoFetchRequestPayload({required this.url, Map<String, String>? headers})
+  MiniMe-CoreFetchRequestPayload({required this.url, Map<String, String>? headers})
       : headers = headers ?? const {};
 
-  static KelivoFetchRequestPayload parse(Object? args) {
+  static MiniMe-CoreFetchRequestPayload parse(Object? args) {
     if (args is! Map) {
       throw ArgumentError('Invalid arguments: expected object with url[, headers]');
     }
@@ -45,15 +45,15 @@ class KelivoFetchRequestPayload {
         headers[k.toString()] = v.toString();
       });
     }
-    return KelivoFetchRequestPayload(url: uri, headers: headers);
+    return MiniMe-CoreFetchRequestPayload(url: uri, headers: headers);
   }
 }
 
-class KelivoFetcher {
+class MiniMe-CoreFetcher {
   static const _defaultUA =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-  static Future<http.Response> _fetch(KelivoFetchRequestPayload payload) async {
+  static Future<http.Response> _fetch(MiniMe-CoreFetchRequestPayload payload) async {
     try {
       final merged = <String, String>{
         'User-Agent': _defaultUA,
@@ -69,7 +69,7 @@ class KelivoFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> html(KelivoFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> html(MiniMe-CoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final text = resp.body;
@@ -79,7 +79,7 @@ class KelivoFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> json(KelivoFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> json(MiniMe-CoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final raw = resp.body;
@@ -90,7 +90,7 @@ class KelivoFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> txt(KelivoFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> txt(MiniMe-CoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final html = resp.body;
@@ -104,7 +104,7 @@ class KelivoFetcher {
     }
   }
 
-  static Future<Map<String, dynamic>> markdown(KelivoFetchRequestPayload payload) async {
+  static Future<Map<String, dynamic>> markdown(MiniMe-CoreFetchRequestPayload payload) async {
     try {
       final resp = await _fetch(payload);
       final html = resp.body;
@@ -132,8 +132,8 @@ class KelivoFetcher {
       };
 }
 
-/// Minimal JSON-RPC server for MCP that serves @kelivo/fetch tools.
-class KelivoFetchMcpServerEngine {
+/// Minimal JSON-RPC server for MCP that serves @minime-core/fetch tools.
+class MiniMe-CoreFetchMcpServerEngine {
   bool _closed = false;
 
   Future<dynamic> handleMessage(dynamic message) async {
@@ -166,7 +166,7 @@ class KelivoFetchMcpServerEngine {
         case mcp.McpProtocol.methodInitialize:
           return _ok(id, result: {
             'serverInfo': {
-              'name': '@kelivo/fetch',
+              'name': '@minime-core/fetch',
               'version': '0.1.0',
             },
             'protocolVersion': mcp.McpProtocol.defaultVersion,
@@ -187,24 +187,24 @@ class KelivoFetchMcpServerEngine {
               ? (params['arguments'] as Map).cast<String, dynamic>()
               : <String, dynamic>{};
 
-          KelivoFetchRequestPayload payload;
+          MiniMe-CoreFetchRequestPayload payload;
           try {
-            payload = KelivoFetchRequestPayload.parse(arguments);
+            payload = MiniMe-CoreFetchRequestPayload.parse(arguments);
           } catch (e) {
-            return _ok(id, result: KelivoFetcher._err(e.toString()));
+            return _ok(id, result: MiniMe-CoreFetcher._err(e.toString()));
           }
 
           if (name == 'fetch_html') {
-            return _ok(id, result: await KelivoFetcher.html(payload));
+            return _ok(id, result: await MiniMe-CoreFetcher.html(payload));
           }
           if (name == 'fetch_markdown') {
-            return _ok(id, result: await KelivoFetcher.markdown(payload));
+            return _ok(id, result: await MiniMe-CoreFetcher.markdown(payload));
           }
           if (name == 'fetch_txt') {
-            return _ok(id, result: await KelivoFetcher.txt(payload));
+            return _ok(id, result: await MiniMe-CoreFetcher.txt(payload));
           }
           if (name == 'fetch_json') {
-            return _ok(id, result: await KelivoFetcher.json(payload));
+            return _ok(id, result: await MiniMe-CoreFetcher.json(payload));
           }
           return _error(id, code: -32101, message: 'Tool not found: $name');
 
@@ -278,13 +278,13 @@ class KelivoFetchMcpServerEngine {
 }
 
 /// In-memory ClientTransport that directly invokes the local server engine.
-class KelivoInMemoryClientTransport implements mcp.ClientTransport {
-  final KelivoFetchMcpServerEngine _server;
+class MiniMe-CoreInMemoryClientTransport implements mcp.ClientTransport {
+  final MiniMe-CoreFetchMcpServerEngine _server;
   final _messageController = StreamController<dynamic>.broadcast();
   final _closeCompleter = Completer<void>();
   bool _closed = false;
 
-  KelivoInMemoryClientTransport(this._server);
+  MiniMe-CoreInMemoryClientTransport(this._server);
 
   @override
   Stream<dynamic> get onMessage => _messageController.stream;

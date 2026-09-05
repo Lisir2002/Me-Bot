@@ -116,7 +116,7 @@ jobs:
           cd build/app/outputs/flutter-apk
           for file in app-*-release.apk; do
             abi=$(echo "$file" | sed -E 's/app-(.*)-release\.apk/\1/')
-            mv "$file" "Kelivo_android_${VERSION}_${abi}.apk"
+            mv "$file" "MiniMeCore_android_${VERSION}_${abi}.apk"
           done
 
       - name: 🚀 发布到 Release
@@ -125,25 +125,25 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.release_tag }}
           name: ${{ github.event.inputs.release_tag }}
-          files: build/app/outputs/flutter-apk/Kelivo_android_*.apk
+          files: build/app/outputs/flutter-apk/MiniMeCore_android_*.apk
 
       - name: 📤 上传构建产物 (arm64-v8a)
         uses: actions/upload-artifact@v4
         with:
           name: Android-arm64-v8a
-          path: build/app/outputs/flutter-apk/Kelivo_android_*_arm64-v8a.apk
+          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_arm64-v8a.apk
 
       - name: 📤 上传构建产物 (armeabi-v7a)
         uses: actions/upload-artifact@v4
         with:
           name: Android-armeabi-v7a
-          path: build/app/outputs/flutter-apk/Kelivo_android_*_armeabi-v7a.apk
+          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_armeabi-v7a.apk
 
       - name: 📤 上传构建产物 (x86_64)
         uses: actions/upload-artifact@v4
         with:
           name: Android-x86_64
-          path: build/app/outputs/flutter-apk/Kelivo_android_*_x86_64.apk
+          path: build/app/outputs/flutter-apk/MiniMeCore_android_*_x86_64.apk
 
   # iOS 构建
   ios:
@@ -185,7 +185,7 @@ jobs:
           cd build/ios/iphoneos
           mkdir Payload
           cp -r Runner.app Payload/
-          zip -r ../../../Kelivo_ios_${VERSION}.ipa Payload
+          zip -r ../../../MiniMeCore_ios_${VERSION}.ipa Payload
 
       - name: 🚀 发布到 Release
         if: ${{ github.event.inputs.publish_release == 'true' && github.event.inputs.release_tag != '' }}
@@ -193,13 +193,13 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.release_tag }}
           name: ${{ github.event.inputs.release_tag }}
-          files: Kelivo_ios_*.ipa
+          files: MiniMeCore_ios_*.ipa
 
       - name: 📤 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: iOS-IPA
-          path: Kelivo_ios_*.ipa
+          path: MiniMeCore_ios_*.ipa
 
   # macOS 构建
   macos:
@@ -240,16 +240,16 @@ jobs:
         run: |
           brew install create-dmg
           create-dmg \
-            --volname "Kelivo" \
+            --volname "MiniMeCore" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --icon-size 100 \
             --app-drop-link 600 185 \
-            "Kelivo_macos_${VERSION}.dmg" \
-            "build/macos/Build/Products/Release/kelivo.app" || true
+            "MiniMeCore_macos_${VERSION}.dmg" \
+            "build/macos/Build/Products/Release/minime-core.app" || true
           # 如果 create-dmg 失败，使用简单方式
-          if [ ! -f "Kelivo_macos_${VERSION}.dmg" ]; then
-            hdiutil create -volname Kelivo -srcfolder build/macos/Build/Products/Release/kelivo.app -ov -format UDZO Kelivo_macos_${VERSION}.dmg
+          if [ ! -f "MiniMeCore_macos_${VERSION}.dmg" ]; then
+            hdiutil create -volname MiniMeCore -srcfolder build/macos/Build/Products/Release/minime-core.app -ov -format UDZO MiniMeCore_macos_${VERSION}.dmg
           fi
 
       - name: 🚀 发布到 Release
@@ -258,13 +258,13 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.release_tag }}
           name: ${{ github.event.inputs.release_tag }}
-          files: Kelivo_macos_*.dmg
+          files: MiniMeCore_macos_*.dmg
 
       - name: 📤 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: macOS-DMG
-          path: Kelivo_macos_*.dmg
+          path: MiniMeCore_macos_*.dmg
 
   # Windows 构建
   windows:
@@ -320,7 +320,7 @@ jobs:
       - name: 📦 打包 ZIP
         shell: pwsh
         run: |
-          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "Kelivo_windows_$env:VERSION.zip"
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "MiniMeCore_windows_$env:VERSION.zip"
 
       - name: 🔧 安装 Inno Setup
         run: choco install innosetup -y
@@ -370,10 +370,10 @@ jobs:
 
           # 创建 Inno Setup 脚本
           $issContent = @"
-          #define MyAppName "Kelivo"
+          #define MyAppName "MiniMeCore"
           #define MyAppVersion "$env:VERSION"
           #define MyAppPublisher "Psyche"
-          #define MyAppExeName "kelivo.exe"
+          #define MyAppExeName "minime-core.exe"
 
           [Setup]
           AppId={{A7B8C9D0-E1F2-4A5B-8C9D-0E1F2A3B4C5D}}
@@ -383,7 +383,7 @@ jobs:
           DefaultDirName={autopf}\{#MyAppName}
           DefaultGroupName={#MyAppName}
           OutputDir=.
-          OutputBaseFilename=Kelivo_windows_{#MyAppVersion}_setup
+          OutputBaseFilename=MiniMeCore_windows_{#MyAppVersion}_setup
           Compression=lzma2
           SolidCompression=yes
           WizardStyle=modern
@@ -421,20 +421,20 @@ jobs:
           tag_name: ${{ github.event.inputs.release_tag }}
           name: ${{ github.event.inputs.release_tag }}
           files: |
-            Kelivo_windows_*.zip
-            Kelivo_windows_*_setup.exe
+            MiniMeCore_windows_*.zip
+            MiniMeCore_windows_*_setup.exe
 
       - name: 📤 上传构建产物 (ZIP)
         uses: actions/upload-artifact@v4
         with:
           name: Windows-ZIP
-          path: Kelivo_windows_*.zip
+          path: MiniMeCore_windows_*.zip
 
       - name: 📤 上传构建产物 (Installer)
         uses: actions/upload-artifact@v4
         with:
           name: Windows-Installer
-          path: Kelivo_windows_*_setup.exe
+          path: MiniMeCore_windows_*_setup.exe
 
   # Linux 构建
   linux:
@@ -484,7 +484,7 @@ jobs:
       - name: 📦 打包 tar.gz
         run: |
           cd build/linux/x64/release/bundle
-          tar -czf ../../../../../Kelivo_linux_${VERSION}.tar.gz .
+          tar -czf ../../../../../MiniMeCore_linux_${VERSION}.tar.gz .
 
       - name: 📦 创建 AppImage
         run: |
@@ -504,75 +504,75 @@ jobs:
           HERE=${SELF%/*}
           export PATH="${HERE}/usr/bin:${PATH}"
           export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
-          exec "${HERE}/usr/bin/kelivo" "$@"
+          exec "${HERE}/usr/bin/minime-core" "$@"
           EOF
           chmod +x AppDir/AppRun
           
           # 创建 desktop 文件
-          cat > AppDir/kelivo.desktop << EOF
+          cat > AppDir/minime-core.desktop << EOF
           [Desktop Entry]
-          Name=Kelivo
-          Exec=kelivo
-          Icon=kelivo
+          Name=MiniMeCore
+          Exec=minime-core
+          Icon=minime-core
           Type=Application
           Categories=Utility;
           EOF
           
           # 复制图标（如果存在）
-          if [ -f "linux/kelivo.png" ]; then
-            cp linux/kelivo.png AppDir/kelivo.png
+          if [ -f "linux/minime-core.png" ]; then
+            cp linux/minime-core.png AppDir/minime-core.png
           else
             # 创建一个简单的占位图标
-            touch AppDir/kelivo.png
+            touch AppDir/minime-core.png
           fi
           
           # 构建 AppImage
-          ARCH=x86_64 ./appimagetool AppDir Kelivo_linux_${VERSION}.AppImage
+          ARCH=x86_64 ./appimagetool AppDir MiniMeCore_linux_${VERSION}.AppImage
 
       - name: 📦 创建 DEB 包
         run: |
           # 创建 DEB 目录结构
           mkdir -p deb/DEBIAN
-          mkdir -p deb/opt/kelivo
+          mkdir -p deb/opt/minime-core
           mkdir -p deb/usr/share/applications
           mkdir -p deb/usr/share/icons/hicolor/256x256/apps
           
           # 复制文件
-          cp -r build/linux/x64/release/bundle/* deb/opt/kelivo/
+          cp -r build/linux/x64/release/bundle/* deb/opt/minime-core/
           
           # 创建 control 文件
           cat > deb/DEBIAN/control << EOF
-          Package: kelivo
+          Package: minime-core
           Version: ${VERSION_NUMBER}
           Section: utils
           Priority: optional
           Architecture: amd64
           Maintainer: Psyche <your@email.com>
           Depends: libgtk-3-0, libstdc++6, libglu1-mesa, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libglib2.0-0, libc6
-          Description: Kelivo Application
+          Description: MiniMeCore Application
            A Flutter application for Linux
           EOF
           
           # 创建 desktop 文件
-          cat > deb/usr/share/applications/kelivo.desktop << EOF
+          cat > deb/usr/share/applications/minime-core.desktop << EOF
           [Desktop Entry]
-          Name=Kelivo
-          Exec=/opt/kelivo/kelivo
-          Icon=kelivo
+          Name=MiniMeCore
+          Exec=/opt/minime-core/minime-core
+          Icon=minime-core
           Type=Application
           Categories=Utility;
           EOF
           
           # 创建启动脚本
-          cat > deb/opt/kelivo/kelivo.sh << 'EOF'
+          cat > deb/opt/minime-core/minime-core.sh << 'EOF'
           #!/bin/bash
           cd "$(dirname "$0")"
-          ./kelivo "$@"
+          ./minime-core "$@"
           EOF
-          chmod +x deb/opt/kelivo/kelivo.sh
+          chmod +x deb/opt/minime-core/minime-core.sh
           
           # 构建 DEB 包
-          dpkg-deb --build deb Kelivo_linux_${VERSION}_amd64.deb
+          dpkg-deb --build deb MiniMeCore_linux_${VERSION}_amd64.deb
 
       - name: 📦 创建 RPM 包
         run: |
@@ -580,16 +580,16 @@ jobs:
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           
           # 创建源码目录
-          mkdir -p kelivo-${VERSION_NUMBER}
-          cp -r build/linux/x64/release/bundle/* kelivo-${VERSION_NUMBER}/
-          tar -czf ~/rpmbuild/SOURCES/kelivo-${VERSION_NUMBER}.tar.gz kelivo-${VERSION_NUMBER}
+          mkdir -p minime-core-${VERSION_NUMBER}
+          cp -r build/linux/x64/release/bundle/* minime-core-${VERSION_NUMBER}/
+          tar -czf ~/rpmbuild/SOURCES/minime-core-${VERSION_NUMBER}.tar.gz minime-core-${VERSION_NUMBER}
           
           # 创建 spec 文件
-          cat > ~/rpmbuild/SPECS/kelivo.spec << EOF
-          Name:           kelivo
+          cat > ~/rpmbuild/SPECS/minime-core.spec << EOF
+          Name:           minime-core
           Version:        ${VERSION_NUMBER}
           Release:        1%{?dist}
-          Summary:        Kelivo Application
+          Summary:        MiniMeCore Application
           License:        MIT
           Source0:        %{name}-%{version}.tar.gz
           BuildArch:      x86_64
@@ -602,22 +602,22 @@ jobs:
           %setup -q
           
           %install
-          mkdir -p %{buildroot}/opt/kelivo
-          cp -r * %{buildroot}/opt/kelivo/
+          mkdir -p %{buildroot}/opt/minime-core
+          cp -r * %{buildroot}/opt/minime-core/
           
           mkdir -p %{buildroot}/usr/share/applications
-          cat > %{buildroot}/usr/share/applications/kelivo.desktop << 'DESKTOPEOF'
+          cat > %{buildroot}/usr/share/applications/minime-core.desktop << 'DESKTOPEOF'
           [Desktop Entry]
-          Name=Kelivo
-          Exec=/opt/kelivo/kelivo
-          Icon=kelivo
+          Name=MiniMeCore
+          Exec=/opt/minime-core/minime-core
+          Icon=minime-core
           Type=Application
           Categories=Utility;
           DESKTOPEOF
           
           %files
-          /opt/kelivo/*
-          /usr/share/applications/kelivo.desktop
+          /opt/minime-core/*
+          /usr/share/applications/minime-core.desktop
           
           %changelog
           * $(date "+%a %b %d %Y") Psyche <your@email.com> - ${VERSION_NUMBER}-1
@@ -625,8 +625,8 @@ jobs:
           EOF
           
           # 构建 RPM
-          rpmbuild -bb ~/rpmbuild/SPECS/kelivo.spec
-          cp ~/rpmbuild/RPMS/x86_64/kelivo-${VERSION_NUMBER}-1.*.rpm Kelivo_linux_${VERSION}.rpm
+          rpmbuild -bb ~/rpmbuild/SPECS/minime-core.spec
+          cp ~/rpmbuild/RPMS/x86_64/minime-core-${VERSION_NUMBER}-1.*.rpm MiniMeCore_linux_${VERSION}.rpm
 
       - name: 🚀 发布到 Release
         if: ${{ github.event.inputs.publish_release == 'true' && github.event.inputs.release_tag != '' }}
@@ -635,31 +635,31 @@ jobs:
           tag_name: ${{ github.event.inputs.release_tag }}
           name: ${{ github.event.inputs.release_tag }}
           files: |
-            Kelivo_linux_*.tar.gz
-            Kelivo_linux_*.AppImage
-            Kelivo_linux_*_amd64.deb
-            Kelivo_linux_*.rpm
+            MiniMeCore_linux_*.tar.gz
+            MiniMeCore_linux_*.AppImage
+            MiniMeCore_linux_*_amd64.deb
+            MiniMeCore_linux_*.rpm
 
       - name: 📤 上传构建产物 (tar.gz)
         uses: actions/upload-artifact@v4
         with:
           name: Linux-tar.gz
-          path: Kelivo_linux_*.tar.gz
+          path: MiniMeCore_linux_*.tar.gz
 
       - name: 📤 上传构建产物 (AppImage)
         uses: actions/upload-artifact@v4
         with:
           name: Linux-AppImage
-          path: Kelivo_linux_*.AppImage
+          path: MiniMeCore_linux_*.AppImage
 
       - name: 📤 上传构建产物 (DEB)
         uses: actions/upload-artifact@v4
         with:
           name: Linux-DEB
-          path: Kelivo_linux_*_amd64.deb
+          path: MiniMeCore_linux_*_amd64.deb
 
       - name: 📤 上传构建产物 (RPM)
         uses: actions/upload-artifact@v4
         with:
           name: Linux-RPM
-          path: Kelivo_linux_*.rpm
+          path: MiniMeCore_linux_*.rpm

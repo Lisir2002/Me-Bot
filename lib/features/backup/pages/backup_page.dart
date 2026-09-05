@@ -1153,7 +1153,7 @@ class _WebDavSettingsSheetState extends State<_WebDavSettingsSheet> {
     _urlCtrl = TextEditingController(text: widget.cfg.url);
     _userCtrl = TextEditingController(text: widget.cfg.username);
     _passCtrl = TextEditingController(text: widget.cfg.password);
-    _pathCtrl = TextEditingController(text: widget.cfg.path.isEmpty ? 'kelivo_backups' : widget.cfg.path);
+    _pathCtrl = TextEditingController(text: widget.cfg.path.isEmpty ? 'minime-core_backups' : widget.cfg.path);
   }
 
   @override
@@ -1221,7 +1221,7 @@ class _WebDavSettingsSheetState extends State<_WebDavSettingsSheet> {
                         url: _urlCtrl.text.trim(),
                         username: _userCtrl.text.trim(),
                         password: _passCtrl.text,
-                        path: _pathCtrl.text.trim().isEmpty ? 'kelivo_backups' : _pathCtrl.text.trim(),
+                        path: _pathCtrl.text.trim().isEmpty ? 'minime-core_backups' : _pathCtrl.text.trim(),
                       );
                       await widget.settings.setWebDavConfig(newCfg);
                       widget.vm.updateConfig(newCfg);
@@ -1259,7 +1259,7 @@ class _WebDavSettingsSheetState extends State<_WebDavSettingsSheet> {
               _InputRow(
                 label: l10n.backupPagePath,
                 controller: _pathCtrl,
-                hint: 'kelivo_backups',
+                hint: 'minime-core_backups',
               ),
               const SizedBox(height: 16),
             ],

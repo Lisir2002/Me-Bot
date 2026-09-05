@@ -26,7 +26,7 @@ class _SponsorPageState extends State<SponsorPage> {
 
   Future<_SponsorData> _fetchSponsors() async {
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final uri = Uri.parse('https://kelivo.psycheas.top/sponsor.json?kelivo=$ts');
+    final uri = Uri.parse('https://minime-core.psycheas.top/sponsor.json?minime-core=$ts');
     try {
       final res = await http.get(uri).timeout(const Duration(seconds: 12));
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -99,7 +99,7 @@ class _SponsorPageState extends State<SponsorPage> {
               icon: Lucide.Heart,
               label: l10n.sponsorPageAfdianTitle,
               onTap: () async {
-                final uri = Uri.parse('https://afdian.com/a/kelivo');
+                final uri = Uri.parse('https://afdian.com/a/minime-core');
                 if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }

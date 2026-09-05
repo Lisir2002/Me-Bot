@@ -307,7 +307,7 @@ abstract class AppLocalizations {
   /// No description provided for @sponsorPageAfdianSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'afdian.com/a/kelivo'**
+  /// **'afdian.com/a/minime-core'**
   String get sponsorPageAfdianSubtitle;
 
   /// No description provided for @sponsorPageWeChatTitle.
@@ -1148,7 +1148,7 @@ abstract class AppLocalizations {
   /// No description provided for @androidBackgroundNotificationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Kelivo is running'**
+  /// **'MiniMe-Core is running'**
   String get androidBackgroundNotificationTitle;
 
   /// No description provided for @androidBackgroundNotificationText.
@@ -5246,7 +5246,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsShare.
   ///
   /// In en, this message translates to:
-  /// **'Kelivo - Open Source AI Assistant'**
+  /// **'MiniMe-Core - Open Source AI Assistant'**
   String get settingsShare;
 
   /// No description provided for @searchProviderBingLocalDescription.

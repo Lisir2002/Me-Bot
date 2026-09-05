@@ -210,7 +210,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
         _p(l10n.providersPageSiliconFlowName, 'SiliconFlow', enabled: true, models: 0),
         _p('Gemini', 'Gemini', enabled: true, models: 0),
         _p('OpenRouter', 'OpenRouter', enabled: true, models: 0),
-        _p('KelivoIN', 'KelivoIN', enabled: true, models: 0),
+        _p('MiniMeCoreIN', 'MiniMeCoreIN', enabled: true, models: 0),
         _p('Tensdaq', 'Tensdaq', enabled: false, models: 0),
         _p('DeepSeek', 'DeepSeek', enabled: false, models: 0),
         _p(l10n.providersPageAliyunName, 'Aliyun', enabled: false, models: 0),

@@ -226,7 +226,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         return;
       }
 
-      final name = 'kelivo-${DateTime.now().millisecondsSinceEpoch}';
+      final name = 'minime-core-${DateTime.now().millisecondsSinceEpoch}';
       final result = await ImageGallerySaverPlus.saveImage(bytes, quality: 100, name: name);
       bool success = false;
       if (result is Map) {
@@ -289,7 +289,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         if (i != -1) {
           final bytes = base64Decode(src.substring(i + 7));
           final tmp = await getTemporaryDirectory();
-          temp = await File(p.join(tmp.path, 'kelivo_${DateTime.now().millisecondsSinceEpoch}.png')).create(recursive: true);
+          temp = await File(p.join(tmp.path, 'minime-core_${DateTime.now().millisecondsSinceEpoch}.png')).create(recursive: true);
           await temp.writeAsBytes(bytes);
           pathToSave = temp.path;
         }
@@ -299,7 +299,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         if (resp.statusCode >= 200 && resp.statusCode < 300) {
           final tmp = await getTemporaryDirectory();
           final ext = p.extension(Uri.parse(src).path);
-          temp = await File(p.join(tmp.path, 'kelivo_${DateTime.now().millisecondsSinceEpoch}${ext.isNotEmpty ? ext : '.jpg'}')).create(recursive: true);
+          temp = await File(p.join(tmp.path, 'minime-core_${DateTime.now().millisecondsSinceEpoch}${ext.isNotEmpty ? ext : '.jpg'}')).create(recursive: true);
           await temp.writeAsBytes(resp.bodyBytes);
           pathToSave = temp.path;
         } else {
@@ -716,7 +716,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         return;
       }
 
-      final defaultName = 'kelivo-${DateTime.now().millisecondsSinceEpoch}$ext';
+      final defaultName = 'minime-core-${DateTime.now().millisecondsSinceEpoch}$ext';
       final allowed = [ext.replaceFirst('.', '').toLowerCase()];
       String? savePath = await FilePicker.platform.saveFile(
         dialogTitle: l10n.imageViewerPageSaveButton,

@@ -56,7 +56,7 @@ class BrandAssets {
     MapEntry(RegExp(r'step|阶跃'), 'stepfun-color.svg'),
     MapEntry(RegExp(r'internlm|书生'), 'internlm-color.svg'),
     MapEntry(RegExp(r'cohere|command-.+'), 'cohere-color.svg'),
-    MapEntry(RegExp(r'kelivo'), 'kelivo.png'),
+    MapEntry(RegExp(r'minime|minime-core'), 'minime-core.png'),
     MapEntry(RegExp(r'tensdaq'), 'tensdaq-color.svg'),
     MapEntry(RegExp(r'longcat'), 'longcat.png'),
     MapEntry(RegExp(r'iflow|心流'), 'iflow-color.svg'),

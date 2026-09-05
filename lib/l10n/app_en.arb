@@ -43,7 +43,7 @@
   "sponsorPageSponsorsSectionTitle": "Sponsors",
   "sponsorPageEmpty": "No sponsors yet",
   "sponsorPageAfdianTitle": "Afdian",
-  "sponsorPageAfdianSubtitle": "afdian.com/a/kelivo",
+  "sponsorPageAfdianSubtitle": "afdian.com/a/minime",
   "sponsorPageWeChatTitle": "WeChat Sponsor",
   "sponsorPageWeChatSubtitle": "WeChat sponsor code",
   "languageDisplaySimplifiedChinese": "Simplified Chinese",
@@ -221,7 +221,7 @@
   "androidBackgroundOptionOff": "Off",
   "notificationChatCompletedTitle": "Generation complete",
   "notificationChatCompletedBody": "Assistant reply has been generated",
-  "androidBackgroundNotificationTitle": "Kelivo is running",
+  "androidBackgroundNotificationTitle": "MiniMe-Core is running",
   "androidBackgroundNotificationText": "Keeping chat generation alive in background",
   "assistantEditEmojiDialogTitle": "Choose Emoji",
   "assistantEditEmojiDialogHint": "Type or paste any emoji",
@@ -1125,7 +1125,7 @@
       }
     }
   },
-  "settingsShare": "Kelivo - Open Source AI Assistant",
+  "settingsShare": "MiniMe-Core - Open Source AI Assistant",
   "searchProviderBingLocalDescription": "Uses web scraping to fetch Bing results. No API key required; may be unstable.",
   "searchProviderBraveDescription": "Independent search engine by Brave. Privacy-focused with no tracking or profiling.",
   "searchProviderExaDescription": "Neural search with semantic understanding. Great for research and finding specific content.",

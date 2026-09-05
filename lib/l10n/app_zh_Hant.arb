@@ -35,7 +35,7 @@
   "sponsorPageSponsorsSectionTitle": "贊助用戶",
   "sponsorPageEmpty": "暫無贊助者",
   "sponsorPageAfdianTitle": "愛發電",
-  "sponsorPageAfdianSubtitle": "afdian.com/a/kelivo",
+  "sponsorPageAfdianSubtitle": "afdian.com/a/minime",
   "sponsorPageWeChatTitle": "微信贊助",
   "sponsorPageWeChatSubtitle": "微信贊助碼",
   "languageDisplaySimplifiedChinese": "简体中文",
@@ -118,7 +118,7 @@
   "androidBackgroundOptionOff": "關閉",
   "notificationChatCompletedTitle": "生成完成",
   "notificationChatCompletedBody": "助手回覆已生成",
-  "androidBackgroundNotificationTitle": "Kelivo 正在運行",
+  "androidBackgroundNotificationTitle": "MiniMe-Core 正在運行",
   "androidBackgroundNotificationText": "後台保持聊天生成",
   "assistantEditEmojiDialogTitle": "選擇表情",
   "assistantEditEmojiDialogHint": "輸入或貼上任意表情",
@@ -868,7 +868,7 @@
       }
     }
   },
-  "settingsShare": "Kelivo - 開源AI助理",
+  "settingsShare": "MiniMe-Core - 開源AI助理",
   "searchProviderBingLocalDescription": "使用網路抓取工具取得 Bing 搜尋結果。無需 API 金鑰，但可能不夠穩定。",
   "searchProviderBraveDescription": "Brave 獨立搜尋引擎。注重隱私，無追蹤或建立個人檔案。",
   "searchProviderExaDescription": "具備語義理解的神經搜尋引擎。適合研究與查找特定內容。",

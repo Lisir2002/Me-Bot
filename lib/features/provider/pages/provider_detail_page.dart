@@ -106,7 +106,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     final l10n = AppLocalizations.of(context)!;
     bool _isUserAdded(String key) {
       const fixed = {
-        'KelivoIN', 'OpenAI', 'Gemini', 'SiliconFlow', 'OpenRouter',
+        'MiniMeCoreIN', 'OpenAI', 'Gemini', 'SiliconFlow', 'OpenRouter',
         'DeepSeek', 'Tensdaq', 'Aliyun', 'Zhipu AI', 'Claude', 'Grok', 'ByteDance',
       };
       return !fixed.contains(key);
@@ -247,7 +247,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       children: [
-        if (widget.keyName.toLowerCase() == 'kelivoin') ...[
+        if (widget.keyName.toLowerCase() == 'minime-corein') ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
@@ -382,7 +382,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
         const SizedBox(height: 6),
         // Top iOS-style section card for key settings
         _iosSectionCard(children: [
-          if (widget.keyName.toLowerCase() != 'kelivoin') _providerKindRow(context),
+          if (widget.keyName.toLowerCase() != 'minime-corein') _providerKindRow(context),
           _iosRow(
             context,
             label: l10n.providerDetailPageEnabledTitle,
@@ -490,12 +490,12 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
           label: l10n.providerDetailPageNameLabel,
           controller: _nameCtrl,
           hint: widget.displayName,
-          enabled: widget.keyName.toLowerCase() != 'kelivoin',
+          enabled: widget.keyName.toLowerCase() != 'minime-corein',
           onChanged: (_) => _save(),
         ),
         const SizedBox(height: 12),
         if (!(_kind == ProviderKind.google && _vertexAI)) ...[
-          if (widget.keyName.toLowerCase() != 'kelivoin' && !_multiKeyEnabled) ...[
+          if (widget.keyName.toLowerCase() != 'minime-corein' && !_multiKeyEnabled) ...[
             _inputRow(
               context,
               label: l10n.multiKeyPageKey,
@@ -516,11 +516,11 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
             label: l10n.providerDetailPageApiBaseUrlLabel,
             controller: _baseCtrl,
             hint: ProviderConfig.defaultsFor(widget.keyName, displayName: widget.displayName).baseUrl,
-            enabled: widget.keyName.toLowerCase() != 'kelivoin',
+            enabled: widget.keyName.toLowerCase() != 'minime-corein',
             onChanged: (_) => _save(),
           ),
         ],
-        if (_kind == ProviderKind.openai && widget.keyName.toLowerCase() != 'kelivoin' && !_useResp) ...[
+        if (_kind == ProviderKind.openai && widget.keyName.toLowerCase() != 'minime-corein' && !_useResp) ...[
           const SizedBox(height: 12),
           _inputRow(
             context,

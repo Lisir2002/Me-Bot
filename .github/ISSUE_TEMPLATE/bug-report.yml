@@ -9,7 +9,7 @@ body:
         Thank you for taking the time to report a bug!
         
         Before filling out this form, please:
-        - Search for [existing issues](https://github.com/Chevey339/kelivo/issues) to avoid duplicates
+        - Search for [existing issues](https://github.com/Chevey339/minime-core/issues) to avoid duplicates
         - Make sure you're using the latest version of the application
 
   - type: textarea

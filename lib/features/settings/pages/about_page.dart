@@ -414,7 +414,7 @@ class _AboutPageState extends State<AboutPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Kelivo',
+                          'MiniMe-Core',
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -460,7 +460,7 @@ class _AboutPageState extends State<AboutPage> {
               icon: Lucide.Earth,
               label: l10n.aboutPageWebsite,
               onTap: () async {
-                final uri = Uri.parse('https://kelivo.psycheas.top/');
+                final uri = Uri.parse('https://minime-core.psycheas.top/');
                 if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }
@@ -471,14 +471,14 @@ class _AboutPageState extends State<AboutPage> {
               context,
               icon: Lucide.Github,
               label: 'GitHub',
-              onTap: () => _openUrl('https://github.com/Chevey339/kelivo'),
+              onTap: () => _openUrl('https://github.com/Chevey339/minime-core'),
             ),
             _iosDivider(context),
           _iosNavRow(
             context,
             icon: Lucide.FileText,
             label: l10n.aboutPageLicense,
-            onTap: () => _openUrl('https://github.com/Chevey339/kelivo/blob/master/LICENSE'),
+            onTap: () => _openUrl('https://github.com/Chevey339/minime-core/blob/master/LICENSE'),
           ),
           _iosDivider(context),
           _iosNavRowSvgLeading(

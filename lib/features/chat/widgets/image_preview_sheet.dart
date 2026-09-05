@@ -107,7 +107,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
       final ext = p.extension(widget.file.path).isNotEmpty
           ? p.extension(widget.file.path)
           : '.png';
-      final defaultName = 'kelivo-${DateTime.now().millisecondsSinceEpoch}$ext';
+      final defaultName = 'minime-core-${DateTime.now().millisecondsSinceEpoch}$ext';
       final allowed = [ext.replaceFirst('.', '').toLowerCase()];
       final String? savePath = await FilePicker.platform.saveFile(
         dialogTitle: l10n.imageViewerPageSaveButton,
@@ -463,7 +463,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
     try {
       final l10n = AppLocalizations.of(context)!;
       final Uint8List bytes = await widget.file.readAsBytes();
-      final name = 'kelivo-${DateTime.now().millisecondsSinceEpoch}';
+      final name = 'minime-core-${DateTime.now().millisecondsSinceEpoch}';
       final result = await ImageGallerySaverPlus.saveImage(bytes, quality: 100, name: name);
       bool success = false;
       if (result is Map) {

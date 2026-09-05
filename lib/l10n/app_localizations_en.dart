@@ -114,7 +114,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sponsorPageAfdianTitle => 'Afdian';
 
   @override
-  String get sponsorPageAfdianSubtitle => 'afdian.com/a/kelivo';
+  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime-core';
 
   @override
   String get sponsorPageWeChatTitle => 'WeChat Sponsor';
@@ -562,7 +562,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Assistant reply has been generated';
 
   @override
-  String get androidBackgroundNotificationTitle => 'Kelivo is running';
+  String get androidBackgroundNotificationTitle => 'MiniMe-Core is running';
 
   @override
   String get androidBackgroundNotificationText =>
@@ -2761,7 +2761,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsShare => 'Kelivo - Open Source AI Assistant';
+  String get settingsShare => 'MiniMe-Core - Open Source AI Assistant';
 
   @override
   String get searchProviderBingLocalDescription =>

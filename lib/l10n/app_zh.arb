@@ -35,7 +35,7 @@
   "sponsorPageSponsorsSectionTitle": "赞助用户",
   "sponsorPageEmpty": "暂无赞助者",
   "sponsorPageAfdianTitle": "爱发电",
-  "sponsorPageAfdianSubtitle": "afdian.com/a/kelivo",
+  "sponsorPageAfdianSubtitle": "afdian.com/a/minime",
   "sponsorPageWeChatTitle": "微信赞助",
   "sponsorPageWeChatSubtitle": "微信赞助码",
   "languageDisplaySimplifiedChinese": "简体中文",
@@ -114,7 +114,7 @@
   "androidBackgroundOptionOff": "关闭",
   "notificationChatCompletedTitle": "生成完成",
   "notificationChatCompletedBody": "助手回复已生成",
-  "androidBackgroundNotificationTitle": "Kelivo 正在运行",
+  "androidBackgroundNotificationTitle": "MiniMe-Core 正在运行",
   "androidBackgroundNotificationText": "后台保持聊天生成",
   "assistantEditEmojiDialogTitle": "选择表情",
   "assistantEditEmojiDialogHint": "输入或粘贴任意表情",
@@ -882,7 +882,7 @@
       }
     }
   },
-  "settingsShare": "Kelivo - 开源AI助手",
+  "settingsShare": "MiniMe-Core - 开源AI助手",
   "searchProviderBingLocalDescription": "使用网络抓取工具获取必应搜索结果。无需 API 密钥，但可能不够稳定。",
   "searchProviderBraveDescription": "Brave 独立搜索引擎。注重隐私，无跟踪或画像。",
   "searchProviderExaDescription": "具备语义理解的神经搜索引擎。适合研究与查找特定内容。",

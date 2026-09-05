@@ -406,7 +406,7 @@ class SettingsProvider extends ChangeNotifier {
     if (_providerConfigs.isEmpty) {
       // Seed a couple of sensible defaults on first launch, but do not recreate
       // providers implicitly during later reads (e.g., when switching chats).
-      ensureProviderConfig('KelivoIN', defaultName: 'KelivoIN');
+      ensureProviderConfig('MiniMeCoreIN', defaultName: 'MiniMeCoreIN');
       ensureProviderConfig('Tensdaq', defaultName: 'Tensdaq');
       ensureProviderConfig('SiliconFlow', defaultName: 'SiliconFlow');
     }
@@ -587,7 +587,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setAppFontFromLocal({required String path, String? alias}) async {
-    final fam = await _registerLocalFont(path: path, aliasPrefix: alias ?? 'kelivo_local_app');
+    final fam = await _registerLocalFont(path: path, aliasPrefix: alias ?? 'minime-core_local_app');
     if (fam == null) return;
     _appFontIsGoogle = false;
     _appFontFamily = fam;
@@ -602,7 +602,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setCodeFontFromLocal({required String path, String? alias}) async {
-    final fam = await _registerLocalFont(path: path, aliasPrefix: alias ?? 'kelivo_local_code');
+    final fam = await _registerLocalFont(path: path, aliasPrefix: alias ?? 'minime-core_local_code');
     if (fam == null) return;
     _codeFontIsGoogle = false;
     _codeFontFamily = fam;
@@ -656,7 +656,7 @@ class SettingsProvider extends ChangeNotifier {
 
     // Re-register local fonts if paths are available (best effort)
     if (_appFontLocalPath != null && _appFontLocalPath!.isNotEmpty) {
-      final alias = _appFontLocalAlias ?? 'kelivo_local_app';
+      final alias = _appFontLocalAlias ?? 'minime-core_local_app';
       final fam = await _registerLocalFont(path: _appFontLocalPath!, aliasPrefix: alias);
       if (fam != null) {
         _appFontLocalAlias = fam;
@@ -664,7 +664,7 @@ class SettingsProvider extends ChangeNotifier {
       }
     }
     if (_codeFontLocalPath != null && _codeFontLocalPath!.isNotEmpty) {
-      final alias = _codeFontLocalAlias ?? 'kelivo_local_code';
+      final alias = _codeFontLocalAlias ?? 'minime-core_local_code';
       final fam = await _registerLocalFont(path: _codeFontLocalPath!, aliasPrefix: alias);
       if (fam != null) {
         _codeFontLocalAlias = fam;
@@ -1771,7 +1771,7 @@ class ProviderConfig {
   static String _defaultBase(String key) {
     final k = key.toLowerCase();
     if (k.contains('tensdaq')) return 'https://tensdaq-api.x-aio.com/v1';
-    if (k.contains('kelivoin')) return 'https://text.pollinations.ai/openai';
+    if (k.contains('minime-corein')) return 'https://text.pollinations.ai/openai';
     if (k.contains('openrouter')) return 'https://openrouter.ai/api/v1';
     if (RegExp(r'qwen|aliyun|dashscope').hasMatch(k)) return 'https://dashscope.aliyuncs.com/compatible-mode/v1';
     if (RegExp(r'bytedance|doubao|volces|ark').hasMatch(k)) return 'https://ark.cn-beijing.volces.com/api/v3';
@@ -1792,7 +1792,7 @@ class ProviderConfig {
       if (s.contains('gemini') || s.contains('google')) return true;
       if (s.contains('silicon')) return true;
       if (s.contains('openrouter')) return true;
-      if (s.contains('kelivoin')) return true;
+      if (s.contains('minime-corein')) return true;
       return false; // others disabled by default
     }
     final kind = classify(key);
@@ -1842,13 +1842,13 @@ class ProviderConfig {
         );
       case ProviderKind.openai:
       default:
-        // Special-case KelivoIN default models and overrides
-        if (lowerKey.contains('kelivoin')) {
+        // Special-case MiniMe-CoreIN default models and overrides
+        if (lowerKey.contains('minime-corein')) {
           return ProviderConfig(
             id: key,
             enabled: _defaultEnabled(key),
             name: displayName ?? key,
-            apiKey: 'kelivo',
+            apiKey: 'minime-core',
             baseUrl: _defaultBase(key),
             providerType: ProviderKind.openai,
             chatPath: null, // keep empty in UI; code uses default '/chat/completions'

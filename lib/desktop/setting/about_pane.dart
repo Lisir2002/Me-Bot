@@ -120,19 +120,19 @@ class _DesktopAboutPaneState extends State<DesktopAboutPane> {
                   _DeskNavRow(
                     icon: lucide.Lucide.Earth,
                     label: l10n.aboutPageWebsite,
-                    onTap: () => _openUrl('https://kelivo.psycheas.top/'),
+                    onTap: () => _openUrl('https://minime-core.psycheas.top/'),
                   ),
                   const _DeskRowDivider(),
                   _DeskNavRow(
                     icon: lucide.Lucide.Github,
                     label: 'GitHub',
-                    onTap: () => _openUrl('https://github.com/Chevey339/kelivo'),
+                    onTap: () => _openUrl('https://github.com/Chevey339/minime-core'),
                   ),
                   const _DeskRowDivider(),
                   _DeskNavRow(
                     icon: lucide.Lucide.FileText,
                     label: l10n.aboutPageLicense,
-                    onTap: () => _openUrl('https://github.com/Chevey339/kelivo/blob/master/LICENSE'),
+                    onTap: () => _openUrl('https://github.com/Chevey339/minime-core/blob/master/LICENSE'),
                   ),
                   const _DeskRowDivider(),
                   _DeskNavRowSvg(
@@ -223,7 +223,7 @@ class _AppHeaderCardState extends State<_AppHeaderCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Kelivo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        const Text('MiniMe-Core', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                         const SizedBox(height: 4),
                         Text(
                           widget.description,
@@ -425,7 +425,7 @@ Future<void> _showSponsorDesktopDialog(BuildContext context) async {
   final cs = Theme.of(context).colorScheme;
   final l10n = AppLocalizations.of(context)!;
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  const afdianUrl = 'https://afdian.com/a/kelivo';
+  const afdianUrl = 'https://afdian.com/a/minime-core';
   final wechatQrUrl = isDark ? 'https://c.img.dasctf.com/LightPicture/2025/10/ee10ae78acbd01f3.png' : 'https://c.img.dasctf.com/LightPicture/2025/10/6ba60ac0f2f8e2b4.png';
 
   Future<void> open(String url) async {

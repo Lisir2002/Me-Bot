@@ -17,7 +17,7 @@ class WebDavConfig {
     this.url = '',
     this.username = '',
     this.password = '',
-    this.path = 'kelivo_backups',
+    this.path = 'minime-core_backups',
     this.includeChats = true,
     this.includeFiles = true,
   });
@@ -56,7 +56,7 @@ class WebDavConfig {
       password: (json['password'] as String?) ?? '',
       path: (json['path'] as String?)?.trim().isNotEmpty == true
           ? (json['path'] as String).trim()
-          : 'kelivo_backups',
+          : 'minime-core_backups',
       includeChats: json['includeChats'] as bool? ?? true,
       includeFiles: json['includeFiles'] as bool? ?? true,
     );

@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
-import '../services/mcp/kelivo_fetch/kelivo_fetch_server.dart';
+import '../services/mcp/minime-core_fetch/minime-core_fetch_server.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -239,7 +239,7 @@ class McpProvider extends ChangeNotifier {
         _servers = list;
       } catch (_) {}
     }
-    // Ensure built-in @kelivo/fetch is present by default
+    // Ensure built-in @minime-core/fetch is present by default
     _ensureBuiltinFetchServerPresent();
     // initialize statuses
     for (final s in _servers) {
@@ -256,12 +256,12 @@ class McpProvider extends ChangeNotifier {
   }
 
   void _ensureBuiltinFetchServerPresent() {
-    final exists = _servers.any((s) => s.transport == McpTransportType.inmemory || s.name == '@kelivo/fetch' || s.id == 'kelivo_fetch');
+    final exists = _servers.any((s) => s.transport == McpTransportType.inmemory || s.name == '@minime-core/fetch' || s.id == 'minime-core_fetch');
     if (exists) return;
     final cfg = McpServerConfig(
-      id: 'kelivo_fetch',
+      id: 'minime-core_fetch',
       enabled: true,
-      name: '@kelivo/fetch',
+      name: '@minime-core/fetch',
       transport: McpTransportType.inmemory,
       tools: const <McpToolConfig>[], // will refresh on connect
     );
@@ -354,7 +354,7 @@ class McpProvider extends ChangeNotifier {
           final cfg = cfgAny.cast<String, dynamic>();
           final typeLower = (cfg['type'] ?? '').toString().toLowerCase();
           if (typeLower == 'inmemory') {
-            // Built-in @kelivo/fetch control via isActive; ignore name mismatches silently
+            // Built-in @minime-core/fetch control via isActive; ignore name mismatches silently
             builtinSeen = true;
             builtinEnabled = (cfg['isActive'] as bool?) ?? true;
             return;
@@ -422,9 +422,9 @@ class McpProvider extends ChangeNotifier {
         if (builtinSeen) {
           // Append single built-in server with fixed id/name
           next.add(McpServerConfig(
-            id: 'kelivo_fetch',
+            id: 'minime-core_fetch',
             enabled: builtinEnabled,
-            name: '@kelivo/fetch',
+            name: '@minime-core/fetch',
             transport: McpTransportType.inmemory,
           ));
         }
@@ -613,7 +613,7 @@ class McpProvider extends ChangeNotifier {
       // }
 
       final clientConfig = mcp.McpClient.simpleConfig(
-        name: 'Kelivo MCP',
+        name: 'MiniMe-Core MCP',
         version: '1.0.0',
         // Turn on library-internal verbose logs
         enableDebugLogging: false,
@@ -621,8 +621,8 @@ class McpProvider extends ChangeNotifier {
 
       // In-memory builtin server path
       if (server.transport == McpTransportType.inmemory) {
-        final engine = KelivoFetchMcpServerEngine();
-        final transport = KelivoInMemoryClientTransport(engine);
+        final engine = MiniMe-CoreFetchMcpServerEngine();
+        final transport = MiniMe-CoreInMemoryClientTransport(engine);
         final client = mcp.McpClient.createClient(clientConfig);
         await client.connect(transport);
         _clients[id] = client;

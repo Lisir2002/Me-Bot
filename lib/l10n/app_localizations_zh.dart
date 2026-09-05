@@ -113,7 +113,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sponsorPageAfdianTitle => '爱发电';
 
   @override
-  String get sponsorPageAfdianSubtitle => 'afdian.com/a/kelivo';
+  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime-core';
 
   @override
   String get sponsorPageWeChatTitle => '微信赞助';
@@ -545,7 +545,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationChatCompletedBody => '助手回复已生成';
 
   @override
-  String get androidBackgroundNotificationTitle => 'Kelivo 正在运行';
+  String get androidBackgroundNotificationTitle => 'MiniMe-Core 正在运行';
 
   @override
   String get androidBackgroundNotificationText => '后台保持聊天生成';
@@ -2666,7 +2666,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get settingsShare => 'Kelivo - 开源AI助手';
+  String get settingsShare => 'MiniMe-Core - 开源AI助手';
 
   @override
   String get searchProviderBingLocalDescription =>
@@ -3141,7 +3141,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get sponsorPageAfdianTitle => '爱发电';
 
   @override
-  String get sponsorPageAfdianSubtitle => 'afdian.com/a/kelivo';
+  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime-core';
 
   @override
   String get sponsorPageWeChatTitle => '微信赞助';
@@ -3573,7 +3573,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get notificationChatCompletedBody => '助手回复已生成';
 
   @override
-  String get androidBackgroundNotificationTitle => 'Kelivo 正在运行';
+  String get androidBackgroundNotificationTitle => 'MiniMe-Core 正在运行';
 
   @override
   String get androidBackgroundNotificationText => '后台保持聊天生成';
@@ -5694,7 +5694,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   }
 
   @override
-  String get settingsShare => 'Kelivo - 开源AI助手';
+  String get settingsShare => 'MiniMe-Core - 开源AI助手';
 
   @override
   String get searchProviderBingLocalDescription =>
@@ -6169,7 +6169,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get sponsorPageAfdianTitle => '愛發電';
 
   @override
-  String get sponsorPageAfdianSubtitle => 'afdian.com/a/kelivo';
+  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime-core';
 
   @override
   String get sponsorPageWeChatTitle => '微信贊助';
@@ -6601,7 +6601,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get notificationChatCompletedBody => '助手回覆已生成';
 
   @override
-  String get androidBackgroundNotificationTitle => 'Kelivo 正在運行';
+  String get androidBackgroundNotificationTitle => 'MiniMe-Core 正在運行';
 
   @override
   String get androidBackgroundNotificationText => '後台保持聊天生成';
@@ -8721,7 +8721,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get settingsShare => 'Kelivo - 開源AI助理';
+  String get settingsShare => 'MiniMe-Core - 開源AI助理';
 
   @override
   String get searchProviderBingLocalDescription =>

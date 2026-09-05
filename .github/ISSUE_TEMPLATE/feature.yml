@@ -1,15 +1,15 @@
 name: Feature request
-description: Suggest a new idea for Kelivo.
+description: Suggest a new idea for MiniMe-Core.
 labels:
   - feature
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for using Kelivo!
+        Thank you for using MiniMe-Core!
         
         Before filling the form fields, please consider the following:
-        - Ensure that you have searched the [existing issues](https://github.com/Chevey339/kelivo/issues)
+        - Ensure that you have searched the [existing issues](https://github.com/Chevey339/minime-core/issues)
         - Check if there's already a similar feature request or discussion
   - type: textarea
     attributes:

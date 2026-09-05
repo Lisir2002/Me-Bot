@@ -132,7 +132,7 @@ class _TitleBarLeading extends StatelessWidget {
       children: [
         // App icon
         Image.asset(
-          'assets/icons/kelivo.png',
+          'assets/icons/minime-core.png',
           width: 16,
           height: 16,
           filterQuality: FilterQuality.medium,
@@ -140,7 +140,7 @@ class _TitleBarLeading extends StatelessWidget {
         const SizedBox(width: 8),
         // App name
         Text(
-          'Kelivo',
+          'MiniMe-Core',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,

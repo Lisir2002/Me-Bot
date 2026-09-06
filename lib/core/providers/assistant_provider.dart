@@ -7,8 +7,6 @@ import '../models/assistant.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/avatar_cache.dart';
 import '../../utils/app_directories.dart';
-import 'package:minime_core/core/services/logging/logger.dart';
-import 'package:minime_core/core/services/logging/log_tags.dart';
 
 class AssistantProvider extends ChangeNotifier {
   static const String _assistantsKey = 'assistants_v1';
@@ -31,7 +29,6 @@ class AssistantProvider extends ChangeNotifier {
   }
 
   Future<void> _load() async {
-  Future<void> _load() async   Logger.i(LogTags.assistant, "AssistantProvider _load");
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_assistantsKey);
     if (raw != null && raw.isNotEmpty) {
@@ -124,7 +121,6 @@ class AssistantProvider extends ChangeNotifier {
   }
 
   Future<void> setCurrentAssistant(String id) async {
-  Future<void> setCurrentAssistant(String id) async   Logger.i(LogTags.assistant, "Set current assistant");
     if (_currentAssistantId == id) return;
     _currentAssistantId = id;
     notifyListeners();
@@ -156,8 +152,7 @@ class AssistantProvider extends ChangeNotifier {
     ];
   }
 
-  Future<String> addAssistant({
-  Future<String> addAssistant(  Logger.i(LogTags.assistant, "Add assistant");String? name, dynamic context}) async {
+  Future<String> addAssistant({String? name, dynamic context}) async {
     final a = Assistant(
       id: const Uuid().v4(),
       name: (name ?? (context != null
@@ -282,7 +277,6 @@ class AssistantProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteAssistant(String id) async {
-  Future<bool> deleteAssistant(String id) async   Logger.w(LogTags.assistant, "Delete assistant");
     final idx = _assistants.indexWhere((a) => a.id == id);
     if (idx == -1) return false;
     // Do not allow deleting the last remaining assistant

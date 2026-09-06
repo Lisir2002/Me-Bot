@@ -160,17 +160,26 @@ class StorageService {
   }
 
   /// 缓存 = appData/cache + 系统临时目录。
+  /// 明细列表需要同时包含两处的文件，否则会出现「有大小但明细空」。
   static Future<StorageScan> _scanCache(Directory appData) async {
     final appCache = await _scanSubdir(appData, id: 'cache', subdir: 'cache');
     int sysBytes = 0;
     int sysCount = 0;
+    final sysEntries = <StorageEntry>[];
     try {
       final temp = await getTemporaryDirectory();
       await for (final ent in temp.list(recursive: true, followLinks: false)) {
         if (ent is File) {
           sysCount += 1;
           try {
-            sysBytes += ent.lengthSync();
+            final len = ent.lengthSync();
+            sysBytes += len;
+            sysEntries.add(StorageEntry(
+              name: _basename(ent.path),
+              path: ent.path,
+              bytes: len,
+              modified: ent.statSync().modified,
+            ));
           } catch (_) {}
         }
       }
@@ -179,7 +188,7 @@ class StorageService {
       id: 'cache',
       bytes: appCache.bytes + sysBytes,
       fileCount: appCache.fileCount + sysCount,
-      entries: appCache.entries,
+      entries: [...appCache.entries, ...sysEntries],
     );
   }
 

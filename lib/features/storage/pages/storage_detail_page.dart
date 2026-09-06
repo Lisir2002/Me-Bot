@@ -90,13 +90,11 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          _InfoHeader(config: cfg, count: widget.scan.fileCount),
+          _InfoHeader(config: cfg, bytes: widget.scan.bytes, count: widget.scan.fileCount),
           if (cfg.type == StorageCategoryType.snapshotDetail && _rootPath != null) ...[
             const SizedBox(height: 12),
             _ManageSnapshotsCard(
               explain: l10n.storageSnapshotPathNote,
-              sizeLine:
-                  '${storageFormatBytes(widget.scan.bytes)} · ${widget.scan.fileCount}',
               path: '$_rootPath/snapshots',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const LocalSnapshotPage()),
@@ -182,12 +180,10 @@ class _DetailRowTile extends StatelessWidget {
 class _ManageSnapshotsCard extends StatelessWidget {
   const _ManageSnapshotsCard({
     required this.explain,
-    required this.sizeLine,
     required this.path,
     required this.onTap,
   });
   final String explain;
-  final String sizeLine;
   final String path;
   final VoidCallback onTap;
 
@@ -211,7 +207,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const SizedBox(width: 36, child: Icon(Lucide.ChevronRight, size: 20, color: Colors.transparent)),
+                Icon(Lucide.FolderOpen, size: 18, color: cs.onSurface.withOpacity(0.7)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -219,12 +215,12 @@ class _ManageSnapshotsCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                 ),
-                Icon(Lucide.ChevronRight, size: 16, color: cs.onSurface),
+                Icon(Lucide.ChevronRight, size: 16, color: cs.onSurface.withOpacity(0.5)),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -232,24 +228,31 @@ class _ManageSnapshotsCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: cardBorder,
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                explain,
-                style: TextStyle(fontSize: 13, height: 1.4, color: cs.onSurface.withOpacity(0.7)),
+              Padding(
+                padding: const EdgeInsets.only(top: 1),
+                child: Icon(Lucide.Info, size: 14, color: cs.onSurface.withOpacity(0.5)),
               ),
-              const SizedBox(height: 8),
-              Text(
-                sizeLine,
-                style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.6)),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                path,
-                style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.5)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      explain,
+                      style: TextStyle(fontSize: 12, height: 1.4, color: cs.onSurface.withOpacity(0.65)),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      path,
+                      style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.45)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -261,8 +264,9 @@ class _ManageSnapshotsCard extends StatelessWidget {
 
 /// 顶部信息：分类名 + 大小 + 文件数 + 风险提示。
 class _InfoHeader extends StatelessWidget {
-  const _InfoHeader({required this.config, required this.count});
+  const _InfoHeader({required this.config, required this.bytes, required this.count});
   final StorageCategoryConfig config;
+  final int bytes;
   final int count;
 
   @override
@@ -288,8 +292,7 @@ class _InfoHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                storageFormatBytes(config.id == 'avatars' && count == 0 ? 0 : count),
-                // 明细总大小在只读页以文件列表为主，这里显示条目占用：
+                storageFormatBytes(bytes),
                 style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),

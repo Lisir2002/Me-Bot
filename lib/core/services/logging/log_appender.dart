@@ -7,6 +7,7 @@ import 'dart:io';
 import '../../../utils/app_directories.dart';
 import 'log_level.dart';
 import 'log_record.dart';
+import 'log_sanitizer.dart';
 
 /// 日志输出目标（Appender）。
 ///
@@ -171,30 +172,35 @@ class FileAppender extends LogAppender {
   //     ── stack trace ──
   //     #0 ...
   String _serialize(LogRecord r) {
-    final two = (int n) => n.toString().padLeft(2, '0');
-    final ms = r.timestamp.millisecond.toString().padLeft(3, '0');
-    final ts = '${r.timestamp.year}-${two(r.timestamp.month)}-${two(r.timestamp.day)} '
-        '${two(r.timestamp.hour)}:${two(r.timestamp.minute)}:${two(r.timestamp.second)}.$ms';
+      final two = (int n) => n.toString().padLeft(2, '0');
+      final ms = r.timestamp.millisecond.toString().padLeft(3, '0');
+      final ts = '${r.timestamp.year}-${two(r.timestamp.month)}-${two(r.timestamp.day)} '
+          '${two(r.timestamp.hour)}:${two(r.timestamp.minute)}:${two(r.timestamp.second)}.$ms';
 
-    final levelStr = r.level.nameUpper.padRight(7);
-    final tagPart = '[${r.tag}]';
+      final levelStr = r.level.nameUpper.padRight(7);
+      final tagPart = '[${r.tag}]';
 
-    final buf = StringBuffer();
-    buf.writeln('$ts $levelStr $tagPart ${r.message}');
+      final buf = StringBuffer();
+      buf.writeln('$ts $levelStr $tagPart ${r.message}');
 
-    if (r.error != null) {
-      buf.writeln('  ${r.error.runtimeType}: ${r.error}');
-    }
-    if (r.stack != null) {
-      buf.writeln('  ── stack trace ──');
-      final lines = r.stack.toString().split('\n');
-      // 只保留前 20 行（Dart 堆栈冗长）
-      for (var i = 0; i < lines.length && i < 20; i++) {
-        buf.writeln('  ${lines[i]}');
+      // 关键：error 和 stack 必须再脱敏一次（Logger 可能漏了某些来源）
+      if (r.error != null) {
+        final safeMsg = LogSanitizer.safeErrorString(r.error);
+        buf.writeln('  ${r.error.runtimeType}: $safeMsg');
       }
+      final safeStack = LogSanitizer.safeStackPreview(r.stack);
+      if (safeStack != null) {
+        buf.writeln('  ── stack trace ──');
+        buf.write(safeStack);
+      }
+
+      // traceId / context 附加（未来可能用得上，先留着）
+      if (r.traceId != null) {
+        buf.writeln('  traceId: ${r.traceId}');
+      }
+
+      return buf.toString().trimRight();
     }
-    return buf.toString().trimRight();
-  }
 
   // ── 工具 ──
   static bool _sameDay(DateTime a, DateTime b) =>

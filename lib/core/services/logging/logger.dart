@@ -8,6 +8,7 @@ import 'log_appender.dart';
 import 'log_context.dart';
 import 'log_level.dart';
 import 'log_record.dart';
+import 'log_sanitizer.dart';
 
 /// 全局日志核心：结构化记录 + Appender 分发 + 控制台镜像。
 ///
@@ -121,6 +122,7 @@ class Logger {
   // ── 初始化 ──
 
   /// 初始化并注册默认 Appender（File + Memory）。
+  /// 失败时状态回滚，不会留下半初始化痕迹。
   static Future<void> init({
     LogLevel minLevel = LogLevel.verbose,
     bool mirrorToConsole = !kReleaseMode,
@@ -130,34 +132,58 @@ class Logger {
     int fileFlushIntervalMs = 500,
   }) async {
     if (_initialized) return;
+
+    // 先构造但不注册，确保都 init 成功了再一次性挂上去（原子性）
+    late final FileAppender fileApp;
+    late final MemoryAppender memoryApp;
+    final snapshot = <LogAppender>[];
+
+    try {
+      fileApp = FileAppender(
+        maxFileBytes: fileMaxBytes,
+        maxAgeDays: fileMaxAgeDays,
+        flushIntervalMs: fileFlushIntervalMs,
+      );
+      await fileApp.init(); // ← 这里可能抛（目录创建失败）
+
+      memoryApp = MemoryAppender(capacity: memoryCapacity);
+    } catch (e) {
+      // 回滚：清理可能半初始化的状态
+      if (_lazyLogDir != null) {
+        try {
+          if (await _lazyLogDir!.exists()) {
+            // 别删，目录可能本来就存在，只是 init 抛了
+          }
+        } catch (_) {}
+      }
+      // 不要把异常吞掉，让调用方知道 init 失败了
+      rethrow;
+    }
+
+    // 全部成功 → 原子性挂上去
     Logger.minLevel = minLevel;
     Logger.mirrorToConsole = mirrorToConsole;
-
-    // 默认 FileAppender
-    final fileApp = FileAppender(
-      maxFileBytes: fileMaxBytes,
-      maxAgeDays: fileMaxAgeDays,
-      flushIntervalMs: fileFlushIntervalMs,
-    );
-    await fileApp.init();
     _appenders.add(fileApp);
-
-    // 默认 MemoryAppender（环形缓冲）
-    _appenders.add(MemoryAppender(capacity: memoryCapacity));
-
-    // 缓存 logDir 供外部查询
+    _appenders.add(memoryApp);
     _lazyLogDir = fileApp.logDir;
-
     _initialized = true;
 
-    // 自报家门（走一次完整的 append → 控制台镜像）
-    _log(LogLevel.info, _tag, 'Logger 初始化完成（appenders=${_appenders.length}, dir=${_lazyLogDir?.path ?? 'N/A'}）', null, null);
+    _log(LogLevel.info, _tag,
+        'Logger 初始化完成（appenders=${_appenders.length}, dir=${_lazyLogDir?.path ?? 'N/A'}）',
+        null, null);
   }
 
   /// 等待队列排空（App 退出前调用）。
+  /// 使用快照遍历，避免 flush 过程中 unregister 导致 ConcurrentModificationError。
   static Future<void> flush() async {
-    for (final a in _appenders) {
-      await a.flush();
+    final snap = List<LogAppender>.from(_appenders);
+    for (final a in snap) {
+      try {
+        await a.flush();
+      } catch (e) {
+        // flush 崩了不影响其他 appender
+        if (mirrorToConsole) debugPrint('[Logger] flush ${a.name} failed: $e');
+      }
     }
   }
 
@@ -182,6 +208,8 @@ class Logger {
 
   static void _log(LogLevel level, String tag, String message, Object? error, StackTrace? stack) {
     if (level.ordinal < minLevel.ordinal) return;
+    // init 前丢弃（避免 init 之前调日志报 Path 错误）
+    if (!_initialized) return;
 
     final timestamp = DateTime.now();
     final body = _buildBody(message, error, stack);
@@ -212,8 +240,6 @@ class Logger {
     );
 
     for (final a in _appenders) {
-      // init 前丢弃
-      if (!_initialized && a is FileAppender) continue;
       try {
         a.append(record);
       } catch (e) {
@@ -223,42 +249,22 @@ class Logger {
     }
   }
 
-  // ── 构建 body（脱敏 + 截断 + 格式化堆栈）──
+  // ── 构建 body（脱敏 + 截断 + 格式化堆栈，全部用 LogSanitizer）──
 
   static String _buildBody(String message, Object? error, StackTrace? stack) {
     final buf = StringBuffer();
-    buf.writeln(_truncate(_redact(message)));
+    buf.writeln(LogSanitizer.truncate(LogSanitizer.redact(message)));
     if (error != null) {
-      buf.writeln('  ${error.runtimeType}: ${_truncate(_redact(error.toString()))}');
+      final safeMsg = LogSanitizer.safeErrorString(error);
+      final shortMsg = LogSanitizer.truncate(safeMsg);
+      buf.writeln('  ${error.runtimeType}: $shortMsg');
     }
-    if (stack != null) {
+    final safeStack = LogSanitizer.safeStackPreview(stack);
+    if (safeStack != null) {
       buf.writeln('  ── stack trace ──');
-      final lines = stack.toString().split('\n');
-      for (var i = 0; i < lines.length && i < 20; i++) {
-        buf.writeln('  ${lines[i]}');
-      }
+      buf.write(safeStack);
     }
     return buf.toString().trimRight();
-  }
-
-  /// 脱敏长 base64 字符串、超长 JSON、API key 字段。
-  static String _redact(String text) {
-    if (text.length < 200) return text;
-    var out = text;
-    out = out.replaceAllMapped(
-      RegExp(r'data:[a-zA-Z0-9._/-]+;base64,([A-Za-z0-9+/=]{200,})'),
-      (m) => 'data:${m.group(1)!.substring(0, 20)}[base64 omitted: ${m.group(1)!.length} chars]',
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'"([a-zA-Z_]+)"\s*:\s*"([A-Za-z0-9+/=]{200,})"'),
-      (m) => '"${m.group(1)}": "[base64 omitted: ${m.group(2)!.length} chars]"',
-    );
-    return out;
-  }
-
-  static String _truncate(String text) {
-    if (text.length <= _maxPayloadChars) return text;
-    return '${text.substring(0, _maxPayloadChars)}\n  ... [truncated ${text.length - _maxPayloadChars} chars]';
   }
 
   // ── 文件级 API（委托给 FileAppender）──

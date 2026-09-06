@@ -9,6 +9,7 @@ import '../../../shared/responsive/breakpoints.dart';
 import '../widgets/chat_input_bar.dart';
 import '../../../core/models/chat_input_data.dart';
 import '../../chat/widgets/bottom_tools_sheet.dart';
+import '../../../shared/widgets/tool_approval_dialog.dart';
 import '../widgets/side_drawer.dart';
 import '../../chat/widgets/chat_message_widget.dart';
 import '../../../theme/design_tokens.dart';
@@ -1773,6 +1774,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             assistantId: assistant?.id,
             toolName: name,
             arguments: args,
+            approvalGate: (serverName, toolName, arguments) async {
+              if (!context.mounted) return false;
+              return showToolApprovalDialog(
+                context,
+                toolName: toolName,
+                arguments: arguments,
+                serverName: serverName,
+              );
+            },
           );
           return text;
         };
@@ -2745,6 +2755,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             assistantId: assistant?.id,
             toolName: name,
             arguments: args,
+            approvalGate: (serverName, toolName, arguments) async {
+              if (!context.mounted) return false;
+              return showToolApprovalDialog(
+                context,
+                toolName: toolName,
+                arguments: arguments,
+                serverName: serverName,
+              );
+            },
           );
           return text;
         };

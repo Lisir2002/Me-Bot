@@ -43,6 +43,8 @@ class McpParamSpec {
 
 class McpToolConfig {
   final bool enabled;
+  /// When true, the model must get explicit user approval before this tool runs.
+  final bool requireApproval;
   final String name;
   final String? description;
   final List<McpParamSpec> params;
@@ -51,15 +53,24 @@ class McpToolConfig {
 
   McpToolConfig({
     required this.enabled,
+    this.requireApproval = false,
     required this.name,
     this.description,
     this.params = const [],
     this.schema,
   });
 
-  McpToolConfig copyWith({bool? enabled, String? name, String? description, List<McpParamSpec>? params, Map<String, dynamic>? schema}) =>
+  McpToolConfig copyWith({
+    bool? enabled,
+    bool? requireApproval,
+    String? name,
+    String? description,
+    List<McpParamSpec>? params,
+    Map<String, dynamic>? schema,
+  }) =>
       McpToolConfig(
         enabled: enabled ?? this.enabled,
+        requireApproval: requireApproval ?? this.requireApproval,
         name: name ?? this.name,
         description: description ?? this.description,
         params: params ?? this.params,
@@ -68,6 +79,7 @@ class McpToolConfig {
 
   Map<String, dynamic> toJson() => {
     'enabled': enabled,
+    'requireApproval': requireApproval,
     'name': name,
     'description': description,
     'params': params.map((e) => e.toJson()).toList(),
@@ -76,6 +88,7 @@ class McpToolConfig {
 
   factory McpToolConfig.fromJson(Map<String, dynamic> json) => McpToolConfig(
     enabled: json['enabled'] as bool? ?? true,
+    requireApproval: json['requireApproval'] as bool? ?? false,
     name: json['name'] as String? ?? '',
     description: json['description'] as String?,
     params: (json['params'] as List?)
@@ -584,6 +597,18 @@ class McpProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setToolRequireApproval(String serverId, String toolName, bool requireApproval) async {
+    final idx = _servers.indexWhere((e) => e.id == serverId);
+    if (idx < 0) return;
+    final server = _servers[idx];
+    final tools = server.tools
+        .map((t) => t.name == toolName ? t.copyWith(requireApproval: requireApproval) : t)
+        .toList();
+    _servers[idx] = server.copyWith(tools: tools);
+    await _persist();
+    notifyListeners();
+  }
+
   Future<void> connect(String id) async {
     final server = _servers.firstWhere((e) => e.id == id, orElse: () => throw StateError('Server not found'));
     // If already connected, try a ping by listing tools quickly; else return
@@ -1046,6 +1071,7 @@ class McpProvider extends ChangeNotifier {
 
         merged.add(McpToolConfig(
           enabled: prior?.enabled ?? true,
+          requireApproval: prior?.requireApproval ?? false,
           name: t.name,
           description: t.description,
           params: params,

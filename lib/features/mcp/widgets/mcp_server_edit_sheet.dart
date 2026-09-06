@@ -447,9 +447,39 @@ class _McpServerEditSheetState extends State<_McpServerEditSheet> with SingleTic
                                               ],
                                             ),
                                           ),
-                                          IosSwitch(
-                                            value: tool.enabled,
-                                            onChanged: (v) => context.read<McpProvider>().setToolEnabled(server!.id, tool.name, v),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    l10n.mcpToolEnableLabel,
+                                                    style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.6)),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  IosSwitch(
+                                                    value: tool.enabled,
+                                                    onChanged: (v) => context.read<McpProvider>().setToolEnabled(server!.id, tool.name, v),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    l10n.mcpToolRequireApprovalLabel,
+                                                    style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.6)),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  IosSwitch(
+                                                    value: tool.requireApproval,
+                                                    onChanged: (v) => context.read<McpProvider>().setToolRequireApproval(server!.id, tool.name, v),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

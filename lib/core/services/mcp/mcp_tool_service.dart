@@ -9,6 +9,32 @@ import '../../providers/assistant_provider.dart';
 class McpToolService extends ChangeNotifier {
   McpToolService();
 
+  /// UI 提供的审批回调：返回 true 允许执行，false 拒绝。
+  /// 当某个工具 requireApproval=true 时，执行前会先询问。
+  typedef ToolApprovalGate = Future<bool> Function(
+    String serverName,
+    String toolName,
+    Map<String, dynamic> arguments,
+  );
+
+  String _deniedText(String serverName, String toolName) =>
+      '{"type":"tool_denied","message":"User declined to run this tool",'
+      '"tool":"$toolName","server":"$serverName",'
+      '"instruction":"Do not call this tool again unless the user explicitly asks."}';
+
+  /// 返回 true 表示通过审批（未开启审批直接通过）。
+  Future<bool> _checkApproval(
+    McpToolConfig tool,
+    String serverName,
+    String toolName,
+    Map<String, dynamic> arguments,
+    ToolApprovalGate? gate,
+  ) async {
+    if (!tool.requireApproval) return true;
+    if (gate == null) return true; // 无审批 UI 时视为自动放行
+    return await gate(serverName, toolName, arguments);
+  }
+
   List<McpToolConfig> listAvailableToolsForConversation(
     McpProvider mcpProvider,
     ChatService chat,
@@ -34,6 +60,7 @@ class McpToolService extends ChangeNotifier {
       required String conversationId,
       required String toolName,
       Map<String, dynamic> arguments = const {},
+      ToolApprovalGate? approvalGate,
   }) async {
     final selected = chat.getConversationMcpServers(conversationId).toSet();
     // debugPrint('[MCP/Call/Select] convo=$conversationId tool=$toolName selectedServers=${selected.join(',')}');
@@ -43,9 +70,22 @@ class McpToolService extends ChangeNotifier {
     final connected = mcpProvider.connectedServers.where((s) => selected.contains(s.id)).toList();
     // debugPrint('[MCP/Call/Select] connectedAndSelected=${connected.map((s)=>s.id).join(',')}');
     for (final s in connected) {
-      final has = s.tools.any((t) => t.enabled && t.name == toolName);
-      if (has) {
+      McpToolConfig? tool;
+      for (final t in s.tools) {
+        if (t.enabled && t.name == toolName) {
+          tool = t;
+          break;
+        }
+      }
+      if (tool != null) {
         // debugPrint('[MCP/Call/Select] using server=${s.id} name=${s.name} transport=${s.transport.name}');
+        final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
+        if (!ok) {
+          return mcp.CallToolResult(
+            [mcp.TextContent(text: _deniedText(s.name, toolName))],
+            isError: false,
+          );
+        }
         return await mcpProvider.callTool(s.id, toolName, arguments);
       }
     }
@@ -59,6 +99,7 @@ class McpToolService extends ChangeNotifier {
       required String conversationId,
       required String toolName,
       Map<String, dynamic> arguments = const {},
+      ToolApprovalGate? approvalGate,
   }) async {
     // Attempt call via selected server
     final selected = chat.getConversationMcpServers(conversationId).toSet();
@@ -66,9 +107,17 @@ class McpToolService extends ChangeNotifier {
     mcp.CallToolResult? res;
     McpServerConfig? usedServer;
     for (final s in connected) {
-      final has = s.tools.any((t) => t.enabled && t.name == toolName);
-      if (!has) continue;
+      McpToolConfig? tool;
+      for (final t in s.tools) {
+        if (t.enabled && t.name == toolName) {
+          tool = t;
+          break;
+        }
+      }
+      if (tool == null) continue;
       usedServer = s;
+      final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
+      if (!ok) return _deniedText(s.name, toolName);
       res = await mcpProvider.callTool(s.id, toolName, arguments);
       break;
     }
@@ -149,6 +198,7 @@ class McpToolService extends ChangeNotifier {
       required String? assistantId,
       required String toolName,
       Map<String, dynamic> arguments = const {},
+      ToolApprovalGate? approvalGate,
   }) async {
     // try servers selected for the assistant
     final a = (assistantId != null) ? assistants.getById(assistantId) : assistants.currentAssistant;
@@ -156,73 +206,80 @@ class McpToolService extends ChangeNotifier {
     // debugPrint('[MCP/Call/Select] assistant=${assistantId ?? a?.id ?? '(current)'} tool=$toolName selectedServers=${selected.join(',')}');
     if (selected.isEmpty) return '';
     for (final s in mcpProvider.connectedServers.where((s) => selected.contains(s.id))) {
-      final has = s.tools.any((t) => t.enabled && t.name == toolName);
-      if (has) {
-        // debugPrint('[MCP/Call/Select] using server=${s.id} name=${s.name} transport=${s.transport.name}');
-        final res = await mcpProvider.callTool(s.id, toolName, arguments);
-        if (res == null) {
-          final errMsg = mcpProvider.errorFor(s.id) ?? 'Unknown error';
-          final schema = s.tools.firstWhere((t) => t.name == toolName).schema;
-          return _renderToolErrorForModel(
-            serverName: s.name,
-            toolName: toolName,
-            arguments: arguments,
-            errorMessage: errMsg,
-            schema: schema,
-          );
+      McpToolConfig? tool;
+      for (final t in s.tools) {
+        if (t.enabled && t.name == toolName) {
+          tool = t;
+          break;
         }
-        final buf = StringBuffer();
-        for (final c in res.content) {
-          try {
-            if (c is mcp.TextContent) {
-              if ((c.text).trim().isNotEmpty) buf.writeln(c.text);
-              continue;
-            }
-            if (c is mcp.ResourceContent) {
-              final t = (c.text ?? '').toString();
-              if (t.trim().isNotEmpty) {
-                buf.writeln(t);
-              } else {
-                final uri = (c.uri).toString();
-                if (uri.isNotEmpty) buf.writeln('resource: $uri');
-              }
-              continue;
-            }
-            if (c is mcp.ImageContent) {
-              final url = (c.url ?? '').toString();
-              final mime = (c.mimeType ?? '').toString();
-              buf.writeln('[image:${url.isNotEmpty ? url : mime}]');
-              continue;
-            }
-            final dyn = c as dynamic;
-            try {
-              final txt = (dyn.text as String?);
-              if (txt != null && txt.trim().isNotEmpty) {
-                buf.writeln(txt);
-                continue;
-              }
-            } catch (_) {}
-            try {
-              final uri = (dyn.uri as String?);
-              if (uri != null && uri.isNotEmpty) {
-                buf.writeln('resource: $uri');
-                continue;
-              }
-            } catch (_) {}
-            try {
-              final json = (dyn.toJson as dynamic).call();
-              buf.writeln(const JsonEncoder.withIndent('  ').convert(json));
-              continue;
-            } catch (_) {}
-            final s = c.toString();
-            if (!s.startsWith('Instance of')) buf.writeln(s);
-          } catch (e, st) {
-            // debugPrint('[MCP/Call/TextParseError] server=${s.id} tool=$toolName type=${c.runtimeType} err=$e');
-            // debugPrint(st.toString());
-          }
-        }
-        return buf.toString().trim();
       }
+      if (tool == null) continue;
+      // debugPrint('[MCP/Call/Select] using server=${s.id} name=${s.name} transport=${s.transport.name}');
+      final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
+      if (!ok) return _deniedText(s.name, toolName);
+      final res = await mcpProvider.callTool(s.id, toolName, arguments);
+      if (res == null) {
+        final errMsg = mcpProvider.errorFor(s.id) ?? 'Unknown error';
+        final schema = s.tools.firstWhere((t) => t.name == toolName).schema;
+        return _renderToolErrorForModel(
+          serverName: s.name,
+          toolName: toolName,
+          arguments: arguments,
+          errorMessage: errMsg,
+          schema: schema,
+        );
+      }
+      final buf = StringBuffer();
+      for (final c in res.content) {
+        try {
+          if (c is mcp.TextContent) {
+            if ((c.text).trim().isNotEmpty) buf.writeln(c.text);
+            continue;
+          }
+          if (c is mcp.ResourceContent) {
+            final t = (c.text ?? '').toString();
+            if (t.trim().isNotEmpty) {
+              buf.writeln(t);
+            } else {
+              final uri = (c.uri).toString();
+              if (uri.isNotEmpty) buf.writeln('resource: $uri');
+            }
+            continue;
+          }
+          if (c is mcp.ImageContent) {
+            final url = (c.url ?? '').toString();
+            final mime = (c.mimeType ?? '').toString();
+            buf.writeln('[image:${url.isNotEmpty ? url : mime}]');
+            continue;
+          }
+          final dyn = c as dynamic;
+          try {
+            final txt = (dyn.text as String?);
+            if (txt != null && txt.trim().isNotEmpty) {
+              buf.writeln(txt);
+              continue;
+            }
+          } catch (_) {}
+          try {
+            final uri = (dyn.uri as String?);
+            if (uri != null && uri.isNotEmpty) {
+              buf.writeln('resource: $uri');
+              continue;
+            }
+          } catch (_) {}
+          try {
+            final json = (dyn.toJson as dynamic).call();
+            buf.writeln(const JsonEncoder.withIndent('  ').convert(json));
+            continue;
+          } catch (_) {}
+          final s = c.toString();
+          if (!s.startsWith('Instance of')) buf.writeln(s);
+        } catch (e, st) {
+          // debugPrint('[MCP/Call/TextParseError] server=${s.id} tool=$toolName type=${c.runtimeType} err=$e');
+          // debugPrint(st.toString());
+        }
+      }
+      return buf.toString().trim();
     }
     return '';
   }

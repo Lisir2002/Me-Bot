@@ -31,23 +31,23 @@ class _StorageLogPageState extends State<StorageLogPage> {
       const StorageScan(id: 'none', bytes: 0, fileCount: 0, entries: []);
 
   Future<void> _clearLogs() async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.storageLogClearConfirmTitle),
-        content: Text(l10n.storageLogClearConfirmBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
     try {
+      final l10n = AppLocalizations.of(context)!;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.storageLogClearConfirmTitle),
+          content: Text(l10n.storageLogClearConfirmBody),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
       for (final e in _scan.entries) {
         try {
           final f = File(e.path);
@@ -59,7 +59,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
       debugPrint('[StorageLogPage._clearLogs] failed: $e\n$s');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清理失败: $e')),
+          SnackBar(content: Text('清理日志失败: $e')),
         );
       }
     }

@@ -57,27 +57,27 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
   }
 
   Future<void> _confirmDelete() async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.storageDeleteConfirmTitle),
-        content: Text(l10n.storageDeleteConfirmBody(_selected.length)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.storageCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.storageConfirmDeleteBtn,
-                style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
     try {
+      final l10n = AppLocalizations.of(context)!;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.storageDeleteConfirmTitle),
+          content: Text(l10n.storageDeleteConfirmBody(_selected.length)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.storageCancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.storageConfirmDeleteBtn,
+                  style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
       await Provider.of<StorageProvider>(context, listen: false)
           .deletePaths(_selected.toList());
       if (!mounted) return;

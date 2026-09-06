@@ -40,60 +40,60 @@ class _StorageCachePageState extends State<StorageCachePage> {
   }
 
   Future<void> _clearAvatar() async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.storageCacheClearConfirmTitle),
-        content: Text(l10n.storageCacheClearConfirmBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
     try {
+      final l10n = AppLocalizations.of(context)!;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.storageCacheClearConfirmTitle),
+          content: Text(l10n.storageCacheClearConfirmBody),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
       await _clearDirectories([(await AppDirectories.getAvatarCacheDirectory()).path]);
       await _refresh();
     } catch (e, s) {
       debugPrint('[StorageCachePage._clearAvatar] failed: $e\n$s');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清理失败: $e')),
+          SnackBar(content: Text('清理头像缓存失败: $e')),
         );
       }
     }
   }
 
   Future<void> _clearApp() async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.storageCacheClearConfirmTitle),
-        content: Text(l10n.storageCacheClearConfirmBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
     try {
+      final l10n = AppLocalizations.of(context)!;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.storageCacheClearConfirmTitle),
+          content: Text(l10n.storageCacheClearConfirmBody),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
       await _clearDirectories([(await AppDirectories.getCacheDirectory()).path]);
       await _refresh();
     } catch (e, s) {
       debugPrint('[StorageCachePage._clearApp] failed: $e\n$s');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清理失败: $e')),
+          SnackBar(content: Text('清理缓存失败: $e')),
         );
       }
     }

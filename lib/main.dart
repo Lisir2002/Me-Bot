@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 // import 'dart:async';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'features/home/pages/home_page.dart';
 import 'desktop/desktop_home_page.dart';
@@ -31,7 +30,7 @@ import 'utils/sandbox_path_resolver.dart';
 import 'shared/widgets/snackbar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_fonts/system_fonts.dart';
-import 'dart:io' show HttpOverrides, Platform; // kept for global override usage inside provider
+import 'dart:io' show Platform;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/android_background.dart';
 import 'core/services/notification_service.dart';

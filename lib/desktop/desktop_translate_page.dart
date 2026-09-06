@@ -11,7 +11,7 @@ import '../core/providers/settings_provider.dart';
 import '../core/providers/assistant_provider.dart';
 import '../core/services/api/chat_api_service.dart';
 import '../shared/widgets/snackbar.dart';
-import '../features/model/widgets/model_select_sheet.dart' show showModelSelector, ModelSelection;
+import '../features/model/widgets/model_select_sheet.dart' show showModelSelector;
 import '../features/settings/widgets/language_select_sheet.dart' show LanguageOption, supportedLanguages;
 
 class DesktopTranslatePage extends StatefulWidget {
@@ -420,7 +420,7 @@ class _LanguageDropdownState extends State<_LanguageDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 

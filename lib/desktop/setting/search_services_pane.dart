@@ -889,7 +889,7 @@ class _ServiceTypeDropdownState extends State<_ServiceTypeDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
   void _close() { _entry?.remove(); _entry = null; if (mounted) setState(() => _open = false); }

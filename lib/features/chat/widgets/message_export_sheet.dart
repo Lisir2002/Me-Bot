@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -247,7 +246,6 @@ Future<File?> _renderWidgetDirectly(
   double pixelRatio = 3.0,
 }) async {
   final overlay = Overlay.of(context);
-  if (overlay == null) return null;
   
   final boundaryKey = GlobalKey();
   final completer = Completer<void>();
@@ -324,141 +322,6 @@ Future<File?> _renderWidgetDirectly(
     final file = File('${dir.path}/chat-export-${DateTime.now().millisecondsSinceEpoch}.png');
     await file.writeAsBytes(data.buffer.asUint8List());
     
-    return file;
-  } finally {
-    entry.remove();
-  }
-}
-
-// Keep the old paginated version for reference but renamed
-Future<File?> _renderAndSavePagedOld(
-  BuildContext context,
-  Widget content, {
-  double width = 480, // 宽度*3
-  double pageHeight = 1600,
-  double pixelRatio = 3.0,
-}) async {
-  final overlay = Overlay.of(context);
-  if (overlay == null) return null;
-  final boundaryKey = GlobalKey();
-  final contentKey = GlobalKey();
-  final controller = ScrollController();
-  
-  // Create a completer to signal when the widget is ready
-  final completer = Completer<void>();
-  
-  late OverlayEntry entry;
-  entry = OverlayEntry(builder: (ctx) {
-    // Schedule a callback after the frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!completer.isCompleted) {
-        completer.complete();
-      }
-    });
-    
-    return Material(
-      type: MaterialType.transparency,
-      child: IgnorePointer(
-        ignoring: true,
-        child: Opacity(
-          opacity: 0.001,
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: RepaintBoundary(
-              key: boundaryKey,
-              child: SizedBox(
-                width: width,
-                height: pageHeight,
-                child: SingleChildScrollView(
-                  controller: controller,
-                  child: KeyedSubtree(key: contentKey, child: content),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  });
-  
-  overlay.insert(entry);
-  
-  try {
-    // Wait for the initial frame to be ready
-    await completer.future;
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    
-    final contentSize = contentKey.currentContext?.size;
-    if (contentSize == null) return null;
-    
-    final totalHeight = contentSize.height;
-    final pages = (totalHeight / pageHeight).ceil().clamp(1, 200);
-    final images = <ui.Image>[];
-    final drawHeights = <int>[];
-    
-    for (int i = 0; i < pages; i++) {
-      final offset = i * pageHeight;
-      controller.jumpTo(offset);
-      
-      // Wait for the scroll to complete and the new content to render
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-      
-      // Force a frame
-      SchedulerBinding.instance.scheduleFrameCallback((_) {});
-      await SchedulerBinding.instance.endOfFrame;
-      
-      final boundary = boundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) break;
-      
-      // Capture with retry logic
-      ui.Image? img;
-      for (int retry = 0; retry < 5; retry++) {
-        try {
-          img = await boundary.toImage(pixelRatio: pixelRatio);
-          break;
-        } catch (e) {
-          // Wait and retry
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          SchedulerBinding.instance.scheduleFrameCallback((_) {});
-          await SchedulerBinding.instance.endOfFrame;
-        }
-      }
-      
-      if (img == null) continue;
-      
-      images.add(img);
-      final drawn = drawHeights.fold<int>(0, (a, b) => a + b);
-      final remaining = (totalHeight * pixelRatio).round() - drawn;
-      final h = remaining <= 0 ? 0 : math.min(img.height, remaining);
-      drawHeights.add(h);
-    }
-    
-    if (images.isEmpty) return null;
-    
-    final composedHeightPx = drawHeights.fold<int>(0, (a, b) => a + b);
-    final widthPx = (width * pixelRatio).round();
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    double y = 0;
-    
-    for (int i = 0; i < images.length; i++) {
-      final ui.Image page = images[i];
-      final int drawH = drawHeights[i];
-      if (drawH <= 0) break;
-      final src = Rect.fromLTWH(0, 0, page.width.toDouble(), drawH.toDouble());
-      final dst = Rect.fromLTWH(0, y, widthPx.toDouble(), drawH.toDouble());
-      canvas.drawImageRect(page, src, dst, Paint());
-      y += drawH.toDouble();
-    }
-    
-    final pic = recorder.endRecording();
-    final img = await pic.toImage(widthPx, composedHeightPx);
-    final data = await img.toByteData(format: ui.ImageByteFormat.png);
-    if (data == null) return null;
-    
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/chat-export-${DateTime.now().millisecondsSinceEpoch}.png');
-    await file.writeAsBytes(data.buffer.asUint8List());
     return file;
   } finally {
     entry.remove();

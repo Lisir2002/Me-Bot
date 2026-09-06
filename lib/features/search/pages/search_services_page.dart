@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/search/search_service.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -91,13 +89,6 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
       } else if (_selectedIndex > index) {
         _selectedIndex--;
       }
-    });
-    _saveChanges();
-  }
-
-  void _selectService(int index) {
-    setState(() {
-      _selectedIndex = index;
     });
     _saveChanges();
   }
@@ -428,37 +419,6 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     );
   }
 
-  IconData _getServiceIcon(SearchServiceOptions service) {
-    if (service is BingLocalOptions) return Lucide.Search;
-    if (service is TavilyOptions) return Lucide.Sparkles;
-    if (service is ExaOptions) return Lucide.Brain;
-    if (service is ZhipuOptions) return Lucide.Languages;
-    if (service is SearXNGOptions) return Lucide.Shield;
-    if (service is LinkUpOptions) return Lucide.Link2;
-    if (service is BraveOptions) return Lucide.Shield;
-    if (service is MetasoOptions) return Lucide.Compass;
-    if (service is JinaOptions) return Lucide.Sparkles;
-    if (service is PerplexityOptions) return Lucide.Search;
-    if (service is BochaOptions) return Lucide.Search;
-    return Lucide.Search;
-  }
-
-  String? _getServiceStatus(SearchServiceOptions service) {
-    final l10n = AppLocalizations.of(context)!;
-    if (service is BingLocalOptions) return null;
-    if (service is TavilyOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is ExaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is ZhipuOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is SearXNGOptions) return service.url.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageUrlRequiredStatus;
-    if (service is LinkUpOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is BraveOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is MetasoOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is OllamaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is JinaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is BochaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    return null;
-  }
-
   // Brand badge for known services using assets/icons; falls back to letter if unknown
   // ignore: unused_element
   Widget _brandBadgeForName(String name, {double size = 20}) => _BrandBadge(name: name, size: size);
@@ -498,15 +458,15 @@ class _BrandBadge extends StatelessWidget {
     final asset = BrandAssets.assetForName(name);
     final bg = isDark ? Colors.white10 : cs.primary.withOpacity(0.1);
     if (asset != null) {
-      if (asset!.endsWith('.svg')) {
-        final isColorful = asset!.contains('color');
+      if (asset.endsWith('.svg')) {
+        final isColorful = asset.contains('color');
         final ColorFilter? tint = (isDark && !isColorful) ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null;
         return Container(
           width: size,
           height: size,
           decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: SvgPicture.asset(asset!, width: size * 0.62, height: size * 0.62, colorFilter: tint),
+          child: SvgPicture.asset(asset, width: size * 0.62, height: size * 0.62, colorFilter: tint),
         );
       } else {
         return Container(
@@ -514,7 +474,7 @@ class _BrandBadge extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: Image.asset(asset!, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain),
+          child: Image.asset(asset, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain),
         );
       }
     }
@@ -1330,18 +1290,12 @@ class _TactileIconButton extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
     this.size = 22,
-    this.haptics = true,
   });
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
   final double size;
-  final bool haptics;
   @override
   State<_TactileIconButton> createState() => _TactileIconButtonState();
 }
@@ -1352,17 +1306,15 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
   Widget build(BuildContext context) {
     final base = widget.color;
     final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
+    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base);
     return Semantics(
       button: true,
-      label: widget.semanticLabel,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
+        onTap: () { Haptics.light(); widget.onTap(); },
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
       ),
     );

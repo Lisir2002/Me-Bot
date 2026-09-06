@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:socks5_proxy/socks_client.dart' as socks;
 
@@ -391,11 +390,6 @@ Widget _sectionCard({required List<Widget> children}) {
       ),
     );
   });
-}
-
-Widget _divider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 12, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
 }
 
 Widget _labeledField(BuildContext context, {required String label, required Widget child}) {

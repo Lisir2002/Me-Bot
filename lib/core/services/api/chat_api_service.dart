@@ -372,10 +372,10 @@ class ChatApiService {
         headers.addAll(_customHeaders(config, modelId));
         if (extraHeaders != null && extraHeaders.isNotEmpty) headers.addAll(extraHeaders);
         final extra = _customBody(config, modelId);
-        if (extra.isNotEmpty) (body as Map<String, dynamic>).addAll(extra);
+        if (extra.isNotEmpty) (body).addAll(extra);
         if (extraBody != null && extraBody.isNotEmpty) {
           (extraBody).forEach((k, v) {
-            (body as Map<String, dynamic>)[k] = (v is String) ? _parseOverrideValue(v) : v;
+            (body)[k] = (v is String) ? _parseOverrideValue(v) : v;
           });
         }
         // Vendor-specific reasoning knobs for chat-completions compatible hosts (non-streaming)
@@ -384,18 +384,18 @@ class ChatApiService {
           if (host.contains('open.bigmodel.cn') || host.contains('bigmodel')) {
             // Zhipu BigModel: thinking: { type: enabled|disabled }
             if (isReasoning) {
-              (body as Map<String, dynamic>)['thinking'] = {'type': off ? 'disabled' : 'enabled'};
+              (body)['thinking'] = {'type': off ? 'disabled' : 'enabled'};
             } else {
-              (body as Map<String, dynamic>).remove('thinking');
+              (body).remove('thinking');
             }
-            (body as Map<String, dynamic>).remove('reasoning_effort');
+            (body).remove('reasoning_effort');
           }
         }
         // Ensure Responses tools use the flattened schema even if supplied via overrides
         try {
-          if (config.useResponseApi == true && (body as Map<String, dynamic>)['tools'] is List) {
-            final raw = ((body as Map<String, dynamic>)['tools'] as List).cast<dynamic>();
-            (body as Map<String, dynamic>)['tools'] = _toResponsesToolsFormat(
+          if (config.useResponseApi == true && (body)['tools'] is List) {
+            final raw = ((body)['tools'] as List).cast<dynamic>();
+            (body)['tools'] = _toResponsesToolsFormat(
               raw.map((e) => (e as Map).cast<String, dynamic>()).toList(),
             );
           }
@@ -571,7 +571,7 @@ class ChatApiService {
       final props = Map<String, dynamic>.from(result['properties'] as Map);
       props.forEach((key, value) {
         if (value is Map) {
-          final propMap = Map<String, dynamic>.from(value as Map);
+          final propMap = Map<String, dynamic>.from(value);
           // print('[ChatApi/Schema] Property $key: type=${propMap['type']}, hasItems=${propMap.containsKey('items')}');
           // If type is array but items is missing, add a permissive items schema
           if (propMap['type'] == 'array' && !propMap.containsKey('items')) {
@@ -602,7 +602,7 @@ class ChatApiService {
       final result = Map<String, dynamic>.from(tool);
       final fn = result['function'];
       if (fn is Map) {
-        final fnMap = Map<String, dynamic>.from(fn as Map);
+        final fnMap = Map<String, dynamic>.from(fn);
         final params = fnMap['parameters'];
         if (params is Map) {
           fnMap['parameters'] = _cleanSchemaForGemini(params as Map<String, dynamic>);
@@ -684,7 +684,7 @@ class ChatApiService {
       final List<Map<String, dynamic>> toolList = [];
       if (tools != null && tools.isNotEmpty) {
         for (final t in tools) {
-          if (t is Map<String, dynamic>) toolList.add(Map<String, dynamic>.from(t));
+          toolList.add(Map<String, dynamic>.from(t));
         }
       }
 
@@ -805,29 +805,29 @@ class ChatApiService {
         final ov = config.modelOverrides[modelId];
         final ws = (ov is Map ? ov['webSearch'] : null);
         if (ws is Map && ws['include_sources'] == true) {
-          (body as Map<String, dynamic>)['include'] = ['web_search_call.action.sources'];
+          (body)['include'] = ['web_search_call.action.sources'];
         }
       } catch (_) {}
       // Save initial Responses context
       try {
-        responsesInitialInput = List<Map<String, dynamic>>.from(((body as Map<String, dynamic>)['input'] as List).map((e) => (e as Map).cast<String, dynamic>()));
+        responsesInitialInput = List<Map<String, dynamic>>.from(((body)['input'] as List).map((e) => (e as Map).cast<String, dynamic>()));
       } catch (_) {
         responsesInitialInput = const <Map<String, dynamic>>[];
       }
       try {
-        if ((body as Map<String, dynamic>)['tools'] is List) {
-          responsesToolsSpec = List<Map<String, dynamic>>.from(((body as Map<String, dynamic>)['tools'] as List).map((e) => (e as Map).cast<String, dynamic>()));
+        if ((body)['tools'] is List) {
+          responsesToolsSpec = List<Map<String, dynamic>>.from(((body)['tools'] as List).map((e) => (e as Map).cast<String, dynamic>()));
         }
       } catch (_) {
         responsesToolsSpec = const <Map<String, dynamic>>[];
       }
       try {
-        responsesInstructions = ((body as Map<String, dynamic>)['instructions'] ?? '').toString();
+        responsesInstructions = ((body)['instructions'] ?? '').toString();
       } catch (_) {
         responsesInstructions = '';
       }
       try {
-        responsesIncludeParam = (body as Map<String, dynamic>)['include'] as List?;
+        responsesIncludeParam = (body)['include'] as List?;
       } catch (_) {
         responsesIncludeParam = null;
       }
@@ -892,83 +892,83 @@ class ChatApiService {
         if (isReasoning) {
           // OpenRouter uses `reasoning.enabled/max_tokens`
           if (off) {
-            (body as Map<String, dynamic>)['reasoning'] = {'enabled': false};
+            (body)['reasoning'] = {'enabled': false};
           } else {
             final obj = <String, dynamic>{'enabled': true};
             if (thinkingBudget != null && thinkingBudget > 0) obj['max_tokens'] = thinkingBudget;
-            (body as Map<String, dynamic>)['reasoning'] = obj;
+            (body)['reasoning'] = obj;
           }
-          (body as Map<String, dynamic>).remove('reasoning_effort');
+          (body).remove('reasoning_effort');
         } else {
-          (body as Map<String, dynamic>).remove('reasoning');
-          (body as Map<String, dynamic>).remove('reasoning_effort');
+          (body).remove('reasoning');
+          (body).remove('reasoning_effort');
         }
       } else if (host.contains('dashscope') || host.contains('aliyun')) {
         // Aliyun DashScope: enable_thinking + thinking_budget
         if (isReasoning) {
-          (body as Map<String, dynamic>)['enable_thinking'] = !off;
+          (body)['enable_thinking'] = !off;
           if (!off && thinkingBudget != null && thinkingBudget > 0) {
-            (body as Map<String, dynamic>)['thinking_budget'] = thinkingBudget;
+            (body)['thinking_budget'] = thinkingBudget;
           } else {
-            (body as Map<String, dynamic>).remove('thinking_budget');
+            (body).remove('thinking_budget');
           }
         } else {
-          (body as Map<String, dynamic>).remove('enable_thinking');
-          (body as Map<String, dynamic>).remove('thinking_budget');
+          (body).remove('enable_thinking');
+          (body).remove('thinking_budget');
         }
-        (body as Map<String, dynamic>).remove('reasoning_effort');
+        (body).remove('reasoning_effort');
       } else if (host.contains('open.bigmodel.cn') || host.contains('bigmodel')) {
         // Zhipu (BigModel): thinking.type enabled/disabled
         if (isReasoning) {
-          (body as Map<String, dynamic>)['thinking'] = {'type': off ? 'disabled' : 'enabled'};
+          (body)['thinking'] = {'type': off ? 'disabled' : 'enabled'};
         } else {
-          (body as Map<String, dynamic>).remove('thinking');
+          (body).remove('thinking');
         }
-        (body as Map<String, dynamic>).remove('reasoning_effort');
+        (body).remove('reasoning_effort');
       } else if (host.contains('ark.cn-beijing.volces.com') || host.contains('volc') || host.contains('ark')) {
         // Volc Ark: thinking: { type: enabled|disabled }
         if (isReasoning) {
-          (body as Map<String, dynamic>)['thinking'] = {'type': off ? 'disabled' : 'enabled'};
+          (body)['thinking'] = {'type': off ? 'disabled' : 'enabled'};
         } else {
-          (body as Map<String, dynamic>).remove('thinking');
+          (body).remove('thinking');
         }
-        (body as Map<String, dynamic>).remove('reasoning_effort');
+        (body).remove('reasoning_effort');
       } else if (host.contains('intern-ai') || host.contains('intern') || host.contains('chat.intern-ai.org.cn')) {
         // InternLM (InternAI): thinking_mode boolean switch
         if (isReasoning) {
-          (body as Map<String, dynamic>)['thinking_mode'] = !off;
+          (body)['thinking_mode'] = !off;
         } else {
-          (body as Map<String, dynamic>).remove('thinking_mode');
+          (body).remove('thinking_mode');
         }
-        (body as Map<String, dynamic>).remove('reasoning_effort');
+        (body).remove('reasoning_effort');
       } else if (host.contains('siliconflow')) {
         // SiliconFlow: OFF -> enable_thinking: false; otherwise omit
         if (isReasoning) {
           if (off) {
-            (body as Map<String, dynamic>)['enable_thinking'] = false;
+            (body)['enable_thinking'] = false;
           } else {
-            (body as Map<String, dynamic>).remove('enable_thinking');
+            (body).remove('enable_thinking');
           }
         } else {
-          (body as Map<String, dynamic>).remove('enable_thinking');
+          (body).remove('enable_thinking');
         }
-        (body as Map<String, dynamic>).remove('reasoning_effort');
+        (body).remove('reasoning_effort');
       } else if (host.contains('deepseek') || modelId.toLowerCase().contains('deepseek')) {
         if (isReasoning) {
           if (off) {
-            (body as Map<String, dynamic>)['reasoning_content'] = false;
-            (body as Map<String, dynamic>).remove('reasoning_budget');
+            (body)['reasoning_content'] = false;
+            (body).remove('reasoning_budget');
           } else {
-            (body as Map<String, dynamic>)['reasoning_content'] = true;
+            (body)['reasoning_content'] = true;
             if (thinkingBudget != null && thinkingBudget > 0) {
-              (body as Map<String, dynamic>)['reasoning_budget'] = thinkingBudget;
+              (body)['reasoning_budget'] = thinkingBudget;
             } else {
-              (body as Map<String, dynamic>).remove('reasoning_budget');
+              (body).remove('reasoning_budget');
             }
           }
         } else {
-          (body as Map<String, dynamic>).remove('reasoning_content');
-          (body as Map<String, dynamic>).remove('reasoning_budget');
+          (body).remove('reasoning_content');
+          (body).remove('reasoning_budget');
         }
       }
     }
@@ -987,17 +987,17 @@ class ChatApiService {
     if (config.useResponseApi != true) {
       final h = Uri.tryParse(config.baseUrl)?.host.toLowerCase() ?? '';
       if (!h.contains('mistral.ai')) {
-        (body as Map<String, dynamic>)['stream_options'] = {'include_usage': true};
+        (body)['stream_options'] = {'include_usage': true};
       }
     }
     // Merge custom body keys (override takes precedence)
     final extraBodyCfg = _customBody(config, modelId);
     if (extraBodyCfg.isNotEmpty) {
-      (body as Map<String, dynamic>).addAll(extraBodyCfg);
+      (body).addAll(extraBodyCfg);
     }
     if (extraBody != null && extraBody.isNotEmpty) {
       extraBody.forEach((k, v) {
-        (body as Map<String, dynamic>)[k] = (v is String) ? _parseOverrideValue(v) : v;
+        (body)[k] = (v is String) ? _parseOverrideValue(v) : v;
       });
     }
     request.body = jsonEncode(body);
@@ -1073,7 +1073,7 @@ class ChatApiService {
               final name = m['__name'] as String;
               final id = m['__id'] as String;
               final args = (m['__args'] as Map<String, dynamic>);
-              final res = await onToolCall(name, args) ?? '';
+              final res = await onToolCall(name, args);
               results.add({'tool_call_id': id, 'content': res});
               resultsInfo.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
             }
@@ -1249,7 +1249,7 @@ class ChatApiService {
                         final completion = (u['completion_tokens'] ?? 0) as int;
                         final cached = (u['prompt_tokens_details']?['cached_tokens'] ?? 0) as int? ?? 0;
                         usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: prompt, completionTokens: completion, cachedTokens: cached));
-                        totalTokens = usage!.totalTokens;
+                        totalTokens = usage.totalTokens;
                       }
                       if (rc is String && rc.isNotEmpty) {
                         yield ChatStreamChunk(content: '', reasoning: rc, isDone: false, totalTokens: 0, usage: usage);
@@ -1331,7 +1331,7 @@ class ChatApiService {
               }
 
               // After this follow-up round finishes: if tool calls again, execute and loop
-              if ((finishReason2 == 'tool_calls' || toolAcc2.isNotEmpty) && onToolCall != null) {
+              if ((finishReason2 == 'tool_calls' || toolAcc2.isNotEmpty)) {
                 final calls2 = <Map<String, dynamic>>[];
                 final callInfos2 = <ToolCallInfo>[];
                 final toolMsgs2 = <Map<String, dynamic>>[];
@@ -1353,7 +1353,7 @@ class ChatApiService {
                   final name = m['__name'] as String;
                   final id = m['__id'] as String;
                   final args = (m['__args'] as Map<String, dynamic>);
-                  final res = await onToolCall(name, args) ?? '';
+                  final res = await onToolCall(name, args);
                   results2.add({'tool_call_id': id, 'content': res});
                   resultsInfo2.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
                 }
@@ -1382,8 +1382,6 @@ class ChatApiService {
                 return;
               }
             }
-            // Should not reach here
-            return;
           }
 
           final approxTotal = approxPromptTokens + _approxTokensFromChars(approxCompletionChars);
@@ -1465,7 +1463,7 @@ class ChatApiService {
                 final inTok = (u['input_tokens'] ?? 0) as int;
                 final outTok = (u['output_tokens'] ?? 0) as int;
                 usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: inTok, completionTokens: outTok));
-                totalTokens = usage!.totalTokens;
+                totalTokens = usage.totalTokens;
               }
               // Extract web search citations from final output (Responses API)
               try {
@@ -1553,7 +1551,7 @@ class ChatApiService {
                   final nm = m['__name'] as String;
                   final id2 = m['__id'] as String;
                   final args = (m['__args'] as Map<String, dynamic>);
-                  final res = await onToolCall(nm, args) ?? '';
+                  final res = await onToolCall(nm, args);
                   resultsInfo.add(ToolResultInfo(id: id2, name: nm, arguments: args, content: res));
                   followUpOutputs.add({'type': 'function_call_output', 'call_id': id2, 'output': res});
                 }
@@ -1672,7 +1670,7 @@ class ChatApiService {
                             final inTok = (u2['input_tokens'] ?? 0) as int;
                             final outTok = (u2['output_tokens'] ?? 0) as int;
                             usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: inTok, completionTokens: outTok));
-                            totalTokens = usage!.totalTokens;
+                            totalTokens = usage.totalTokens;
                           }
                           // capture output items
                           final out2 = o['response']?['output'];
@@ -1717,7 +1715,7 @@ class ChatApiService {
                     final nm = m['__name'] as String;
                     final id2 = m['__id'] as String;
                     final args2 = (m['__args'] as Map<String, dynamic>);
-                    final res2 = await onToolCall(nm, args2) ?? '';
+                    final res2 = await onToolCall(nm, args2);
                     resultsInfo2.add(ToolResultInfo(id: id2, name: nm, arguments: args2, content: res2));
                     followUpOutputs2.add({'type': 'function_call_output', 'call_id': id2, 'output': res2});
                   }
@@ -1755,7 +1753,7 @@ class ChatApiService {
                   final inTok = (u['input_tokens'] ?? 0) as int;
                   final outTok = (u['output_tokens'] ?? 0) as int;
                   usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: inTok, completionTokens: outTok));
-                  totalTokens = usage!.totalTokens;
+                  totalTokens = usage.totalTokens;
                 }
               }
             }
@@ -1935,11 +1933,11 @@ class ChatApiService {
               final completion = (u['completion_tokens'] ?? 0) as int;
               final cached = (u['prompt_tokens_details']?['cached_tokens'] ?? 0) as int? ?? 0;
               usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: prompt, completionTokens: completion, cachedTokens: cached));
-              totalTokens = usage!.totalTokens;
+              totalTokens = usage.totalTokens;
             }
           }
 
-          if (content.isNotEmpty || (reasoning != null && reasoning!.isNotEmpty)) {
+          if (content.isNotEmpty || (reasoning != null && reasoning.isNotEmpty)) {
             final approxTotal = approxPromptTokens + _approxTokensFromChars(approxCompletionChars);
             yield ChatStreamChunk(
               content: content,
@@ -1989,7 +1987,7 @@ class ChatApiService {
               final name = m['__name'] as String;
               final id = m['__id'] as String;
               final args = (m['__args'] as Map<String, dynamic>);
-              final res = await onToolCall(name, args) ?? '';
+              final res = await onToolCall(name, args);
               results.add({'tool_call_id': id, 'content': res});
               resultsInfo.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
             }
@@ -2152,7 +2150,7 @@ class ChatApiService {
                         final completion = (u['completion_tokens'] ?? 0) as int;
                         final cached = (u['prompt_tokens_details']?['cached_tokens'] ?? 0) as int? ?? 0;
                         usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: prompt, completionTokens: completion, cachedTokens: cached));
-                        totalTokens = usage!.totalTokens;
+                        totalTokens = usage.totalTokens;
                       }
                       if (rc is String && rc.isNotEmpty) {
                         yield ChatStreamChunk(content: '', reasoning: rc, isDone: false, totalTokens: 0, usage: usage);
@@ -2252,7 +2250,7 @@ class ChatApiService {
                   } catch (_) {}
                 }
               }
-              if ((finishReason2 == 'tool_calls' || toolAcc2.isNotEmpty) && onToolCall != null) {
+              if ((finishReason2 == 'tool_calls' || toolAcc2.isNotEmpty)) {
                 final calls2 = <Map<String, dynamic>>[];
                 final callInfos2 = <ToolCallInfo>[];
                 final toolMsgs2 = <Map<String, dynamic>>[];
@@ -2274,7 +2272,7 @@ class ChatApiService {
                   final name = m['__name'] as String;
                   final id = m['__id'] as String;
                   final args = (m['__args'] as Map<String, dynamic>);
-                  final res = await onToolCall(name, args) ?? '';
+                  final res = await onToolCall(name, args);
                   results2.add({'tool_call_id': id, 'content': res});
                   resultsInfo2.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
                 }
@@ -2338,7 +2336,7 @@ class ChatApiService {
                   final name = m['__name'] as String;
                   final id = m['__id'] as String;
                   final args = (m['__args'] as Map<String, dynamic>);
-                  final res = await onToolCall(name, args) ?? '';
+                  final res = await onToolCall(name, args);
                   results.add({'tool_call_id': id, 'content': res});
                   resultsInfo.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
                 }
@@ -2494,7 +2492,7 @@ class ChatApiService {
                             final completion = (u['completion_tokens'] ?? 0) as int;
                             final cached = (u['prompt_tokens_details']?['cached_tokens'] ?? 0) as int? ?? 0;
                             usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: prompt, completionTokens: completion, cachedTokens: cached));
-                            totalTokens = usage!.totalTokens;
+                            totalTokens = usage.totalTokens;
                           }
                           if (rc is String && rc.isNotEmpty) {
                             yield ChatStreamChunk(content: '', reasoning: rc, isDone: false, totalTokens: 0, usage: usage);
@@ -2594,7 +2592,7 @@ class ChatApiService {
                       } catch (_) {}
                     }
                   }
-                  if ((finishReason2 == 'tool_calls' || toolAcc2.isNotEmpty) && onToolCall != null) {
+                  if ((finishReason2 == 'tool_calls' || toolAcc2.isNotEmpty)) {
                     final calls2 = <Map<String, dynamic>>[];
                     final callInfos2 = <ToolCallInfo>[];
                     final toolMsgs2 = <Map<String, dynamic>>[];
@@ -2616,7 +2614,7 @@ class ChatApiService {
                       final name = m['__name'] as String;
                       final id = m['__id'] as String;
                       final args = (m['__args'] as Map<String, dynamic>);
-                      final res = await onToolCall(name, args) ?? '';
+                      final res = await onToolCall(name, args);
                       results2.add({'tool_call_id': id, 'content': res});
                       resultsInfo2.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
                     }
@@ -2657,6 +2655,8 @@ class ChatApiService {
           }
 
           // If model finished with tool_calls, execute them and follow-up
+          // Disabled follow-up tool-call branch (superseded by live loop above). Kept for reference.
+          // ignore: dead_code
           if (false && config.useResponseApi != true && finishReason == 'tool_calls' && onToolCall != null) {
             // Build messages for follow-up
             final calls = <Map<String, dynamic>>[];
@@ -2695,7 +2695,7 @@ class ChatApiService {
               final name = m['__name'] as String;
               final id = m['__id'] as String;
               final args = (m['__args'] as Map<String, dynamic>);
-              final res = await onToolCall(name, args) ?? '';
+              final res = await onToolCall(name, args);
               results.add({'tool_call_id': id, 'content': res});
               resultsInfo.add(ToolResultInfo(id: id, name: name, arguments: args, content: res));
             }
@@ -2871,7 +2871,7 @@ class ChatApiService {
     if (anthropicTools != null && anthropicTools.isNotEmpty) allTools.addAll(anthropicTools);
     if (tools != null && tools.isNotEmpty) {
       for (final t in tools) {
-        if (t is Map && t['type'] is String && (t['type'] as String).startsWith('web_search_')) {
+        if (t['type'] is String && (t['type'] as String).startsWith('web_search_')) {
           allTools.add(t);
         }
       }
@@ -2930,10 +2930,10 @@ class ChatApiService {
           },
       };
       final extraClaude = _customBody(config, modelId);
-      if (extraClaude.isNotEmpty) (body as Map<String, dynamic>).addAll(extraClaude);
+      if (extraClaude.isNotEmpty) (body).addAll(extraClaude);
       if (extraBody != null && extraBody.isNotEmpty) {
         extraBody.forEach((k, v) {
-          (body as Map<String, dynamic>)[k] = (v is String) ? _parseOverrideValue(v) : v;
+          (body)[k] = (v is String) ? _parseOverrideValue(v) : v;
         });
       }
 
@@ -3114,7 +3114,7 @@ class ChatApiService {
                 }
                 // Emit tool result to UI (placeholder was emitted at start)
                 if (onToolCall != null) {
-                  final res = await onToolCall(name, args) ?? '';
+                  final res = await onToolCall(name, args);
                   _toolResultsContent[id] = res;
                   yield ChatStreamChunk(content: '', isDone: false, totalTokens: roundTokens, toolResults: [ToolResultInfo(id: id, name: name, arguments: args, content: res)], usage: usage);
                 }
@@ -3134,7 +3134,7 @@ class ChatApiService {
                 final inTok = (u['input_tokens'] ?? 0) as int;
                 final outTok = (u['output_tokens'] ?? 0) as int;
                 usage = (usage ?? const TokenUsage()).merge(TokenUsage(promptTokens: inTok, completionTokens: outTok));
-                roundTokens = usage!.totalTokens;
+                roundTokens = usage.totalTokens;
               }
               // Capture stop reason to handle pause_turn for server tools
               try {
@@ -3158,11 +3158,11 @@ class ChatApiService {
       }
 
       // Merge usage across rounds for final token count
-      if (usage != null) totalUsage = (totalUsage ?? const TokenUsage()).merge(usage!);
+      if (usage != null) totalUsage = (totalUsage ?? const TokenUsage()).merge(usage);
 
       // If no client tool calls, decide whether to continue (pause_turn/server tool) or finalize
       if (_anthToolUse.isEmpty) {
-        final hadServerTool = assistantBlocks.any((b) => (b is Map) && (b['type'] == 'tool_use' || b['type'] == 'text')) && _srvIndexToId.isNotEmpty;
+        final hadServerTool = assistantBlocks.any((b) => (b['type'] == 'tool_use' || b['type'] == 'text')) && _srvIndexToId.isNotEmpty;
         final sr = _lastStopReason ?? '';
         if (sr == 'pause_turn' || hadServerTool) {
           // Continue this turn with assistant content only
@@ -3187,7 +3187,7 @@ class ChatApiService {
         try { args = (jsonDecode((entry.value['args'] ?? '{}') as String) as Map).cast<String, dynamic>(); } catch (_) { args = <String, dynamic>{}; }
         String res = _toolResultsContent[id] ?? '';
         if (res.isEmpty && onToolCall != null) {
-          res = await onToolCall(name, args) ?? '';
+          res = await onToolCall(name, args);
         }
         toolResultsBlocks.add({
           'type': 'tool_result',
@@ -3414,10 +3414,10 @@ class ChatApiService {
       if (extraHeaders != null && extraHeaders.isNotEmpty) headers.addAll(extraHeaders);
       request.headers.addAll(headers);
       final extra = _customBody(config, modelId);
-      if (extra.isNotEmpty) (body as Map<String, dynamic>).addAll(extra);
+      if (extra.isNotEmpty) (body).addAll(extra);
       if (extraBody != null && extraBody.isNotEmpty) {
         extraBody.forEach((k, v) {
-          (body as Map<String, dynamic>)[k] = (v is String) ? _parseOverrideValue(v) : v;
+          (body)[k] = (v is String) ? _parseOverrideValue(v) : v;
         });
       }
       request.body = jsonEncode(body);
@@ -3457,7 +3457,7 @@ class ChatApiService {
                 completionTokens: (um['candidatesTokenCount'] ?? 0) as int,
                 totalTokens: (um['totalTokenCount'] ?? 0) as int,
               ));
-              totalTokens = usage!.totalTokens;
+              totalTokens = usage.totalTokens;
             }
 
             final candidates = obj['candidates'];
@@ -3531,7 +3531,7 @@ class ChatApiService {
                     yield ChatStreamChunk(content: '', isDone: false, totalTokens: totalTokens, usage: usage, toolCalls: [ToolCallInfo(id: id, name: name, arguments: args)]);
                     String resText = '';
                     if (onToolCall != null) {
-                      resText = await onToolCall(name, args) ?? '';
+                      resText = await onToolCall(name, args);
                       yield ChatStreamChunk(content: '', isDone: false, totalTokens: totalTokens, usage: usage, toolResults: [ToolResultInfo(id: id, name: name, arguments: args, content: resText)]);
                     }
                     calls.add({'id': id, 'name': name, 'args': args, 'result': resText});

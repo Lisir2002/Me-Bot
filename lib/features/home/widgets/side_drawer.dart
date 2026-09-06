@@ -283,7 +283,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
               );
               if (deletingCurrent || chatService.currentConversationId == null) {
                 if (nextId != null) {
-                  widget.onSelectConversation?.call(nextId!);
+                  widget.onSelectConversation?.call(nextId);
                 } else {
                   widget.onNewConversation?.call();
                 }
@@ -405,7 +405,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                         );
                         if (deletingCurrent || chatService.currentConversationId == null) {
                           if (nextId != null) {
-                            widget.onSelectConversation?.call(nextId!);
+                            widget.onSelectConversation?.call(nextId);
                           } else {
                             widget.onNewConversation?.call();
                           }
@@ -558,7 +558,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
       for (final k in keys)
         _ChatGroup(
           label: _dateLabel(context, k),
-          items: (map[k]!..sort((a, b) => b.created.compareTo(a.created)))!,
+          items: (map[k]!..sort((a, b) => b.created.compareTo(a.created))),
         )
     ];
   }
@@ -1783,7 +1783,7 @@ extension on _SideDrawerState {
         await context.read<UserProvider>().setAvatarFilePath(file.path);
         return;
       }
-    } on PlatformException catch (e) {
+    } on PlatformException {
       // Gracefully degrade when plugin channel isn't available or permission denied.
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;

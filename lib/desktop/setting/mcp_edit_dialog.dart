@@ -494,7 +494,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
           child: AnimatedBuilder(
             animation: _tab!,
             builder: (context, _) => _SegTabBar(
-              controller: _tab!,
+              controller: _tab,
               tabs: [l10n.mcpServerEditSheetTabBasic, l10n.mcpServerEditSheetTabTools],
             ),
           ),
@@ -506,7 +506,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
             child: isEdit
                 ? AnimatedBuilder(
                     animation: _tab!,
-                    builder: (context, _) => _tab!.index == 0 ? _basicForm() : _toolsTab(),
+                    builder: (context, _) => _tab.index == 0 ? _basicForm() : _toolsTab(),
                   )
                 : _basicForm(),
           ),

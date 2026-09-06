@@ -541,7 +541,7 @@ class _BackupPageState extends State<BackupPage> {
     // iPad: anchor popover to the overlay's center
     Rect rect;
     final overlay = Overlay.of(context);
-    final ro = overlay?.context.findRenderObject();
+    final ro = overlay.context.findRenderObject();
     if (ro is RenderBox && ro.hasSize) {
       final center = ro.size.center(Offset.zero);
       final global = ro.localToGlobal(center);

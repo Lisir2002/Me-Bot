@@ -58,7 +58,6 @@ import 'dart:ui' as ui;
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import '../../../core/services/search/search_tool_service.dart';
 import '../../../utils/markdown_media_sanitizer.dart';
@@ -143,7 +142,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
     if (node is! Map) return node;
 
-    final m = Map<String, dynamic>.from(node as Map);
+    final m = Map<String, dynamic>.from(node);
     m.remove(r'$schema');
     if (m.containsKey('const')) {
       final v = m['const'];
@@ -1047,7 +1046,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
       final picker = ImagePicker();
       final files = await picker.pickMultiImage();
-      if (files == null || files.isEmpty) return;
+      if (files.isEmpty) return;
       final paths = await _copyPickedFiles(files);
       if (paths.isNotEmpty) {
         _mediaController.addImages(paths);
@@ -1537,7 +1536,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 你可以在和用户闲聊的时候暗示用户你能记住东西。
 ''');
         if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + buf.toString();
+          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + buf.toString();
         } else {
           apiMessages.insert(0, {'role': 'system', 'content': buf.toString()});
         }
@@ -1562,7 +1561,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           }
           sb.writeln('</recent_chats>');
           if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-            apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + sb.toString();
+            apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + sb.toString();
           } else {
             apiMessages.insert(0, {'role': 'system', 'content': sb.toString()});
           }
@@ -1590,7 +1589,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (settings.searchEnabled && !hasBuiltInSearch) {
       final prompt = SearchToolService.getSystemPrompt();
       if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-        apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + prompt;
+        apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + prompt;
       } else {
         apiMessages.insert(0, {'role': 'system', 'content': prompt});
       }
@@ -1601,7 +1600,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (lmEnabled) {
         final lp = await LearningModeStore.getPrompt();
         if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + lp;
+          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + lp;
         } else {
           apiMessages.insert(0, {'role': 'system', 'content': lp});
         }
@@ -2031,7 +2030,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 parts[idx] = ToolUIPart(
                   id: parts[idx].id,
                   toolName: parts[idx].toolName,
-                  arguments: (r.arguments is Map && (r.arguments as Map).isNotEmpty)
+                  arguments: ((r.arguments as Map).isNotEmpty)
                       ? Map<String, dynamic>.from(r.arguments)
                       : parts[idx].arguments,
                   content: r.content,
@@ -2418,7 +2417,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         final g = (_messages[i].groupId ?? _messages[i].id);
         keepGroups.add(g);
       }
-      if (targetGroupId != null) keepGroups.add(targetGroupId!);
+      if (targetGroupId != null) keepGroups.add(targetGroupId);
 
       final trailing = _messages.sublist(lastKeep + 1);
       final removeIds = <String>[];
@@ -2560,7 +2559,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 你可以在和用户闲聊的时候暗示用户你能记住东西。
 ''');
         if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + buf.toString();
+          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + buf.toString();
         } else {
           apiMessages.insert(0, {'role': 'system', 'content': buf.toString()});
         }
@@ -2585,7 +2584,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           }
           sb.writeln('</recent_chats>');
           if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-            apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + sb.toString();
+            apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + sb.toString();
           } else {
             apiMessages.insert(0, {'role': 'system', 'content': sb.toString()});
           }
@@ -2596,7 +2595,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (settings.searchEnabled) {
       final prompt = SearchToolService.getSystemPrompt();
       if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-        apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + prompt;
+        apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + prompt;
       } else {
         apiMessages.insert(0, {'role': 'system', 'content': prompt});
       }
@@ -2607,7 +2606,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (lmEnabled) {
         final lp = await LearningModeStore.getPrompt();
         if (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system') {
-          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '') as String) + '\n\n' + lp;
+          apiMessages[0]['content'] = ((apiMessages[0]['content'] ?? '')) + '\n\n' + lp;
         } else {
           apiMessages.insert(0, {'role': 'system', 'content': lp});
         }
@@ -4806,7 +4805,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 // Desktop: title and model chip in a single row; Tablet can keep same for consistency
                 final String? brandAsset = (modelDisplay != null
                         ? (BrandAssets.assetForName(modelDisplay))
-                        : null) ?? (providerName != null ? BrandAssets.assetForName(providerName!) : null);
+                        : null) ?? (providerName != null ? BrandAssets.assetForName(providerName) : null);
 
                 Widget? capsule;
                 String? capsuleLabel;
@@ -4848,7 +4847,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             // Allow label to ellipsize within the chip
                             Flexible(
                               child: AnimatedTextSwap(
-                                text: capsuleLabel!,
+                                text: capsuleLabel,
                                 style: TextStyle(
                                   fontSize: 12,
                                   height: 1.1,
@@ -4904,7 +4903,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             ),
                             child: KeyedSubtree(
                               key: ValueKey('cap:${capsuleLabel ?? ''}'),
-                              child: capsule!,
+                              child: capsule,
                             ),
                           ),
                         ),

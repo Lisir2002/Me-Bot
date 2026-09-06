@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import 'package:provider/provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../widgets/model_select_sheet.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:characters/characters.dart';
@@ -19,19 +17,6 @@ class DefaultModelPage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
     final l10n = AppLocalizations.of(context)!;
-
-    String displayText({String? providerKey, String? modelId, String? fbProvider, String? fbModel}) {
-      // If not explicitly set, use current model text
-      if (providerKey == null || modelId == null) return l10n.defaultModelPageUseCurrentModel;
-      try {
-        final cfg = settings.getProviderConfig(providerKey);
-        final ov = cfg.modelOverrides[modelId] as Map?;
-        final modelDisplay = (ov != null && (ov['name'] as String?)?.isNotEmpty == true) ? (ov['name'] as String) : modelId;
-        return modelDisplay;
-      } catch (_) {
-        return fbModel ?? providerKey;
-      }
-    }
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -434,50 +419,6 @@ class _BrandAvatar extends StatelessWidget {
 
 // --- iOS-style helpers ---
 
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
-
-Widget _iosDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
 class _TactileIconButton extends StatefulWidget {
   const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.onLongPress, this.semanticLabel, this.size = 22, this.haptics = true});
   final IconData icon; final Color color; final VoidCallback onTap; final VoidCallback? onLongPress; final String? semanticLabel; final double size; final bool haptics;
@@ -503,39 +444,6 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
       ),
     );
   }
-}
-
-Widget _iosNavRow(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  String? detailText,
-  Widget? accessory,
-  VoidCallback? onTap,
-}) {
-  final cs = Theme.of(context).colorScheme; final interactive = onTap != null;
-  return _TactileRow(
-    onTap: onTap, haptics: true,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.8);
-      return _AnimatedPressColor(
-        pressed: pressed, base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            child: Row(children: [
-              SizedBox(width: 36, child: Icon(icon, size: 20, color: c)),
-              const SizedBox(width: 12),
-              Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c), maxLines: 1, overflow: TextOverflow.ellipsis)),
-              if (detailText != null) Padding(padding: const EdgeInsets.only(right: 6), child: Text(detailText, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)), maxLines: 1, overflow: TextOverflow.ellipsis)),
-              if (accessory != null) accessory,
-              if (interactive) Icon(Lucide.ChevronRight, size: 16, color: c),
-            ]),
-          );
-        },
-      );
-    },
-  );
 }
 
 class _TactileRow extends StatefulWidget {

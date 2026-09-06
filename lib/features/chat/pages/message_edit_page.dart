@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/chat_message.dart';
-import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 
 class MessageEditPage extends StatefulWidget {

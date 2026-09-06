@@ -268,7 +268,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
       Rect anchor;
       try {
         final overlay = Overlay.of(context);
-        final ro = overlay?.context.findRenderObject();
+        final ro = overlay.context.findRenderObject();
         if (ro is RenderBox && ro.hasSize) {
           final center = ro.size.center(Offset.zero);
           final global = ro.localToGlobal(center);
@@ -329,7 +329,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         if (res.type != ResultType.done) {
           showAppSnackBar(
             context,
-            message: l10n.imageViewerPageShareFailedOpenFile(res.message ?? res.type.name),
+            message: l10n.imageViewerPageShareFailedOpenFile(res.message),
             type: NotificationType.error,
           );
         }
@@ -339,7 +339,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         if (res.type != ResultType.done) {
           showAppSnackBar(
             context,
-            message: l10n.imageViewerPageShareFailedOpenFile(res.message ?? res.type.name),
+            message: l10n.imageViewerPageShareFailedOpenFile(res.message),
             type: NotificationType.error,
           );
         }
@@ -544,11 +544,6 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
     if (_bgOpacity >= 0.5) return Colors.white;
     final brightness = Theme.of(context).brightness;
     return brightness == Brightness.dark ? Colors.white : Colors.black;
-  }
-
-  double _currentScale() {
-    if (_index < 0 || _index >= _zoomCtrls.length) return 1.0;
-    return _zoomCtrls[_index].value.getMaxScaleOnAxis();
   }
 
   Color _smartIconColorForKey(BuildContext context, GlobalKey key) {
@@ -757,21 +752,6 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
       if (mounted) setState(() => _saving = false);
     }
   }
-}
-
-Route _buildFancyRoute(Widget page) {
-  return PageRouteBuilder(
-    pageBuilder: (_, __, ___) => page,
-    transitionDuration: const Duration(milliseconds: 260),
-    reverseTransitionDuration: const Duration(milliseconds: 220),
-    transitionsBuilder: (context, anim, sec, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-      return FadeTransition(
-        opacity: curved,
-        child: ScaleTransition(scale: Tween<double>(begin: 0.98, end: 1).animate(curved), child: child),
-      );
-    },
-  );
 }
 
 class _GlassCircleButton extends StatefulWidget {

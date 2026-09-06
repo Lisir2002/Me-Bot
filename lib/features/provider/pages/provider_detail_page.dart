@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../model/widgets/model_detail_sheet.dart';
@@ -18,7 +17,6 @@ import '../widgets/share_provider_sheet.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
-import '../../../shared/widgets/ios_checkbox.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import 'multi_key_manager_page.dart';
 import 'provider_network_page.dart';
@@ -51,8 +49,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   bool _vertexAI = false; // google
   bool _showApiKey = false; // toggle visibility
   bool _multiKeyEnabled = false; // single/multi key mode
-  // network proxy (per provider)
-  bool _proxyEnabled = false;
   final _proxyHostCtrl = TextEditingController();
   final _proxyPortCtrl = TextEditingController(text: '8080');
   final _proxyUserCtrl = TextEditingController();
@@ -75,7 +71,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     _projectCtrl.text = _cfg.projectId ?? '';
     _saJsonCtrl.text = _cfg.serviceAccountJson ?? '';
     // proxy
-    _proxyEnabled = _cfg.proxyEnabled ?? false;
     _proxyHostCtrl.text = _cfg.proxyHost ?? '';
     _proxyPortCtrl.text = _cfg.proxyPort ?? '8080';
     _proxyUserCtrl.text = _cfg.proxyUsername ?? '';
@@ -454,7 +449,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               final settings = context.read<SettingsProvider>();
               final latest = settings.getProviderConfig(widget.keyName, defaultName: widget.displayName);
               setState(() {
-                _proxyEnabled = latest.proxyEnabled ?? false;
                 _proxyHostCtrl.text = latest.proxyHost ?? '';
                 _proxyPortCtrl.text = latest.proxyPort ?? '8080';
               });
@@ -796,24 +790,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
 
   // Legacy network tab removed (replaced by ProviderNetworkPage)
 
-  Widget _switchRow({required IconData icon, required String title, required bool value, required ValueChanged<bool> onChanged}) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(color: cs.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
-          alignment: Alignment.center,
-          margin: const EdgeInsets.only(right: 12),
-          child: Icon(icon, size: 20, color: cs.primary),
-        ),
-        Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
-        IosSwitch(value: value, onChanged: onChanged),
-      ],
-    );
-  }
-
   Widget _inputRow(BuildContext context, {required String label, required TextEditingController controller, String? hint, bool obscure = false, bool enabled = true, Widget? suffix, ValueChanged<String>? onChanged}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
@@ -851,20 +827,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _checkboxRow(BuildContext context, {required String title, required bool value, required ValueChanged<bool> onChanged}) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: () => onChanged(!value),
-      child: Row(
-        children: [
-          // iOS-style circular checkbox
-          IosCheckbox(value: value, onChanged: onChanged),
-          Text(title, style: TextStyle(fontSize: 14, color: cs.onSurface)),
-        ],
-      ),
     );
   }
 
@@ -934,7 +896,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
         case ProviderKind.claude:
           return 'Claude';
         case ProviderKind.openai:
-        default:
           return 'OpenAI';
       }
     }
@@ -1179,129 +1140,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   }
 
   // _saveNetwork moved to ProviderNetworkPage
-
-  Widget _buildProviderTypeSelector(BuildContext context, ColorScheme cs, AppLocalizations l10n) {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _kind = ProviderKind.openai;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: _kind == ProviderKind.openai 
-                    ? cs.primary.withOpacity(0.15) 
-                    : Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.white10 
-                        : const Color(0xFFF7F7F9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _kind == ProviderKind.openai 
-                      ? cs.primary.withOpacity(0.5) 
-                      : cs.outlineVariant.withOpacity(0.2),
-                  width: _kind == ProviderKind.openai ? 2 : 1,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'OpenAI',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: _kind == ProviderKind.openai ? FontWeight.w600 : FontWeight.w500,
-                      color: _kind == ProviderKind.openai ? cs.primary : cs.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _kind = ProviderKind.google;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: _kind == ProviderKind.google 
-                    ? cs.primary.withOpacity(0.15) 
-                    : Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.white10 
-                        : const Color(0xFFF7F7F9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _kind == ProviderKind.google 
-                      ? cs.primary.withOpacity(0.5) 
-                      : cs.outlineVariant.withOpacity(0.2),
-                  width: _kind == ProviderKind.google ? 2 : 1,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Gemini',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: _kind == ProviderKind.google ? FontWeight.w600 : FontWeight.w500,
-                      color: _kind == ProviderKind.google ? cs.primary : cs.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _kind = ProviderKind.claude;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: _kind == ProviderKind.claude 
-                    ? cs.primary.withOpacity(0.15) 
-                    : Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.white10 
-                        : const Color(0xFFF7F7F9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _kind == ProviderKind.claude 
-                      ? cs.primary.withOpacity(0.5) 
-                      : cs.outlineVariant.withOpacity(0.2),
-                  width: _kind == ProviderKind.claude ? 2 : 1,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Claude',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: _kind == ProviderKind.claude ? FontWeight.w600 : FontWeight.w500,
-                      color: _kind == ProviderKind.claude ? cs.primary : cs.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Future<void> _showModelPicker(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
@@ -1684,43 +1522,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       },
     );
   }
-
-  Widget _capPill(BuildContext context, IconData icon, String label) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(color: cs.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(999)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 12, color: cs.primary),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: cs.primary)),
-      ]),
-    );
-  }
-}
-
-Widget _buildDismissBg(BuildContext context, {required bool alignStart}) {
-  final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
-  return Container(
-    decoration: BoxDecoration(
-      color: cs.error.withOpacity(0.12),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    alignment: alignStart ? Alignment.centerLeft : Alignment.centerRight,
-    child: Row(
-      mainAxisAlignment: alignStart ? MainAxisAlignment.start : MainAxisAlignment.end,
-      children: [
-        Icon(Lucide.Trash2, color: cs.error, size: 20),
-        const SizedBox(width: 6),
-        Text(
-          l10n.providerDetailPageDeleteText,
-          style: TextStyle(color: cs.error, fontWeight: FontWeight.w600),
-        ),
-      ],
-    ),
-  );
 }
 
 class _ModelCard extends StatelessWidget {
@@ -1763,7 +1564,6 @@ class _ModelCard extends StatelessWidget {
                   color: cs.onSurface.withOpacity(0.7),
                   size: 18,
                   semanticLabel: l10n.providerDetailPageEditTooltip,
-                  haptics: false,
                   onTap: () async {
                     await showModelDetailSheet(context, providerKey: providerKey, modelId: modelId);
                   },
@@ -1826,19 +1626,7 @@ class _ModelCard extends StatelessWidget {
     return modelId;
   }
 
-  Widget _pill(BuildContext context, IconData icon, String label) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(color: cs.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(999)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 12, color: cs.primary),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: cs.primary)),
-      ]),
-    );
   }
-}
 
 class _ConnectionTestDialog extends StatefulWidget {
   const _ConnectionTestDialog({required this.providerKey, required this.providerDisplayName});
@@ -2052,40 +1840,6 @@ Future<String?> showModelPickerForTest(BuildContext context, String providerKey,
   return sel?.modelId;
 }
 
-ModelInfo _effectiveFor(BuildContext context, String providerKey, String providerDisplayName, ModelInfo base) {
-  final cfg = context.read<SettingsProvider>().getProviderConfig(providerKey, defaultName: providerDisplayName);
-  final ov = cfg.modelOverrides[base.id] as Map?;
-  if (ov == null) return base;
-  ModelType? type;
-  final t = (ov['type'] as String?) ?? '';
-  if (t == 'embedding') type = ModelType.embedding; else if (t == 'chat') type = ModelType.chat;
-  List<Modality>? input;
-  if (ov['input'] is List) {
-    input = [
-      for (final e in (ov['input'] as List)) (e.toString() == 'image' ? Modality.image : Modality.text)
-    ];
-  }
-  List<Modality>? output;
-  if (ov['output'] is List) {
-    output = [
-      for (final e in (ov['output'] as List)) (e.toString() == 'image' ? Modality.image : Modality.text)
-    ];
-  }
-  List<ModelAbility>? abilities;
-  if (ov['abilities'] is List) {
-    abilities = [
-      for (final e in (ov['abilities'] as List)) (e.toString() == 'reasoning' ? ModelAbility.reasoning : ModelAbility.tool)
-    ];
-  }
-  return base.copyWith(
-    type: type ?? base.type,
-    input: input ?? base.input,
-    output: output ?? base.output,
-    abilities: abilities ?? base.abilities,
-  );
-}
-
-
 // Using flutter_slidable for reliable swipe actions with confirm + undo.
 
 Widget _modelTagWrap(BuildContext context, ModelInfo m) {
@@ -2162,13 +1916,6 @@ class _BrandAvatar extends StatelessWidget {
   final double size;
 
 
-  bool _preferMonochromeWhite(String n) {
-    final k = n.toLowerCase();
-    if (RegExp(r'openai|gpt|o\d').hasMatch(k)) return true;
-    if (RegExp(r'grok|xai').hasMatch(k)) return true;
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -2218,19 +1965,15 @@ class _TactileIconButton extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.onLongPress,
     this.semanticLabel,
     this.size = 22,
-    this.haptics = true,
   });
 
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
   final String? semanticLabel;
   final double size;
-  final bool haptics;
 
   @override
   State<_TactileIconButton> createState() => _TactileIconButtonState();
@@ -2257,12 +2000,6 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
           // if (widget.haptics) Haptics.light();
           widget.onTap();
         },
-        onLongPress: widget.onLongPress == null
-            ? null
-            : () {
-                if (widget.haptics) Haptics.light();
-                widget.onLongPress!.call();
-              },
         child: AnimatedScale(
           scale: _pressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 100),

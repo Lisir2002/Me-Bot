@@ -24,7 +24,6 @@ class _WebViewPageState extends State<WebViewPage> {
   bool _canGoBack = false;
   bool _canGoForward = false;
   final List<_ConsoleMessage> _console = <_ConsoleMessage>[];
-  bool _consoleOpen = false;
 
   @override
   void initState() {
@@ -162,12 +161,11 @@ class _WebViewPageState extends State<WebViewPage> {
                     }
                     break;
                   case 'console':
-                    setState(() { _consoleOpen = true; });
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
                       builder: (ctx) => _ConsoleSheet(messages: _console),
-                    ).whenComplete(() => setState(() { _consoleOpen = false; }));
+                    );
                     break;
                 }
               },

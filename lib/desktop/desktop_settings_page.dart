@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
 import 'dart:convert';
 
 import '../icons/lucide_adapter.dart' as lucide;
@@ -20,8 +19,6 @@ import '../utils/avatar_cache.dart';
 import '../utils/sandbox_path_resolver.dart';
 import 'dart:io' show File;
 import 'package:characters/characters.dart';
-import '../features/provider/pages/multi_key_manager_page.dart';
-import '../features/model/widgets/model_detail_sheet.dart';
 import 'add_provider_dialog.dart' show showDesktopAddProviderDialog;
 import 'model_edit_dialog.dart' show showDesktopCreateModelDialog, showDesktopModelEditDialog;
 // Use the unified model selector (desktop dialog on desktop platforms)
@@ -89,35 +86,6 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-
-    String titleFor(_SettingsMenuItem it) {
-      switch (it) {
-        case _SettingsMenuItem.assistant:
-          return l10n.settingsPageAssistant;
-        case _SettingsMenuItem.providers:
-          return l10n.settingsPageProviders;
-        case _SettingsMenuItem.display:
-          return l10n.settingsPageDisplay;
-        case _SettingsMenuItem.stats:
-          return l10n.settingsPageStats;
-        case _SettingsMenuItem.defaultModel:
-          return l10n.settingsPageDefaultModel;
-        case _SettingsMenuItem.search:
-          return l10n.settingsPageSearch;
-        case _SettingsMenuItem.mcp:
-          return l10n.settingsPageMcp;
-        case _SettingsMenuItem.quickPhrases:
-          return l10n.settingsPageQuickPhrase;
-        case _SettingsMenuItem.tts:
-          return l10n.settingsPageTts;
-        case _SettingsMenuItem.networkProxy:
-          return l10n.settingsPageNetworkProxy;
-        case _SettingsMenuItem.backup:
-          return l10n.settingsPageBackup;
-        case _SettingsMenuItem.about:
-          return l10n.settingsPageAbout;
-      }
-    }
 
     const double menuWidth = 250;
     final topBar = SizedBox(
@@ -2305,7 +2273,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                                 filled: true,
                                 onTap: () {
                                   final p = int.tryParse(priCtrl.text.trim()) ?? k.priority;
-                                  final clamped = p.clamp(1, 10) as int;
+                                  final clamped = p.clamp(1, 10);
                                   Navigator.of(c2).pop(
                                     k.copyWith(
                                       name: aliasCtrl.text.trim().isEmpty ? null : aliasCtrl.text.trim(),
@@ -2532,7 +2500,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
             state = _TestState.error;
             errorMessage = e.toString();
           }
-          (ctx as Element).markNeedsBuild();
+          (ctx).markNeedsBuild();
         }
         final l10n = AppLocalizations.of(ctx)!;
         final canTest = selectedModelId != null && state != _TestState.loading;
@@ -2646,7 +2614,7 @@ class _ProviderTypeDropdownState extends State<_ProviderTypeDropdown> {
   void _openMenu() {
     if (_entry != null) return;
     final rb = _key.currentContext?.findRenderObject() as RenderBox?;
-    final overlayBox = Overlay.of(context)?.context.findRenderObject() as RenderBox?;
+    final overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (rb == null || overlayBox == null) return;
     final size = rb.size;
     final triggerW = size.width;
@@ -2699,7 +2667,7 @@ class _ProviderTypeDropdownState extends State<_ProviderTypeDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 
@@ -2794,7 +2762,7 @@ class _StrategyDropdownState extends State<_StrategyDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 
@@ -3287,17 +3255,6 @@ class _ModelRow extends StatelessWidget {
       );
     }
     final info = _effective();
-
-    Widget cap(String text) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      final bg = isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF2F3F5);
-      final fg = cs.onSurface.withOpacity(0.85);
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-        child: Text(text, style: TextStyle(fontSize: 11, color: fg)),
-      );
-    }
 
     // Build capsule pill style like mobile
     final caps = <Widget>[];
@@ -3950,7 +3907,7 @@ class _TopicPositionDropdownState extends State<_TopicPositionDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 
@@ -4184,7 +4141,7 @@ class _BackgroundStyleDropdownState extends State<_BackgroundStyleDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 
@@ -4418,7 +4375,7 @@ class _AppLanguageRowState extends State<_AppLanguageRow> {
   void _openDropdownOverlay() {
     if (_entry != null) return;
     final rb = _key.currentContext?.findRenderObject() as RenderBox?;
-    final overlayBox = Overlay.of(context)?.context.findRenderObject() as RenderBox?;
+    final overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (rb == null || overlayBox == null) return;
     final size = rb.size;
     final triggerW = size.width;
@@ -4470,7 +4427,7 @@ class _AppLanguageRowState extends State<_AppLanguageRow> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 
@@ -5181,7 +5138,7 @@ Future<String?> _showDesktopFontChooserDialog(
     );
   });
   final fonts = await _fetchSystemFonts();
-  if (loadingTimer?.isActive ?? false) loadingTimer?.cancel();
+  if (loadingTimer.isActive ?? false) loadingTimer.cancel();
   if (loadingShown) {
     try { Navigator.of(context, rootNavigator: true).pop(); } catch (_) {}
   }

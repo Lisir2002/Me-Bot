@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import '../../../core/services/haptics.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -119,14 +118,11 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   // Local expand state for inline <think> card (defaults to expanded)
   bool? _inlineThinkExpanded;
   bool _inlineThinkManuallyToggled = false;
-  bool _inlineThinkWasLoading = false;
   // User message context menu state
   final GlobalKey _userBubbleKey = GlobalKey();
   OverlayEntry? _userMenuOverlay;
-  bool _userMenuActive = false; // for bubble highlight/scale
   // Desktop anchored menus for bottom action buttons
   final GlobalKey _moreBtnKey1 = GlobalKey();
-  final GlobalKey _translateBtnKey1 = GlobalKey();
   final GlobalKey _moreBtnKey2 = GlobalKey();
   final GlobalKey _translateBtnKey2 = GlobalKey();
   late final Ticker _ticker = Ticker((_) {
@@ -149,9 +145,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           .join('\n\n');
       final usingInlineThink = (widget.reasoningText == null || widget.reasoningText!.isEmpty) && extracted.isNotEmpty;
       final loading = usingInlineThink && widget.message.isStreaming && !widget.message.content.contains('</think>');
-
-      // Persist last loading state for later checks
-      _inlineThinkWasLoading = loading;
 
       if (usingInlineThink && _inlineThinkExpanded == null) {
         final autoCollapse = context.read<SettingsProvider>().autoCollapseThinking;
@@ -192,9 +185,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
       final usingInlineThinkOld = (oldWidget.reasoningText == null || oldWidget.reasoningText!.isEmpty) && oldExtracted.isNotEmpty;
       loadingOld = usingInlineThinkOld && oldWidget.message.isStreaming && !oldWidget.message.content.contains('</think>');
     }
-
-    // Persist last loading to assist other checks
-    _inlineThinkWasLoading = loadingNew;
 
     final autoCollapse = context.read<SettingsProvider>().autoCollapseThinking;
 
@@ -280,20 +270,14 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
     super.dispose();
   }
 
-  void _removeUserMenuOverlay() {
-    try { _userMenuOverlay?.remove(); } catch (_) {}
-    _userMenuOverlay = null;
-    if (mounted && _userMenuActive) setState(() => _userMenuActive = false);
-  }
-
   void _showUserContextMenu() {
     // Haptic feedback (optional)
     try { Haptics.light(); } catch (_) {}
 
     final box = _userBubbleKey.currentContext?.findRenderObject() as RenderBox?;
     final overlay = Overlay.of(context);
-    final overlayBox = overlay?.context.findRenderObject() as RenderBox?;
-    if (box == null || overlayBox == null || overlay == null) return;
+    final overlayBox = overlay.context.findRenderObject() as RenderBox?;
+    if (box == null || overlayBox == null) return;
 
     final bubbleTopLeft = box.localToGlobal(Offset.zero, ancestor: overlayBox);
     final bubbleSize = box.size;
@@ -343,7 +327,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
     if (y < minY) y = minY;
     if (y > maxY) y = maxY;
 
-    if (mounted) setState(() => _userMenuActive = true);
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
@@ -437,9 +420,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           )],
         );
       },
-    ).whenComplete(() {
-      if (mounted) setState(() => _userMenuActive = false);
-    });
+    );
   }
 
   Widget _buildUserAvatar(UserProvider userProvider, ColorScheme cs) {
@@ -751,7 +732,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                               if (res.type != ResultType.done) {
                                 showAppSnackBar(
                                   context,
-                                  message: l10n.chatMessageWidgetCannotOpenFile(res.message ?? res.type.toString()),
+                                  message: l10n.chatMessageWidgetCannotOpenFile(res.message),
                                   type: NotificationType.error,
                                 );
                               }
@@ -977,7 +958,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           child: child,
         );
       case ChatMessageBackgroundStyle.defaultStyle:
-      default:
         // Default: keep original visual — user has a tinted bubble; assistant is bare
         if (isUser) {
           return Container(
@@ -2309,41 +2289,6 @@ class _ToolCallItem extends StatelessWidget {
   }
 }
 
-class _SourcesList extends StatelessWidget {
-  const _SourcesList({required this.items});
-  final List<Map<String, dynamic>> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
-      ),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text(
-              l10n.chatMessageWidgetCitationsTitle(items.length),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.75)),
-            ),
-          ),
-          for (int i = 0; i < items.length; i++)
-            _SourceRow(index: (items[i]['index'] ?? (i + 1)).toString(), title: (items[i]['title'] ?? '').toString(), url: (items[i]['url'] ?? '').toString()),
-        ],
-      ),
-    );
-  }
-}
-
 class _SourceRow extends StatelessWidget {
   const _SourceRow({required this.index, required this.title, required this.url});
   final String index;
@@ -2502,25 +2447,6 @@ class _ReasoningSectionState extends State<_ReasoningSection> with SingleTickerP
     final over = _scroll.position.maxScrollExtent > 0.5;
     if (over != _hasOverflow && mounted) setState(() => _hasOverflow = over);
   }
-
-  String _sanitizedeepthink(String s) {
-    // 统一换行
-    s = s.replaceAll('\r\n', '\n');
-
-    // 去掉首尾零宽字符（模型有时会插入）
-    s = s
-        .replaceAll(RegExp(r'^[\u200B\u200C\u200D\uFEFF]+'), '')
-        .replaceAll(RegExp(r'[\u200B\u200C\u200D\uFEFF]+$'), '');
-
-    // 去掉**开头**的纯空白行
-    s = s.replaceFirst(RegExp(r'^\s*\n+'), '');
-
-    // 去掉**结尾**的纯空白行
-    s = s.replaceFirst(RegExp(r'\n+\s*$'), '');
-
-    return s;
-  }
-
 
   @override
   Widget build(BuildContext context) {

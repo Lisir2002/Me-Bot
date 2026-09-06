@@ -371,10 +371,10 @@ Future<void> showImportProviderSheet(BuildContext context) async {
                                   }
                                 } catch (_) {}
                               }
-                              if (code == null || code!.isEmpty) throw 'QR not detected';
+                              if (code == null || code.isEmpty) throw 'QR not detected';
                               final settings = ctx.read<SettingsProvider>();
                               final results = <_ImportResult>[];
-                              final parts = code!.split(RegExp(r'\r?\n+')).map((e)=>e.trim()).where((e)=>e.isNotEmpty).toList();
+                              final parts = code.split(RegExp(r'\r?\n+')).map((e)=>e.trim()).where((e)=>e.isNotEmpty).toList();
                               if (parts.length > 1) {
                                 for (final p in parts) {
                                   try {
@@ -556,7 +556,6 @@ class _TactileIconButton extends StatefulWidget {
     required this.onTap,
     this.semanticLabel,
     this.size = 22,
-    this.haptics = true,
   });
 
   final IconData icon;
@@ -564,7 +563,6 @@ class _TactileIconButton extends StatefulWidget {
   final VoidCallback onTap;
   final String? semanticLabel;
   final double size;
-  final bool haptics;
 
   @override
   State<_TactileIconButton> createState() => _TactileIconButtonState();
@@ -591,7 +589,7 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
+        onTap: () { Haptics.light(); widget.onTap(); },
         child: AnimatedScale(
           scale: _pressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 100),

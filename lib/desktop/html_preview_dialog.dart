@@ -36,7 +36,6 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
   // macOS uses webview_flutter; Windows uses webview_windows.
   WebViewController? _flutterCtrl;
   winweb.WebviewController? _winCtrl;
-  String? _tempFilePath; // for Windows loadUrl
   bool _ready = false;
   bool _loadedOnce = false;
   bool? _lastDark;
@@ -88,6 +87,16 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
     }
   }
 
+  void _pushConsole({required String level, required String message, String? source, int? line}) {
+    if (!mounted) return;
+    setState(() {
+      _console.add(_ConsoleMessage(level: level, message: message, source: source, line: line));
+      if (_console.length > 128) {
+        _console.removeRange(0, _console.length - 128);
+      }
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -118,7 +127,6 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
     final html = _wrapWithTheme(widget.html, isDark: isDark);
     if (Platform.isWindows) {
       final path = await _writeTempHtml(html);
-      _tempFilePath = path;
       await _winCtrl?.loadUrl(Uri.file(path).toString());
     } else {
       await _flutterCtrl?.loadHtmlString(html);
@@ -309,18 +317,6 @@ class _ConsoleMessage {
   final String message;
   final String? source;
   final int? line;
-}
-
-extension on _HtmlPreviewDialogState {
-  void _pushConsole({required String level, required String message, String? source, int? line}) {
-    if (!mounted) return;
-    setState(() {
-      _console.add(_ConsoleMessage(level: level, message: message, source: source, line: line));
-      if (_console.length > 128) {
-        _console.removeRange(0, _console.length - 128);
-      }
-    });
-  }
 }
 
 // (Bottom sheet version removed; desktop uses custom dialog.)

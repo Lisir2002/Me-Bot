@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
-import 'package:intl/intl.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/models/chat_message.dart';
-import 'package:provider/provider.dart';
-import '../../../core/providers/settings_provider.dart';
-import '../../../core/providers/model_provider.dart';
 // import '../pages/select_copy_page.dart';
 import 'select_copy_sheet.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -112,37 +108,6 @@ class _MessageMoreSheet extends StatefulWidget {
 
 class _MessageMoreSheetState extends State<_MessageMoreSheet> {
   // Draggable sheet removed; use auto height with max constraint.
-
-  String _formatTime(BuildContext context, DateTime time) {
-    final locale = Localizations.localeOf(context);
-    final fmt = locale.languageCode == 'zh' ? DateFormat('yyyy年M月d日 HH:mm:ss') : DateFormat('yyyy-MM-dd HH:mm:ss');
-    return fmt.format(time);
-  }
-
-  String? _modelDisplayName(BuildContext context) {
-    final msg = widget.message;
-    if (msg.role != 'assistant') return null;
-    if (msg.providerId == null || msg.modelId == null) return null;
-    final settings = context.read<SettingsProvider>();
-    final modelId = msg.modelId!;
-    String? name;
-    if (msg.providerId!.isNotEmpty) {
-      try {
-        final cfg = settings.getProviderConfig(msg.providerId!);
-        final ov = cfg.modelOverrides[modelId] as Map?;
-        final overrideName = (ov?['name'] as String?)?.trim();
-        if (overrideName != null && overrideName.isNotEmpty) {
-          name = overrideName;
-        }
-      } catch (_) {
-        // Ignore lookup issues; fall back to inference below.
-      }
-    }
-
-    final inferred = ModelRegistry.infer(ModelInfo(id: modelId, displayName: modelId));
-    final fallback = inferred.displayName.trim();
-    return name ?? (fallback.isNotEmpty ? fallback : modelId);
-  }
 
   Widget _actionItem({
     required IconData icon,

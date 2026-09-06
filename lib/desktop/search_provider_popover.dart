@@ -19,7 +19,6 @@ Future<void> showDesktopSearchProviderPopover(
   required GlobalKey anchorKey,
 }) async {
   final overlay = Overlay.of(context);
-  if (overlay == null) return;
   final keyContext = anchorKey.currentContext;
   if (keyContext == null) return;
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../theme/design_tokens.dart';
 import '../../../core/models/quick_phrase.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';

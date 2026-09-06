@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
-import 'package:provider/provider.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
 import '../../providers/mcp_provider.dart';
 import '../chat/chat_service.dart';
@@ -274,7 +273,7 @@ class McpToolService extends ChangeNotifier {
           } catch (_) {}
           final s = c.toString();
           if (!s.startsWith('Instance of')) buf.writeln(s);
-        } catch (e, st) {
+        } catch (e) {
           // debugPrint('[MCP/Call/TextParseError] server=${s.id} tool=$toolName type=${c.runtimeType} err=$e');
           // debugPrint(st.toString());
         }

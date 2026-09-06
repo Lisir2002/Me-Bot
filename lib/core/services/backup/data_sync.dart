@@ -177,7 +177,7 @@ class DataSync {
 
     // Encode archive to ZIP
     final zipEncoder = ZipEncoder();
-    final zipBytes = zipEncoder.encode(archive)!;
+    final zipBytes = zipEncoder.encode(archive);
     await outFile.writeAsBytes(zipBytes);
     
     return outFile;
@@ -414,7 +414,7 @@ class DataSync {
                   for (final a in existingAssistants) {
                     if (a is Map && a.containsKey('id')) {
                       // Store as mutable map<String, dynamic>
-                      assistantMap[a['id'].toString()] = Map<String, dynamic>.from(a as Map);
+                      assistantMap[a['id'].toString()] = Map<String, dynamic>.from(a);
                     }
                   }
 
@@ -422,7 +422,7 @@ class DataSync {
                   for (final a in newAssistants) {
                     if (a is Map && a.containsKey('id')) {
                       final id = a['id'].toString();
-                      final incoming = Map<String, dynamic>.from(a as Map);
+                      final incoming = Map<String, dynamic>.from(a);
 
                       if (!assistantMap.containsKey(id)) {
                         // New assistant entirely
@@ -522,7 +522,7 @@ class DataSync {
                     if (e is Map && e['id'] != null) {
                       final id = e['id'].toString();
                       existingOrder.add(id);
-                      tagById[id] = Map<String, dynamic>.from(e as Map);
+                      tagById[id] = Map<String, dynamic>.from(e);
                     }
                   }
                   // Add new tags that don't exist yet
@@ -530,7 +530,7 @@ class DataSync {
                     if (e is Map && e['id'] != null) {
                       final id = e['id'].toString();
                       if (!tagById.containsKey(id)) {
-                        tagById[id] = Map<String, dynamic>.from(e as Map);
+                        tagById[id] = Map<String, dynamic>.from(e);
                         existingOrder.add(id);
                       }
                     }

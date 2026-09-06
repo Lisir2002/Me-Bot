@@ -90,11 +90,11 @@ MermaidViewHandle? createMermaidView(String code, bool dark, {Map<String, String
       final rect = svg.getBoundingClientRect();
       final w = rect.width.ceil();
       final h = rect.height.ceil();
-      final scale = (html.window.devicePixelRatio ?? 1) * 2;
+      final scale = (html.window.devicePixelRatio) * 2;
       final canvas = html.CanvasElement(width: (w * scale).floor(), height: (h * scale).floor());
       final ctx = canvas.context2D;
       final cloned = (html.DocumentFragment.html('')..append(svg.clone(true))).children.first;
-      final xmlRaw = (cloned?.outerHtml ?? svg.outerHtml) ?? '';
+      final xmlRaw = (cloned.outerHtml ?? svg.outerHtml) ?? '';
       final img = html.ImageElement();
       final completer = Completer<void>();
       img.onLoad.listen((_) => completer.complete());

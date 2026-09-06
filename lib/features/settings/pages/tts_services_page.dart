@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import 'package:provider/provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/tts_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -165,8 +164,8 @@ Widget _header(BuildContext context, String text, {bool first = false}) {
 }
 
 class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.onLongPress, this.semanticLabel, this.size = 22, this.haptics = true});
-  final IconData icon; final Color color; final VoidCallback onTap; final VoidCallback? onLongPress; final String? semanticLabel; final double size; final bool haptics;
+  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.size = 22});
+  final IconData icon; final Color color; final VoidCallback onTap; final double size;
   @override State<_TactileIconButton> createState() => _TactileIconButtonState();
 }
 
@@ -175,16 +174,15 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
   @override
   Widget build(BuildContext context) {
     final base = widget.color; final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
+    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base);
     return Semantics(
-      button: true, label: widget.semanticLabel,
+      button: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
+        onTap: () { Haptics.light(); widget.onTap(); },
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
       ),
     );

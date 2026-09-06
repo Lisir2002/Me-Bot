@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import 'dart:math' as math;
-import 'package:provider/provider.dart';
 import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
@@ -572,65 +571,6 @@ class _TactileRowState extends State<_TactileRow> {
         duration: const Duration(milliseconds: 110), curve: Curves.easeOutCubic,
         child: widget.builder(_pressed),
       ),
-    );
-  }
-}
-
-class _IosOutlineButton extends StatelessWidget {
-  const _IosOutlineButton({required this.label, required this.onTap});
-  final String label; final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return _TactileRow(
-      pressedScale: 0.98,
-      onTap: onTap,
-      builder: (pressed) {
-        final overlay = pressed ? (Theme.of(context).brightness==Brightness.dark ? Colors.black.withOpacity(0.04) : Colors.white.withOpacity(0.04)) : Colors.transparent;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 160), curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: overlay,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cs.primary.withOpacity(0.5)),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          child: Text(label, style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600)),
-        );
-      },
-    );
-  }
-}
-
-class _IosFilledButton extends StatelessWidget {
-  const _IosFilledButton({required this.label, required this.onTap, this.icon});
-  final String label; final VoidCallback onTap; final IconData? icon;
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return _TactileRow(
-      pressedScale: 0.98,
-      onTap: onTap,
-      builder: (pressed) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 160), curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(color: cs.primary, borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: cs.onPrimary),
-                const SizedBox(width: 6),
-              ],
-              Text(label, style: TextStyle(color: cs.onPrimary, fontWeight: FontWeight.w600)),
-            ],
-          ),
-        );
-      },
     );
   }
 }

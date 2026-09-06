@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart' show debugPrint, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show debugPrint;
 import './app_directories.dart';
 
 /// Resolves persisted absolute file paths that include the iOS sandbox UUID

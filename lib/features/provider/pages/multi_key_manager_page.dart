@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../core/models/api_keys.dart';
 import '../../../l10n/app_localizations.dart';
@@ -140,7 +138,6 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
       case LoadBalanceStrategy.random:
         return l10n.multiKeyPageStrategyRandom;
       case LoadBalanceStrategy.roundRobin:
-      default:
         return l10n.multiKeyPageStrategyRoundRobin;
     }
   }
@@ -368,11 +365,6 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     return row;
   }
 
-  Widget _divider(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(height: 0.6, color: cs.outlineVariant.withOpacity(0.25));
-  }
-
   Future<void> _updateKey(ApiKeyConfig updated) async {
     final settings = context.read<SettingsProvider>();
     final old = settings.getProviderConfig(widget.providerKey, defaultName: widget.providerDisplayName);
@@ -534,11 +526,6 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     );
   }
 
-  Future<void> _chooseDetectModel() async {
-    final sel = await showModelSelector(context, limitProviderKey: widget.providerKey);
-    if (sel != null) setState(() => _detectModelId = sel.modelId);
-  }
-
   Future<void> _showStrategySheet() async {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
@@ -554,7 +541,6 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
         case LoadBalanceStrategy.random:
           return l10n.multiKeyPageStrategyRandom;
         case LoadBalanceStrategy.roundRobin:
-        default:
           return l10n.multiKeyPageStrategyRoundRobin;
       }
     }
@@ -801,7 +787,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
                     backgroundColor: cs.primary,
                     onTap: () {
                       final p = int.tryParse(priCtrl.text.trim()) ?? k.priority;
-                      final clamped = p.clamp(1, 10) as int;
+                      final clamped = p.clamp(1, 10);
                       Navigator.of(ctx).pop(
                         k.copyWith(
                           name: aliasCtrl.text.trim().isEmpty ? null : aliasCtrl.text.trim(),
@@ -928,7 +914,6 @@ class _TactileIconButton extends StatefulWidget {
     required this.onTap,
     this.onLongPress,
     this.semanticLabel,
-    this.size = 22,
   });
 
   final IconData icon;
@@ -936,7 +921,6 @@ class _TactileIconButton extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final String? semanticLabel;
-  final double size;
 
   @override
   State<_TactileIconButton> createState() => _TactileIconButtonState();
@@ -949,7 +933,7 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
   Widget build(BuildContext context) {
     final base = widget.color;
     final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
+    final icon = Icon(widget.icon, size: 22, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
 
     return Semantics(
       button: true,

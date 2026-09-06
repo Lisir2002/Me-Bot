@@ -8,7 +8,6 @@ import '../widgets/add_provider_sheet.dart';
 // grid reorder removed in favor of iOS-style list reordering
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../core/services/haptics.dart';
@@ -29,7 +28,6 @@ class ProvidersPage extends StatefulWidget {
 }
 
 class _ProvidersPageState extends State<ProvidersPage> {
-  List<_Provider>? _items;
   final Set<String> _settleKeys = {};
   bool _selectMode = false;
   final Set<String> _selected = {};
@@ -597,12 +595,11 @@ class _SelectionBar extends StatelessWidget {
 }
 
 class _CapsuleButton extends StatefulWidget {
-  const _CapsuleButton({required this.label, required this.icon, required this.color, required this.onTap, this.outlined = false});
+  const _CapsuleButton({required this.label, required this.icon, required this.color, required this.onTap});
   final String label;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final bool outlined;
   @override
   State<_CapsuleButton> createState() => _CapsuleButtonState();
 }
@@ -668,13 +665,11 @@ class _GlassCircleButton extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.size = 46,
     this.semanticLabel,
   });
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final double size; // diameter
   final String? semanticLabel;
 
   @override
@@ -695,8 +690,8 @@ class _GlassCircleButtonState extends State<_GlassCircleButton> {
     final borderColor = cs.outlineVariant.withOpacity(isDark ? 0.10 : 0.10);
 
     final child = SizedBox(
-      width: widget.size,
-      height: widget.size,
+      width: 46,
+      height: 46,
       child: Center(child: Icon(widget.icon, size: 18, color: widget.color)),
     );
 
@@ -873,24 +868,6 @@ class _SettleAnim extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({required this.text, required this.bg, required this.fg});
-  final String text;
-  final Color bg;
-  final Color fg;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Text(text, style: TextStyle(color: fg, fontSize: 11)),
-    );
-  }
-}
-
 class _BrandAvatar extends StatelessWidget {
   const _BrandAvatar({required this.name, this.size = 40});
   final String name;
@@ -903,11 +880,6 @@ class _BrandAvatar extends StatelessWidget {
     if (RegExp(r'grok|xai').hasMatch(k)) return true;
     if (RegExp(r'openrouter').hasMatch(k)) return true;
     return false;
-  }
-
-  bool _tintPurpleSilicon(String n) {
-    final k = n.toLowerCase();
-    return RegExp(r'silicon|硅基').hasMatch(k);
   }
 
   @override
@@ -973,58 +945,19 @@ class _Provider {
   _Provider({required this.name, required this.keyName, required this.enabled, required this.modelCount});
 }
 
-class _DragHandle extends StatelessWidget {
-  const _DragHandle({required this.onDragStarted, required this.onDragEnd, required this.feedback, required this.data});
-  final VoidCallback onDragStarted;
-  final VoidCallback onDragEnd;
-  final Widget feedback;
-  final int data;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return LongPressDraggable<int>(
-      data: data,
-      dragAnchorStrategy: pointerDragAnchorStrategy,
-      onDragStarted: onDragStarted,
-      onDragEnd: (_) => onDragEnd(),
-      feedback: Material(
-        color: Colors.transparent,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 200),
-          child: Opacity(opacity: 0.95, child: feedback),
-        ),
-      ),
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        child: Icon(Lucide.GripHorizontal, size: 24, color: cs.onSurface.withOpacity(0.7)),
-      ),
-      childWhenDragging: const SizedBox(width: 40, height: 40),
-    );
-  }
-}
-
 // Icon-only tactile icon button for AppBar: no ripple, scale + color on press, no haptics
 class _TactileIconButton extends StatefulWidget {
   const _TactileIconButton({
     required this.icon,
     required this.color,
     required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
     this.size = 22,
-    this.haptics = true,
   });
 
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
   final double size;
-  final bool haptics;
 
   @override
   State<_TactileIconButton> createState() => _TactileIconButtonState();
@@ -1041,19 +974,16 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
       widget.icon,
       size: widget.size,
       color: _pressed ? pressColor : base,
-      semanticLabel: widget.semanticLabel,
     );
 
     return Semantics(
       button: true,
-      label: widget.semanticLabel,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
+        onTap: () { Haptics.light(); widget.onTap(); },
         child: AnimatedScale(
           scale: _pressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 100),

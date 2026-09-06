@@ -110,24 +110,6 @@ class _AddProviderSheetState extends State<_AddProviderSheet>
     );
   }
 
-  Widget _switchTile({required String label, required bool value, required ValueChanged<bool> onChanged}) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
-          IosSwitch(value: value, onChanged: onChanged),
-        ],
-      ),
-    );
-  }
-
   Widget _switchRow({required String label, required bool value, required ValueChanged<bool> onChanged}) {
     return Row(
       children: [

@@ -8,8 +8,6 @@ import 'package:syncfusion_flutter_core/theme.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:characters/characters.dart';
 import '../../../shared/widgets/emoji_text.dart';
@@ -22,7 +20,6 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../theme/design_tokens.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/providers/assistant_provider.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../model/widgets/model_select_sheet.dart';
 import '../../chat/widgets/reasoning_budget_sheet.dart';
@@ -1013,26 +1010,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
     final ap = context.watch<AssistantProvider>();
     final a = ap.getById(widget.assistantId)!;
 
-    Widget titleDesc(String title, String? desc) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        if (desc != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            desc,
-            style: TextStyle(
-              fontSize: 12,
-              color: cs.onSurface.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ],
-    );
-
     Widget avatarWidget({double size = 56}) {
       final bg = cs.primary.withOpacity(isDark ? 0.18 : 0.12);
       Widget inner;
@@ -1279,18 +1256,15 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
                     final l10n = AppLocalizations.of(context)!;
                     final settings = context.read<SettingsProvider>();
                     String display = l10n.assistantEditModelUseGlobalDefault;
-                    String brandName = display;
                     if (a.chatModelProvider != null && a.chatModelId != null) {
                       try {
                         final cfg = settings.getProviderConfig(a.chatModelProvider!);
                         final ov = cfg.modelOverrides[a.chatModelId] as Map?;
-                        brandName = cfg.name.isNotEmpty ? cfg.name : a.chatModelProvider!;
                         final mdl = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
                             ? (ov['name'] as String)
                             : a.chatModelId!;
                         display = mdl;
                       } catch (_) {
-                        brandName = a.chatModelProvider ?? '';
                         display = a.chatModelId ?? '';
                       }
                     }
@@ -2695,7 +2669,7 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
         );
         return;
       }
-    } on PlatformException catch (e) {
+    } on PlatformException {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
       showAppSnackBar(
@@ -2801,49 +2775,6 @@ class _PromptTabState extends State<_PromptTab> {
     final cs = Theme.of(context).colorScheme;
     final ap = context.watch<AssistantProvider>();
     final a = ap.getById(widget.assistantId)!;
-
-    Widget chips(List<String> items, void Function(String v) onPick) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final t in items)
-              ActionChip(
-                label: Text(t, style: const TextStyle(fontSize: 12)),
-                onPressed: () => onPick(t),
-              ),
-          ],
-        ),
-      );
-    }
-
-    // Helper to render link-like variable chips
-    Widget linkWrap(List<String> vars, void Function(String v) onPick) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            for (final t in vars)
-              InkWell(
-                onTap: () => onPick(t),
-                child: Text(
-                  t,
-                  style: TextStyle(
-                    color: cs.primary,
-                    decoration: TextDecoration.underline,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      );
-    }
 
     // Sample preview for message template
     final now = DateTime.now();
@@ -4666,19 +4597,16 @@ class _AssistantModelCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     String display = l10n.assistantEditModelUseGlobalDefault;
-    String brandName = display;
     if (providerKey != null && modelId != null) {
       try {
         final settings = context.read<SettingsProvider>();
         final cfg = settings.getProviderConfig(providerKey!);
         final ov = cfg.modelOverrides[modelId] as Map?;
-        brandName = cfg.name.isNotEmpty ? cfg.name : providerKey!;
         final mdl = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
             ? (ov['name'] as String)
             : modelId!;
         display = mdl;
       } catch (_) {
-        brandName = providerKey ?? '';
         display = modelId ?? '';
       }
     }
@@ -4754,8 +4682,8 @@ class _BrandAvatarLike extends StatelessWidget {
     String? asset;
     asset = BrandAssets.assetForName(name);
     if (asset != null) {
-      if (asset!.endsWith('.svg')) {
-        final isColorful = asset!.contains('color');
+      if (asset.endsWith('.svg')) {
+        final isColorful = asset.contains('color');
         final ColorFilter? tint = (isDark && !isColorful)
             ? const ColorFilter.mode(Colors.white, BlendMode.srcIn)
             : null;
@@ -4768,7 +4696,7 @@ class _BrandAvatarLike extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: SvgPicture.asset(
-            asset!,
+            asset,
             width: size * 0.62,
             height: size * 0.62,
             colorFilter: tint,
@@ -4784,7 +4712,7 @@ class _BrandAvatarLike extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Image.asset(
-            asset!,
+            asset,
             width: size * 0.62,
             height: size * 0.62,
             fit: BoxFit.contain,

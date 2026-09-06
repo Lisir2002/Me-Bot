@@ -4,10 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
-import '../../../theme/design_tokens.dart';
 import '../../../shared/widgets/ios_switch.dart';
-import '../../../shared/widgets/ios_tactile.dart';
-import '../../../core/services/haptics.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';
 

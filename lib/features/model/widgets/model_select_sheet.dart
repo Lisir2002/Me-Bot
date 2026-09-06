@@ -236,7 +236,6 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
   // Async loading state
   bool _isLoading = true;
   Map<String, _ProviderGroup> _groups = {};
-  List<_ModelItem> _favItems = [];
   List<String> _orderedKeys = [];
   bool _autoScrolled = false; // ensure we only auto-scroll once per open
 
@@ -285,7 +284,6 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
       if (mounted) {
         setState(() {
           _groups = result.groups;
-          _favItems = result.favItems;
           _orderedKeys = result.orderedKeys;
           _isLoading = false;
         });
@@ -341,7 +339,6 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
     
     setState(() {
       _groups = result.groups;
-      _favItems = result.favItems;
       _orderedKeys = result.orderedKeys;
       _isLoading = false;
     });
@@ -871,9 +868,6 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
     }
   }
 
-  String _displayName(BuildContext context, _ModelItem m) => m.info.displayName;
-  ModelInfo _effectiveInfo(BuildContext context, _ModelItem m) => m.info;
-
   Future<void> _jumpToFavorites() async {
     if (widget.limitProviderKey != null) return;
     // Expand sheet first to reveal more content
@@ -1136,7 +1130,6 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
   final TextEditingController _searchCtrl = TextEditingController();
   bool _loading = true;
   Map<String, _ProviderGroup> _groups = const {};
-  List<_ModelItem> _favItems = const [];
   List<String> _orderedKeys = const [];
   // Flattened rows and precise index mapping for jump
   final ItemScrollController _itemScrollController = ItemScrollController();
@@ -1185,7 +1178,6 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
     if (!mounted) return;
     setState(() {
       _groups = result.groups;
-      _favItems = result.favItems;
       _orderedKeys = result.orderedKeys;
       _loading = false;
     });

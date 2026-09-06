@@ -29,8 +29,8 @@ Future<void> showDesktopContextMenuAt(
   required List<DesktopContextMenuItem> items,
 }) async {
   final overlay = Overlay.of(context);
-  final overlayBox = overlay?.context.findRenderObject() as RenderBox?;
-  if (overlay == null || overlayBox == null) return;
+  final overlayBox = overlay.context.findRenderObject() as RenderBox?;
+  if (overlayBox == null) return;
 
   const double minMenuWidth = 160;
   const double maxMenuWidth = 360;

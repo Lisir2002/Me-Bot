@@ -29,6 +29,14 @@ class _StoragePageState extends State<StoragePage> {
     if (!provider.initialized) {
       Future.microtask(() => provider.refresh());
     }
+    // 打开主存储页期间开启实时扫盘，子页面会随 Provider 刷新自动重建。
+    provider.startPolling();
+  }
+
+  @override
+  void dispose() {
+    context.read<StorageProvider>().stopPolling();
+    super.dispose();
   }
 
   Future<void> _refresh() async =>

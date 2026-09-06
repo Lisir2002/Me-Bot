@@ -305,6 +305,20 @@ class StorageTactileIconButton extends StatefulWidget {
 
 class _StorageTactileIconButtonState extends State<StorageTactileIconButton> {
   bool _pressed = false;
+  void _safeOnTap() {
+    try {
+      Haptics.light();
+      widget.onTap();
+    } catch (e, s) {
+      debugPrint('[StorageTactileIconButton] onTap failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('操作失败: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final base = widget.color;
@@ -317,10 +331,7 @@ class _StorageTactileIconButtonState extends State<StorageTactileIconButton> {
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        onTap: () {
-          Haptics.light();
-          widget.onTap();
-        },
+        onTap: _safeOnTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           child: Icon(widget.icon, size: widget.size, color: _pressed ? press : base),
@@ -346,6 +357,20 @@ class _StorageOutlineButtonState extends State<StorageOutlineButton> {
     if (_pressed != v) setState(() => _pressed = v);
   }
 
+  void _safeOnTap() {
+    try {
+      Haptics.soft();
+      widget.onTap();
+    } catch (e, s) {
+      debugPrint('[StorageOutlineButton] onTap failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('操作失败: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -354,10 +379,7 @@ class _StorageOutlineButtonState extends State<StorageOutlineButton> {
       onTapDown: (_) => _set(true),
       onTapUp: (_) => Future.delayed(const Duration(milliseconds: 80), () => _set(false)),
       onTapCancel: () => _set(false),
-      onTap: () {
-        Haptics.soft();
-        widget.onTap();
-      },
+      onTap: _safeOnTap,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 110),
@@ -402,6 +424,20 @@ class _StorageFilledButtonState extends State<StorageFilledButton> {
     if (_pressed != v) setState(() => _pressed = v);
   }
 
+  void _safeOnTap() {
+    try {
+      Haptics.soft();
+      widget.onTap();
+    } catch (e, s) {
+      debugPrint('[StorageFilledButton] onTap failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('操作失败: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -412,10 +448,7 @@ class _StorageFilledButtonState extends State<StorageFilledButton> {
       onTapDown: (_) => _set(true),
       onTapUp: (_) => Future.delayed(const Duration(milliseconds: 80), () => _set(false)),
       onTapCancel: () => _set(false),
-      onTap: () {
-        Haptics.soft();
-        widget.onTap();
-      },
+      onTap: _safeOnTap,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 110),

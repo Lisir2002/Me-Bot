@@ -77,10 +77,19 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
       ),
     );
     if (ok != true || !mounted) return;
-    await Provider.of<StorageProvider>(context, listen: false)
-        .deletePaths(_selected.toList());
-    if (!mounted) return;
-    setState(() => _selected.clear());
+    try {
+      await Provider.of<StorageProvider>(context, listen: false)
+          .deletePaths(_selected.toList());
+      if (!mounted) return;
+      setState(() => _selected.clear());
+    } catch (e, s) {
+      debugPrint('[StorageMediaPage._confirmDelete] failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('删除失败: $e')),
+        );
+      }
+    }
   }
 
   @override

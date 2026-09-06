@@ -56,8 +56,17 @@ class _StorageCachePageState extends State<StorageCachePage> {
       ),
     );
     if (ok != true || !mounted) return;
-    await _clearDirectories([(await AppDirectories.getAvatarCacheDirectory()).path]);
-    await _refresh();
+    try {
+      await _clearDirectories([(await AppDirectories.getAvatarCacheDirectory()).path]);
+      await _refresh();
+    } catch (e, s) {
+      debugPrint('[StorageCachePage._clearAvatar] failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('清理失败: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _clearApp() async {
@@ -77,8 +86,17 @@ class _StorageCachePageState extends State<StorageCachePage> {
       ),
     );
     if (ok != true || !mounted) return;
-    await _clearDirectories([(await AppDirectories.getCacheDirectory()).path]);
-    await _refresh();
+    try {
+      await _clearDirectories([(await AppDirectories.getCacheDirectory()).path]);
+      await _refresh();
+    } catch (e, s) {
+      debugPrint('[StorageCachePage._clearApp] failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('清理失败: $e')),
+        );
+      }
+    }
   }
 
   @override

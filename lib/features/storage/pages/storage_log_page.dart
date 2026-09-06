@@ -47,13 +47,22 @@ class _StorageLogPageState extends State<StorageLogPage> {
       ),
     );
     if (ok != true || !mounted) return;
-    for (final e in _scan.entries) {
-      try {
-        final f = File(e.path);
-        if (await f.exists()) await f.delete();
-      } catch (_) {}
+    try {
+      for (final e in _scan.entries) {
+        try {
+          final f = File(e.path);
+          if (await f.exists()) await f.delete();
+        } catch (_) {}
+      }
+      await _refresh();
+    } catch (e, s) {
+      debugPrint('[StorageLogPage._clearLogs] failed: $e\n$s');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('清理失败: $e')),
+        );
+      }
     }
-    await _refresh();
   }
 
   @override

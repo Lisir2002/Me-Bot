@@ -6,16 +6,16 @@ import '../../providers/mcp_provider.dart';
 import '../chat/chat_service.dart';
 import '../../providers/assistant_provider.dart';
 
+/// UI 提供的审批回调：返回 true 允许执行，false 拒绝。
+/// 当某个工具 requireApproval=true 时，执行前会先询问。
+typedef ToolApprovalGate = Future<bool> Function(
+  String serverName,
+  String toolName,
+  Map<String, dynamic> arguments,
+);
+
 class McpToolService extends ChangeNotifier {
   McpToolService();
-
-  /// UI 提供的审批回调：返回 true 允许执行，false 拒绝。
-  /// 当某个工具 requireApproval=true 时，执行前会先询问。
-  typedef ToolApprovalGate = Future<bool> Function(
-    String serverName,
-    String toolName,
-    Map<String, dynamic> arguments,
-  );
 
   String _deniedText(String serverName, String toolName) =>
       '{"type":"tool_denied","message":"User declined to run this tool",'

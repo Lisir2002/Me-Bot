@@ -25,6 +25,10 @@ class _StorageCachePageState extends State<StorageCachePage> {
   Future<void> _refresh() async =>
       Provider.of<StorageProvider>(context, listen: false).refresh();
 
+  /// 从实时 Provider 状态取当前分类快照，清理后列表能即时刷新。
+  StorageScan get _scan =>
+      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+
   Future<void> _clearDirectories(List<String> roots) async {
     for (final root in roots) {
       try {
@@ -81,6 +85,8 @@ class _StorageCachePageState extends State<StorageCachePage> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
+    context.watch<StorageProvider>();
+    final scan = _scan;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,7 +111,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          _InfoHeader(config: cfg, scan: widget.scan),
+          _InfoHeader(config: cfg, scan: scan),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -129,7 +135,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
           const SizedBox(height: 18),
           StorageSectionHeader(l10n.storageDetailHeader, first: true),
           const SizedBox(height: 6),
-          if (widget.scan.entries.isEmpty)
+          if (scan.entries.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(

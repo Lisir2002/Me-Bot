@@ -25,6 +25,10 @@ class _StorageLogPageState extends State<StorageLogPage> {
   Future<void> _refresh() async =>
       Provider.of<StorageProvider>(context, listen: false).refresh();
 
+  /// 从实时 Provider 状态取当前分类快照，删除后列表能即时刷新。
+  StorageScan get _scan =>
+      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+
   Future<void> _clearLogs() async {
     final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
@@ -42,7 +46,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
       ),
     );
     if (ok != true || !mounted) return;
-    for (final e in widget.scan.entries) {
+    for (final e in _scan.entries) {
       try {
         final f = File(e.path);
         if (await f.exists()) await f.delete();
@@ -56,6 +60,8 @@ class _StorageLogPageState extends State<StorageLogPage> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
+    context.watch<StorageProvider>();
+    final scan = _scan;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,7 +86,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          _InfoHeader(config: cfg, scan: widget.scan),
+          _InfoHeader(config: cfg, scan: scan),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -109,7 +115,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
           const SizedBox(height: 18),
           StorageSectionHeader(l10n.storageDetailHeader, first: true),
           const SizedBox(height: 6),
-          if (widget.scan.entries.isEmpty)
+          if (scan.entries.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
@@ -122,9 +128,9 @@ class _StorageLogPageState extends State<StorageLogPage> {
           else
             StorageSectionCard(
               children: [
-                for (var i = 0; i < widget.scan.entries.length; i++) ...[
+                for (var i = 0; i < scan.entries.length; i++) ...[
                   if (i > 0) const StorageDivider(),
-                  _LogRow(entry: widget.scan.entries[i]),
+                  _LogRow(entry: scan.entries[i]),
                 ],
               ],
             ),

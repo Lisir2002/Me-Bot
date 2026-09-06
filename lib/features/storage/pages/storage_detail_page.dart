@@ -37,10 +37,15 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
     setState(() => _rootPath = dir.path);
   }
 
+  /// 从实时 Provider 状态取当前分类快照，避免展示被清理的旧数据。
+  /// 首次打开且 Provider 尚未加载时回退到构造快照。
+  StorageScan get _scan =>
+      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+
   /// 明细条目。助手类始终显示"头像"固定项。
-  List<_DetailRowData> _rows(AppLocalizations l10n) {
+  List<_DetailRowData> _rows(AppLocalizations l10n, StorageScan scan) {
     final rows = <_DetailRowData>[];
-    for (final e in widget.scan.entries) {
+    for (final e in scan.entries) {
       rows.add(_DetailRowData(
         name: e.name,
         bytes: e.bytes,
@@ -65,7 +70,9 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
-    final rows = _rows(l10n);
+    context.watch<StorageProvider>();
+    final scan = _scan;
+    final rows = _rows(l10n, scan);
 
     return Scaffold(
       appBar: AppBar(
@@ -90,7 +97,7 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          _InfoHeader(config: cfg, bytes: widget.scan.bytes, count: widget.scan.fileCount),
+          _InfoHeader(config: cfg, bytes: scan.bytes, count: scan.fileCount),
           if (cfg.type == StorageCategoryType.snapshotDetail && _rootPath != null) ...[
             const SizedBox(height: 12),
             _ManageSnapshotsCard(

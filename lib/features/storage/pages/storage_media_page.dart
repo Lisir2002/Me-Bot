@@ -25,10 +25,15 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
   bool _largest = false;
   final Set<String> _selected = {};
 
-  List<StorageEntry> get _filtered {
+  /// 从实时 Provider 状态取当前分类快照，避免展示被删除的旧数据。
+  /// 首次打开且 Provider 尚未加载时回退到构造快照。
+  StorageScan get _scan =>
+      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+
+  List<StorageEntry> _filteredFor(StorageScan scan) {
     var list = _source == StorageSource.all
-        ? widget.scan.entries
-        : widget.scan.entries
+        ? scan.entries
+        : scan.entries
             .where((e) => e.source == (_source == StorageSource.user ? 'user' : 'assistant'))
             .toList();
     list = List.of(list);
@@ -83,7 +88,9 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
-    final items = _filtered;
+    context.watch<StorageProvider>();
+    final scan = _scan;
+    final items = _filteredFor(scan);
     final isImage = cfg.id == 'images' || cfg.id == 'avatars';
 
     return Scaffold(
@@ -114,8 +121,8 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
               children: [
                 _InfoHeader(
                   title: cfg.title,
-                  bytes: widget.scan.bytes,
-                  count: widget.scan.fileCount,
+                  bytes: scan.bytes,
+                  count: scan.fileCount,
                   caution: cfg.caution,
                 ),
                 if (items.isNotEmpty) ...[

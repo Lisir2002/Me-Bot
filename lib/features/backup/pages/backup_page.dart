@@ -2,11 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -19,6 +18,9 @@ import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../core/services/backup/cherry_importer.dart';
+import '../../../utils/app_directories.dart';
+import '../../storage/pages/local_snapshot_page.dart';
+import '../widgets/backup_progress_card.dart';
 
 // File size formatter (B, KB, MB, GB)
 String _fmtBytes(int bytes) {
@@ -41,6 +43,21 @@ class BackupPage extends StatefulWidget {
 class _BackupPageState extends State<BackupPage> {
   List<BackupFileItem> _remote = const <BackupFileItem>[];
   bool _loadingRemote = false;
+  bool _remindBackup = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _remindBackup = prefs.getBool('backup_remind_me') ?? false;
+    });
+  }
 
   Future<bool?> _confirmCherryImport(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
@@ -131,7 +148,6 @@ class _BackupPageState extends State<BackupPage> {
 
   Future<RestoreMode?> _chooseImportModeDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
 
@@ -170,7 +186,6 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<T> _runWithExportingOverlay<T>(BuildContext context, Future<T> Function() task) async {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     showDialog<void>(
       context: context,
@@ -178,26 +193,10 @@ class _BackupPageState extends State<BackupPage> {
       builder: (ctx) => Center(
         child: Material(
           color: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CupertinoActivityIndicator(radius: 16),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.backupPageExporting,
-                    style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.8)),
-                  ),
-                ],
-              ),
-            ),
+          child: BackupProgressCard(
+            title: l10n.backupPageExportToFile,
+            progress: -1, // 不确定进度，动画条
+            phase: l10n.backupPhasePacking,
           ),
         ),
       ),
@@ -313,6 +312,46 @@ class _BackupPageState extends State<BackupPage> {
                     final newCfg = cfg.copyWith(includeFiles: v);
                     await settings.setWebDavConfig(newCfg);
                     vm.updateConfig(newCfg);
+                  },
+                ),
+              ]),
+
+              // Section 1.5: 备份提醒
+              header(l10n.backupPageReminderHeader),
+              _iosSectionCard(children: [
+                _iosSwitchRow(
+                  context,
+                  icon: Lucide.Bell,
+                  label: l10n.backupPageRemindMe,
+                  value: _remindBackup,
+                  onChanged: (v) async {
+                    setState(() => _remindBackup = v);
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('backup_remind_me', v);
+                  },
+                ),
+              ]),
+
+              // Section 1.6: 本地副本
+              header(l10n.backupPageLocalCopiesHeader),
+              _iosSectionCard(children: [
+                _iosSwitchRow(
+                  context,
+                  icon: Lucide.Save,
+                  label: l10n.backupPageKeepLocalCopy,
+                  value: cfg.keepLocalCopy,
+                  onChanged: (v) async {
+                    final newCfg = cfg.copyWith(keepLocalCopy: v);
+                    await settings.setWebDavConfig(newCfg);
+                    vm.updateConfig(newCfg);
+                  },
+                ),
+                _iosDivider(context),
+                _SnapshotNavRow(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LocalSnapshotPage()),
+                    );
                   },
                 ),
               ]),
@@ -536,14 +575,13 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<void> _doExport(BuildContext context, BackupProvider vm) async {
-    final l10n = AppLocalizations.of(context)!;
     final file = await _runWithExportingOverlay(context, () => vm.exportToFile());
     if (!mounted) return;
     
     // iPad: anchor popover to the overlay's center
     Rect rect;
     final overlay = Overlay.of(context);
-    final ro = overlay?.context.findRenderObject();
+    final ro = overlay.context.findRenderObject();
     if (ro is RenderBox && ro.hasSize) {
       final center = ro.size.center(Offset.zero);
       final global = ro.localToGlobal(center);
@@ -608,17 +646,13 @@ class _InputRow extends StatelessWidget {
     required this.controller,
     this.hint,
     this.obscure = false,
-    this.enabled = true,
     this.suffix,
-    this.onChanged,
   });
   final String label;
   final TextEditingController controller;
   final String? hint;
   final bool obscure;
-  final bool enabled;
   final Widget? suffix;
-  final ValueChanged<String>? onChanged;
   
   @override
   Widget build(BuildContext context) {
@@ -632,8 +666,6 @@ class _InputRow extends StatelessWidget {
         TextField(
           controller: controller,
           obscureText: obscure,
-          enabled: enabled,
-          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -882,6 +914,61 @@ Widget _iosNavRow(
       );
     },
   );
+}
+
+// 本地副本导航行：展示 份数 + 大小，点击进入管理页。
+class _SnapshotNavRow extends StatefulWidget {
+  const _SnapshotNavRow({required this.onTap});
+  final VoidCallback onTap;
+  @override
+  State<_SnapshotNavRow> createState() => _SnapshotNavRowState();
+}
+
+class _SnapshotNavRowState extends State<_SnapshotNavRow> {
+  int _count = 0;
+  int _bytes = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final root = await AppDirectories.getAppDataDirectory();
+    final dir = Directory('${root.path}/snapshots');
+    int count = 0;
+    int bytes = 0;
+    if (await dir.exists()) {
+      await for (final ent in dir.list(followLinks: false)) {
+        if (ent is File && ent.path.toLowerCase().endsWith('.zip')) {
+          count += 1;
+          try {
+            bytes += ent.statSync().size;
+          } catch (_) {}
+        }
+      }
+    }
+    if (!mounted) return;
+    if (count != _count || bytes != _bytes) {
+      setState(() {
+        _count = count;
+        _bytes = bytes;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return _iosNavRow(
+      context,
+      icon: Lucide.Box,
+      label: l10n.storageManageSnapshots,
+      detailText: l10n.backupPageManageCopiesDetail(_count, _fmtBytes(_bytes)),
+      onTap: widget.onTap,
+    );
+  }
 }
 
 // --- Local iOS-style buttons for sheets ---

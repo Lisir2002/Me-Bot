@@ -15,6 +15,7 @@ import 'tts_services_page.dart';
 import 'sponsor_page.dart';
 import '../../search/pages/search_services_page.dart';
 import '../../backup/pages/backup_page.dart';
+import '../../storage/pages/storage_page.dart';
 import '../../quick_phrase/pages/quick_phrases_page.dart';
 import 'network_proxy_page.dart';
 import 'usage_stats_page.dart';
@@ -276,32 +277,11 @@ class SettingsPage extends StatelessWidget {
               context,
               icon: Lucide.HardDrive,
               label: l10n.settingsPageChatStorage,
-              detailBuilder: (ctx) {
-                String fmtBytes(int bytes) {
-                  const kb = 1024;
-                  const mb = kb * 1024;
-                  const gb = mb * 1024;
-                  if (bytes >= gb) return (bytes / gb).toStringAsFixed(2) + ' GB';
-                  if (bytes >= mb) return (bytes / mb).toStringAsFixed(2) + ' MB';
-                  if (bytes >= kb) return (bytes / kb).toStringAsFixed(1) + ' KB';
-                  return '$bytes B';
-                }
-                final l10n = AppLocalizations.of(ctx)!;
-                final svc = ctx.read<ChatService>();
-                return FutureBuilder<UploadStats>(
-                  future: svc.getUploadStats(),
-                  builder: (context, snapshot) {
-                    final data = snapshot.data;
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return Text(l10n.settingsPageCalculating, style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6), fontSize: 13));
-                    }
-                    final count = data?.fileCount ?? 0;
-                    final size = fmtBytes(data?.totalBytes ?? 0);
-                    return Text(l10n.settingsPageFilesCount(count, size), style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6), fontSize: 13));
-                  },
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const StoragePage()),
                 );
               },
-              onTap: null, // disabled: no tap, no chevron, no press feedback
             ),
           ]),
 

@@ -136,4 +136,16 @@ class Lucide {
   static const IconData Repeat = lucide.LucideIcons.repeat;
   static const IconData EthernetPort = lucide.LucideIcons.ethernetPort;
   static const IconData Cut = lucide.LucideIcons.scissors;
+  static const IconData Save = lucide.LucideIcons.save;
+  static const IconData Scissors = lucide.LucideIcons.scissors;
+  static const IconData Gauge = lucide.LucideIcons.gauge;
+  static const IconData CalendarDays = lucide.LucideIcons.calendarDays;
+  static const IconData CalendarRange = lucide.LucideIcons.calendarRange;
+  static const IconData CalendarClock = lucide.LucideIcons.calendarClock;
+  static const IconData HardDriveDownload = lucide.LucideIcons.hardDriveDownload;
+  static const IconData Bell = lucide.LucideIcons.bell;
+  static const IconData MapPin = lucide.LucideIcons.pin;
+  static const IconData Cpu = lucide.LucideIcons.cpu;
+  static const IconData ScrollText = lucide.LucideIcons.scrollText;
+  static const IconData ZapOff = lucide.LucideIcons.zapOff;
 }

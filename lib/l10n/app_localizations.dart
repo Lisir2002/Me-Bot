@@ -6208,6 +6208,588 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Forward'**
   String get messageWebViewForwardTooltip;
+
+  /// No description provided for @storagePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storagePageTitle;
+
+  /// No description provided for @storageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used space'**
+  String get storageUsed;
+
+  /// No description provided for @storageCleanable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanable space'**
+  String get storageCleanable;
+
+  /// No description provided for @storageCategoriesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get storageCategoriesHeader;
+
+  /// No description provided for @storageRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get storageRefresh;
+
+  /// No description provided for @storageItemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files'**
+  String storageItemsCount(int count);
+
+  /// No description provided for @storageDetailHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get storageDetailHeader;
+
+  /// No description provided for @storageEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No content yet'**
+  String get storageEmpty;
+
+  /// No description provided for @storageAvatarItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatars'**
+  String get storageAvatarItem;
+
+  /// No description provided for @storageManageSnapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage copies'**
+  String get storageManageSnapshots;
+
+  /// No description provided for @storageSnapshotPathNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto backups are stored in the snapshots directory'**
+  String get storageSnapshotPathNote;
+
+  /// No description provided for @storageCautionRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting may affect the corresponding feature. Please be careful.'**
+  String get storageCautionRisk;
+
+  /// No description provided for @storageCautionSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe to clean, does not affect chat history.'**
+  String get storageCautionSafe;
+
+  /// No description provided for @storageCautionOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown files, please be careful.'**
+  String get storageCautionOther;
+
+  /// No description provided for @storageCatePic.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get storageCatePic;
+
+  /// No description provided for @storageCateFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get storageCateFile;
+
+  /// No description provided for @storageCateChats.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat history'**
+  String get storageCateChats;
+
+  /// No description provided for @storageCateSnapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Local copies'**
+  String get storageCateSnapshots;
+
+  /// No description provided for @storageCateAvatars.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistants'**
+  String get storageCateAvatars;
+
+  /// No description provided for @storageCateCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache'**
+  String get storageCateCache;
+
+  /// No description provided for @storageCateLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs'**
+  String get storageCateLogs;
+
+  /// No description provided for @storageCateOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get storageCateOther;
+
+  /// No description provided for @storageSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get storageSource;
+
+  /// No description provided for @storageSourceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get storageSourceAll;
+
+  /// No description provided for @storageSourceUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User uploads'**
+  String get storageSourceUser;
+
+  /// No description provided for @storageSourceAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant output'**
+  String get storageSourceAssistant;
+
+  /// No description provided for @storageOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get storageOrder;
+
+  /// No description provided for @storageOrderNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get storageOrderNewest;
+
+  /// No description provided for @storageOrderOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest'**
+  String get storageOrderOldest;
+
+  /// No description provided for @storageOrderLargest.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get storageOrderLargest;
+
+  /// No description provided for @storageOrderSmallest.
+  ///
+  /// In en, this message translates to:
+  /// **'Smallest'**
+  String get storageOrderSmallest;
+
+  /// No description provided for @storageSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get storageSelectAll;
+
+  /// No description provided for @storageDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get storageDelete;
+
+  /// No description provided for @storageSelectedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String storageSelectedItems(int count);
+
+  /// No description provided for @storageDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected files?'**
+  String get storageDeleteConfirmTitle;
+
+  /// No description provided for @storageDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected {count} files will be permanently deleted. Continue?'**
+  String storageDeleteConfirmBody(int count);
+
+  /// No description provided for @storageCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get storageCancel;
+
+  /// No description provided for @storageConfirmDeleteBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get storageConfirmDeleteBtn;
+
+  /// No description provided for @storageCacheClearAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear avatar cache'**
+  String get storageCacheClearAvatar;
+
+  /// No description provided for @storageCacheClearApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cache'**
+  String get storageCacheClearApp;
+
+  /// No description provided for @storageCleanableNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe to clean, does not affect chat history.'**
+  String get storageCleanableNote;
+
+  /// No description provided for @storageCacheClearConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cache?'**
+  String get storageCacheClearConfirmTitle;
+
+  /// No description provided for @storageCacheClearConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing will free up space without affecting chat history. Continue?'**
+  String get storageCacheClearConfirmBody;
+
+  /// No description provided for @storageLogView.
+  ///
+  /// In en, this message translates to:
+  /// **'View logs'**
+  String get storageLogView;
+
+  /// No description provided for @storageLogClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs'**
+  String get storageLogClear;
+
+  /// No description provided for @storageLogContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get storageLogContext;
+
+  /// No description provided for @storageLogNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Request logs'**
+  String get storageLogNetwork;
+
+  /// No description provided for @storageLogRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'App logs'**
+  String get storageLogRuntime;
+
+  /// No description provided for @storageLogCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current log'**
+  String get storageLogCurrent;
+
+  /// No description provided for @storageLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs yet'**
+  String get storageLogEmpty;
+
+  /// No description provided for @storageLogClearConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs?'**
+  String get storageLogClearConfirmTitle;
+
+  /// No description provided for @storageLogClearConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All log files will be deleted. Continue?'**
+  String get storageLogClearConfirmBody;
+
+  /// No description provided for @logSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log settings'**
+  String get logSettingsTitle;
+
+  /// No description provided for @logSettingsSaveResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Save response output'**
+  String get logSettingsSaveResponse;
+
+  /// No description provided for @logSettingsOmitLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Omit large payloads'**
+  String get logSettingsOmitLarge;
+
+  /// No description provided for @logSettingsAutoDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto delete'**
+  String get logSettingsAutoDelete;
+
+  /// No description provided for @logSettingsAutoDeleteNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get logSettingsAutoDeleteNone;
+
+  /// No description provided for @logSettingsSizeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Log size limit'**
+  String get logSettingsSizeLimit;
+
+  /// No description provided for @logSettingDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days'**
+  String logSettingDays(int count);
+
+  /// No description provided for @logSettingSizeText.
+  ///
+  /// In en, this message translates to:
+  /// **'{limit} MB'**
+  String logSettingSizeText(int limit);
+
+  /// No description provided for @snapshotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local copies'**
+  String get snapshotTitle;
+
+  /// No description provided for @snapshotSettingsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get snapshotSettingsHeader;
+
+  /// No description provided for @snapshotKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep local copies'**
+  String get snapshotKeepLocal;
+
+  /// No description provided for @snapshotFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup frequency'**
+  String get snapshotFrequency;
+
+  /// No description provided for @snapshotFrequencyAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get snapshotFrequencyAuto;
+
+  /// No description provided for @snapshotKeepCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies to keep'**
+  String get snapshotKeepCount;
+
+  /// No description provided for @snapshotKeepLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep one from last week'**
+  String get snapshotKeepLastWeek;
+
+  /// No description provided for @snapshotKeepLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep one from last month'**
+  String get snapshotKeepLastMonth;
+
+  /// No description provided for @snapshotSizeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Size limit'**
+  String get snapshotSizeLimit;
+
+  /// No description provided for @snapshotNotifyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify when backup completes'**
+  String get snapshotNotifyDone;
+
+  /// No description provided for @snapshotLastBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Last backup: {time}'**
+  String snapshotLastBackup(String time);
+
+  /// No description provided for @snapshotBackupNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get snapshotBackupNow;
+
+  /// No description provided for @snapshotListHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Local copies · {count} × · {size}'**
+  String snapshotListHeader(int count, String size);
+
+  /// No description provided for @snapshotAutoBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto backup'**
+  String get snapshotAutoBadge;
+
+  /// No description provided for @snapshotRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get snapshotRestore;
+
+  /// No description provided for @snapshotExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get snapshotExport;
+
+  /// No description provided for @snapshotDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get snapshotDelete;
+
+  /// No description provided for @snapshotPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this copy'**
+  String get snapshotPin;
+
+  /// No description provided for @snapshotKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept'**
+  String get snapshotKeep;
+
+  /// No description provided for @snapshotSafetyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Local copies help restore data after an unexpected issue. Do not delete them unless you are sure you no longer need them.'**
+  String get snapshotSafetyNote;
+
+  /// No description provided for @snapshotCreatedNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get snapshotCreatedNow;
+
+  /// No description provided for @snapshotFreqManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get snapshotFreqManual;
+
+  /// No description provided for @snapshotFreqDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get snapshotFreqDaily;
+
+  /// No description provided for @snapshotFreqWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get snapshotFreqWeekly;
+
+  /// No description provided for @snapshotFreqAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get snapshotFreqAuto;
+
+  /// No description provided for @snapshotCopies.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} copies'**
+  String snapshotCopies(int n);
+
+  /// No description provided for @backupPageReminderHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup reminder'**
+  String get backupPageReminderHeader;
+
+  /// No description provided for @backupPageRemindMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me to back up regularly'**
+  String get backupPageRemindMe;
+
+  /// No description provided for @backupPageLocalCopiesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Local copies'**
+  String get backupPageLocalCopiesHeader;
+
+  /// No description provided for @backupPageKeepLocalCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep local copies'**
+  String get backupPageKeepLocalCopy;
+
+  /// No description provided for @backupPageImportFromChatbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Chatbox'**
+  String get backupPageImportFromChatbox;
+
+  /// No description provided for @backupPageManageCopiesDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage copies · {count} × · {size}'**
+  String backupPageManageCopiesDetail(int count, String size);
+
+  /// No description provided for @backupPhasePacking.
+  ///
+  /// In en, this message translates to:
+  /// **'Packing'**
+  String get backupPhasePacking;
+
+  /// No description provided for @backupPhaseExporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting'**
+  String get backupPhaseExporting;
+
+  /// No description provided for @backupPhaseDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get backupPhaseDone;
+
+  /// No description provided for @backupPhaseRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring'**
+  String get backupPhaseRestoring;
+
+  /// No description provided for @backupPhaseUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get backupPhaseUploading;
 }
 
 class _AppLocalizationsDelegate

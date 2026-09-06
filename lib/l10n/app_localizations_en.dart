@@ -3275,4 +3275,320 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get messageWebViewForwardTooltip => 'Forward';
+
+  @override
+  String get storagePageTitle => 'Storage';
+
+  @override
+  String get storageUsed => 'Used space';
+
+  @override
+  String get storageCleanable => 'Cleanable space';
+
+  @override
+  String get storageCategoriesHeader => 'Categories';
+
+  @override
+  String get storageRefresh => 'Refresh';
+
+  @override
+  String storageItemsCount(int count) {
+    return '$count files';
+  }
+
+  @override
+  String get storageDetailHeader => 'Details';
+
+  @override
+  String get storageEmpty => 'No content yet';
+
+  @override
+  String get storageAvatarItem => 'Avatars';
+
+  @override
+  String get storageManageSnapshots => 'Manage copies';
+
+  @override
+  String get storageSnapshotPathNote =>
+      'Auto backups are stored in the snapshots directory';
+
+  @override
+  String get storageCautionRisk =>
+      'Deleting may affect the corresponding feature. Please be careful.';
+
+  @override
+  String get storageCautionSafe =>
+      'Safe to clean, does not affect chat history.';
+
+  @override
+  String get storageCautionOther => 'Unknown files, please be careful.';
+
+  @override
+  String get storageCatePic => 'Images';
+
+  @override
+  String get storageCateFile => 'Files';
+
+  @override
+  String get storageCateChats => 'Chat history';
+
+  @override
+  String get storageCateSnapshots => 'Local copies';
+
+  @override
+  String get storageCateAvatars => 'Assistants';
+
+  @override
+  String get storageCateCache => 'Cache';
+
+  @override
+  String get storageCateLogs => 'Logs';
+
+  @override
+  String get storageCateOther => 'Other';
+
+  @override
+  String get storageSource => 'Source';
+
+  @override
+  String get storageSourceAll => 'All';
+
+  @override
+  String get storageSourceUser => 'User uploads';
+
+  @override
+  String get storageSourceAssistant => 'Assistant output';
+
+  @override
+  String get storageOrder => 'Sort';
+
+  @override
+  String get storageOrderNewest => 'Newest';
+
+  @override
+  String get storageOrderOldest => 'Oldest';
+
+  @override
+  String get storageOrderLargest => 'Largest';
+
+  @override
+  String get storageOrderSmallest => 'Smallest';
+
+  @override
+  String get storageSelectAll => 'Select all';
+
+  @override
+  String get storageDelete => 'Delete';
+
+  @override
+  String storageSelectedItems(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get storageDeleteConfirmTitle => 'Delete selected files?';
+
+  @override
+  String storageDeleteConfirmBody(int count) {
+    return 'The selected $count files will be permanently deleted. Continue?';
+  }
+
+  @override
+  String get storageCancel => 'Cancel';
+
+  @override
+  String get storageConfirmDeleteBtn => 'Delete';
+
+  @override
+  String get storageCacheClearAvatar => 'Clear avatar cache';
+
+  @override
+  String get storageCacheClearApp => 'Clear cache';
+
+  @override
+  String get storageCleanableNote =>
+      'Safe to clean, does not affect chat history.';
+
+  @override
+  String get storageCacheClearConfirmTitle => 'Clear cache?';
+
+  @override
+  String get storageCacheClearConfirmBody =>
+      'Clearing will free up space without affecting chat history. Continue?';
+
+  @override
+  String get storageLogView => 'View logs';
+
+  @override
+  String get storageLogClear => 'Clear logs';
+
+  @override
+  String get storageLogContext => 'Context';
+
+  @override
+  String get storageLogNetwork => 'Request logs';
+
+  @override
+  String get storageLogRuntime => 'App logs';
+
+  @override
+  String get storageLogCurrent => 'Current log';
+
+  @override
+  String get storageLogEmpty => 'No logs yet';
+
+  @override
+  String get storageLogClearConfirmTitle => 'Clear logs?';
+
+  @override
+  String get storageLogClearConfirmBody =>
+      'All log files will be deleted. Continue?';
+
+  @override
+  String get logSettingsTitle => 'Log settings';
+
+  @override
+  String get logSettingsSaveResponse => 'Save response output';
+
+  @override
+  String get logSettingsOmitLarge => 'Omit large payloads';
+
+  @override
+  String get logSettingsAutoDelete => 'Auto delete';
+
+  @override
+  String get logSettingsAutoDeleteNone => 'Disabled';
+
+  @override
+  String get logSettingsSizeLimit => 'Log size limit';
+
+  @override
+  String logSettingDays(int count) {
+    return '$count days';
+  }
+
+  @override
+  String logSettingSizeText(int limit) {
+    return '$limit MB';
+  }
+
+  @override
+  String get snapshotTitle => 'Local copies';
+
+  @override
+  String get snapshotSettingsHeader => 'Settings';
+
+  @override
+  String get snapshotKeepLocal => 'Keep local copies';
+
+  @override
+  String get snapshotFrequency => 'Backup frequency';
+
+  @override
+  String get snapshotFrequencyAuto => 'Auto';
+
+  @override
+  String get snapshotKeepCount => 'Copies to keep';
+
+  @override
+  String get snapshotKeepLastWeek => 'Keep one from last week';
+
+  @override
+  String get snapshotKeepLastMonth => 'Keep one from last month';
+
+  @override
+  String get snapshotSizeLimit => 'Size limit';
+
+  @override
+  String get snapshotNotifyDone => 'Notify when backup completes';
+
+  @override
+  String snapshotLastBackup(String time) {
+    return 'Last backup: $time';
+  }
+
+  @override
+  String get snapshotBackupNow => 'Back up now';
+
+  @override
+  String snapshotListHeader(int count, String size) {
+    return 'Local copies · $count × · $size';
+  }
+
+  @override
+  String get snapshotAutoBadge => 'Auto backup';
+
+  @override
+  String get snapshotRestore => 'Restore';
+
+  @override
+  String get snapshotExport => 'Export';
+
+  @override
+  String get snapshotDelete => 'Delete';
+
+  @override
+  String get snapshotPin => 'Keep this copy';
+
+  @override
+  String get snapshotKeep => 'Kept';
+
+  @override
+  String get snapshotSafetyNote =>
+      'Local copies help restore data after an unexpected issue. Do not delete them unless you are sure you no longer need them.';
+
+  @override
+  String get snapshotCreatedNow => 'Just now';
+
+  @override
+  String get snapshotFreqManual => 'Manual';
+
+  @override
+  String get snapshotFreqDaily => 'Daily';
+
+  @override
+  String get snapshotFreqWeekly => 'Weekly';
+
+  @override
+  String get snapshotFreqAuto => 'Auto';
+
+  @override
+  String snapshotCopies(int n) {
+    return '$n copies';
+  }
+
+  @override
+  String get backupPageReminderHeader => 'Backup reminder';
+
+  @override
+  String get backupPageRemindMe => 'Remind me to back up regularly';
+
+  @override
+  String get backupPageLocalCopiesHeader => 'Local copies';
+
+  @override
+  String get backupPageKeepLocalCopy => 'Keep local copies';
+
+  @override
+  String get backupPageImportFromChatbox => 'Import from Chatbox';
+
+  @override
+  String backupPageManageCopiesDetail(int count, String size) {
+    return 'Manage copies · $count × · $size';
+  }
+
+  @override
+  String get backupPhasePacking => 'Packing';
+
+  @override
+  String get backupPhaseExporting => 'Exporting';
+
+  @override
+  String get backupPhaseDone => 'Done';
+
+  @override
+  String get backupPhaseRestoring => 'Restoring';
+
+  @override
+  String get backupPhaseUploading => 'Uploading';
 }

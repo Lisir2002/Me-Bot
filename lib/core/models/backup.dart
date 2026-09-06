@@ -12,6 +12,7 @@ class WebDavConfig {
   final String path;
   final bool includeChats; // Hive boxes
   final bool includeFiles; // uploads/
+  final bool keepLocalCopy; // 保留本地副本
 
   const WebDavConfig({
     this.url = '',
@@ -20,6 +21,7 @@ class WebDavConfig {
     this.path = 'minime-core_backups',
     this.includeChats = true,
     this.includeFiles = true,
+    this.keepLocalCopy = true,
   });
 
   WebDavConfig copyWith({
@@ -29,6 +31,7 @@ class WebDavConfig {
     String? path,
     bool? includeChats,
     bool? includeFiles,
+    bool? keepLocalCopy,
   }) {
     return WebDavConfig(
       url: url ?? this.url,
@@ -37,6 +40,7 @@ class WebDavConfig {
       path: path ?? this.path,
       includeChats: includeChats ?? this.includeChats,
       includeFiles: includeFiles ?? this.includeFiles,
+      keepLocalCopy: keepLocalCopy ?? this.keepLocalCopy,
     );
   }
 
@@ -47,6 +51,7 @@ class WebDavConfig {
         'path': path,
         'includeChats': includeChats,
         'includeFiles': includeFiles,
+        'keepLocalCopy': keepLocalCopy,
       };
 
   static WebDavConfig fromJson(Map<String, dynamic> json) {
@@ -59,6 +64,7 @@ class WebDavConfig {
           : 'minime-core_backups',
       includeChats: json['includeChats'] as bool? ?? true,
       includeFiles: json['includeFiles'] as bool? ?? true,
+      keepLocalCopy: json['keepLocalCopy'] as bool? ?? true,
     );
   }
 

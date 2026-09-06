@@ -3166,6 +3166,315 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get messageWebViewForwardTooltip => '前进';
+
+  @override
+  String get storagePageTitle => '存储空间';
+
+  @override
+  String get storageUsed => '已用空间';
+
+  @override
+  String get storageCleanable => '可清理空间';
+
+  @override
+  String get storageCategoriesHeader => '分类';
+
+  @override
+  String get storageRefresh => '刷新';
+
+  @override
+  String storageItemsCount(int count) {
+    return '$count 个文件';
+  }
+
+  @override
+  String get storageDetailHeader => '明细';
+
+  @override
+  String get storageEmpty => '暂无内容';
+
+  @override
+  String get storageAvatarItem => '头像';
+
+  @override
+  String get storageManageSnapshots => '管理副本';
+
+  @override
+  String get storageSnapshotPathNote => '自动备份的副本保存在 snapshots 目录';
+
+  @override
+  String get storageCautionRisk => '删除可能影响对应功能，请谨慎操作';
+
+  @override
+  String get storageCautionSafe => '可安全清理，不影响聊天记录';
+
+  @override
+  String get storageCautionOther => '情况不明的文件，请谨慎操作';
+
+  @override
+  String get storageCatePic => '图片';
+
+  @override
+  String get storageCateFile => '文件';
+
+  @override
+  String get storageCateChats => '聊天记录';
+
+  @override
+  String get storageCateSnapshots => '本地副本';
+
+  @override
+  String get storageCateAvatars => '助手';
+
+  @override
+  String get storageCateCache => '缓存';
+
+  @override
+  String get storageCateLogs => '日志';
+
+  @override
+  String get storageCateOther => '其他';
+
+  @override
+  String get storageSource => '来源';
+
+  @override
+  String get storageSourceAll => '全部';
+
+  @override
+  String get storageSourceUser => '用户上传';
+
+  @override
+  String get storageSourceAssistant => '助手发出';
+
+  @override
+  String get storageOrder => '排序';
+
+  @override
+  String get storageOrderNewest => '最新';
+
+  @override
+  String get storageOrderOldest => '最旧';
+
+  @override
+  String get storageOrderLargest => '最大';
+
+  @override
+  String get storageOrderSmallest => '最小';
+
+  @override
+  String get storageSelectAll => '全选';
+
+  @override
+  String get storageDelete => '删除';
+
+  @override
+  String storageSelectedItems(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get storageDeleteConfirmTitle => '删除所选文件？';
+
+  @override
+  String storageDeleteConfirmBody(int count) {
+    return '将永久删除选中的 $count 个文件，确定吗？';
+  }
+
+  @override
+  String get storageCancel => '取消';
+
+  @override
+  String get storageConfirmDeleteBtn => '删除';
+
+  @override
+  String get storageCacheClearAvatar => '清理头像缓存';
+
+  @override
+  String get storageCacheClearApp => '清理缓存';
+
+  @override
+  String get storageCleanableNote => '可安全清理，不影响聊天记录。';
+
+  @override
+  String get storageCacheClearConfirmTitle => '清理缓存？';
+
+  @override
+  String get storageCacheClearConfirmBody => '清理后将释放空间，不影响聊天记录。确定清理吗？';
+
+  @override
+  String get storageLogView => '查看日志';
+
+  @override
+  String get storageLogClear => '清理日志';
+
+  @override
+  String get storageLogContext => '上下文';
+
+  @override
+  String get storageLogNetwork => '请求日志';
+
+  @override
+  String get storageLogRuntime => '应用日志';
+
+  @override
+  String get storageLogCurrent => '当前日志';
+
+  @override
+  String get storageLogEmpty => '暂无日志';
+
+  @override
+  String get storageLogClearConfirmTitle => '清理日志？';
+
+  @override
+  String get storageLogClearConfirmBody => '将删除全部日志文件，确定清理吗？';
+
+  @override
+  String get logSettingsTitle => '日志设置';
+
+  @override
+  String get logSettingsSaveResponse => '保存响应输出';
+
+  @override
+  String get logSettingsOmitLarge => '省略大载荷';
+
+  @override
+  String get logSettingsAutoDelete => '自动删除';
+
+  @override
+  String get logSettingsAutoDeleteNone => '不启用';
+
+  @override
+  String get logSettingsSizeLimit => '日志大小上限';
+
+  @override
+  String logSettingDays(int count) {
+    return '$count 天';
+  }
+
+  @override
+  String logSettingSizeText(int limit) {
+    return '$limit MB';
+  }
+
+  @override
+  String get snapshotTitle => '本地副本';
+
+  @override
+  String get snapshotSettingsHeader => '设置';
+
+  @override
+  String get snapshotKeepLocal => '保留本地副本';
+
+  @override
+  String get snapshotFrequency => '备份频率';
+
+  @override
+  String get snapshotFrequencyAuto => '自动';
+
+  @override
+  String get snapshotKeepCount => '保留份数';
+
+  @override
+  String get snapshotKeepLastWeek => '保留一份上周的';
+
+  @override
+  String get snapshotKeepLastMonth => '保留一份上个月的';
+
+  @override
+  String get snapshotSizeLimit => '占用上限';
+
+  @override
+  String get snapshotNotifyDone => '备份完成时提示';
+
+  @override
+  String snapshotLastBackup(String time) {
+    return '上次备份：$time';
+  }
+
+  @override
+  String get snapshotBackupNow => '立即备份一份';
+
+  @override
+  String snapshotListHeader(int count, String size) {
+    return '本地副本 · $count 份 · $size';
+  }
+
+  @override
+  String get snapshotAutoBadge => '自动备份';
+
+  @override
+  String get snapshotRestore => '恢复';
+
+  @override
+  String get snapshotExport => '导出';
+
+  @override
+  String get snapshotDelete => '删除';
+
+  @override
+  String get snapshotPin => '保留这份';
+
+  @override
+  String get snapshotKeep => '已保留';
+
+  @override
+  String get snapshotSafetyNote => '本地副本用于在异常时恢复数据。请勿手动删除，除非你确定不需要。';
+
+  @override
+  String get snapshotCreatedNow => '刚刚';
+
+  @override
+  String get snapshotFreqManual => '手动';
+
+  @override
+  String get snapshotFreqDaily => '每天';
+
+  @override
+  String get snapshotFreqWeekly => '每周';
+
+  @override
+  String get snapshotFreqAuto => '自动';
+
+  @override
+  String snapshotCopies(int n) {
+    return '$n 份';
+  }
+
+  @override
+  String get backupPageReminderHeader => '备份提醒';
+
+  @override
+  String get backupPageRemindMe => '定期提醒我备份';
+
+  @override
+  String get backupPageLocalCopiesHeader => '本地副本';
+
+  @override
+  String get backupPageKeepLocalCopy => '保留本地副本';
+
+  @override
+  String get backupPageImportFromChatbox => '从 Chatbox 导入';
+
+  @override
+  String backupPageManageCopiesDetail(int count, String size) {
+    return '管理副本 · $count 份 · $size';
+  }
+
+  @override
+  String get backupPhasePacking => '正在打包';
+
+  @override
+  String get backupPhaseExporting => '正在导出';
+
+  @override
+  String get backupPhaseDone => '完成';
+
+  @override
+  String get backupPhaseRestoring => '正在恢复';
+
+  @override
+  String get backupPhaseUploading => '正在上传';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -6197,6 +6506,315 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get messageWebViewForwardTooltip => '前进';
+
+  @override
+  String get storagePageTitle => '存储空间';
+
+  @override
+  String get storageUsed => '已用空间';
+
+  @override
+  String get storageCleanable => '可清理空间';
+
+  @override
+  String get storageCategoriesHeader => '分类';
+
+  @override
+  String get storageRefresh => '刷新';
+
+  @override
+  String storageItemsCount(int count) {
+    return '$count 个文件';
+  }
+
+  @override
+  String get storageDetailHeader => '明细';
+
+  @override
+  String get storageEmpty => '暂无内容';
+
+  @override
+  String get storageAvatarItem => '头像';
+
+  @override
+  String get storageManageSnapshots => '管理副本';
+
+  @override
+  String get storageSnapshotPathNote => '自动备份的副本保存在 snapshots 目录';
+
+  @override
+  String get storageCautionRisk => '删除可能影响对应功能，请谨慎操作';
+
+  @override
+  String get storageCautionSafe => '可安全清理，不影响聊天记录';
+
+  @override
+  String get storageCautionOther => '情况不明的文件，请谨慎操作';
+
+  @override
+  String get storageCatePic => '图片';
+
+  @override
+  String get storageCateFile => '文件';
+
+  @override
+  String get storageCateChats => '聊天记录';
+
+  @override
+  String get storageCateSnapshots => '本地副本';
+
+  @override
+  String get storageCateAvatars => '助手';
+
+  @override
+  String get storageCateCache => '缓存';
+
+  @override
+  String get storageCateLogs => '日志';
+
+  @override
+  String get storageCateOther => '其他';
+
+  @override
+  String get storageSource => '来源';
+
+  @override
+  String get storageSourceAll => '全部';
+
+  @override
+  String get storageSourceUser => '用户上传';
+
+  @override
+  String get storageSourceAssistant => '助手发出';
+
+  @override
+  String get storageOrder => '排序';
+
+  @override
+  String get storageOrderNewest => '最新';
+
+  @override
+  String get storageOrderOldest => '最旧';
+
+  @override
+  String get storageOrderLargest => '最大';
+
+  @override
+  String get storageOrderSmallest => '最小';
+
+  @override
+  String get storageSelectAll => '全选';
+
+  @override
+  String get storageDelete => '删除';
+
+  @override
+  String storageSelectedItems(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get storageDeleteConfirmTitle => '删除所选文件？';
+
+  @override
+  String storageDeleteConfirmBody(int count) {
+    return '将永久删除选中的 $count 个文件，确定吗？';
+  }
+
+  @override
+  String get storageCancel => '取消';
+
+  @override
+  String get storageConfirmDeleteBtn => '删除';
+
+  @override
+  String get storageCacheClearAvatar => '清理头像缓存';
+
+  @override
+  String get storageCacheClearApp => '清理缓存';
+
+  @override
+  String get storageCleanableNote => '可安全清理，不影响聊天记录。';
+
+  @override
+  String get storageCacheClearConfirmTitle => '清理缓存？';
+
+  @override
+  String get storageCacheClearConfirmBody => '清理后将释放空间，不影响聊天记录。确定清理吗？';
+
+  @override
+  String get storageLogView => '查看日志';
+
+  @override
+  String get storageLogClear => '清理日志';
+
+  @override
+  String get storageLogContext => '上下文';
+
+  @override
+  String get storageLogNetwork => '请求日志';
+
+  @override
+  String get storageLogRuntime => '应用日志';
+
+  @override
+  String get storageLogCurrent => '当前日志';
+
+  @override
+  String get storageLogEmpty => '暂无日志';
+
+  @override
+  String get storageLogClearConfirmTitle => '清理日志？';
+
+  @override
+  String get storageLogClearConfirmBody => '将删除全部日志文件，确定清理吗？';
+
+  @override
+  String get logSettingsTitle => '日志设置';
+
+  @override
+  String get logSettingsSaveResponse => '保存响应输出';
+
+  @override
+  String get logSettingsOmitLarge => '省略大载荷';
+
+  @override
+  String get logSettingsAutoDelete => '自动删除';
+
+  @override
+  String get logSettingsAutoDeleteNone => '不启用';
+
+  @override
+  String get logSettingsSizeLimit => '日志大小上限';
+
+  @override
+  String logSettingDays(int count) {
+    return '$count 天';
+  }
+
+  @override
+  String logSettingSizeText(int limit) {
+    return '$limit MB';
+  }
+
+  @override
+  String get snapshotTitle => '本地副本';
+
+  @override
+  String get snapshotSettingsHeader => '设置';
+
+  @override
+  String get snapshotKeepLocal => '保留本地副本';
+
+  @override
+  String get snapshotFrequency => '备份频率';
+
+  @override
+  String get snapshotFrequencyAuto => '自动';
+
+  @override
+  String get snapshotKeepCount => '保留份数';
+
+  @override
+  String get snapshotKeepLastWeek => '保留一份上周的';
+
+  @override
+  String get snapshotKeepLastMonth => '保留一份上个月的';
+
+  @override
+  String get snapshotSizeLimit => '占用上限';
+
+  @override
+  String get snapshotNotifyDone => '备份完成时提示';
+
+  @override
+  String snapshotLastBackup(String time) {
+    return '上次备份：$time';
+  }
+
+  @override
+  String get snapshotBackupNow => '立即备份一份';
+
+  @override
+  String snapshotListHeader(int count, String size) {
+    return '本地副本 · $count 份 · $size';
+  }
+
+  @override
+  String get snapshotAutoBadge => '自动备份';
+
+  @override
+  String get snapshotRestore => '恢复';
+
+  @override
+  String get snapshotExport => '导出';
+
+  @override
+  String get snapshotDelete => '删除';
+
+  @override
+  String get snapshotPin => '保留这份';
+
+  @override
+  String get snapshotKeep => '已保留';
+
+  @override
+  String get snapshotSafetyNote => '本地副本用于在异常时恢复数据。请勿手动删除，除非你确定不需要。';
+
+  @override
+  String get snapshotCreatedNow => '刚刚';
+
+  @override
+  String get snapshotFreqManual => '手动';
+
+  @override
+  String get snapshotFreqDaily => '每天';
+
+  @override
+  String get snapshotFreqWeekly => '每周';
+
+  @override
+  String get snapshotFreqAuto => '自动';
+
+  @override
+  String snapshotCopies(int n) {
+    return '$n 份';
+  }
+
+  @override
+  String get backupPageReminderHeader => '备份提醒';
+
+  @override
+  String get backupPageRemindMe => '定期提醒我备份';
+
+  @override
+  String get backupPageLocalCopiesHeader => '本地副本';
+
+  @override
+  String get backupPageKeepLocalCopy => '保留本地副本';
+
+  @override
+  String get backupPageImportFromChatbox => '从 Chatbox 导入';
+
+  @override
+  String backupPageManageCopiesDetail(int count, String size) {
+    return '管理副本 · $count 份 · $size';
+  }
+
+  @override
+  String get backupPhasePacking => '正在打包';
+
+  @override
+  String get backupPhaseExporting => '正在导出';
+
+  @override
+  String get backupPhaseDone => '完成';
+
+  @override
+  String get backupPhaseRestoring => '正在恢复';
+
+  @override
+  String get backupPhaseUploading => '正在上传';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -9229,4 +9847,313 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get messageWebViewForwardTooltip => '前進';
+
+  @override
+  String get storagePageTitle => '儲存空間';
+
+  @override
+  String get storageUsed => '已用空間';
+
+  @override
+  String get storageCleanable => '可清理空間';
+
+  @override
+  String get storageCategoriesHeader => '分類';
+
+  @override
+  String get storageRefresh => '重新整理';
+
+  @override
+  String storageItemsCount(int count) {
+    return '$count 個檔案';
+  }
+
+  @override
+  String get storageDetailHeader => '明細';
+
+  @override
+  String get storageEmpty => '暫無內容';
+
+  @override
+  String get storageAvatarItem => '頭像';
+
+  @override
+  String get storageManageSnapshots => '管理副本';
+
+  @override
+  String get storageSnapshotPathNote => '自動備份的副本儲存在 snapshots 目錄';
+
+  @override
+  String get storageCautionRisk => '刪除可能影響對應功能，請謹慎操作';
+
+  @override
+  String get storageCautionSafe => '可安全清理，不影響聊天記錄';
+
+  @override
+  String get storageCautionOther => '情況不明的檔案，請謹慎操作';
+
+  @override
+  String get storageCatePic => '圖片';
+
+  @override
+  String get storageCateFile => '檔案';
+
+  @override
+  String get storageCateChats => '聊天記錄';
+
+  @override
+  String get storageCateSnapshots => '本地副本';
+
+  @override
+  String get storageCateAvatars => '助手';
+
+  @override
+  String get storageCateCache => '快取';
+
+  @override
+  String get storageCateLogs => '日誌';
+
+  @override
+  String get storageCateOther => '其他';
+
+  @override
+  String get storageSource => '來源';
+
+  @override
+  String get storageSourceAll => '全部';
+
+  @override
+  String get storageSourceUser => '使用者上傳';
+
+  @override
+  String get storageSourceAssistant => '助手發出';
+
+  @override
+  String get storageOrder => '排序';
+
+  @override
+  String get storageOrderNewest => '最新';
+
+  @override
+  String get storageOrderOldest => '最舊';
+
+  @override
+  String get storageOrderLargest => '最大';
+
+  @override
+  String get storageOrderSmallest => '最小';
+
+  @override
+  String get storageSelectAll => '全選';
+
+  @override
+  String get storageDelete => '刪除';
+
+  @override
+  String storageSelectedItems(int count) {
+    return '已選 $count 項';
+  }
+
+  @override
+  String get storageDeleteConfirmTitle => '刪除所選檔案？';
+
+  @override
+  String storageDeleteConfirmBody(int count) {
+    return '將永久刪除選中的 $count 個檔案，確定嗎？';
+  }
+
+  @override
+  String get storageCancel => '取消';
+
+  @override
+  String get storageConfirmDeleteBtn => '刪除';
+
+  @override
+  String get storageCacheClearAvatar => '清理頭像快取';
+
+  @override
+  String get storageCacheClearApp => '清理快取';
+
+  @override
+  String get storageCleanableNote => '可安全清理，不影響聊天記錄。';
+
+  @override
+  String get storageCacheClearConfirmTitle => '清理快取？';
+
+  @override
+  String get storageCacheClearConfirmBody => '清理後將釋放空間，不影響聊天記錄。確定清理嗎？';
+
+  @override
+  String get storageLogView => '查看日誌';
+
+  @override
+  String get storageLogClear => '清理日誌';
+
+  @override
+  String get storageLogContext => '上下文';
+
+  @override
+  String get storageLogNetwork => '請求日誌';
+
+  @override
+  String get storageLogRuntime => '應用日誌';
+
+  @override
+  String get storageLogCurrent => '目前日誌';
+
+  @override
+  String get storageLogEmpty => '暫無日誌';
+
+  @override
+  String get storageLogClearConfirmTitle => '清理日誌？';
+
+  @override
+  String get storageLogClearConfirmBody => '將刪除全部日誌檔案，確定清理嗎？';
+
+  @override
+  String get logSettingsTitle => '日誌設定';
+
+  @override
+  String get logSettingsSaveResponse => '儲存回應輸出';
+
+  @override
+  String get logSettingsOmitLarge => '省略大酬載';
+
+  @override
+  String get logSettingsAutoDelete => '自動刪除';
+
+  @override
+  String get logSettingsAutoDeleteNone => '不啟用';
+
+  @override
+  String get logSettingsSizeLimit => '日誌大小上限';
+
+  @override
+  String logSettingDays(int count) {
+    return '$count 天';
+  }
+
+  @override
+  String logSettingSizeText(int limit) {
+    return '$limit MB';
+  }
+
+  @override
+  String get snapshotTitle => '本地副本';
+
+  @override
+  String get snapshotSettingsHeader => '設定';
+
+  @override
+  String get snapshotKeepLocal => '保留本地副本';
+
+  @override
+  String get snapshotFrequency => '備份頻率';
+
+  @override
+  String get snapshotFrequencyAuto => '自動';
+
+  @override
+  String get snapshotKeepCount => '保留份數';
+
+  @override
+  String get snapshotKeepLastWeek => '保留一份上週的';
+
+  @override
+  String get snapshotKeepLastMonth => '保留一份上個月的';
+
+  @override
+  String get snapshotSizeLimit => '佔用上限';
+
+  @override
+  String get snapshotNotifyDone => '備份完成時提示';
+
+  @override
+  String snapshotLastBackup(String time) {
+    return '上次備份：$time';
+  }
+
+  @override
+  String get snapshotBackupNow => '立即備份一份';
+
+  @override
+  String snapshotListHeader(int count, String size) {
+    return '本地副本 · $count 份 · $size';
+  }
+
+  @override
+  String get snapshotAutoBadge => '自動備份';
+
+  @override
+  String get snapshotRestore => '回復';
+
+  @override
+  String get snapshotExport => '匯出';
+
+  @override
+  String get snapshotDelete => '刪除';
+
+  @override
+  String get snapshotPin => '保留這份';
+
+  @override
+  String get snapshotKeep => '已保留';
+
+  @override
+  String get snapshotSafetyNote => '本地副本用於在異常時回復資料。請勿手動刪除，除非你確定不需要。';
+
+  @override
+  String get snapshotCreatedNow => '剛剛';
+
+  @override
+  String get snapshotFreqManual => '手動';
+
+  @override
+  String get snapshotFreqDaily => '每天';
+
+  @override
+  String get snapshotFreqWeekly => '每週';
+
+  @override
+  String get snapshotFreqAuto => '自動';
+
+  @override
+  String snapshotCopies(int n) {
+    return '$n 份';
+  }
+
+  @override
+  String get backupPageReminderHeader => '備份提醒';
+
+  @override
+  String get backupPageRemindMe => '定期提醒我備份';
+
+  @override
+  String get backupPageLocalCopiesHeader => '本地副本';
+
+  @override
+  String get backupPageKeepLocalCopy => '保留本地副本';
+
+  @override
+  String get backupPageImportFromChatbox => '從 Chatbox 匯入';
+
+  @override
+  String backupPageManageCopiesDetail(int count, String size) {
+    return '管理副本 · $count 份 · $size';
+  }
+
+  @override
+  String get backupPhasePacking => '正在打包';
+
+  @override
+  String get backupPhaseExporting => '正在匯出';
+
+  @override
+  String get backupPhaseDone => '完成';
+
+  @override
+  String get backupPhaseRestoring => '正在回復';
+
+  @override
+  String get backupPhaseUploading => '正在上傳';
 }

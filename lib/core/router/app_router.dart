@@ -143,8 +143,8 @@ class _MobileScaffoldShell extends StatelessWidget {
             label: l10n.mobileTabTerminal,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.settings_outlined_rounded),
-            selectedIcon: Icon(Icons.settings, color: cs.primary),
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded, color: cs.primary),
             label: l10n.settingsPageTitle,
           ),
         ],

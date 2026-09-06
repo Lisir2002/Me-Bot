@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import "package:go_router/go_router.dart";
 import '../../../l10n/app_localizations.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/conversation.dart';

@@ -1,3 +1,4 @@
+
 /// 日志等级，由低到高。[none] 用作阈值时关闭一切输出。
 /// 顺序即严重程度：阈值 [Logger.minLevel] 之下的日志一律跳过。
 enum LogLevel {

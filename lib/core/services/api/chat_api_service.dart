@@ -10,8 +10,8 @@ import '../../../utils/sandbox_path_resolver.dart';
 import 'google_service_account_auth.dart';
 import '../../services/api_key_manager.dart';
 import '../logging/logger.dart';
-import '../services/logging/api_logger.dart';
-import '../services/logging/log_tags.dart';
+import '../logging/api_logger.dart';
+import '../logging/log_tags.dart';
 import 'package:minime_core/secrets/fallback.dart';
 
 class ChatApiService {

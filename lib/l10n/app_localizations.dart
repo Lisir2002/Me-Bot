@@ -3467,6 +3467,42 @@ abstract class AppLocalizations {
   /// **'No approval needed'**
   String get mcpToolSchemaNoApproval;
 
+  /// No description provided for @mcpDetailTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Overview'**
+  String get mcpDetailTabOverview;
+
+  /// No description provided for @mcpDetailTabTools.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Tools'**
+  String get mcpDetailTabTools;
+
+  /// No description provided for @mcpToolDetailTabActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get mcpToolDetailTabActions;
+
+  /// No description provided for @mcpToolDetailTabHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get mcpToolDetailTabHistory;
+
+  /// No description provided for @mcpToolDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool not found or removed'**
+  String get mcpToolDetailNotFound;
+
+  /// No description provided for @mcpDetailEnabledLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get mcpDetailEnabledLive;
+
   /// No description provided for @defaultModelPageBackTooltip.
   ///
   /// In en, this message translates to:

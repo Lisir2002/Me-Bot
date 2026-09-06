@@ -1755,6 +1755,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpToolSchemaNoApproval => '无需审批';
 
   @override
+  String get mcpDetailTabOverview => 'MCP 详情';
+
+  @override
+  String get mcpDetailTabTools => 'MCP 工具';
+
+  @override
+  String get mcpToolDetailTabActions => '工具操作';
+
+  @override
+  String get mcpToolDetailTabHistory => '操作记录';
+
+  @override
+  String get mcpToolDetailNotFound => '工具不存在或已移除';
+
+  @override
+  String get mcpDetailEnabledLive => '已启用';
+
+  @override
   String get defaultModelPageBackTooltip => '返回';
 
   @override

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
-import '../../../theme/design_tokens.dart';
 import '../widgets/mcp_server_edit_sheet.dart';
 import '../widgets/mcp_json_edit_sheet.dart';
 import 'mcp_server_detail_page.dart';
@@ -25,7 +23,6 @@ class McpPage extends StatelessWidget {
         return cs.primary;
       case McpStatus.error:
       case McpStatus.idle:
-      default:
         return Colors.red;
     }
   }
@@ -111,8 +108,6 @@ class McpPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final mcp = context.watch<McpProvider>();
-    final servers = mcp.servers.toList();
 
     return Scaffold(
       appBar: AppBar(

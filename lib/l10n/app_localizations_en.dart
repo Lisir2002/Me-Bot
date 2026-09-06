@@ -1809,6 +1809,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpToolSchemaNoApproval => 'No approval needed';
 
   @override
+  String get mcpDetailTabOverview => 'MCP Overview';
+
+  @override
+  String get mcpDetailTabTools => 'MCP Tools';
+
+  @override
+  String get mcpToolDetailTabActions => 'Operations';
+
+  @override
+  String get mcpToolDetailTabHistory => 'History';
+
+  @override
+  String get mcpToolDetailNotFound => 'Tool not found or removed';
+
+  @override
+  String get mcpDetailEnabledLive => 'Enabled';
+
+  @override
   String get defaultModelPageBackTooltip => 'Back';
 
   @override

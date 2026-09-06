@@ -4,40 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
 
-import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
 
 /// 工具试调面板：输入参数 → 直接调用 MCP 工具 → 预览返回结果。
-Future<void> showMcpToolTestSheet(
-  BuildContext context, {
-  required String serverId,
-  required String toolName,
-}) async {
-  final cs = Theme.of(context).colorScheme;
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: cs.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (_) => _McpToolTestSheet(serverId: serverId, toolName: toolName),
-  );
-}
-
-class _McpToolTestSheet extends StatefulWidget {
-  const _McpToolTestSheet({required this.serverId, required this.toolName});
+/// 设计为内嵌在工具详情页「工具操作」分区中使用。
+class McpToolTestPanel extends StatefulWidget {
+  const McpToolTestPanel({super.key, required this.serverId, required this.toolName});
   final String serverId;
   final String toolName;
 
   @override
-  State<_McpToolTestSheet> createState() => _McpToolTestSheetState();
+  State<McpToolTestPanel> createState() => _McpToolTestPanelState();
 }
 
-class _McpToolTestSheetState extends State<_McpToolTestSheet> {
+class _McpToolTestPanelState extends State<McpToolTestPanel> {
   late final TextEditingController _argsCtrl;
   bool _running = false;
   bool _showResult = false;
@@ -157,7 +140,8 @@ class _McpToolTestSheetState extends State<_McpToolTestSheet> {
         continue;
       }
       if (c is mcp.ImageContent) {
-        buf.writeln('[image: ${c.mimeType ?? c.url ?? ''}]');
+        final u = c.url;
+        buf.writeln(u != null && u.isNotEmpty ? '[image: ${c.mimeType}: $u]' : '[image: ${c.mimeType}]');
         continue;
       }
       buf.writeln(c.toString());
@@ -172,171 +156,108 @@ class _McpToolTestSheetState extends State<_McpToolTestSheet> {
     final tool = _findTool();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.75,
-          maxChildSize: 0.95,
-          minChildSize: 0.5,
-          builder: (context, controller) => Column(
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurface.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(999),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.mcpToolTestArgsLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white10 : const Color(0xFFF2F3F5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outlineVariant.withOpacity(0.3)),
+          ),
+          child: TextField(
+            controller: _argsCtrl,
+            maxLines: 8,
+            minLines: 4,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.5),
+            decoration: InputDecoration(
+              hintText: '{}',
+              hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.4)),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.mcpToolTestArgsHint,
+          style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.55)),
+        ),
+        const SizedBox(height: 16),
+        if (tool?.description != null && (tool!.description ?? '').isNotEmpty) ...[
+          Text(tool.description!, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
+          const SizedBox(height: 16),
+        ],
+        if (_showResult) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? (cs.error.withOpacity(0.15))
+                  : (_resultError != null ? cs.error.withOpacity(0.08) : const Color(0xFFF2F3F5)),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: (_resultError != null ? cs.error : cs.primary).withOpacity(0.35),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 36,
-                child: Stack(
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        l10n.mcpToolTestTitle(widget.toolName),
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                      ),
+                    Icon(
+                      _resultError != null ? Lucide.CircleX : Lucide.Check,
+                      size: 16,
+                      color: _resultError != null ? cs.error : Colors.green,
                     ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            Haptics.light();
-                            Navigator.of(context).maybePop();
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.all(6),
-                            child: Icon(Lucide.X, size: 20),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: ListView(
-                  controller: controller,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    Text(l10n.mcpToolTestArgsLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white10 : const Color(0xFFF2F3F5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: cs.outlineVariant.withOpacity(0.3)),
-                      ),
-                      child: TextField(
-                        controller: _argsCtrl,
-                        maxLines: 8,
-                        minLines: 4,
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.5),
-                        decoration: InputDecoration(
-                          hintText: '{}',
-                          hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.4)),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(width: 6),
                     Text(
-                      l10n.mcpToolTestArgsHint,
-                      style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.55)),
-                    ),
-                    const SizedBox(height: 16),
-                    if (tool?.description != null && (tool!.description ?? '').isNotEmpty) ...[
-                      Text(tool.description!, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_showResult) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? (cs.error.withOpacity(0.15))
-                              : (_resultError != null ? cs.error.withOpacity(0.08) : const Color(0xFFF2F3F5)),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: (_resultError != null ? cs.error : cs.primary).withOpacity(0.35),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  _resultError != null ? Lucide.CircleX : Lucide.Check,
-                                  size: 16,
-                                  color: _resultError != null ? cs.error : Colors.green,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _resultError != null ? l10n.mcpToolTestFailed : l10n.mcpToolTestSuccess,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: _resultError != null ? cs.error : Colors.green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            SelectableText(
-                              _resultError ?? _resultText ?? '',
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1.5,
-                                color: cs.onSurface.withOpacity(0.9),
-                                fontFamily: _resultError == null ? 'monospace' : null,
-                              ),
-                            ),
-                          ],
-                        ),
+                      _resultError != null ? l10n.mcpToolTestFailed : l10n.mcpToolTestSuccess,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _resultError != null ? cs.error : Colors.green,
                       ),
-                      const SizedBox(height: 16),
-                    ],
+                    ),
                   ],
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Stack(
-                    children: [
-                      IosTileButton(
-                        icon: Lucide.Play,
-                        label: _running ? l10n.mcpToolTestRunning : l10n.mcpToolTestRun,
-                        backgroundColor: cs.primary,
-                        onTap: _running ? () {} : _run,
-                      ),
-                      if (_running)
-                        Positioned.fill(
-                          child: Container(color: cs.surface.withOpacity(0.4)),
-                        ),
-                    ],
+                const SizedBox(height: 8),
+                SelectableText(
+                  _resultError ?? _resultText ?? '',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: cs.onSurface.withOpacity(0.9),
+                    fontFamily: _resultError == null ? 'monospace' : null,
                   ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        SizedBox(
+          width: double.infinity,
+          child: Stack(
+            children: [
+              IosTileButton(
+                icon: Lucide.Play,
+                label: _running ? l10n.mcpToolTestRunning : l10n.mcpToolTestRun,
+                backgroundColor: cs.primary,
+                onTap: _running ? () {} : _run,
               ),
+              if (_running)
+                Positioned.fill(
+                  child: Container(color: cs.surface.withOpacity(0.4)),
+                ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -257,7 +257,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.conversationDeleteConfirmTitle),
-        content: Text(l10n.conversationDeleteConfirmContent(title: chat.title)),
+        content: Text(l10n.conversationDeleteConfirmContent(chat.title)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.sideDrawerCancel)),
           FilledButton(

@@ -6812,7 +6812,7 @@ abstract class AppLocalizations {
   /// **"{title}" and all its messages will be permanently deleted."**
   ///
   /// {title}: placeholder
-  String conversationDeleteConfirmContent({required String title});
+  String conversationDeleteConfirmContent(String title);
 
   /// No description provided for @conversationRenameTitle.
   String get conversationRenameTitle;
@@ -6841,7 +6841,7 @@ abstract class AppLocalizations {
   /// **Generation failed: {error}**
   ///
   /// {error}: placeholder
-  String chatGenerationFailed({required String error});
+  String chatGenerationFailed(String error);
 
   /// No description provided for @terminalComingSoon.
   String get terminalComingSoon;

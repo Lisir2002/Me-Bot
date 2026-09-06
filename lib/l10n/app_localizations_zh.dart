@@ -3492,7 +3492,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get conversationDeleteConfirmTitle => '删除对话？';
 
   @override
-  String conversationDeleteConfirmContent({required String title}) => '「$title」及其所有消息将被永久删除。';
+  String conversationDeleteConfirmContent(String title) => '「$title」及其所有消息将被永久删除。';
 
   @override
   String get conversationRenameTitle => '重命名对话';
@@ -3516,7 +3516,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatPleaseSelectModel => '请先选择一个模型';
 
   @override
-  String chatGenerationFailed({required String error}) => '生成失败：$error';
+  String chatGenerationFailed(String error) => '生成失败：$error';
 
   @override
   String get terminalComingSoon => '即将推出 — AI agent 命令行';

@@ -268,14 +268,14 @@ class _ChatPageState extends State<ChatPage> {
             _messages[idx] = _messages[idx].copyWith(
               isStreaming: false,
               content: fullContent.isNotEmpty
-                  ? '$fullContent\n\n${l10n.chatGenerationFailed(error: e.toString())}'
-                  : l10n.chatGenerationFailed(error: e.toString()),
+                  ? '$fullContent\n\n${l10n.chatGenerationFailed(e.toString())}'
+                  : l10n.chatGenerationFailed(e.toString()),
             );
           }
         });
         showAppSnackBar(
           context,
-          message: l10n.chatGenerationFailed(error: e.toString()),
+          message: l10n.chatGenerationFailed(e.toString()),
           type: NotificationType.error,
         );
       }

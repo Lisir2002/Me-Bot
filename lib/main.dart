@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:go_router/go_router.dart';
 // import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'features/home/pages/home_page.dart';
 import 'desktop/desktop_home_page.dart';
+import 'core/router/app_router.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import 'desktop/desktop_window_controller.dart';
@@ -43,6 +45,10 @@ import 'core/services/notification_service.dart';
 final RouteObserver<ModalRoute<dynamic>> routeObserver = RouteObserver<ModalRoute<dynamic>>();
 bool _didCheckUpdates = false; // one-time update check flag
 bool _didEnsureAssistants = false; // ensure defaults after l10n ready
+
+// go_router root key (mobile only; desktop keeps MaterialApp.home)
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+bool _routerInitialized = false;
 
 
 Future<void> main() async {
@@ -119,6 +125,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── 仅 Android/iOS 初始化 go_router（只一次）──
+    if (!_routerInitialized &&
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS)) {
+      AppRouter.init(rootNavigatorKey: _rootNavigatorKey);
+      _routerInitialized = true;
+    }
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ChatProvider()),
@@ -268,61 +282,78 @@ class MyApp extends StatelessWidget {
               // Log top-level colors likely used by widgets (card/bg/shadow approximations)
               // debugPrint('[Theme/App] Light scaffoldBg=${light.colorScheme.surface.value.toRadixString(16)} card≈${light.colorScheme.surface.value.toRadixString(16)} shadow=${light.colorScheme.shadow.value.toRadixString(16)}');
               // debugPrint('[Theme/App] Dark scaffoldBg=${dark.colorScheme.surface.value.toRadixString(16)} card≈${dark.colorScheme.surface.value.toRadixString(16)} shadow=${dark.colorScheme.shadow.value.toRadixString(16)}');
-              return MaterialApp(
-                debugShowCheckedModeBanner: false,
-                title: 'MiniMe-Core',
-                // App UI language; null = follow system (respects iOS per-app language)
-                locale: settings.appLocaleForMaterialApp,
-                supportedLocales: AppLocalizations.supportedLocales,
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
-                theme: themedLight,
-                darkTheme: themedDark,
-                themeMode: settings.themeMode,
-                navigatorObservers: <NavigatorObserver>[routeObserver],
-                home: _selectHome(),
-                builder: (ctx, child) {
-                  final bright = Theme.of(ctx).brightness;
-                  final overlay = bright == Brightness.dark
-                      ? const SystemUiOverlayStyle(
-                          statusBarColor: Colors.transparent,
-                          statusBarIconBrightness: Brightness.light,
-                          statusBarBrightness: Brightness.dark,
-                          systemNavigationBarColor: Colors.transparent,
-                          systemNavigationBarIconBrightness: Brightness.light,
-                          systemNavigationBarDividerColor: Colors.transparent,
-                          systemNavigationBarContrastEnforced: false,
-                        )
-                      : const SystemUiOverlayStyle(
-                          statusBarColor: Colors.transparent,
-                          statusBarIconBrightness: Brightness.dark,
-                          statusBarBrightness: Brightness.light,
-                          systemNavigationBarColor: Colors.transparent,
-                          systemNavigationBarIconBrightness: Brightness.dark,
-                          systemNavigationBarDividerColor: Colors.transparent,
-                          systemNavigationBarContrastEnforced: false,
-                        );
-              // Ensure localized defaults (assistants and chat default title) after first frame
-              if (!_didEnsureAssistants) {
-                _didEnsureAssistants = true;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  try { ctx.read<AssistantProvider>().ensureDefaults(ctx); } catch (_) {}
-                  try { ctx.read<ChatService>().setDefaultConversationTitle(AppLocalizations.of(ctx)!.chatServiceDefaultConversationTitle); } catch (_) {}
-                  try { ctx.read<UserProvider>().setDefaultNameIfUnset(AppLocalizations.of(ctx)!.userProviderDefaultUserName); } catch (_) {}
-                });
+              // ── 判断平台：仅 Android/iOS 走 router；桌面/web 继续用 home ──
+              final _isMobile = !kIsWeb &&
+                  (defaultTargetPlatform == TargetPlatform.android ||
+                      defaultTargetPlatform == TargetPlatform.iOS);
+
+              // builder 闭包（两个 MaterialApp 分支共用）
+              Widget appBuilder(BuildContext ctx, Widget? child) {
+                final bright = Theme.of(ctx).brightness;
+                final overlay = bright == Brightness.dark
+                    ? const SystemUiOverlayStyle(
+                        statusBarColor: Colors.transparent,
+                        statusBarIconBrightness: Brightness.light,
+                        statusBarBrightness: Brightness.dark,
+                        systemNavigationBarColor: Colors.transparent,
+                        systemNavigationBarIconBrightness: Brightness.light,
+                        systemNavigationBarDividerColor: Colors.transparent,
+                        systemNavigationBarContrastEnforced: false,
+                      )
+                    : const SystemUiOverlayStyle(
+                        statusBarColor: Colors.transparent,
+                        statusBarIconBrightness: Brightness.dark,
+                        statusBarBrightness: Brightness.light,
+                        systemNavigationBarColor: Colors.transparent,
+                        systemNavigationBarIconBrightness: Brightness.dark,
+                        systemNavigationBarDividerColor: Colors.transparent,
+                        systemNavigationBarContrastEnforced: false,
+                      );
+                if (!_didEnsureAssistants) {
+                  _didEnsureAssistants = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    try { ctx.read<AssistantProvider>().ensureDefaults(ctx); } catch (_) {}
+                    try { ctx.read<ChatService>().setDefaultConversationTitle(AppLocalizations.of(ctx)!.chatServiceDefaultConversationTitle); } catch (_) {}
+                    try { ctx.read<UserProvider>().setDefaultNameIfUnset(AppLocalizations.of(ctx)!.userProviderDefaultUserName); } catch (_) {}
+                  });
+                }
+                return AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: overlay,
+                  child: effectiveAppFont == null
+                      ? AppSnackBarOverlay(child: child ?? const SizedBox.shrink())
+                      : DefaultTextStyle.merge(
+                          style: TextStyle(fontFamily: effectiveAppFont),
+                          child: AppSnackBarOverlay(child: child ?? const SizedBox.shrink()),
+                        ),
+                );
               }
 
-                  // Enforce app font as a default across the tree for Texts without explicit family
-                  return AnnotatedRegion<SystemUiOverlayStyle>(
-                    value: overlay,
-                    child: effectiveAppFont == null
-                        ? AppSnackBarOverlay(child: child ?? const SizedBox.shrink())
-                        : DefaultTextStyle.merge(
-                            style: TextStyle(fontFamily: effectiveAppFont),
-                            child: AppSnackBarOverlay(child: child ?? const SizedBox.shrink()),
-                          ),
-                  );
-                },
-              );
+              return _isMobile
+                  ? MaterialApp.router(
+                      debugShowCheckedModeBanner: false,
+                      title: 'MiniMe-Core',
+                      locale: settings.appLocaleForMaterialApp,
+                      supportedLocales: AppLocalizations.supportedLocales,
+                      localizationsDelegates: AppLocalizations.localizationsDelegates,
+                      theme: themedLight,
+                      darkTheme: themedDark,
+                      themeMode: settings.themeMode,
+                      routerConfig: AppRouter.router,
+                      builder: appBuilder,
+                    )
+                  : MaterialApp(
+                      debugShowCheckedModeBanner: false,
+                      title: 'MiniMe-Core',
+                      locale: settings.appLocaleForMaterialApp,
+                      supportedLocales: AppLocalizations.supportedLocales,
+                      localizationsDelegates: AppLocalizations.localizationsDelegates,
+                      theme: themedLight,
+                      darkTheme: themedDark,
+                      themeMode: settings.themeMode,
+                      navigatorObservers: <NavigatorObserver>[routeObserver],
+                      home: _selectHome(),
+                      builder: appBuilder,
+                    );
             },
           );
         },

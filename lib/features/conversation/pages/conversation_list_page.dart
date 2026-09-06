@@ -406,9 +406,10 @@ class _L10n {
   final BuildContext _ctx;
   _L10n(this._ctx);
 
-  String _try(String Function(AppLocalizations) getter, {String fallback = ''}) {
+  String _try(String? Function(AppLocalizations) getter, {String fallback = ''}) {
     try {
       final l10n = AppLocalizations.of(_ctx);
+      if (l10n == null) return fallback;
       return getter(l10n) ?? fallback;
     } catch (_) {
       return fallback;

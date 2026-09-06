@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/providers/user_provider.dart';
 import '../../theme/design_tokens.dart';
-import '../providers/user_provider.dart';
+import 'package:minime_core/l10n/app_localizations.dart';
 import '../../features/conversation/pages/chat_page.dart';
 import '../../features/conversation/pages/conversation_list_page.dart';
 import '../../features/settings/pages/settings_page.dart';
@@ -49,8 +51,9 @@ class AppRouter {
                       path: 'chat/:id',
                       pageBuilder: (context, state) {
                         final id = state.pathParameters['id']!;
-                        return MaterialPageRoute(
-                          builder: (_) => ChatPage(conversationId: id),
+                        return MaterialPage(
+                          key: ValueKey<String>(id),
+                          child: ChatPage(conversationId: id),
                         );
                       },
                     ),

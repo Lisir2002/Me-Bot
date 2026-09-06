@@ -3591,4 +3591,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupPhaseUploading => 'Uploading';
+
+  @override
+  String get mobileTabConversations => 'Conversations';
+
+  @override
+  String get mobileTabTerminal => 'Terminal';
+
+  @override
+  String get mobileDrawerGuest => 'Guest';
+
+  @override
+  String get mobileDrawerComingSoon => 'Navigation menu coming soon';
+
+  @override
+  String get conversationDeleteConfirmTitle => 'Delete Conversation?';
+
+  @override
+  String conversationDeleteConfirmContent({required String title}) => '"$title" and all its messages will be permanently deleted.';
+
+  @override
+  String get conversationRenameTitle => 'Rename Conversation';
+
+  @override
+  String get conversationListEmptyHint => 'Tap + to start a new chat';
+
+  @override
+  String get conversationDeletedSnackbar => 'Conversation deleted';
+
+  @override
+  String get chatPageTitle => 'Chat';
+
+  @override
+  String get chatEmptyTitle => 'Start a conversation';
+
+  @override
+  String get chatEmptySubtitle => 'Type a message below';
+
+  @override
+  String get chatPleaseSelectModel => 'Please select a model first';
+
+  @override
+  String chatGenerationFailed({required String error}) => 'Generation failed: $error';
+
+  @override
+  String get terminalComingSoon => 'Coming soon — CLI for AI agent commands';
 }

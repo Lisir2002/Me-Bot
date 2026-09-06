@@ -6790,6 +6790,61 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uploading'**
   String get backupPhaseUploading;
+
+  /// No description provided for @mobileTabConversations.
+  String get mobileTabConversations;
+
+  /// No description provided for @mobileTabTerminal.
+  String get mobileTabTerminal;
+
+  /// No description provided for @mobileDrawerGuest.
+  String get mobileDrawerGuest;
+
+  /// No description provided for @mobileDrawerComingSoon.
+  String get mobileDrawerComingSoon;
+
+  /// No description provided for @conversationDeleteConfirmTitle.
+  String get conversationDeleteConfirmTitle;
+
+  /// No description provided for @conversationDeleteConfirmContent.
+  ///
+  /// In en, this message translates to:
+  /// **"{title}" and all its messages will be permanently deleted."**
+  ///
+  /// {title}: placeholder
+  String conversationDeleteConfirmContent({required String title});
+
+  /// No description provided for @conversationRenameTitle.
+  String get conversationRenameTitle;
+
+  /// No description provided for @conversationListEmptyHint.
+  String get conversationListEmptyHint;
+
+  /// No description provided for @conversationDeletedSnackbar.
+  String get conversationDeletedSnackbar;
+
+  /// No description provided for @chatPageTitle.
+  String get chatPageTitle;
+
+  /// No description provided for @chatEmptyTitle.
+  String get chatEmptyTitle;
+
+  /// No description provided for @chatEmptySubtitle.
+  String get chatEmptySubtitle;
+
+  /// No description provided for @chatPleaseSelectModel.
+  String get chatPleaseSelectModel;
+
+  /// No description provided for @chatGenerationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **Generation failed: {error}**
+  ///
+  /// {error}: placeholder
+  String chatGenerationFailed({required String error});
+
+  /// No description provided for @terminalComingSoon.
+  String get terminalComingSoon;
 }
 
 class _AppLocalizationsDelegate

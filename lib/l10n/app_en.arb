@@ -1248,14 +1248,15 @@
   "displaySettingsPageBehaviorStartupTitle": "Behavior & startup",
   "displaySettingsPageHapticsSettingsTitle": "Haptics",
   "assistantSettingsNoPromptPlaceholder": "No prompt yet",
-  "providersPageMultiSelectTooltip": "Multi-select"
-  ,
+  "providersPageMultiSelectTooltip": "Multi-select",
   "providersPageDeleteSelectedConfirmContent": "Delete selected providers? This cannot be undone.",
   "providersPageDeleteSelectedSnackbar": "Deleted selected providers",
   "providersPageExportSelectedTitle": "Export {count} providers",
   "@providersPageExportSelectedTitle": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "providersPageExportCopyButton": "Copy",
@@ -1293,7 +1294,9 @@
   "networkProxyTestFailed": "Test failed: {error}",
   "@networkProxyTestFailed": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "networkProxyNoUrl": "Please enter a URL",
@@ -1310,7 +1313,13 @@
   "storageCategoriesHeader": "Categories",
   "storageRefresh": "Refresh",
   "storageItemsCount": "{count} files",
-  "@storageItemsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@storageItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDetailHeader": "Details",
   "storageEmpty": "No content yet",
   "storageAvatarItem": "Avatars",
@@ -1339,10 +1348,22 @@
   "storageSelectAll": "Select all",
   "storageDelete": "Delete",
   "storageSelectedItems": "{count} selected",
-  "@storageSelectedItems": { "placeholders": { "count": { "type": "int" } } },
+  "@storageSelectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDeleteConfirmTitle": "Delete selected files?",
   "storageDeleteConfirmBody": "The selected {count} files will be permanently deleted. Continue?",
-  "@storageDeleteConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "@storageDeleteConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageCancel": "Cancel",
   "storageConfirmDeleteBtn": "Delete",
   "storageCacheClearAvatar": "Clear avatar cache",
@@ -1366,9 +1387,21 @@
   "logSettingsAutoDeleteNone": "Disabled",
   "logSettingsSizeLimit": "Log size limit",
   "logSettingDays": "{count} days",
-  "@logSettingDays": { "placeholders": { "count": { "type": "int" } } },
+  "@logSettingDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "logSettingSizeText": "{limit} MB",
-  "@logSettingSizeText": { "placeholders": { "limit": { "type": "int" } } },
+  "@logSettingSizeText": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "snapshotTitle": "Local copies",
   "snapshotSettingsHeader": "Settings",
   "snapshotKeepLocal": "Keep local copies",
@@ -1380,10 +1413,25 @@
   "snapshotSizeLimit": "Size limit",
   "snapshotNotifyDone": "Notify when backup completes",
   "snapshotLastBackup": "Last backup: {time}",
-  "@snapshotLastBackup": { "placeholders": { "time": { "type": "String" } } },
+  "@snapshotLastBackup": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotBackupNow": "Back up now",
   "snapshotListHeader": "Local copies · {count} × · {size}",
-  "@snapshotListHeader": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@snapshotListHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotAutoBadge": "Auto backup",
   "snapshotRestore": "Restore",
   "snapshotExport": "Export",
@@ -1397,17 +1445,61 @@
   "snapshotFreqWeekly": "Weekly",
   "snapshotFreqAuto": "Auto",
   "snapshotCopies": "{n} copies",
-  "@snapshotCopies": { "placeholders": { "n": { "type": "int" } } },
+  "@snapshotCopies": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "backupPageReminderHeader": "Backup reminder",
   "backupPageRemindMe": "Remind me to back up regularly",
   "backupPageLocalCopiesHeader": "Local copies",
   "backupPageKeepLocalCopy": "Keep local copies",
   "backupPageImportFromChatbox": "Import from Chatbox",
   "backupPageManageCopiesDetail": "Manage copies · {count} × · {size}",
-  "@backupPageManageCopiesDetail": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@backupPageManageCopiesDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "backupPhasePacking": "Packing",
   "backupPhaseExporting": "Exporting",
   "backupPhaseDone": "Done",
   "backupPhaseRestoring": "Restoring",
-  "backupPhaseUploading": "Uploading"
+  "backupPhaseUploading": "Uploading",
+  "mobileTabConversations": "Conversations",
+  "mobileTabTerminal": "Terminal",
+  "mobileDrawerGuest": "Guest",
+  "mobileDrawerComingSoon": "Navigation menu coming soon",
+  "conversationDeleteConfirmTitle": "Delete Conversation?",
+  "conversationDeleteConfirmContent": "\"{title}\" and all its messages will be permanently deleted.",
+  "@conversationDeleteConfirmContent": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "conversationRenameTitle": "Rename Conversation",
+  "conversationListEmptyHint": "Tap + to start a new chat",
+  "conversationDeletedSnackbar": "Conversation deleted",
+  "chatPageTitle": "Chat",
+  "chatEmptyTitle": "Start a conversation",
+  "chatEmptySubtitle": "Type a message below",
+  "chatPleaseSelectModel": "Please select a model first",
+  "chatGenerationFailed": "Generation failed: {error}",
+  "@chatGenerationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "terminalComingSoon": "Coming soon — CLI for AI agent commands"
 }

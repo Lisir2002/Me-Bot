@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../core/providers/assistant_provider.dart';
-import '../../../core/providers/settings_provider.dart';
-import '../../../core/providers/tag_provider.dart';
 import '../../../core/models/chat_item.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -34,7 +32,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
   Widget build(BuildContext context) {
     final chatService = context.watch<ChatService>();
     final ap = context.watch<AssistantProvider>();
-    final l10n = _L10n(context);
+    final l10n = AppLocalizations.of(context)!;
 
     // 获取当前助手的所有对话（和 SideDrawer 完全一致）
     final currentAssistantId = ap.currentAssistantId;
@@ -66,14 +64,14 @@ class _ConversationListPageState extends State<ConversationListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Conversations'),
+        title: Text(l10n.mobileTabConversations),
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'New Chat',
+            tooltip: l10n.chatServiceDefaultConversationTitle,
             onPressed: () async {
               final convo = await chatService.createConversation();
               if (mounted) {
@@ -92,7 +90,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
               controller: _searchController,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Search conversations',
+                hintText: l10n.chatHistoryPageSearchHint,
                 filled: true,
                 fillColor: cs.surfaceContainerHighest.withOpacity(0.5),
                 isDense: true,
@@ -114,7 +112,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
                     children: [
                       // 置顶分组
                       if (pinnedList.isNotEmpty) ...[
-                        _SectionHeader(text: l10n.pinned),
+                        _SectionHeader(text: l10n.chatHistoryPagePinnedSection),
                         for (final c in pinnedList)
                           _ConversationTile(
                             chat: c,
@@ -162,20 +160,24 @@ class _ConversationListPageState extends State<ConversationListPage> {
   }
 
   String _dateLabel(BuildContext context, DateTime date) {
+    final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final aDay = DateTime(date.year, date.month, date.day);
     final diff = today.difference(aDay).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Yesterday';
+    if (diff == 0) return l10n.sideDrawerDateToday;
+    if (diff == 1) return l10n.sideDrawerDateYesterday;
     final sameYear = now.year == date.year;
-    final fmt = DateFormat(sameYear ? 'MMM d' : 'MMM d, yyyy');
+    final fmt = DateFormat(
+      sameYear ? l10n.sideDrawerDateShortPattern : l10n.sideDrawerDateFullPattern,
+    );
     return fmt.format(date);
   }
 
   // ── 长按菜单（重命名 / 置顶 / 删除）──
 
   Future<void> _showMenu(BuildContext context, ChatItem chat) async {
+    final l10n = AppLocalizations.of(context)!;
     final chatService = context.read<ChatService>();
     final convo = chatService.getConversation(chat.id);
     final isPinned = convo?.isPinned ?? false;
@@ -188,17 +190,17 @@ class _ConversationListPageState extends State<ConversationListPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Rename'),
+              title: Text(l10n.sideDrawerMenuRename),
               onTap: () => Navigator.pop(ctx, 'rename'),
             ),
             ListTile(
               leading: Icon(isPinned ? Icons.push_pin_outlined : Icons.push_pin),
-              title: Text(isPinned ? 'Unpin' : 'Pin'),
+              title: Text(isPinned ? l10n.sideDrawerMenuUnpin : l10n.sideDrawerMenuPin),
               onTap: () => Navigator.pop(ctx, 'pin'),
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              title: Text(l10n.sideDrawerMenuDelete, style: const TextStyle(color: Colors.red)),
               onTap: () => Navigator.pop(ctx, 'delete'),
             ),
           ],
@@ -222,21 +224,22 @@ class _ConversationListPageState extends State<ConversationListPage> {
   }
 
   Future<void> _rename(BuildContext context, ChatItem chat) async {
+    final l10n = AppLocalizations.of(context)!;
     final chatService = context.read<ChatService>();
     final controller = TextEditingController(text: chat.title);
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rename Conversation'),
+        title: Text(l10n.conversationRenameTitle),
         content: TextField(
           controller: controller,
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.sideDrawerCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
+            child: Text(l10n.sideDrawerSave),
           ),
         ],
       ),
@@ -248,18 +251,19 @@ class _ConversationListPageState extends State<ConversationListPage> {
   }
 
   Future<void> _delete(BuildContext context, ChatItem chat) async {
+    final l10n = AppLocalizations.of(context)!;
     final chatService = context.read<ChatService>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Conversation?'),
-        content: Text('"${chat.title}" and all its messages will be permanently deleted.'),
+        title: Text(l10n.conversationDeleteConfirmTitle),
+        content: Text(l10n.conversationDeleteConfirmContent(title: chat.title)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.sideDrawerCancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.sideDrawerMenuDelete),
           ),
         ],
       ),
@@ -269,7 +273,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
       if (mounted) {
         showAppSnackBar(
           context,
-          message: 'Conversation deleted',
+          message: l10n.conversationDeletedSnackbar,
           type: NotificationType.success,
         );
         setState(() {});
@@ -362,6 +366,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -377,14 +382,14 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No conversations yet',
+            l10n.chatHistoryPageNoConversations,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: cs.onSurface.withOpacity(0.7),
                 ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Tap + to start a new chat',
+            l10n.conversationListEmptyHint,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurface.withOpacity(0.5),
                 ),
@@ -399,22 +404,4 @@ class _ChatGroup {
   final String label;
   final List<ChatItem> items;
   _ChatGroup({required this.label, required this.items});
-}
-
-/// 轻量 l10n 代理（避免硬编码 key 缺失编译错误）。
-class _L10n {
-  final BuildContext _ctx;
-  _L10n(this._ctx);
-
-  String _try(String? Function(AppLocalizations) getter, {String fallback = ''}) {
-    try {
-      final l10n = AppLocalizations.of(_ctx);
-      if (l10n == null) return fallback;
-      return getter(l10n) ?? fallback;
-    } catch (_) {
-      return fallback;
-    }
-  }
-
-  String get pinned => _try((l) => l.chatHistoryPagePinned, fallback: 'Pinned');
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// 终端页面（占位，后续要用到）。
 /// 真实骨架：标题 + 图标 + 简短说明 + 版本号。
@@ -9,10 +10,11 @@ class TerminalPlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Terminal'),
+        title: Text(l10n.mobileTabTerminal),
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -37,14 +39,14 @@ class TerminalPlaceholderPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Terminal',
+                l10n.mobileTabTerminal,
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Coming soon — CLI for AI agent commands',
+                l10n.terminalComingSoon,
                 style: textTheme.bodyMedium?.copyWith(
                   color: cs.onSurface.withOpacity(0.6),
                 ),
@@ -57,7 +59,7 @@ class TerminalPlaceholderPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'v0.0.27',
+                  'v0.0.28',
                   style: textTheme.labelSmall?.copyWith(
                     color: cs.onSurface.withOpacity(0.5),
                   ),

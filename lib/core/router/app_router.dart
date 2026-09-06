@@ -109,37 +109,38 @@ class _MobileScaffoldShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    Widget build(BuildContext context) {
+      final cs = Theme.of(context).colorScheme;
+      final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      drawer: const _DrawerSkeleton(),
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _onTap,
-        elevation: 0,
-        backgroundColor: cs.surface,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat, color: cs.primary),
-            label: 'Conversations',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.terminal_outlined),
-            selectedIcon: Icon(Icons.terminal, color: cs.primary),
-            label: 'Terminal',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings, color: cs.primary),
-            label: 'Settings',
-          ),
-        ],
-      ),
-    );
-  }
+      return Scaffold(
+        drawer: const _DrawerSkeleton(),
+        body: navigationShell,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: _onTap,
+          elevation: 0,
+          backgroundColor: cs.surface,
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.chat_outlined),
+              selectedIcon: Icon(Icons.chat, color: cs.primary),
+              label: l10n.mobileTabConversations,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.terminal_outlined),
+              selectedIcon: Icon(Icons.terminal, color: cs.primary),
+              label: l10n.mobileTabTerminal,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings, color: cs.primary),
+              label: l10n.settingsPageTitle,
+            ),
+          ],
+        ),
+      );
+    }
 }
 
 // ── Drawer 导航骨架（占位，等后续填）──
@@ -150,8 +151,9 @@ class _DrawerSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final userName = context.watch<UserProvider>().name;
-    final displayName = userName.isNotEmpty ? userName : 'Guest';
+    final displayName = userName.isNotEmpty ? userName : l10n.mobileDrawerGuest;
 
     return Drawer(
       child: SafeArea(
@@ -200,7 +202,7 @@ class _DrawerSkeleton extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.info_outline),
                     title: Text(
-                      'Navigation menu coming soon',
+                      l10n.mobileDrawerComingSoon,
                       style: TextStyle(
                         color: cs.onSurface.withOpacity(0.5),
                         fontStyle: FontStyle.italic,

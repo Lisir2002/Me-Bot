@@ -3475,6 +3475,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupPhaseUploading => '正在上传';
+
+  @override
+  String get mobileTabConversations => '对话';
+
+  @override
+  String get mobileTabTerminal => '终端';
+
+  @override
+  String get mobileDrawerGuest => '游客';
+
+  @override
+  String get mobileDrawerComingSoon => '导航菜单开发中';
+
+  @override
+  String get conversationDeleteConfirmTitle => '删除对话？';
+
+  @override
+  String conversationDeleteConfirmContent({required String title}) => '「$title」及其所有消息将被永久删除。';
+
+  @override
+  String get conversationRenameTitle => '重命名对话';
+
+  @override
+  String get conversationListEmptyHint => '点击 + 开始新对话';
+
+  @override
+  String get conversationDeletedSnackbar => '对话已删除';
+
+  @override
+  String get chatPageTitle => '对话';
+
+  @override
+  String get chatEmptyTitle => '开始对话';
+
+  @override
+  String get chatEmptySubtitle => '在下方输入消息';
+
+  @override
+  String get chatPleaseSelectModel => '请先选择一个模型';
+
+  @override
+  String chatGenerationFailed({required String error}) => '生成失败：$error';
+
+  @override
+  String get terminalComingSoon => '即将推出 — AI agent 命令行';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).

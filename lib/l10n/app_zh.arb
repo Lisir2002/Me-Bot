@@ -137,7 +137,9 @@
   "providersPageExportSelectedTitle": "导出 {count} 个供应商",
   "@providersPageExportSelectedTitle": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "providersPageExportCopyButton": "复制",
@@ -1020,8 +1022,7 @@
   "assistantEditPresetEmpty": "暂无预设消息",
   "assistantEditPresetEditDialogTitle": "编辑预设消息",
   "assistantEditPresetRoleUser": "用户",
-  "assistantEditPresetRoleAssistant": "助手"
-  ,
+  "assistantEditPresetRoleAssistant": "助手",
   "assistantTagsManageTitle": "管理标签",
   "assistantTagsCreateButton": "创建",
   "assistantTagsCreateDialogTitle": "创建标签",
@@ -1050,8 +1051,7 @@
   "mcpServerEditSheetStdioEnvValueLabel": "值",
   "mcpServerEditSheetStdioAddEnv": "添加环境变量",
   "mcpServerEditSheetStdioCommandRequired": "STDIO 需要填写命令",
-  "assistantTagsContextMenuDeleteAssistant": "删除助手"
-  ,
+  "assistantTagsContextMenuDeleteAssistant": "删除助手",
   "assistantTagsClearTag": "清除标签",
   "desktopTtsPleaseAddProvider": "请先在设置中添加语音服务商",
   "settingsPageNetworkProxy": "网络代理",
@@ -1073,7 +1073,11 @@
   "networkProxyTestSuccess": "连接成功",
   "networkProxyTestFailed": "测试失败：{error}",
   "@networkProxyTestFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "networkProxyNoUrl": "请输入测试地址",
   "networkProxyPriorityNote": "当同时开启全局代理与供应商代理时，将优先使用供应商代理。",
@@ -1089,7 +1093,13 @@
   "storageCategoriesHeader": "分类",
   "storageRefresh": "刷新",
   "storageItemsCount": "{count} 个文件",
-  "@storageItemsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@storageItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDetailHeader": "明细",
   "storageEmpty": "暂无内容",
   "storageAvatarItem": "头像",
@@ -1118,10 +1128,22 @@
   "storageSelectAll": "全选",
   "storageDelete": "删除",
   "storageSelectedItems": "已选 {count} 项",
-  "@storageSelectedItems": { "placeholders": { "count": { "type": "int" } } },
+  "@storageSelectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDeleteConfirmTitle": "删除所选文件？",
   "storageDeleteConfirmBody": "将永久删除选中的 {count} 个文件，确定吗？",
-  "@storageDeleteConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "@storageDeleteConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageCancel": "取消",
   "storageConfirmDeleteBtn": "删除",
   "storageCacheClearAvatar": "清理头像缓存",
@@ -1145,9 +1167,21 @@
   "logSettingsAutoDeleteNone": "不启用",
   "logSettingsSizeLimit": "日志大小上限",
   "logSettingDays": "{count} 天",
-  "@logSettingDays": { "placeholders": { "count": { "type": "int" } } },
+  "@logSettingDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "logSettingSizeText": "{limit} MB",
-  "@logSettingSizeText": { "placeholders": { "limit": { "type": "int" } } },
+  "@logSettingSizeText": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "snapshotTitle": "本地副本",
   "snapshotSettingsHeader": "设置",
   "snapshotKeepLocal": "保留本地副本",
@@ -1159,10 +1193,25 @@
   "snapshotSizeLimit": "占用上限",
   "snapshotNotifyDone": "备份完成时提示",
   "snapshotLastBackup": "上次备份：{time}",
-  "@snapshotLastBackup": { "placeholders": { "time": { "type": "String" } } },
+  "@snapshotLastBackup": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotBackupNow": "立即备份一份",
   "snapshotListHeader": "本地副本 · {count} 份 · {size}",
-  "@snapshotListHeader": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@snapshotListHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotAutoBadge": "自动备份",
   "snapshotRestore": "恢复",
   "snapshotExport": "导出",
@@ -1176,17 +1225,61 @@
   "snapshotFreqWeekly": "每周",
   "snapshotFreqAuto": "自动",
   "snapshotCopies": "{n} 份",
-  "@snapshotCopies": { "placeholders": { "n": { "type": "int" } } },
+  "@snapshotCopies": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "backupPageReminderHeader": "备份提醒",
   "backupPageRemindMe": "定期提醒我备份",
   "backupPageLocalCopiesHeader": "本地副本",
   "backupPageKeepLocalCopy": "保留本地副本",
   "backupPageImportFromChatbox": "从 Chatbox 导入",
   "backupPageManageCopiesDetail": "管理副本 · {count} 份 · {size}",
-  "@backupPageManageCopiesDetail": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@backupPageManageCopiesDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "backupPhasePacking": "正在打包",
   "backupPhaseExporting": "正在导出",
   "backupPhaseDone": "完成",
   "backupPhaseRestoring": "正在恢复",
-  "backupPhaseUploading": "正在上传"
+  "backupPhaseUploading": "正在上传",
+  "mobileTabConversations": "对话",
+  "mobileTabTerminal": "终端",
+  "mobileDrawerGuest": "游客",
+  "mobileDrawerComingSoon": "导航菜单开发中",
+  "conversationDeleteConfirmTitle": "删除对话？",
+  "conversationDeleteConfirmContent": "「{title}」及其所有消息将被永久删除。",
+  "@conversationDeleteConfirmContent": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "conversationRenameTitle": "重命名对话",
+  "conversationListEmptyHint": "点击 + 开始新对话",
+  "conversationDeletedSnackbar": "对话已删除",
+  "chatPageTitle": "对话",
+  "chatEmptyTitle": "开始对话",
+  "chatEmptySubtitle": "在下方输入消息",
+  "chatPleaseSelectModel": "请先选择一个模型",
+  "chatGenerationFailed": "生成失败：{error}",
+  "@chatGenerationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "terminalComingSoon": "即将推出 — AI agent 命令行"
 }

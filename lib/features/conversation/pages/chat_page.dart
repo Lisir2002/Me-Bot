@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/providers/assistant_provider.dart';
@@ -83,12 +84,13 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final assistant = context.watch<AssistantProvider>().currentAssistant;
     final settings = context.watch<SettingsProvider>();
 
     final title = (_conversation?.title ?? '').trim().isNotEmpty
         ? _conversation!.title
-        : 'Chat';
+        : l10n.chatPageTitle;
 
     final providerKey = assistant?.chatModelProvider ?? settings.currentModelProvider;
     final modelId = assistant?.chatModelId ?? settings.currentModelId;
@@ -171,9 +173,10 @@ class _ChatPageState extends State<ChatPage> {
     final modelId = assistant?.chatModelId ?? settings.currentModelId;
 
     if (providerKey == null || modelId == null) {
+      final l10n = AppLocalizations.of(context)!;
       showAppSnackBar(
         context,
-        message: 'Please select a model first',
+        message: l10n.chatPleaseSelectModel,
         type: NotificationType.warning,
       );
       return;
@@ -257,6 +260,7 @@ class _ChatPageState extends State<ChatPage> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         setState(() {
           _loadingIds.remove(_conversation!.id);
           final idx = _messages.indexWhere((m) => m.id == assistantMessage.id);
@@ -264,14 +268,14 @@ class _ChatPageState extends State<ChatPage> {
             _messages[idx] = _messages[idx].copyWith(
               isStreaming: false,
               content: fullContent.isNotEmpty
-                  ? '$fullContent\n\n[Error: $e]'
-                  : '[Error: $e]',
+                  ? '$fullContent\n\n${l10n.chatGenerationFailed(error: e.toString())}'
+                  : l10n.chatGenerationFailed(error: e.toString()),
             );
           }
         });
         showAppSnackBar(
           context,
-          message: 'Generation failed: $e',
+          message: l10n.chatGenerationFailed(error: e.toString()),
           type: NotificationType.error,
         );
       }
@@ -318,6 +322,7 @@ class _EmptyChat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -333,12 +338,12 @@ class _EmptyChat extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Start a conversation',
+            l10n.chatEmptyTitle,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
           Text(
-            'Type a message below',
+            l10n.chatEmptySubtitle,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurface.withOpacity(0.5),
                 ),

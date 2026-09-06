@@ -87,7 +87,6 @@ class ThemeSettingsPage extends StatelessWidget {
 Widget _iosSectionCard({required List<Widget> children}) {
   return Builder(builder: (context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final settings = context.watch<SettingsProvider>();
     final Color bg = settings.usePureBackground

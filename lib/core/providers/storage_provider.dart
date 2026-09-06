@@ -83,7 +83,7 @@ class StorageProvider extends ChangeNotifier with WidgetsBindingObserver {
       final sw = Stopwatch()..start();
       _stats = await StorageService.scanAll();
       sw.stop();
-      Logger.d(LogTags.storage, 'refresh done in ${sw.elapsedMs}ms, ${_stats?.categories.length ?? 0} categories');
+      Logger.d(LogTags.storage, 'refresh done in ${sw.elapsedMilliseconds}ms, ${_stats?.categories.length ?? 0} categories');
       _error = null;
     } catch (e, s) {
       _error = e;

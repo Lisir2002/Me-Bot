@@ -147,7 +147,7 @@ class Logger {
         // 每次攒成一个大写入，减少 IO
         final buf = StringBuffer();
         while (_queue.isNotEmpty) {
-          buf.writeln(_queue.removeFirst().line);
+          buf.writeln(_queue.removeAt(0).line);
         }
         await _writeChunk(buf.toString());
       }

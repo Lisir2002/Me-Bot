@@ -39,6 +39,7 @@ class LogTags {
   static const String background = 'Background';
   static const String search = 'Search';
   static const String apiKey = 'ApiKey';
+  static const String provider = 'Provider';
 
   // ── Feature ──
   static const String home = 'Home';

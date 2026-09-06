@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 
-import '../../services/logging/logger.dart';
-import '../../services/logging/log_level.dart';
-import '../../services/logging/log_parser.dart';
-import '../../services/logging/log_repository.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_level.dart';
+import '../services/logging/log_parser.dart';
+import '../services/logging/log_repository.dart';
 
 /// 日志设置 + 过滤偏好。
 ///

@@ -20,4 +20,7 @@ enum LogLevel {
         LogLevel.error => '错误',
         LogLevel.none => '关闭',
       };
+
+  /// Dart enum 的 index 从 0 开始，数值越小等级越低。
+  int get ordinal => index;
 }

@@ -62,7 +62,7 @@ class BackupProvider extends ChangeNotifier {
   }
 
   Future<void> restoreFromItem(BackupFileItem item, {RestoreMode mode = RestoreMode.overwrite}) async {
-    Logger.w(LogTags.backup, 'Restore from remote: ${item.name} mode=$mode');
+    Logger.w(LogTags.backup, 'Restore from remote: ${item.displayName} mode=$mode');
     _busy = true; _message = null; notifyListeners();
     final sw = Stopwatch()..start();
     try {
@@ -91,7 +91,7 @@ class BackupProvider extends ChangeNotifier {
   }
 
   Future<List<BackupFileItem>> deleteAndReload(BackupFileItem item) async {
-    Logger.w(LogTags.backup, 'Delete remote backup: ${item.name}');
+    Logger.w(LogTags.backup, 'Delete remote backup: ${item.displayName}');
     try {
       await _dataSync.deleteWebDavBackupFile(_cfg, item);
       return _dataSync.listBackupFiles(_cfg);

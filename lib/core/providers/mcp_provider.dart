@@ -1179,7 +1179,7 @@ class McpProvider extends ChangeNotifier {
       Logger.i(LogTags.mcpTool, 'callTool OK: server=$serverId tool=$toolName dur=${durMs}ms');
       return result;
     } catch (e, st) {
-      Logger.w(LogTags.mcpTool, 'callTool error: server=$serverId tool=$toolName err=${e.toString().take(200)}', e, st);
+      Logger.w(LogTags.mcpTool, 'callTool error: server=$serverId tool=$toolName err=${e.toString().take(200).join()}', e, st);
 
       // If this is a parameter validation error from the server, do NOT disconnect.
       try {

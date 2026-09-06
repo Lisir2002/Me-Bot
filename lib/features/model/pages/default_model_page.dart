@@ -10,6 +10,7 @@ import 'package:characters/characters.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../core/services/haptics.dart';
+import '../../../shared/widgets/card_surface.dart';
 
 class DefaultModelPage extends StatelessWidget {
   const DefaultModelPage({super.key});
@@ -312,7 +313,7 @@ class _ModelCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: baseBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -445,7 +446,7 @@ Widget _iosSectionCard({required List<Widget> children}) {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(

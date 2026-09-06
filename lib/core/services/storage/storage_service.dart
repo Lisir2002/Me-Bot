@@ -25,6 +25,12 @@ class StorageService {
     'tool_events_v1.hive',
   };
 
+  /// 图片扩展名：凡属这些类型的文件都会聚合进「图片」分类。
+  static const Set<String> _imageExtensions = {
+    '.png', '.jpg', '.jpeg', '.webp', '.gif',
+    '.heic', '.heif', '.bmp', '.tiff', '.tif', '.avif',
+  };
+
   /// 是否属于数据库类文件（被「聊天记录」占用）。
   static bool _isDbFile(String name) {
     return _chatDbNames.contains(name) ||
@@ -41,7 +47,7 @@ class StorageService {
     final appData = await AppDirectories.getAppDataDirectory();
     final results = <StorageScan>[];
 
-    results.add(await _scanSubdir(appData, id: 'images', subdir: 'images'));
+    results.add(await _scanAllImages(appData));
     results.add(await _scanSubdir(appData, id: 'upload', subdir: 'upload'));
     results.add(await _scanSubdir(appData, id: 'snapshots', subdir: 'snapshots'));
     results.add(await _scanSubdir(appData, id: 'avatars', subdir: 'avatars'));
@@ -92,6 +98,39 @@ class StorageService {
       }
     } catch (_) {}
     return StorageScan(id: id, bytes: bytes, fileCount: count, entries: entries);
+  }
+
+  /// 「图片」分类：聚合 images/、upload/、avatars/ 下的所有图片文件，
+  /// 让用户头像、聊天中发送/接收的图片都能在「图片」里看到。
+  static Future<StorageScan> _scanAllImages(Directory appData) async {
+    int bytes = 0;
+    int count = 0;
+    final entries = <StorageEntry>[];
+    for (final sub in const ['images', 'upload', 'avatars']) {
+      final dir = Directory('${appData.path}/$sub');
+      if (!await dir.exists()) continue;
+      try {
+        await for (final ent in dir.list(recursive: true, followLinks: false)) {
+          if (ent is! File) continue;
+          final name = _basename(ent.path);
+          final lower = name.toLowerCase();
+          final hasImageExt = _imageExtensions.any(lower.endsWith);
+          if (!hasImageExt) continue;
+          count += 1;
+          try {
+            final len = ent.lengthSync();
+            bytes += len;
+            entries.add(StorageEntry(
+              name: name,
+              path: ent.path,
+              bytes: len,
+              modified: ent.statSync().modified,
+            ));
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
+    return StorageScan(id: 'images', bytes: bytes, fileCount: count, entries: entries);
   }
 
   /// 聊天记录 = appData 根下的数据库文件。

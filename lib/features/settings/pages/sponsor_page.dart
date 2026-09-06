@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/haptics.dart';
+import '../../../shared/widgets/card_surface.dart';
 
 class SponsorPage extends StatefulWidget {
   const SponsorPage({super.key});
@@ -252,7 +253,7 @@ Widget _iosSectionCard({required List<Widget> children}) {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(

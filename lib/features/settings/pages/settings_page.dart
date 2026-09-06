@@ -8,6 +8,7 @@ import '../../model/pages/default_model_page.dart';
 import '../../provider/pages/providers_page.dart';
 import 'display_settings_page.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../shared/widgets/card_surface.dart';
 import '../../mcp/pages/mcp_page.dart';
 import '../../assistant/pages/assistant_settings_page.dart';
 import 'about_page.dart';
@@ -358,16 +359,15 @@ class SettingsPage extends StatelessWidget {
 
 Widget _iosSectionCard({required List<Widget> children}) {
   return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Light: white with slight transparency; Dark: subtle translucent dark
     final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
     return Container(
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        // 统一细黑边规范
+        border: AppCardSurface.border(context),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(

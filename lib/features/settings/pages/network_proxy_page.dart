@@ -12,6 +12,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tactile.dart';
+import '../../../shared/widgets/card_surface.dart';
 
 class NetworkProxyPage extends StatefulWidget {
   const NetworkProxyPage({super.key});
@@ -382,7 +383,7 @@ Widget _sectionCard({required List<Widget> children}) {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(

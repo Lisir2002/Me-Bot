@@ -13,6 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../core/services/haptics.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../shared/widgets/card_surface.dart';
 import 'google_fonts_picker_page.dart';
 
 enum _FontTarget { app, code }
@@ -724,14 +725,14 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
 Widget _iosSectionCard({required List<Widget> children}) {
   return Builder(builder: (context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
     return Container(
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        // 统一细黑边规范
+        border: AppCardSurface.border(context),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(

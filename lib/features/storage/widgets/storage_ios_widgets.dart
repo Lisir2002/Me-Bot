@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
+import '../../../shared/widgets/card_surface.dart';
 import '../../../shared/widgets/ios_switch.dart';
 
 /// 文件大小格式化（B / KB / MB / GB）。与 backup_page 的私有版保持一致。
@@ -50,11 +51,7 @@ Color storageCardBackground(ThemeData theme) {
 
 /// 细微黑边：浅色下用低透明度黑，深色下用低透明度白，保证卡片轮廓清晰但不刺眼。
 Border storageCardBorder(BuildContext context, {double width = 0.8}) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  return Border.all(
-    color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.10),
-    width: width,
-  );
+  return AppCardSurface.border(context, width: width);
 }
 
 /// iOS 风格分组标题。

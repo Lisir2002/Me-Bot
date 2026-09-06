@@ -12,6 +12,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
+import '../../../shared/widgets/card_surface.dart';
 import '../../model/widgets/model_detail_sheet.dart';
 import '../../model/widgets/model_select_sheet.dart';
 import '../widgets/share_provider_sheet.dart';
@@ -881,7 +882,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
         // boxShadow: [
         //   if (!isDark) BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 1)),
         // ],

@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/haptics.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
+import '../../../shared/widgets/card_surface.dart';
 
 Future<String?> showAddProviderSheet(BuildContext context) async {
   final cs = Theme.of(context).colorScheme;
@@ -144,7 +145,7 @@ class _AddProviderSheetState extends State<_AddProviderSheet>
       decoration: BoxDecoration(
         color: isDark ? Colors.white10 : Colors.white.withOpacity(0.96),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

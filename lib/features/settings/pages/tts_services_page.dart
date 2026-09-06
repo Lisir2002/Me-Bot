@@ -10,6 +10,7 @@ import '../../../core/services/tts/network_tts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../core/services/haptics.dart';
+import '../../../shared/widgets/card_surface.dart';
 
 class TtsServicesPage extends StatelessWidget {
   const TtsServicesPage({super.key});
@@ -241,7 +242,7 @@ Widget _iosSectionCard({required List<Widget> children}) {
     final isDark = theme.brightness == Brightness.dark;
     final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
     return Container(
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6)),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: AppCardSurface.border(context)),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Column(children: children)),
     );

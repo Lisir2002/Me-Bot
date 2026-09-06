@@ -10,6 +10,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
+import '../../../shared/widgets/card_surface.dart';
 
 class _HeaderEntry {
   final TextEditingController key;
@@ -104,7 +105,7 @@ class _McpServerEditSheetState extends State<_McpServerEditSheet> with SingleTic
       decoration: BoxDecoration(
         color: isDark ? Colors.white10 : Colors.white.withOpacity(0.96),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+        border: AppCardSurface.border(context),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

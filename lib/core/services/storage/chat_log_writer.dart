@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../utils/app_directories.dart';
 
 /// 记录用户提问与模型回复的操作日志（fire-and-forget）。
@@ -27,6 +29,10 @@ class ChatLogWriter {
     String? error,
   }) async {
     try {
+      // 与日志设置页开关对齐：关闭「保存响应输出」则不落盘
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool('log_save_response') ?? true)) return;
+
       final root = await AppDirectories.getAppDataDirectory();
       final dir = Directory('${root.path}/logs');
       if (!await dir.exists()) await dir.create(recursive: true);

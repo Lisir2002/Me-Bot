@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/card_surface.dart';
 import '../../../shared/widgets/snackbar.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
@@ -464,7 +465,7 @@ class _MemoryTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? Colors.white10 : Colors.white.withOpacity(0.96),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
+                border: AppCardSurface.border(context),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12),

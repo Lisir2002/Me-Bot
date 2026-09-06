@@ -15,7 +15,8 @@ class LogViewerPage extends StatefulWidget {
 }
 
 class _LogViewerPageState extends State<LogViewerPage> {
-  int _tab = 0;
+  // 默认落到「请求/网络」Tab，用户与模型对话的日志就在这里，避免打开即空态。
+  int _tab = 1;
   LogEntry? _selected;
   List<LogEntry> _entries = const [];
   bool _loading = false;
@@ -202,7 +203,7 @@ class _TactileLogCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cs.outlineVariant.withOpacity(themeDark ? 0.08 : 0.06), width: 0.6),
+          border: storageCardBorder(context),
         ),
         child: Row(
           children: [

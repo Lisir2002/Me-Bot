@@ -9,8 +9,10 @@ import '../../../core/models/chat_item.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../shared/widgets/snackbar.dart';
 
-/// 对话列表页 —— 移动端首页。
-/// 真实功能（从 SideDrawer 抽逻辑）：搜索、置顶、按日期分组、点击进入 ChatPage、长按管理。
+/// 对话列表页 —— 移动端首页（Conversations tab）。
+///
+/// 功能：搜索折叠动画、置顶/日期分组、长按管理、实时刷新。
+/// ChatPage push 到根 Navigator（覆盖底栏），不嵌套在 shell 内。
 class ConversationListPage extends StatefulWidget {
   const ConversationListPage({super.key});
 
@@ -20,6 +22,7 @@ class ConversationListPage extends StatefulWidget {
 
 class _ConversationListPageState extends State<ConversationListPage> {
   final TextEditingController _searchController = TextEditingController();
+  bool _searchExpanded = false;
   String _query = '';
 
   @override
@@ -28,20 +31,31 @@ class _ConversationListPageState extends State<ConversationListPage> {
     super.dispose();
   }
 
+  void _openChat(String id) {
+    // push 到根 Navigator（覆盖底栏骨架）
+    context.push('/chat/$id');
+  }
+
+  Future<void> _newChat() async {
+    final chatService = context.read<ChatService>();
+    final convo = await chatService.createConversation();
+    if (mounted) {
+      context.push('/chat/${convo.id}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final chatService = context.watch<ChatService>();
+    // watch ChatService —— 任何对话增删改都会触发 rebuild
+    context.watch<ChatService>();
+    final chatService = context.read<ChatService>();
     final ap = context.watch<AssistantProvider>();
     final l10n = AppLocalizations.of(context)!;
 
-    // 获取当前助手的所有对话（和 SideDrawer 完全一致）
     final currentAssistantId = ap.currentAssistantId;
-    final conversations = chatService
+    final all = chatService
         .getAllConversations()
         .where((c) => c.assistantId == currentAssistantId || c.assistantId == null)
-        .toList();
-
-    final all = conversations
         .map((c) => ChatItem(id: c.id, title: c.title, created: c.updatedAt))
         .toList();
 
@@ -49,59 +63,48 @@ class _ConversationListPageState extends State<ConversationListPage> {
         ? all
         : all.where((c) => c.title.toLowerCase().contains(_query.toLowerCase())).toList();
 
-    // 置顶 + 非置顶（和 SideDrawer 一致）
     final pinnedList = base
         .where((c) => (chatService.getConversation(c.id)?.isPinned ?? false))
         .toList()
       ..sort((a, b) => b.created.compareTo(a.created));
 
-    final rest = base
-        .where((c) => !(chatService.getConversation(c.id)?.isPinned ?? false))
-        .toList();
+    final rest = base.where((c) => !(chatService.getConversation(c.id)?.isPinned ?? false)).toList();
     final groups = _groupByDate(context, rest);
 
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.mobileTabConversations),
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: l10n.chatServiceDefaultConversationTitle,
-            onPressed: () async {
-              final convo = await chatService.createConversation();
-              if (mounted) {
-                context.push('/conversations/chat/${convo.id}');
-              }
-            },
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(context, l10n, cs),
       body: Column(
         children: [
-          // 搜索框（真实搜索功能）
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (v) => setState(() => _query = v),
-              decoration: InputDecoration(
-                hintText: l10n.chatHistoryPageSearchHint,
-                filled: true,
-                fillColor: cs.surfaceContainerHighest.withOpacity(0.5),
-                isDense: true,
-                prefixIcon: const Icon(Icons.search, size: 18),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+          // 搜索框（折叠展开由 AppBar 控制，这里只在展开时显示）
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _searchExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      onChanged: (v) => setState(() => _query = v),
+                      decoration: InputDecoration(
+                        hintText: l10n.chatHistoryPageSearchHint,
+                        filled: true,
+                        fillColor: cs.surfaceContainerHighest.withOpacity(0.6),
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
           // 对话列表
           Expanded(
@@ -110,25 +113,23 @@ class _ConversationListPageState extends State<ConversationListPage> {
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(10, 2, 10, 16),
                     children: [
-                      // 置顶分组
                       if (pinnedList.isNotEmpty) ...[
                         _SectionHeader(text: l10n.chatHistoryPagePinnedSection),
                         for (final c in pinnedList)
                           _ConversationTile(
                             chat: c,
                             pinned: true,
-                            onTap: () => context.push('/conversations/chat/${c.id}'),
+                            onTap: () => _openChat(c.id),
                             onLongPress: () => _showMenu(context, c),
                           ),
                       ],
-                      // 按日期分组
                       for (final g in groups) ...[
                         _SectionHeader(text: g.label),
                         for (final c in g.items)
                           _ConversationTile(
                             chat: c,
                             pinned: false,
-                            onTap: () => context.push('/conversations/chat/${c.id}'),
+                            onTap: () => _openChat(c.id),
                             onLongPress: () => _showMenu(context, c),
                           ),
                       ],
@@ -140,7 +141,56 @@ class _ConversationListPageState extends State<ConversationListPage> {
     );
   }
 
-  // ── 日期分组（和 SideDrawer 完全一致的逻辑）──
+  // ── 搜索折叠 AppBar ──
+
+  PreferredSizeWidget _buildAppBar(BuildContext context, AppLocalizations l10n, ColorScheme cs) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      titleSpacing: 4,
+      title: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: _searchExpanded
+            ? const SizedBox.shrink(key: ValueKey('empty'))
+            : Text(
+                l10n.mobileTabConversations,
+                key: const ValueKey('title'),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+      ),
+      actions: [
+        // 搜索图标（点击展开/收起搜索框）
+        IconButton(
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              _searchExpanded ? Icons.close_rounded : Icons.search_rounded,
+              key: ValueKey(_searchExpanded),
+            ),
+          ),
+          onPressed: () {
+            setState(() {
+              _searchExpanded = !_searchExpanded;
+              if (!_searchExpanded) {
+                _searchController.clear();
+                _query = '';
+              }
+            });
+            FocusScope.of(context).requestFocus(FocusNode());
+          },
+        ),
+        // 新建对话
+        IconButton(
+          icon: const Icon(Icons.add_rounded),
+          tooltip: l10n.chatServiceDefaultConversationTitle,
+          onPressed: _newChat,
+        ),
+      ],
+    );
+  }
+
+  // ── 日期分组 ──
 
   List<_ChatGroup> _groupByDate(BuildContext context, List<ChatItem> source) {
     final items = [...source];
@@ -174,7 +224,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
     return fmt.format(date);
   }
 
-  // ── 长按菜单（重命名 / 置顶 / 删除）──
+  // ── 长按菜单 ──
 
   Future<void> _showMenu(BuildContext context, ChatItem chat) async {
     final l10n = AppLocalizations.of(context)!;
@@ -246,7 +296,6 @@ class _ConversationListPageState extends State<ConversationListPage> {
     );
     if (result != null && result.isNotEmpty && mounted) {
       await chatService.renameConversation(chat.id, result);
-      if (mounted) setState(() {});
     }
   }
 
@@ -270,14 +319,11 @@ class _ConversationListPageState extends State<ConversationListPage> {
     );
     if (confirmed == true && mounted) {
       await chatService.deleteConversation(chat.id);
-      if (mounted) {
-        showAppSnackBar(
-          context,
-          message: l10n.conversationDeletedSnackbar,
-          type: NotificationType.success,
-        );
-        setState(() {});
-      }
+      showAppSnackBar(
+        context,
+        message: l10n.conversationDeletedSnackbar,
+        type: NotificationType.success,
+      );
     }
   }
 }
@@ -310,9 +356,6 @@ class _ConversationTile extends StatelessWidget {
           onLongPress: onLongPress,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
             child: Row(
               children: [
                 Expanded(

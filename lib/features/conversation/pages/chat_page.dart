@@ -8,18 +8,19 @@ import '../../../core/models/chat_message.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../chat/widgets/chat_message_widget.dart';
 import '../../home/widgets/chat_input_bar.dart';
+import '../../home/widgets/side_drawer.dart';
 import '../../../core/models/chat_input_data.dart';
 
-/// 聊天页 —— 从 HomePage 搬核心聊天逻辑。
+/// 聊天页 —— 完整迁移自 HomePage（消息渲染 + 流式 + 持久化 + 侧边栏）。
 ///
-/// 真实功能（完整可用）：消息列表渲染、发送消息、流式输出、消息持久化。
-/// 高级功能（reasoning / tool events / translation / MCP / 消息版本管理）
-/// 在 HomePage 有完整实现，逐步迁移到此页面。
+/// Push 到根 Navigator（parentNavigatorKey = root），覆盖底栏骨架。
+/// 带右侧 EndDrawer（对话历史/助手选择），顶栏右侧有新建对话按钮。
 class ChatPage extends StatefulWidget {
   final String conversationId;
   const ChatPage({super.key, required this.conversationId});
@@ -81,12 +82,23 @@ class _ChatPageState extends State<ChatPage> {
 
   bool get _isLoading => _loadingIds.contains(widget.conversationId);
 
+  Future<void> _newChat() async {
+    final chatService = context.read<ChatService>();
+    final convo = await chatService.createConversation();
+    if (mounted) {
+      // 用 go 替换当前 ChatPage（保持在根 Navigator）
+      context.go('/chat/${convo.id}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final assistant = context.watch<AssistantProvider>().currentAssistant;
     final settings = context.watch<SettingsProvider>();
+    final chatService = context.watch<ChatService>();
+    final userName = context.watch<UserProvider>().name;
 
     final title = (_conversation?.title ?? '').trim().isNotEmpty
         ? _conversation!.title
@@ -94,11 +106,28 @@ class _ChatPageState extends State<ChatPage> {
 
     final providerKey = assistant?.chatModelProvider ?? settings.currentModelProvider;
     final modelId = assistant?.chatModelId ?? settings.currentModelId;
+    final assistantName = assistant?.name.trim() ?? l10n.mobileDrawerGuest;
 
     return Scaffold(
+      endDrawer: SideDrawer(
+        userName: userName.isEmpty ? l10n.mobileDrawerGuest : userName,
+        assistantName: assistantName,
+        loadingConversationIds: _loadingIds,
+        onSelectConversation: (id) {
+          Scaffold.of(context).closeEndDrawer();
+          if (id != widget.conversationId) {
+            context.go('/chat/$id');
+          }
+        },
+        onNewConversation: () async {
+          Scaffold.of(context).closeEndDrawer();
+          final convo = await chatService.createConversation();
+          if (mounted) context.go('/chat/${convo.id}');
+        },
+      ),
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -119,10 +148,23 @@ class _ChatPageState extends State<ChatPage> {
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          // 新建对话
+          IconButton(
+            icon: const Icon(Icons.add_rounded),
+            tooltip: l10n.chatServiceDefaultConversationTitle,
+            onPressed: _newChat,
+          ),
+          // 右侧边栏按钮（对话历史/助手列表）
+          IconButton(
+            icon: const Icon(Icons.menu_open_rounded),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // 消息列表（复用 ChatMessageWidget）
+          // 消息列表
           Expanded(
             child: _messages.isEmpty
                 ? const _EmptyChat()
@@ -147,7 +189,7 @@ class _ChatPageState extends State<ChatPage> {
                     },
                   ),
           ),
-          // 输入栏（复用 ChatInputBar）
+          // 输入栏
           ChatInputBar(
             onSend: _sendMessage,
             onStop: _cancelStreaming,
@@ -158,7 +200,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ── 发送消息（从 HomePage 搬核心逻辑，用真实 API）──
+  // ── 发送消息 ──
 
   Future<void> _sendMessage(ChatInputData input) async {
     final content = input.text.trim();
@@ -168,12 +210,12 @@ class _ChatPageState extends State<ChatPage> {
     final chatService = context.read<ChatService>();
     final settings = context.read<SettingsProvider>();
     final assistant = context.read<AssistantProvider>().currentAssistant;
+    final l10n = AppLocalizations.of(context)!;
 
     final providerKey = assistant?.chatModelProvider ?? settings.currentModelProvider;
     final modelId = assistant?.chatModelId ?? settings.currentModelId;
 
     if (providerKey == null || modelId == null) {
-      final l10n = AppLocalizations.of(context)!;
       showAppSnackBar(
         context,
         message: l10n.chatPleaseSelectModel,
@@ -182,7 +224,6 @@ class _ChatPageState extends State<ChatPage> {
       return;
     }
 
-    // 用户消息
     final imageMarkers = input.imagePaths.map((p) => '\n[image:$p]').join();
     final docMarkers = input.documents.map((d) => '\n[file:${d.path}|${d.fileName}|${d.mime}]').join();
     final userMessage = await chatService.addMessage(
@@ -197,7 +238,6 @@ class _ChatPageState extends State<ChatPage> {
     });
     _scrollToBottom();
 
-    // 助手占位消息
     final assistantMessage = await chatService.addMessage(
       conversationId: _conversation!.id,
       role: 'assistant',
@@ -210,7 +250,6 @@ class _ChatPageState extends State<ChatPage> {
     setState(() => _messages.add(assistantMessage));
     _scrollToBottom();
 
-    // 构建 API messages（HomePage 真实逻辑：ChatMessage → Map）
     final apiMessages = _messages
         .where((m) => m.id != assistantMessage.id && m.content.isNotEmpty)
         .map((m) => {
@@ -219,7 +258,6 @@ class _ChatPageState extends State<ChatPage> {
             })
         .toList();
 
-    // 发送流式请求（用 HomePage 真实的调用方式）
     final config = settings.getProviderConfig(providerKey);
     final stream = ChatApiService.sendMessageStream(
       config: config,
@@ -247,7 +285,6 @@ class _ChatPageState extends State<ChatPage> {
           _scrollToBottom();
         }
       }
-      // 完成
       await chatService.updateMessage(assistantMessage.id, isStreaming: false);
       if (mounted) {
         setState(() {

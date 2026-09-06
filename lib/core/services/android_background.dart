@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
+import 'logging/logger.dart';
+import 'logging/log_tags.dart';
 
 /// Simple manager for enabling/disabling background execution on Android.
 /// All calls are no-ops on non-Android platforms.
@@ -11,6 +13,7 @@ class AndroidBackgroundManager {
   static Future<bool> ensureInitialized({String? notificationTitle, String? notificationText}) async {
     if (!Platform.isAndroid) return false;
     if (_initialized) return true;
+    Logger.i(LogTags.background, 'ensureInitialized: initializing FlutterBackground');
     try {
       final androidConfig = FlutterBackgroundAndroidConfig(
         notificationTitle: notificationTitle ?? 'MiniMe-Core is running',
@@ -21,8 +24,10 @@ class AndroidBackgroundManager {
       );
       final ok = await FlutterBackground.initialize(androidConfig: androidConfig);
       _initialized = ok;
+      Logger.i(LogTags.background, 'ensureInitialized result: $ok');
       return ok;
-    } catch (_) {
+    } catch (e) {
+      Logger.e(LogTags.background, 'ensureInitialized failed: $e');
       return false;
     }
   }
@@ -30,11 +35,15 @@ class AndroidBackgroundManager {
   /// Enable/disable background execution. Requires [ensureInitialized] to have run.
   static Future<void> setEnabled(bool enable) async {
     if (!Platform.isAndroid) return;
+    Logger.i(LogTags.background, 'setEnabled: enable=$enable currentlyInit=$_initialized');
     try {
       // Short-circuit if state already matches
       try {
         final current = await FlutterBackground.isBackgroundExecutionEnabled;
-        if (current == enable) return;
+        if (current == enable) {
+          Logger.d(LogTags.background, 'setEnabled: already in state enable=$enable, skip');
+          return;
+        }
       } catch (_) {}
 
       if (enable) {
@@ -43,12 +52,18 @@ class AndroidBackgroundManager {
           await ensureInitialized();
         }
         await FlutterBackground.enableBackgroundExecution();
+        Logger.i(LogTags.background, 'background execution enabled');
       } else {
         // Try to disable without forcing initialization to avoid permission prompts
-        try { await FlutterBackground.disableBackgroundExecution(); } catch (_) {}
+        try {
+          await FlutterBackground.disableBackgroundExecution();
+          Logger.i(LogTags.background, 'background execution disabled');
+        } catch (e) {
+          Logger.w(LogTags.background, 'disableBackgroundExecution failed: $e');
+        }
       }
-    } catch (_) {
-      // ignore runtime errors; best effort only
+    } catch (e) {
+      Logger.e(LogTags.background, 'setEnabled failed: $e');
     }
   }
 

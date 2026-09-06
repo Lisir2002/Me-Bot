@@ -1,5 +1,8 @@
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'logging/logger.dart';
+import 'logging/log_tags.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
@@ -15,6 +18,7 @@ class NotificationService {
   static Future<void> ensureInitialized() async {
     if (!Platform.isAndroid) return;
     if (_inited) return;
+    Logger.i(LogTags.notification, 'ensureInitialized: initializing FlutterLocalNotifications');
 
     // Android initialization
     const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -25,6 +29,7 @@ class NotificationService {
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
       await android.createNotificationChannel(_channel);
+      Logger.i(LogTags.notification, 'Notification channel created: ${_channel.id}');
       // Runtime notification permission (Android 13+) should be requested by app UI if needed
     }
     _inited = true;
@@ -38,11 +43,15 @@ class NotificationService {
     try {
       final enabled = await android.areNotificationsEnabled();
       if (enabled == true) return true;
-    } catch (_) {}
+    } catch (e) {
+      Logger.w(LogTags.notification, 'areNotificationsEnabled check failed: $e');
+    }
     try {
       final ok = await android.requestNotificationsPermission();
+      Logger.i(LogTags.notification, 'requestNotificationsPermission result: $ok');
       return ok ?? false;
-    } catch (_) {
+    } catch (e) {
+      Logger.e(LogTags.notification, 'requestNotificationsPermission failed: $e');
       return false;
     }
   }
@@ -50,6 +59,7 @@ class NotificationService {
   static Future<void> showChatCompleted({String? title, String? body}) async {
     if (!Platform.isAndroid) return;
     await ensureInitialized();
+    Logger.i(LogTags.notification, 'showChatCompleted: title=${title ?? 'default'}');
     await _plugin.show(
       2001, // id
       title ?? 'Generation complete',

@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../services/tts/network_tts.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 
 /// System TTS provider using flutter_tts.
 /// Keeps minimal state and simple chunked speaking for long text.
@@ -282,9 +284,11 @@ class TtsProvider extends ChangeNotifier {
   /// Speak text via System TTS. If [flush] is true, stop current playback first.
   Future<void> speak(String text, {bool flush = true}) async {
     if (!_initialized) return;
+    Logger.i(LogTags.tts, 'speak: len=${text.length} flush=$flush');
     // Prefer network TTS if configured
     final selected = await _getSelectedNetworkService();
     if (selected != null && selected.enabled) {
+      Logger.i(LogTags.tts, 'speak: using network TTS service=${selected.name}');
       return _speakNetwork(text, selected, flush: flush);
     }
     // Fallback to system TTS
@@ -298,6 +302,7 @@ class TtsProvider extends ChangeNotifier {
     _chunks
       ..clear()
       ..addAll(_chunkText(content, maxLen: 450));
+    Logger.d(LogTags.tts, 'speak: ${_chunks.length} chunks prepared');
     _currentChunkIndex = 0;
     _speakingCompleter = Completer<void>();
     await _speakNext();
@@ -307,6 +312,7 @@ class TtsProvider extends ChangeNotifier {
   // Force speaking via system TTS (ignores network selection). Used by settings test.
   Future<void> speakSystem(String text, {bool flush = true}) async {
     if (!_initialized) return;
+    Logger.i(LogTags.tts, 'speakSystem: len=${text.length}');
     await _ensureBound();
     if (flush) {
       try { await _tts.stop(); } catch (_) {}
@@ -331,10 +337,15 @@ class TtsProvider extends ChangeNotifier {
   }
 
   Future<void> pause() async {
+    Logger.d(LogTags.tts, 'pause');
     await _ensureBound();
     try {
       await _tts.pause();
-    } catch (_) {}
+      _isPaused = true;
+      notifyListeners();
+    } catch (e) {
+      Logger.w(LogTags.tts, 'pause failed: $e');
+    }
   }
 
   Future<void> resume() async {
@@ -343,6 +354,7 @@ class TtsProvider extends ChangeNotifier {
     if (!_isPaused) return;
     final hasChunk = _currentChunkIndex < _chunks.length;
     if (hasChunk) {
+      Logger.d(LogTags.tts, 'resume: chunk $_currentChunkIndex/${_chunks.length}');
       final s = _chunks[_currentChunkIndex];
       final ok = await _trySpeak(s);
       if (ok) {
@@ -353,6 +365,7 @@ class TtsProvider extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    Logger.i(LogTags.tts, 'stop');
     // stop both network and system TTS safely
     try { await _player.stop(); } catch (_) {}
     try { await _tts.stop(); } catch (_) {}

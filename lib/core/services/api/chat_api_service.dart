@@ -1032,11 +1032,23 @@ class ChatApiService {
     }
     request.body = jsonEncode(body);
 
-    final response = await client.send(request);
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final errorBody = await response.stream.bytesToString();
-      throw HttpException('HTTP ${response.statusCode}: $errorBody');
-    }
+    final req = ApiLogger.logRequest(
+      provider: config.id,
+      model: modelId,
+      method: 'POST',
+      url: url.toString(),
+      body: body,
+    );
+    final streamSw = Stopwatch()..start();
+
+    try {
+      final response = await client.send(request);
+      ApiLogger.logResponse(req, statusCode: response.statusCode);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final errorBody = await response.stream.bytesToString();
+        ApiLogger.logError(req, statusCode: response.statusCode, message: errorBody);
+        throw HttpException('HTTP ${response.statusCode}: $errorBody');
+      }
 
     final stream = response.stream.transform(utf8.decoder);
     String buffer = '';
@@ -2813,6 +2825,10 @@ class ChatApiService {
     // Fallback: provider closed SSE without sending [DONE]
     final approxTotal = usage?.totalTokens ?? (approxPromptTokens + _approxTokensFromChars(approxCompletionChars));
     yield ChatStreamChunk(content: '', isDone: true, totalTokens: approxTotal, usage: usage);
+    } finally {
+      streamSw.stop();
+      Logger.i(LogTags.api, 'stream OpenAI-style ${config.id}/${modelId} took=${streamSw.elapsedMilliseconds}ms');
+    }
   }
 
   static Stream<ChatStreamChunk> _sendClaudeStream(
@@ -2941,6 +2957,16 @@ class ChatApiService {
     List<Map<String, dynamic>> convo = List<Map<String, dynamic>>.from(initialMessages);
     TokenUsage? totalUsage;
 
+    final claudeReq = ApiLogger.logRequest(
+      provider: config.id,
+      model: modelId,
+      method: 'POST',
+      url: url.toString(),
+      body: initialMessages,
+    );
+    final claudeSw = Stopwatch()..start();
+
+    try {
     while (true) {
       // Prepare request body per round
       final body = <String, dynamic>{
@@ -2973,8 +2999,10 @@ class ChatApiService {
       request.body = jsonEncode(body);
 
       final response = await client.send(request);
+      ApiLogger.logResponse(claudeReq, statusCode: response.statusCode);
       if (response.statusCode < 200 || response.statusCode >= 300) {
         final errorBody = await response.stream.bytesToString();
+        ApiLogger.logError(claudeReq, statusCode: response.statusCode, message: errorBody);
         throw HttpException('HTTP ${response.statusCode}: $errorBody');
       }
 
@@ -3235,6 +3263,10 @@ class ChatApiService {
       ];
       // Loop to next round; the next response will stream more assistant content
     }
+    } finally {
+      claudeSw.stop();
+      Logger.i(LogTags.api, 'stream Claude ${config.id}/${modelId} took=${claudeSw.elapsedMilliseconds}ms');
+    }
   }
 
   static Stream<ChatStreamChunk> _sendGoogleStream(
@@ -3406,6 +3438,16 @@ class ChatApiService {
       return out;
     }
 
+    final googleReq = ApiLogger.logRequest(
+      provider: config.id,
+      model: modelId,
+      method: 'POST',
+      url: uri.toString(),
+      body: contents,
+    );
+    final googleSw = Stopwatch()..start();
+
+    try {
     while (true) {
       final gen = <String, dynamic>{
         if (temperature != null) 'temperature': temperature,
@@ -3454,8 +3496,10 @@ class ChatApiService {
       request.body = jsonEncode(body);
 
       final resp = await client.send(request);
+      ApiLogger.logResponse(googleReq, statusCode: resp.statusCode);
       if (resp.statusCode < 200 || resp.statusCode >= 300) {
         final errorBody = await resp.stream.bytesToString();
+        ApiLogger.logError(googleReq, statusCode: resp.statusCode, message: errorBody);
         throw HttpException('HTTP ${resp.statusCode}: $errorBody');
       }
 
@@ -3663,6 +3707,10 @@ class ChatApiService {
         ]});
       }
       // Continue while(true) for next round
+    }
+    } finally {
+      googleSw.stop();
+      Logger.i(LogTags.api, 'stream Google ${config.id}/${modelId} took=${googleSw.elapsedMilliseconds}ms');
     }
   }
 

@@ -268,7 +268,7 @@ class McpProvider extends ChangeNotifier {
       _servers.where((s) => statusFor(s.id) == McpStatus.connected).toList(growable: false);
 
   Future<void> _load() async {
-  Future<void> _load() async   Logger.i(LogTags.mcp, "McpProvider _load");
+    Logger.i(LogTags.mcp, '_load: loading MCP servers from prefs');
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_prefsKey);
     if (raw != null && raw.isNotEmpty) {
@@ -309,7 +309,7 @@ class McpProvider extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
-  Future<void> _persist() async   Logger.d(LogTags.mcp, "McpProvider _persist");
+    Logger.d(LogTags.mcp, '_persist: saving ${_servers.length} MCP servers');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKey, jsonEncode(_servers.map((e) => e.toJson()).toList()));
   }
@@ -549,7 +549,6 @@ class McpProvider extends ChangeNotifier {
   }
 
   Future<String> addServer({
-  Future<String> addServer(  Logger.i(LogTags.mcp, "Add MCP server");
     required bool enabled,
     required String name,
     required McpTransportType transport,
@@ -560,6 +559,7 @@ class McpProvider extends ChangeNotifier {
     Map<String, String> env = const <String, String>{},
     String? workingDirectory,
   }) async {
+    Logger.i(LogTags.mcp, 'addServer: name=$name transport=$transport enabled=$enabled');
     final id = const Uuid().v4();
     final cfg = McpServerConfig(
       id: id,
@@ -1161,27 +1161,25 @@ class McpProvider extends ChangeNotifier {
   }
 
   Future<mcp.CallToolResult?> callTool(String serverId, String toolName, Map<String, dynamic> args) async {
+    Logger.d(LogTags.mcpTool, 'callTool: server=$serverId tool=$toolName args=${jsonEncode(args)}');
     try {
       await ensureConnected(serverId);
       var client = _clients[serverId];
-      if (client == null) return null;
+      if (client == null) {
+        Logger.e(LogTags.mcpTool, 'callTool skipped: no client for server=$serverId');
+        return null;
+      }
       // Normalize arguments based on tool schema (best-effort)
       final normalized = _normalizeArgsForTool(serverId, toolName, args);
-      // if (normalized != args) {
-      //   debugPrint('[MCP/Call] serverId=$serverId tool=$toolName args(normalized)=${jsonEncode(normalized)}');
-      // } else {
-      //   debugPrint('[MCP/Call] serverId=$serverId tool=$toolName args=${jsonEncode(args)}');
-      // }
       final start = DateTime.now();
       final result = await client.callTool(toolName, normalized);
       final durMs = DateTime.now().difference(start).inMilliseconds;
       recordToolCall(serverId, toolName, normalized,
           result: _resultSummary(result), durationMs: durMs);
-      // Detailed call timing/content logging disabled
+      Logger.i(LogTags.mcpTool, 'callTool OK: server=$serverId tool=$toolName dur=${durMs}ms');
       return result;
     } catch (e, st) {
-      // debugPrint('[MCP/Call/Error] serverId=$serverId tool=$toolName');
-      // _logMcpException('callTool', serverId: serverId, toolName: toolName, error: e, stack: st);
+      Logger.w(LogTags.mcpTool, 'callTool error: server=$serverId tool=$toolName err=${e.toString().take(200)}', e, st);
 
       // If this is a parameter validation error from the server, do NOT disconnect.
       try {
@@ -1189,7 +1187,7 @@ class McpProvider extends ChangeNotifier {
           // Keep connection healthy status; surface error to caller via null
           _errors[serverId] = e.toString();
           recordToolCall(serverId, toolName, args, isError: true, error: e.toString());
-          // debugPrint('[MCP/Call] invalid arguments; skipping reconnect');
+          Logger.w(LogTags.mcpTool, 'callTool invalid args: server=$serverId tool=$toolName code=-32602');
           return null;
         }
       } catch (_) {}
@@ -1199,6 +1197,7 @@ class McpProvider extends ChangeNotifier {
       notifyListeners();
       // Auto-reconnect a few times and try once more
       try {
+        Logger.i(LogTags.mcpTool, 'callTool retrying: server=$serverId tool=$toolName');
         await _reconnectWithBackoff(serverId, maxAttempts: 3);
         if (!isConnected(serverId)) {
           recordToolCall(serverId, toolName, args, isError: true, error: e.toString());
@@ -1216,15 +1215,14 @@ class McpProvider extends ChangeNotifier {
         final durMs = DateTime.now().difference(start).inMilliseconds;
         recordToolCall(serverId, toolName, normalized,
             result: _resultSummary(result), durationMs: durMs);
-        // Detailed retry logging disabled
+        Logger.i(LogTags.mcpTool, 'callTool retry OK: server=$serverId tool=$toolName dur=${durMs}ms');
         // Mark healthy again
         _status[serverId] = McpStatus.connected;
         _errors.remove(serverId);
         notifyListeners();
         return result;
       } catch (e2, st2) {
-        // debugPrint('[MCP/Call/RetryError] serverId=$serverId tool=$toolName');
-        // _logMcpException('callTool-retry', serverId: serverId, toolName: toolName, error: e2, stack: st2);
+        Logger.e(LogTags.mcpTool, 'callTool retry failed: server=$serverId tool=$toolName', e2, st2);
         // Keep error state; give up
         recordToolCall(serverId, toolName, args, isError: true, error: e2.toString());
         return null;

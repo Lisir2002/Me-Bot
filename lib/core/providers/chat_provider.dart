@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_item.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 
 class ChatProvider extends ChangeNotifier {
   ChatProvider({List<ChatItem>? seed}) {
@@ -21,10 +23,12 @@ class ChatProvider extends ChangeNotifier {
   bool get initialized => _initialized;
 
   Future<void> _init() async {
+    Logger.i(LogTags.chat, 'ChatProvider init start');
     await _loadPinned();
     await _loadTitles();
     _initialized = true;
     notifyListeners();
+    Logger.i(LogTags.chat, 'ChatProvider init done chats=${_chats.length}');
   }
 
   Future<void> _loadPinned() async {

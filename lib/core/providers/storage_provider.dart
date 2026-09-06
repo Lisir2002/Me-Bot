@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart';
 
 import '../models/storage.dart';
 import '../services/storage/storage_service.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 
 /// 存储页面的状态容器：承载全量扫描结果与加载状态。
 ///

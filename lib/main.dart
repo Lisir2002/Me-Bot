@@ -27,6 +27,7 @@ import 'core/providers/memory_provider.dart';
 import 'core/providers/backup_provider.dart';
 import 'core/providers/storage_provider.dart';
 import 'core/services/logging/logger.dart';
+import 'core/services/logging/log_tags.dart';
 import 'core/providers/log_settings_provider.dart';
 import 'core/services/chat/chat_service.dart';
 import 'core/services/mcp/mcp_tool_service.dart';
@@ -50,15 +51,20 @@ Future<void> main() async {
   await _initDesktopWindow();
   // Preload system fonts on desktop so saved font selections render on launch
   await _preloadDesktopSystemFonts();
-  // Debug logging and global error handlers were enabled previously for diagnosis.
-  // They are commented out now per request to reduce log noise.
-  // FlutterError.onError = (FlutterErrorDetails details) { ... };
-  // WidgetsBinding.instance.platformDispatcher.onError = (Object error, StackTrace stack) { ... };
-  // logging.Logger.root.level = logging.Level.ALL;
-  // logging.Logger.root.onRecord.listen((rec) { ... });
   // Cache current Documents directory to fix sandboxed absolute paths on iOS
   await SandboxPathResolver.init();
   await Logger.init();
+  Logger.i(LogTags.boot, 'App boot complete, ready to run');
+
+  // ── 全局错误处理：所有未捕获异常落盘到 Logger ──
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    Logger.e(LogTags.error, 'FlutterError: \${details.exception}', details.exception, details.stack);
+  };
+  WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+    Logger.e(LogTags.error, 'Platform error: \$error', error, stack);
+    return true;
+  };
   // Count app launches (feeds the Stats page "app launch" card)
   await _incrementAppLaunchCount();
   // Enable edge-to-edge to allow content under system bars (Android)

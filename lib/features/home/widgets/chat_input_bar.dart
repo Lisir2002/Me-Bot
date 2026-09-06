@@ -23,9 +23,6 @@ import '../../../utils/app_directories.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import '../../../desktop/desktop_context_menu.dart';
 
-// Desktop context menu actions for right-click on the input field
-enum _DesktopTextMenuAction { paste, cut, copy, selectAll }
-
 class ChatInputBarController {
   _ChatInputBarState? _state;
   void _bind(_ChatInputBarState s) => _state = s;
@@ -117,7 +114,6 @@ class ChatInputBar extends StatefulWidget {
 
 class _ChatInputBarState extends State<ChatInputBar> {
   late TextEditingController _controller;
-  bool _searchEnabled = false;
   final List<String> _images = <String>[]; // local file paths
   final List<DocumentAttachment> _docs = <DocumentAttachment>[]; // files to upload
   final Map<LogicalKeyboardKey, Timer?> _repeatTimers = {};
@@ -156,7 +152,6 @@ class _ChatInputBarState extends State<ChatInputBar> {
     super.initState();
     _controller = widget.controller ?? TextEditingController();
     widget.mediaController?._bind(this);
-    _searchEnabled = widget.searchEnabled;
   }
 
   @override
@@ -168,14 +163,6 @@ class _ChatInputBarState extends State<ChatInputBar> {
       _controller.dispose();
     }
     super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant ChatInputBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.searchEnabled != widget.searchEnabled) {
-      _searchEnabled = widget.searchEnabled;
-    }
   }
 
   String _hint(BuildContext context) {
@@ -1333,53 +1320,6 @@ class _CompactIconButton extends StatelessWidget {
   }
 }
 
-// Keep original button for compatibility if needed elsewhere
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({
-    required this.icon,
-    this.onTap,
-    this.tooltip,
-    this.active = false,
-    this.child,
-    this.padding,
-  });
-
-  final IconData icon;
-  final VoidCallback? onTap;
-  final String? tooltip;
-  final bool active;
-  final Widget? child;
-  final double? padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bgColor = active ? theme.colorScheme.primary.withOpacity(0.12) : Colors.transparent;
-    final fgColor = active ? theme.colorScheme.primary : (isDark ? Colors.white : Colors.black87);
-
-    final button = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: const ShapeDecoration(shape: CircleBorder()),
-      child: Material(
-        color: bgColor,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.all(padding ?? 10),
-            child: child ?? Icon(icon, size: 22, color: fgColor),
-          ),
-        ),
-      ),
-    );
-
-    // Avoid Material Tooltip's ticker conflicts on some platforms; use semantics-only tooltip
-    return tooltip == null ? button : Semantics(tooltip: tooltip!, child: button);
-  }
-}
-
 // New compact send button for the integrated input bar
 class _CompactSendButton extends StatelessWidget {
   const _CompactSendButton({
@@ -1424,57 +1364,6 @@ class _CompactSendButton extends StatelessWidget {
                     colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
                   )
                 : Icon(icon, key: const ValueKey('send'), size: 18, color: fg),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Keep original button for compatibility if needed elsewhere
-class _SendButton extends StatelessWidget {
-  const _SendButton({
-    required this.enabled,
-    required this.onSend,
-    required this.color,
-    required this.icon,
-    this.loading = false,
-    this.onStop,
-  });
-
-  final bool enabled;
-  final bool loading;
-  final VoidCallback onSend;
-  final VoidCallback? onStop;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = (enabled || loading) ? color : (isDark ? Colors.white12 : Colors.grey.shade300);
-    final fg = (enabled || loading) ? (isDark ? Colors.black : Colors.white) : (isDark ? Colors.white70 : Colors.grey.shade600);
-
-    return Material(
-      color: bg,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: loading ? onStop : (enabled ? onSend : null),
-        child: Padding(
-          padding: const EdgeInsets.all(9),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: FadeTransition(opacity: anim, child: child)),
-            child: loading
-                ? SvgPicture.asset(
-                    key: const ValueKey('stop'),
-                    'assets/icons/stop.svg',
-                    width: 22,
-                    height: 22,
-                    colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
-                  )
-                : Icon(icon, key: const ValueKey('send'), size: 22, color: fg),
           ),
         ),
       ),

@@ -606,17 +606,14 @@ class _InputRow extends StatelessWidget {
     required this.controller,
     this.hint,
     this.obscure = false,
-    this.enabled = true,
     this.suffix,
-    this.onChanged,
-  });
+  }) : enabled = true;
   final String label;
   final TextEditingController controller;
   final String? hint;
   final bool obscure;
   final bool enabled;
   final Widget? suffix;
-  final ValueChanged<String>? onChanged;
   
   @override
   Widget build(BuildContext context) {
@@ -631,7 +628,6 @@ class _InputRow extends StatelessWidget {
           controller: controller,
           obscureText: obscure,
           enabled: enabled,
-          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,

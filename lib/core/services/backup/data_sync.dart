@@ -296,13 +296,6 @@ class DataSync {
   }
 
   // ===== Internal helpers =====
-  Future<File> _writeTempText(String name, String content) async {
-    final tmp = await getTemporaryDirectory();
-    final f = File(p.join(tmp.path, name));
-    await f.writeAsString(content);
-    return f;
-  }
-
   Future<Directory> _getUploadDir() async {
     return await AppDirectories.getUploadDirectory();
   }

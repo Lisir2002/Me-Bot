@@ -242,19 +242,13 @@ class _AssistantCard extends StatelessWidget {
     );
   }
 
-  String _initials(String name) {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) return '?';
-    final first = String.fromCharCode(trimmed.runes.first);
-    return first.toUpperCase();
   }
-}
 
 // --- iOS-style tactile helpers ---
 
 class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.onLongPress, this.semanticLabel, this.size = 22, this.haptics = true});
-  final IconData icon; final Color color; final VoidCallback onTap; final VoidCallback? onLongPress; final String? semanticLabel; final double size; final bool haptics;
+  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.size = 22}) : haptics = true;
+  final IconData icon; final Color color; final VoidCallback onTap; final double size; final bool haptics;
   @override State<_TactileIconButton> createState() => _TactileIconButtonState();
 }
 
@@ -263,16 +257,15 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
   @override
   Widget build(BuildContext context) {
     final base = widget.color; final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
+    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base);
     return Semantics(
-      button: true, label: widget.semanticLabel,
+      button: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
         onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
       ),
     );
@@ -280,7 +273,7 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
 }
 
 class _TactileCard extends StatefulWidget {
-  const _TactileCard({required this.builder, this.onTap, this.haptics = true, this.pressedScale = 0.98});
+  const _TactileCard({required this.builder, this.onTap}) : haptics = true, pressedScale = 0.98;
   final Widget Function(bool pressed, Color overlay) builder;
   final VoidCallback? onTap;
   final bool haptics;

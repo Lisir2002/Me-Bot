@@ -226,8 +226,6 @@ class _ThemeCycleButton extends StatefulWidget {
 }
 
 class _ThemeCycleButtonState extends State<_ThemeCycleButton> {
-  bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
     final sp = context.watch<SettingsProvider>();
@@ -254,7 +252,6 @@ class _ThemeCycleButtonState extends State<_ThemeCycleButton> {
       case ThemeMode.dark:
         return lucide.Lucide.Moon;
       case ThemeMode.system:
-      default:
         return lucide.Lucide.Monitor;
     }
   }

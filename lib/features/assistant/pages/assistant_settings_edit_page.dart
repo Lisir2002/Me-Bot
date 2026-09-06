@@ -20,7 +20,6 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../theme/design_tokens.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/providers/assistant_provider.dart';
-import '../../../core/providers/mcp_provider.dart';
 import '../../model/widgets/model_select_sheet.dart';
 import '../../chat/widgets/reasoning_budget_sheet.dart';
 import 'package:intl/intl.dart';
@@ -3558,171 +3557,6 @@ class _VarExplainList extends StatelessWidget {
   }
 }
 
-class _McpTab extends StatelessWidget {
-  const _McpTab({required this.assistantId});
-  final String assistantId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    final ap = context.watch<AssistantProvider>();
-    final a = ap.getById(assistantId)!;
-    final mcp = context.watch<McpProvider>();
-    final servers = mcp.servers
-        .where((s) => mcp.statusFor(s.id) == McpStatus.connected)
-        .toList();
-
-    if (servers.isEmpty) {
-      return Center(
-        child: Text(
-          l10n.assistantEditMcpNoServersMessage,
-          style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-        ),
-      );
-    }
-
-    Widget tag(String text) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: cs.primary.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: cs.primary.withOpacity(0.35)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          color: cs.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-      itemCount: servers.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final s = servers[index];
-        final tools = s.tools;
-        final enabledTools = tools.where((t) => t.enabled).length;
-        final isSelected = a.mcpServerIds.contains(s.id);
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final bg = isSelected
-            ? cs.primary.withOpacity(isDark ? 0.12 : 0.10)
-            : (isDark ? Colors.white10 : cs.surface);
-        final borderColor = isSelected
-            ? cs.primary.withOpacity(0.45)
-            : cs.outlineVariant.withOpacity(0.25);
-
-        return _TactileRow(
-          onTap: () async {
-            final set = a.mcpServerIds.toSet();
-            if (isSelected)
-              set.remove(s.id);
-            else
-              set.add(s.id);
-            await context.read<AssistantProvider>().updateAssistant(
-              a.copyWith(mcpServerIds: set.toList()),
-            );
-          },
-          pressedScale: 1.0, // No scale on press
-          builder: (pressed) {
-            final overlayBg = pressed
-                ? (isDark
-                    ? Color.alphaBlend(Colors.white.withOpacity(0.06), bg)
-                    : Color.alphaBlend(Colors.black.withOpacity(0.05), bg))
-                : bg;
-            return Container(
-              decoration: BoxDecoration(
-                color: overlayBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: borderColor, width: 0.6),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white10
-                            : const Color(0xFFF2F3F5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(Lucide.Terminal, size: 20, color: cs.primary),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  s.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              tag(l10n.assistantEditMcpConnectedTag),
-                              tag(
-                                l10n.assistantEditMcpToolsCountTag(
-                                  enabledTools.toString(),
-                                  tools.length.toString(),
-                                ),
-                              ),
-                              tag(
-                                s.transport == McpTransportType.inmemory
-                                    ? AppLocalizations.of(context)!.mcpTransportTagInmemory
-                                    : (s.transport == McpTransportType.sse ? 'SSE' : 'HTTP'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    IosSwitch(
-                      value: isSelected,
-                      onChanged: (v) async {
-                        final set = a.mcpServerIds.toSet();
-                        if (v)
-                          set.add(s.id);
-                        else
-                          set.remove(s.id);
-                        await context.read<AssistantProvider>().updateAssistant(
-                          a.copyWith(mcpServerIds: set.toList()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
 class _QuickPhraseTab extends StatelessWidget {
   const _QuickPhraseTab({required this.assistantId});
   final String assistantId;
@@ -4098,7 +3932,7 @@ class _QuickPhraseTab extends StatelessWidget {
 
 // Local glass circle button for Quick Phrase (icon-only, frosted background)
 class _GlassCircleButtonQP extends StatefulWidget {
-  const _GlassCircleButtonQP({required this.icon, required this.color, required this.onTap, this.size = 48});
+  const _GlassCircleButtonQP({required this.icon, required this.color, required this.onTap}) : size = 48;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
@@ -4440,85 +4274,16 @@ class _SegTabBar extends StatelessWidget {
   }
 }
 
-class _SliderTile extends StatelessWidget {
-  const _SliderTile({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.label,
-    required this.onChanged,
-  });
-  final double value;
-  final double min;
-  final double max;
-  final int divisions;
-  final String label;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cs.surfaceVariant.withOpacity(
-            Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 44,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: cs.onSurface.withOpacity(0.7),
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Slider(
-                  value: value,
-                  min: min,
-                  max: max,
-                  divisions: divisions,
-                  label: label,
-                  onChanged: onChanged,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _InputRow extends StatelessWidget {
   const _InputRow({
     required this.label,
     required this.controller,
-    this.hint,
     this.onChanged,
-    this.enabled = true,
-    this.suffix,
-    this.keyboardType,
-    this.hideLabel = false,
-  });
+  }) : enabled = true, hideLabel = false;
   final String label;
   final TextEditingController controller;
-  final String? hint;
   final ValueChanged<String>? onChanged;
   final bool enabled;
-  final Widget? suffix;
-  final TextInputType? keyboardType;
   final bool hideLabel;
 
   @override
@@ -4547,10 +4312,8 @@ class _InputRow extends StatelessWidget {
                 child: TextField(
                   enabled: enabled,
                   controller: controller,
-                  keyboardType: keyboardType,
                   onChanged: onChanged,
                   decoration: InputDecoration(
-                    hintText: hint,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -4559,109 +4322,7 @@ class _InputRow extends StatelessWidget {
                   ),
                 ),
               ),
-              if (suffix != null) ...[
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: suffix!,
-                ),
-              ],
             ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AssistantModelCard extends StatelessWidget {
-  const _AssistantModelCard({
-    required this.title,
-    required this.subtitle,
-    required this.onPick,
-    this.onLongPress,
-    this.providerKey,
-    this.modelId,
-  });
-
-  final String title;
-  final String subtitle;
-  final VoidCallback onPick;
-  final VoidCallback? onLongPress;
-  final String? providerKey;
-  final String? modelId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    String display = l10n.assistantEditModelUseGlobalDefault;
-    if (providerKey != null && modelId != null) {
-      try {
-        final settings = context.read<SettingsProvider>();
-        final cfg = settings.getProviderConfig(providerKey!);
-        final ov = cfg.modelOverrides[modelId] as Map?;
-        final mdl = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
-            ? (ov['name'] as String)
-            : modelId!;
-        display = mdl;
-      } catch (_) {
-        display = modelId ?? '';
-      }
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7)),
-        ),
-        const SizedBox(height: 10),
-        Material(
-          color: isDark ? Colors.white10 : cs.surface,
-          borderRadius: BorderRadius.circular(14),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: onPick,
-            onLongPress: onLongPress,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : cs.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: cs.outlineVariant.withOpacity(0.25)),
-                boxShadow: isDark ? [] : AppShadows.soft,
-              ),
-              child: Row(
-                children: [
-                  _BrandAvatarLike(name: (modelId ?? display), size: 24),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      display,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Lucide.ChevronRight,
-                    size: 18,
-                    color: cs.onSurface.withOpacity(0.5),
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ],
@@ -4747,16 +4408,11 @@ class _TactileIconButton extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
     this.size = 22,
-    this.haptics = true,
-  });
+  }) : haptics = true;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
   final double size;
   final bool haptics;
 
@@ -4775,11 +4431,9 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
       widget.icon,
       size: widget.size,
       color: _pressed ? pressColor : base,
-      semanticLabel: widget.semanticLabel,
     );
     return Semantics(
       button: true,
-      label: widget.semanticLabel,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _pressed = true),
@@ -4789,12 +4443,6 @@ class _TactileIconButtonState extends State<_TactileIconButton> {
           if (widget.haptics) Haptics.light();
           widget.onTap();
         },
-        onLongPress: widget.onLongPress == null
-            ? null
-            : () {
-                if (widget.haptics) Haptics.light();
-                widget.onLongPress!.call();
-              },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           child: icon,
@@ -5316,18 +4964,6 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
     _nameCtrl.dispose();
     _maxTokensCtrl.dispose();
     super.dispose();
-  }
-
-  String _tempTitle(BuildContext context) {
-    final lc = Localizations.localeOf(context).languageCode;
-    if (lc.startsWith('zh')) return '温度';
-    return 'Temperature';
-  }
-
-  String _topPTitle(BuildContext context) {
-    final lc = Localizations.localeOf(context).languageCode;
-    if (lc.startsWith('zh')) return 'Top‑p';
-    return 'Top‑p';
   }
 
   @override
@@ -5858,16 +5494,6 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
     );
   }
 
-  Future<void> _pickLocalAvatar(BuildContext context, Assistant a) async {
-    try {
-      final picker = ImagePicker();
-      final XFile? file = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, imageQuality: 88);
-      if (file != null) {
-        await context.read<AssistantProvider>().updateAssistant(a.copyWith(avatar: file.path));
-      }
-    } catch (_) {}
-  }
-
   Future<void> _inputAvatarUrl(BuildContext context, Assistant a) async {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
@@ -5904,49 +5530,6 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
         await context.read<AssistantProvider>().updateAssistant(a.copyWith(avatar: url));
       }
     }
-  }
-
-  Future<String?> _inputEmojiDialog(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    final controller = TextEditingController();
-    String value = '';
-    bool validGrapheme(String s) {
-      final trimmed = s.characters.take(1).toString().trim();
-      return trimmed.isNotEmpty && trimmed == s.trim();
-    }
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: cs.surface,
-          title: Text(l10n.assistantEditAvatarChooseEmoji),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: '🙂',
-              filled: true,
-              fillColor: Theme.of(ctx).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF2F3F5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.transparent)),
-              enabledBorder: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: Colors.transparent)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.primary.withOpacity(0.4))),
-            ),
-            onChanged: (v) => value = v,
-            onSubmitted: (_) {
-              if (validGrapheme(value)) Navigator.of(ctx).pop(true);
-            },
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantEditImageUrlDialogCancel)),
-            TextButton(onPressed: validGrapheme(value) ? () => Navigator.of(ctx).pop(true) : null, child: Text(l10n.assistantEditImageUrlDialogSave)),
-          ],
-        );
-      },
-    );
-    if (ok == true) return controller.text.characters.take(1).toString();
-    return null;
   }
 
   Future<void> _inputQQAvatar(BuildContext context, Assistant a) async {

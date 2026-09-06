@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import '../models/assistant_tag.dart';
+import 'package:minime_core/core/services/logging/logger.dart';
+import 'package:minime_core/core/services/logging/log_tags.dart';
 
 /// Manages assistant group tags, assignments, order and collapse state.
 class TagProvider extends ChangeNotifier {
@@ -23,6 +25,7 @@ class TagProvider extends ChangeNotifier {
   }
 
   Future<void> _load() async {
+  Future<void> _load() async   Logger.i(LogTags.tag, "TagProvider _load");
     final prefs = await SharedPreferences.getInstance();
     final rawTags = prefs.getString(_tagsKey);
     if (rawTags != null && rawTags.isNotEmpty) {
@@ -69,6 +72,7 @@ class TagProvider extends ChangeNotifier {
   String? tagOfAssistant(String assistantId) => _assignment[assistantId];
 
   Future<String> createTag(String name) async {
+  Future<String> createTag(String name) async   Logger.d(LogTags.tag, "Create tag");
     final id = const Uuid().v4();
     _tags.add(AssistantTag(id: id, name: name.trim()));
     await _persistTags();
@@ -77,6 +81,7 @@ class TagProvider extends ChangeNotifier {
   }
 
   Future<void> renameTag(String tagId, String name) async {
+  Future<void> renameTag(String tagId, String name) async   Logger.d(LogTags.tag, "Rename tag");
     final idx = _tags.indexWhere((t) => t.id == tagId);
     if (idx == -1) return;
     _tags[idx] = _tags[idx].copyWith(name: name.trim());
@@ -85,6 +90,7 @@ class TagProvider extends ChangeNotifier {
   }
 
   Future<void> deleteTag(String tagId) async {
+  Future<void> deleteTag(String tagId) async   Logger.w(LogTags.tag, "Delete tag");
     final idx = _tags.indexWhere((t) => t.id == tagId);
     if (idx == -1) return;
     _tags.removeAt(idx);
@@ -107,6 +113,7 @@ class TagProvider extends ChangeNotifier {
   }
 
   Future<void> assignAssistantToTag(String assistantId, String? tagId) async {
+  Future<void> assignAssistantToTag(String assistantId, String? tagId) async   Logger.d(LogTags.tag, "Assign assistant to tag");
     if (tagId == null || tagId.isEmpty) {
       _assignment.remove(assistantId);
     } else {

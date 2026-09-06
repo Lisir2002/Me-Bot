@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/quick_phrase.dart';
 import '../services/quick_phrase_store.dart';
+import 'package:minime_core/core/services/logging/logger.dart';
+import 'package:minime_core/core/services/logging/log_tags.dart';
 
 class QuickPhraseProvider with ChangeNotifier {
   List<QuickPhrase> _phrases = [];
@@ -15,12 +17,14 @@ class QuickPhraseProvider with ChangeNotifier {
       _phrases.where((p) => !p.isGlobal && p.assistantId == assistantId).toList();
 
   Future<void> initialize() async {
+  Future<void> initialize() async   Logger.i(LogTags.quickPhrase, "QuickPhrase initialize");
     if (_initialized) return;
     await loadAll();
     _initialized = true;
   }
 
   Future<void> loadAll() async {
+  Future<void> loadAll() async   Logger.i(LogTags.quickPhrase, "QuickPhrase loadAll");
     try {
       _phrases = await QuickPhraseStore.getAll();
       notifyListeners();
@@ -32,6 +36,7 @@ class QuickPhraseProvider with ChangeNotifier {
   }
 
   Future<void> add(QuickPhrase phrase) async {
+  Future<void> add(QuickPhrase phrase) async   Logger.d(LogTags.quickPhrase, "Add phrase");
     await QuickPhraseStore.add(phrase);
     await loadAll();
   }
@@ -42,11 +47,13 @@ class QuickPhraseProvider with ChangeNotifier {
   }
 
   Future<void> delete(String id) async {
+  Future<void> delete(String id) async   Logger.d(LogTags.quickPhrase, "Delete phrase");
     await QuickPhraseStore.delete(id);
     await loadAll();
   }
 
   Future<void> clear() async {
+  Future<void> clear() async   Logger.w(LogTags.quickPhrase, "Clear all phrases");
     await QuickPhraseStore.clear();
     _phrases = [];
     notifyListeners();

@@ -72,6 +72,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> rename(String id, String newTitle) async {
+    Logger.i(LogTags.chat, 'Rename chat id=$id title="$newTitle"');
     final idx = _chats.indexWhere((c) => c.id == id);
     if (idx == -1) return;
     _chats[idx] = _chats[idx].copyWith(title: newTitle);
@@ -80,6 +81,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> togglePin(String id) async {
+    Logger.d(LogTags.chat, 'TogglePin chat id=$id');
     if (_pinned.contains(id)) {
       _pinned.remove(id);
     } else {
@@ -90,6 +92,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> deleteById(String id) async {
+    Logger.w(LogTags.chat, 'Delete chat id=$id');
     _pinned.remove(id);
     _chats.removeWhere((c) => c.id == id);
     notifyListeners();

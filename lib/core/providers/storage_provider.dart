@@ -42,6 +42,7 @@ class StorageProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_polling) return;
     _polling = true;
     WidgetsBinding.instance.addObserver(this);
+    Logger.i(LogTags.storage, 'Start polling interval=${interval.inSeconds}s');
     _pollTimer = Timer.periodic(interval, (_) {
       if (_polling) refresh(silent: true);
     });
@@ -49,16 +50,19 @@ class StorageProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// 停止定时扫盘 + 停止 App 生命周期监听。
   void stopPolling() {
+    if (!_polling) return;
     _polling = false;
     _pollTimer?.cancel();
     _pollTimer = null;
     WidgetsBinding.instance.removeObserver(this);
+    Logger.i(LogTags.storage, 'Stop polling');
   }
 
   /// App 从后台切回前台时触发一次静默刷新。
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      Logger.d(LogTags.storage, 'App resumed, silent refresh');
       refresh(silent: true);
     }
   }
@@ -75,10 +79,15 @@ class StorageProvider extends ChangeNotifier with WidgetsBindingObserver {
       notifyListeners();
     }
     try {
+      Logger.d(LogTags.storage, 'refresh(silent=$silent)');
+      final sw = Stopwatch()..start();
       _stats = await StorageService.scanAll();
+      sw.stop();
+      Logger.d(LogTags.storage, 'refresh done in ${sw.elapsedMs}ms, ${_stats?.categories.length ?? 0} categories');
       _error = null;
-    } catch (e) {
+    } catch (e, s) {
       _error = e;
+      Logger.e(LogTags.storage, 'refresh failed', e, s);
     } finally {
       if (!silent) _loading = false;
       notifyListeners();
@@ -87,12 +96,20 @@ class StorageProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// 删除指定路径文件（媒体型多选删除 / 缓存清理），删除后自动刷新。
   Future<bool> deletePaths(List<String> paths) async {
+    Logger.w(LogTags.storage, 'deletePaths count=${paths.length}');
+    int deleted = 0;
     for (final path in paths) {
       try {
         final f = File(path);
-        if (await f.exists()) await f.delete();
-      } catch (_) {}
+        if (await f.exists()) {
+          await f.delete();
+          deleted++;
+        }
+      } catch (e, s) {
+        Logger.e(LogTags.storage, 'delete failed path=$path', e, s);
+      }
     }
+    Logger.w(LogTags.storage, 'deletePaths done: $deleted/${paths.length} removed');
     await refresh();
     return true;
   }

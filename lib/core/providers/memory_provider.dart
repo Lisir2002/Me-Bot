@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/assistant_memory.dart';
 import '../services/memory_store.dart';
+import 'package:minime_core/core/services/logging/logger.dart';
+import 'package:minime_core/core/services/logging/log_tags.dart';
 
 class MemoryProvider extends ChangeNotifier {
   List<AssistantMemory> _memories = <AssistantMemory>[];
@@ -12,12 +14,14 @@ class MemoryProvider extends ChangeNotifier {
       _memories.where((m) => m.assistantId == assistantId).toList();
 
   Future<void> initialize() async {
+  Future<void> initialize() async   Logger.i(LogTags.memory, "MemoryProvider initialize");
     if (_initialized) return;
     await loadAll();
     _initialized = true;
   }
 
   Future<void> loadAll() async {
+  Future<void> loadAll() async   Logger.i(LogTags.memory, "MemoryProvider loadAll");
     try {
       _memories = await MemoryStore.getAll();
       notifyListeners();
@@ -28,7 +32,8 @@ class MemoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<AssistantMemory> add({required String assistantId, required String content}) async {
+  Future<AssistantMemory> add({
+  Future<AssistantMemory> add(  Logger.d(LogTags.memory, "Add memory");required String assistantId, required String content}) async {
     final mem = await MemoryStore.add(assistantId: assistantId, content: content);
     await loadAll();
     return mem;
@@ -40,7 +45,8 @@ class MemoryProvider extends ChangeNotifier {
     return mem;
   }
 
-  Future<bool> delete({required int id}) async {
+  Future<bool> delete({
+  Future<bool> delete(  Logger.d(LogTags.memory, "Delete memory");required int id}) async {
     final ok = await MemoryStore.delete(id: id);
     await loadAll();
     return ok;

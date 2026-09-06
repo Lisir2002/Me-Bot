@@ -9,6 +9,9 @@ import '../../models/token_usage.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import 'google_service_account_auth.dart';
 import '../../services/api_key_manager.dart';
+import '../logging/logger.dart';
+import '../services/logging/api_logger.dart';
+import '../services/logging/log_tags.dart';
 import 'package:minime_core/secrets/fallback.dart';
 
 class ChatApiService {
@@ -400,8 +403,17 @@ class ChatApiService {
             );
           }
         } catch (_) {}
+        final req = ApiLogger.logRequest(
+          provider: config.id,
+          model: modelId,
+          method: 'POST',
+          url: url.toString(),
+          body: body,
+        );
         final resp = await client.post(url, headers: headers, body: jsonEncode(body));
+        ApiLogger.logResponse(req, statusCode: resp.statusCode, body: resp.body);
         if (resp.statusCode < 200 || resp.statusCode >= 300) {
+          ApiLogger.logError(req, statusCode: resp.statusCode, message: resp.body);
           throw HttpException('HTTP ${resp.statusCode}: ${resp.body}');
         }
         final data = jsonDecode(resp.body);
@@ -463,8 +475,17 @@ class ChatApiService {
             (body as Map<String, dynamic>)[k] = (v is String) ? _parseOverrideValue(v) : v;
           });
         }
+        final req = ApiLogger.logRequest(
+          provider: config.id,
+          model: modelId,
+          method: 'POST',
+          url: url.toString(),
+          body: body,
+        );
         final resp = await client.post(url, headers: headers, body: jsonEncode(body));
+        ApiLogger.logResponse(req, statusCode: resp.statusCode, body: resp.body);
         if (resp.statusCode < 200 || resp.statusCode >= 300) {
+          ApiLogger.logError(req, statusCode: resp.statusCode, message: resp.body);
           throw HttpException('HTTP ${resp.statusCode}: ${resp.body}');
         }
         final data = jsonDecode(resp.body);
@@ -533,8 +554,17 @@ class ChatApiService {
             (body as Map<String, dynamic>)[k] = (v is String) ? _parseOverrideValue(v) : v;
           });
         }
+        final req = ApiLogger.logRequest(
+          provider: config.id,
+          model: modelId,
+          method: 'POST',
+          url: url,
+          body: body,
+        );
         final resp = await client.post(Uri.parse(url), headers: headers, body: jsonEncode(body));
+        ApiLogger.logResponse(req, statusCode: resp.statusCode, body: resp.body);
         if (resp.statusCode < 200 || resp.statusCode >= 300) {
+          ApiLogger.logError(req, statusCode: resp.statusCode, message: resp.body);
           throw HttpException('HTTP ${resp.statusCode}: ${resp.body}');
         }
         final data = jsonDecode(resp.body);

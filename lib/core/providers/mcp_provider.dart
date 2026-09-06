@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
 import '../services/mcp/minime_fetch/minime_fetch_server.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -266,6 +268,7 @@ class McpProvider extends ChangeNotifier {
       _servers.where((s) => statusFor(s.id) == McpStatus.connected).toList(growable: false);
 
   Future<void> _load() async {
+  Future<void> _load() async   Logger.i(LogTags.mcp, "McpProvider _load");
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_prefsKey);
     if (raw != null && raw.isNotEmpty) {
@@ -306,6 +309,7 @@ class McpProvider extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+  Future<void> _persist() async   Logger.d(LogTags.mcp, "McpProvider _persist");
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKey, jsonEncode(_servers.map((e) => e.toJson()).toList()));
   }
@@ -545,6 +549,7 @@ class McpProvider extends ChangeNotifier {
   }
 
   Future<String> addServer({
+  Future<String> addServer(  Logger.i(LogTags.mcp, "Add MCP server");
     required bool enabled,
     required String name,
     required McpTransportType transport,

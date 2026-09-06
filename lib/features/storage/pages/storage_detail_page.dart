@@ -14,9 +14,8 @@ import 'local_snapshot_page.dart';
 ///       明细卡片列表（名称 / 大小 · N 个文件 / 完整路径）
 /// 本地副本额外提供「管理副本」入口与说明卡。
 class StorageDetailPage extends StatefulWidget {
-  const StorageDetailPage({super.key, required this.config, required this.scan});
+  const StorageDetailPage({super.key, required this.config});
   final StorageCategoryConfig config;
-  final StorageScan scan;
 
   @override
   State<StorageDetailPage> createState() => _StorageDetailPageState();
@@ -37,10 +36,11 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
     setState(() => _rootPath = dir.path);
   }
 
-  /// 从实时 Provider 状态取当前分类快照，避免展示被清理的旧数据。
-  /// 首次打开且 Provider 尚未加载时回退到构造快照。
+  /// 从实时 Provider 状态取当前分类快照，仅以此作为数据源。
+  /// 这是唯一的数据来源，避免持有构造函数传入的冻结快照导致清理后不刷新。
   StorageScan get _scan =>
-      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+      context.read<StorageProvider>().scanFor(widget.config.id) ??
+      const StorageScan(id: 'none', bytes: 0, fileCount: 0, entries: []);
 
   /// 明细条目。助手类始终显示"头像"固定项。
   List<_DetailRowData> _rows(AppLocalizations l10n, StorageScan scan) {

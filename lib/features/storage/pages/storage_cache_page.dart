@@ -13,9 +13,8 @@ import '../widgets/storage_ios_widgets.dart';
 /// 可清理明细型（缓存）子页面。
 /// 顶部两个描边按钮：清理头像缓存 / 清理缓存；下方明细卡。
 class StorageCachePage extends StatefulWidget {
-  const StorageCachePage({super.key, required this.config, required this.scan});
+  const StorageCachePage({super.key, required this.config});
   final StorageCategoryConfig config;
-  final StorageScan scan;
 
   @override
   State<StorageCachePage> createState() => _StorageCachePageState();
@@ -25,9 +24,11 @@ class _StorageCachePageState extends State<StorageCachePage> {
   Future<void> _refresh() async =>
       Provider.of<StorageProvider>(context, listen: false).refresh();
 
-  /// 从实时 Provider 状态取当前分类快照，清理后列表能即时刷新。
+  /// 从实时 Provider 状态取当前分类快照，仅以此作为数据源。
+  /// 这是唯一的数据来源，避免持有构造函数传入的冻结快照导致清理后不刷新。
   StorageScan get _scan =>
-      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+      context.read<StorageProvider>().scanFor(widget.config.id) ??
+      const StorageScan(id: 'none', bytes: 0, fileCount: 0, entries: []);
 
   Future<void> _clearDirectories(List<String> roots) async {
     for (final root in roots) {
@@ -145,9 +146,9 @@ class _StorageCachePageState extends State<StorageCachePage> {
           else
             StorageSectionCard(
               children: [
-                for (var i = 0; i < widget.scan.entries.length; i++) ...[
+                for (var i = 0; i < scan.entries.length; i++) ...[
                   if (i > 0) const StorageDivider(),
-                  _CacheRow(entry: widget.scan.entries[i]),
+                  _CacheRow(entry: scan.entries[i]),
                 ],
               ],
             ),

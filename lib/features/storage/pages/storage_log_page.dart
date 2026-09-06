@@ -13,9 +13,8 @@ import 'log_viewer_page.dart';
 /// 可清理明细型（日志）子页面。
 /// 顶部：查看日志 / 清理日志；下方日志明细卡（无独立按钮）。
 class StorageLogPage extends StatefulWidget {
-  const StorageLogPage({super.key, required this.config, required this.scan});
+  const StorageLogPage({super.key, required this.config});
   final StorageCategoryConfig config;
-  final StorageScan scan;
 
   @override
   State<StorageLogPage> createState() => _StorageLogPageState();
@@ -25,9 +24,11 @@ class _StorageLogPageState extends State<StorageLogPage> {
   Future<void> _refresh() async =>
       Provider.of<StorageProvider>(context, listen: false).refresh();
 
-  /// 从实时 Provider 状态取当前分类快照，删除后列表能即时刷新。
+  /// 从实时 Provider 状态取当前分类快照，仅以此作为数据源。
+  /// 这是唯一的数据来源，避免持有构造函数传入的冻结快照导致清理后不刷新。
   StorageScan get _scan =>
-      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+      context.read<StorageProvider>().scanFor(widget.config.id) ??
+      const StorageScan(id: 'none', bytes: 0, fileCount: 0, entries: []);
 
   Future<void> _clearLogs() async {
     final l10n = AppLocalizations.of(context)!;

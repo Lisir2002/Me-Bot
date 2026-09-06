@@ -34,18 +34,18 @@ class _StoragePageState extends State<StoragePage> {
   Future<void> _refresh() async =>
       context.read<StorageProvider>().refresh();
 
-  Widget _subPage(StorageCategoryConfig config, StorageScan scan) {
+  Widget _subPage(StorageCategoryConfig config) {
     switch (config.type) {
       case StorageCategoryType.media:
-        return StorageMediaPage(config: config, scan: scan);
+        return StorageMediaPage(config: config);
       case StorageCategoryType.cleanableDetail:
         if (config.id == 'logs') {
-          return StorageLogPage(config: config, scan: scan);
+          return StorageLogPage(config: config);
         }
-        return StorageCachePage(config: config, scan: scan);
+        return StorageCachePage(config: config);
       case StorageCategoryType.readOnlyDetail:
       case StorageCategoryType.snapshotDetail:
-        return StorageDetailPage(config: config, scan: scan);
+        return StorageDetailPage(config: config);
     }
   }
 
@@ -103,7 +103,7 @@ class _StoragePageState extends State<StoragePage> {
                 if (scan == null) return;
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => _subPage(config, scan),
+                    builder: (_) => _subPage(config),
                   ),
                 );
               },

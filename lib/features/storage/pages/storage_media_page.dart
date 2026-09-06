@@ -11,9 +11,8 @@ import '../widgets/storage_ios_widgets.dart';
 
 /// 媒体型子页面：缩略图网格 + 来源/排序筛选 + 全选 + 多选删除。
 class StorageMediaPage extends StatefulWidget {
-  const StorageMediaPage({super.key, required this.config, required this.scan});
+  const StorageMediaPage({super.key, required this.config});
   final StorageCategoryConfig config;
-  final StorageScan scan;
 
   @override
   State<StorageMediaPage> createState() => _StorageMediaPageState();
@@ -25,10 +24,11 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
   bool _largest = false;
   final Set<String> _selected = {};
 
-  /// 从实时 Provider 状态取当前分类快照，避免展示被删除的旧数据。
-  /// 首次打开且 Provider 尚未加载时回退到构造快照。
+  /// 从实时 Provider 状态取当前分类快照，仅以此作为数据源。
+  /// 这是唯一的数据来源，避免持有构造函数传入的冻结快照导致删除后不刷新。
   StorageScan get _scan =>
-      context.read<StorageProvider>().scanFor(widget.config.id) ?? widget.scan;
+      context.read<StorageProvider>().scanFor(widget.config.id) ??
+      const StorageScan(id: 'none', bytes: 0, fileCount: 0, entries: []);
 
   List<StorageEntry> _filteredFor(StorageScan scan) {
     var list = _source == StorageSource.all

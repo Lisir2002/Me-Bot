@@ -26,6 +26,8 @@ import 'core/providers/quick_phrase_provider.dart';
 import 'core/providers/memory_provider.dart';
 import 'core/providers/backup_provider.dart';
 import 'core/providers/storage_provider.dart';
+import 'core/services/logging/logger.dart';
+import 'core/providers/log_settings_provider.dart';
 import 'core/services/chat/chat_service.dart';
 import 'core/services/mcp/mcp_tool_service.dart';
 import 'utils/sandbox_path_resolver.dart';
@@ -56,6 +58,7 @@ Future<void> main() async {
   // logging.Logger.root.onRecord.listen((rec) { ... });
   // Cache current Documents directory to fix sandboxed absolute paths on iOS
   await SandboxPathResolver.init();
+  await Logger.init();
   // Count app launches (feeds the Stats page "app launch" card)
   await _incrementAppLaunchCount();
   // Enable edge-to-edge to allow content under system bars (Android)
@@ -131,6 +134,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider(create: (_) => StorageProvider()),
+        ChangeNotifierProvider(create: (_) => LogSettingsProvider()),
       ],
       child: Builder(
         builder: (context) {

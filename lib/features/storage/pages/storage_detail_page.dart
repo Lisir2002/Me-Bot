@@ -207,7 +207,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Lucide.FolderOpen, size: 18, color: cs.onSurface.withOpacity(0.7)),
+                Icon(Lucide.HardDrive, size: 18, color: cs.onSurface.withOpacity(0.7)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -233,7 +233,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 1),
-                child: Icon(Lucide.Info, size: 14, color: cs.onSurface.withOpacity(0.5)),
+                child: Icon(Lucide.BadgeInfo, size: 14, color: cs.onSurface.withOpacity(0.5)),
               ),
               const SizedBox(width: 8),
               Expanded(

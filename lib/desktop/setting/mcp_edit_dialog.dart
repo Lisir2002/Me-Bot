@@ -154,7 +154,6 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
   }
 
   Widget _headerBar() {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 52,

@@ -25,7 +25,6 @@ class DefaultModelPage extends StatelessWidget {
       if (providerKey == null || modelId == null) return l10n.defaultModelPageUseCurrentModel;
       try {
         final cfg = settings.getProviderConfig(providerKey);
-        final providerName = cfg.name.isNotEmpty ? cfg.name : providerKey;
         final ov = cfg.modelOverrides[modelId] as Map?;
         final modelDisplay = (ov != null && (ov['name'] as String?)?.isNotEmpty == true) ? (ov['name'] as String) : modelId;
         return modelDisplay;

@@ -218,7 +218,6 @@ class _ConversationCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? Colors.white12 : const Color(0xFFF7F7F9);
     final border = cs.outlineVariant.withOpacity(0.16);
-    final pinned = conversation.isPinned;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),

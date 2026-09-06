@@ -29,7 +29,6 @@ class MarkdownMediaSanitizer {
 
     final sb = StringBuffer();
     int last = 0;
-    int idx = 0;
     for (final m in matches) {
       sb.write(markdown.substring(last, m.start));
       final dataUrl = m.group(1)!;
@@ -67,7 +66,6 @@ class MarkdownMediaSanitizer {
       final replaced = markdown.substring(m.start, m.end).replaceFirst(dataUrl, file.path);
       sb.write(replaced);
       last = m.end;
-      idx++;
     }
     sb.write(markdown.substring(last));
     return sb.toString();

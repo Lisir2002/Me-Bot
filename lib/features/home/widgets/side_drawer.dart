@@ -568,7 +568,6 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
     final textBase = isDark ? Colors.white : Colors.black; // 纯黑（白天），夜间自动适配
     final chatService = context.watch<ChatService>();
     final ap = context.watch<AssistantProvider>();
@@ -2329,7 +2328,6 @@ class _GroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textBase = cs.onSurface;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

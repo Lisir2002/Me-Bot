@@ -315,7 +315,7 @@ class _ProxyTypeSheetField extends StatelessWidget {
   }
 
   Widget _sheetOption(BuildContext ctx, {required String text, required String value, required bool selected}) {
-    final cs = Theme.of(ctx).colorScheme; final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    final cs = Theme.of(ctx).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: SizedBox(

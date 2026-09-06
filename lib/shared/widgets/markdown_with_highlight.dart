@@ -48,7 +48,6 @@ class MarkdownWithCodeHighlight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
     final imageUrls = _extractImageUrls(text);
 
@@ -1741,7 +1740,6 @@ class AtxHeadingMd extends BlockMd {
   }
 
   TextStyle _headingTextStyle(BuildContext ctx, GptMarkdownConfig cfg, int level) {
-    final t = Theme.of(ctx).textTheme;
     final cs = Theme.of(ctx).colorScheme;
     final isZh = MarkdownWithCodeHighlight._isZh(ctx);
     final settings = ctx.read<SettingsProvider>();

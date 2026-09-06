@@ -96,7 +96,6 @@ class _SearchPopoverOverlayState extends State<_SearchPopoverOverlay>
   @override
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
-    final cs = Theme.of(context).colorScheme;
     // Slightly narrower than input width
     final width = (widget.anchorWidth - 16).clamp(260.0, 720.0);
     final left = (widget.anchorRect.left + (widget.anchorRect.width - width) / 2)

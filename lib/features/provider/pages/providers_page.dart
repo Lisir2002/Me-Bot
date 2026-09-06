@@ -420,7 +420,6 @@ class _ProviderRow extends StatelessWidget {
     final statusBg = enabled ? Colors.green.withOpacity(0.12) : Colors.orange.withOpacity(0.15);
     final statusFg = enabled ? Colors.green : Colors.orange;
 
-    final isFirst = index == 0;
     final isLast = index == total - 1;
 
     final row = _TactileRow(

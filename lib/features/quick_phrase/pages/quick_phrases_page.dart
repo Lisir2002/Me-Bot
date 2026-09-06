@@ -27,9 +27,7 @@ class _QuickPhrasesPageState extends State<QuickPhrasesPage> {
   }
 
   Future<void> _showAddEditSheet({QuickPhrase? phrase}) async {
-    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final result = await showModalBottomSheet<Map<String, String>?>(
       context: context,

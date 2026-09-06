@@ -356,7 +356,6 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,

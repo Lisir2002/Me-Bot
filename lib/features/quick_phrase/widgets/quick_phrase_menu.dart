@@ -21,11 +21,9 @@ class QuickPhraseMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     // Calculate menu position anchored to the input bar's global left and bottom inset
     final double menuWidth = 250;

@@ -315,7 +315,6 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     final s = _services[index];
     final cs = Theme.of(context).colorScheme;
     final name = SearchService.getService(s).name;
-    final selected = index == _selectedIndex;
     // Connection/testing status for capsule
     final l10n = AppLocalizations.of(context)!;
     final testing = _testing[s.id] == true;
@@ -556,8 +555,6 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(

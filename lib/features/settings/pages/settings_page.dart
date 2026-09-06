@@ -590,7 +590,6 @@ Widget _sheetOption(
     onTap: onTap,
     builder: (pressed) {
       final base = cs.onSurface;
-      final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
       final bgTarget = pressed
           ? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05))
           : Colors.transparent;

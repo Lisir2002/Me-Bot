@@ -98,7 +98,6 @@ class _AddProviderDialogBodyState extends State<_AddProviderDialogBody> with Sin
       );
 
   Widget _switchTile({required String label, required bool value, required ValueChanged<bool> onChanged}) {
-    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
@@ -285,7 +284,6 @@ class _AddProviderDialogBodyState extends State<_AddProviderDialogBody> with Sin
   }
 
   Widget _openaiForm(AppLocalizations l10n) {
-    final cs = Theme.of(context).colorScheme;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Top switches: Enabled, then Use Responses API
       _switchTile(label: l10n.addProviderSheetEnabledLabel, value: _openaiEnabled, onChanged: (v) => setState(() => _openaiEnabled = v)),
@@ -308,7 +306,6 @@ class _AddProviderDialogBodyState extends State<_AddProviderDialogBody> with Sin
   }
 
   Widget _googleForm(AppLocalizations l10n) {
-    final cs = Theme.of(context).colorScheme;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Top switches: Enabled, then Vertex AI
       _switchTile(label: l10n.addProviderSheetEnabledLabel, value: _googleEnabled, onChanged: (v) => setState(() => _googleEnabled = v)),

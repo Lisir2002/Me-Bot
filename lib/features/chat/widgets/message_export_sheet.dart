@@ -1615,7 +1615,6 @@ class _ExportedMessageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAssistant = message.role == 'assistant';
     final headerFg = cs.onSurface;
-    final headerBg = cs.surface;
     final bubbleBg = cs.primary.withOpacity(0.08);
     final bubbleFg = cs.onSurface;
     final time = DateFormat('yyyy-MM-dd HH:mm').format(message.timestamp);
@@ -2357,7 +2356,6 @@ class _ExportThinkingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = cs.primaryContainer.withOpacity(isDark ? 0.25 : 0.30);
-    final fg = cs.onPrimaryContainer;
     final l10n = AppLocalizations.of(context)!;
     final cleanedText = _sanitizeThinkingText(thinkingText);
 

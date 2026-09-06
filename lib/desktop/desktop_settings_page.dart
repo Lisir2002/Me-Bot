@@ -88,7 +88,6 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
 
     String titleFor(_SettingsMenuItem it) {
@@ -955,7 +954,6 @@ class _DesktopProvidersBodyState extends State<_DesktopProvidersBody> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
     final settings = context.watch<SettingsProvider>();
 
@@ -1771,10 +1769,6 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
     final sp = context.read<SettingsProvider>();
     final l10n = AppLocalizations.of(context)!;
     ProviderConfig cfg = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName);
-    ProviderKind kind = ProviderConfig.classify(widget.providerKey, explicitType: cfg.providerType);
-    bool multi = cfg.multiKeyEnabled ?? false;
-    bool openaiResp = cfg.useResponseApi ?? false;
-    bool googleVertex = cfg.vertexAI ?? false;
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -1784,10 +1778,6 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
         final proxyPortCtrl = TextEditingController(text: cfg.proxyPort ?? '8080');
         final proxyUserCtrl = TextEditingController(text: cfg.proxyUsername ?? '');
         final proxyPassCtrl = TextEditingController(text: cfg.proxyPassword ?? '');
-        ProviderKind tmpKind = kind;
-        bool tmpMulti = multi;
-        bool tmpResp = openaiResp;
-        bool tmpVertex = googleVertex;
         return Dialog(
           backgroundColor: cs.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -2143,9 +2133,6 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
       context: context,
       barrierDismissible: true,
       builder: (ctx) {
-        ProviderConfig cfg = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName);
-        LoadBalanceStrategy strat = cfg.keyManagement?.strategy ?? LoadBalanceStrategy.roundRobin;
-        final keys = List<ApiKeyConfig>.from(cfg.apiKeys ?? const <ApiKeyConfig>[]);
         final listCtrl = ScrollController();
         Future<void> saveStrategy(LoadBalanceStrategy s) async {
           final old = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName);
@@ -2663,7 +2650,6 @@ class _ProviderTypeDropdownState extends State<_ProviderTypeDropdown> {
     if (rb == null || overlayBox == null) return;
     final size = rb.size;
     final triggerW = size.width;
-    const maxW = 280.0; // unused after width sync, kept for reference
     final items = const [
       (ProviderKind.openai, 'OpenAI'),
       (ProviderKind.google, 'Google'),
@@ -2979,7 +2965,6 @@ class _ProviderListRowState extends State<_ProviderListRow> {
   bool _hover = false;
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final hoverBg = _hover && !widget.selected ? Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04) : Colors.transparent;
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
@@ -3936,7 +3921,6 @@ class _TopicPositionDropdownState extends State<_TopicPositionDropdown> {
     final triggerWidth = triggerSize.width;
 
     _entry = OverlayEntry(builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
       final usePure = Provider.of<SettingsProvider>(ctx, listen: false).usePureBackground;
       final bgColor = usePure ? (isDark ? Colors.black : Colors.white) : (isDark ? const Color(0xFF1C1C1E) : Colors.white);
@@ -4171,7 +4155,6 @@ class _BackgroundStyleDropdownState extends State<_BackgroundStyleDropdown> {
     final triggerWidth = triggerSize.width;
 
     _entry = OverlayEntry(builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
       final usePure = Provider.of<SettingsProvider>(ctx, listen: false).usePureBackground;
       final bgColor = usePure ? (isDark ? Colors.black : Colors.white) : (isDark ? const Color(0xFF1C1C1E) : Colors.white);
@@ -4442,7 +4425,6 @@ class _AppLanguageRowState extends State<_AppLanguageRow> {
     final maxW = 280.0;
     final minW = triggerW;
     _entry = OverlayEntry(builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
       // measure desired content width for centering under trigger
       double measureContentWidth() {
         // Keep measurement consistent with dropdown item text (14)
@@ -4891,7 +4873,6 @@ class _ChatFontSizeRowState extends State<_ChatFontSizeRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
     return _LabeledRow(
       label: l10n.displaySettingsPageChatFontSizeTitle,
       trailing: Row(
@@ -4947,7 +4928,6 @@ class _BorderInputState extends State<_BorderInput> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // hover to change border color (not background)
-    final active = _focus.hasFocus || _hover;
     final baseBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.28), width: 0.8),

@@ -44,7 +44,6 @@ class _ProviderNetworkPageState extends State<ProviderNetworkPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
@@ -104,7 +103,6 @@ class _ProviderNetworkPageState extends State<ProviderNetworkPage> {
   }
 
   Widget _switchRow({required String title, required bool value, required ValueChanged<bool> onChanged}) {
-    final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),

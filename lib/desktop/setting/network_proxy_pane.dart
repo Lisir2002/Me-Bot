@@ -70,7 +70,6 @@ class _DesktopNetworkProxyPaneState extends State<DesktopNetworkProxyPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
     return Container(
       alignment: Alignment.topCenter,
@@ -400,7 +399,6 @@ class _ProxyTypeDropdownState extends State<_ProxyTypeDropdown> {
     if (rb == null) return;
     final size = rb.size;
     _entry = OverlayEntry(builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
       final bgColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
       return Stack(children: [

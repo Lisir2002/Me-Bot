@@ -1519,7 +1519,6 @@ class ChatApiService {
               final bool hasRespCalls = respToolCallsByIndex.isNotEmpty || toolAccResp.isNotEmpty;
               if (onToolCall != null && hasRespCalls) {
                 // Prefer the indexed calls (with call_id); fallback to toolAccResp
-                final calls = <Map<String, dynamic>>[];
                 final callInfos = <ToolCallInfo>[];
                 final msgs = <Map<String, dynamic>>[]; // for executing tools
                 if (respToolCallsByIndex.isNotEmpty) {

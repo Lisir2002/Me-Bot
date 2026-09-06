@@ -248,8 +248,6 @@ class CherryImporter {
   static Future<Map<String, dynamic>> _readCherryBackupFile(File file) async {
     final bytes = await file.readAsBytes();
 
-    Map<String, dynamic>? parsed;
-
     // Helper to verify structure looks like Cherry backup
     Map<String, dynamic>? _tryParseBackupJson(String text) {
       try {
@@ -601,7 +599,6 @@ class CherryImporter {
       if (meta == null) continue;
       final name = (meta['origin_name'] ?? meta['name'] ?? 'file').toString();
       final ext = (meta['ext'] ?? '').toString();
-      final mime = (meta['type'] ?? '').toString();
       final safeName = name.replaceAll(RegExp(r'[/\\\0]'), '_');
       final fn = safeName.isNotEmpty ? safeName : (ext.isNotEmpty ? 'file.$ext' : 'file');
       final fileName = 'cherry_${id}_$fn';

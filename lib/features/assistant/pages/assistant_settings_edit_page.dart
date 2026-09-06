@@ -1556,7 +1556,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
             child: Builder(builder: (context) {
               final theme = Theme.of(context);
               final cs = theme.colorScheme;
-              final isDark = theme.brightness == Brightness.dark;
               final value = context.watch<AssistantProvider>().getById(widget.assistantId)?.temperature ?? 0.6;
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1650,7 +1649,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
             child: Builder(builder: (context) {
               final theme = Theme.of(context);
               final cs = theme.colorScheme;
-              final isDark = theme.brightness == Brightness.dark;
               final value = context.watch<AssistantProvider>().getById(widget.assistantId)?.topP ?? 1.0;
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1744,7 +1742,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
             child: Builder(builder: (context) {
               final theme = Theme.of(context);
               final cs = theme.colorScheme;
-              final isDark = theme.brightness == Brightness.dark;
               final value = context.watch<AssistantProvider>().getById(widget.assistantId)?.contextMessageSize ?? 20;
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -2023,7 +2020,6 @@ class _SliderTileNew extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
     final active = cs.primary;
     final inactive = cs.onSurface.withOpacity(isDark ? 0.25 : 0.20);
     final double clamped = value.clamp(min, max);
@@ -2043,7 +2039,7 @@ class _SliderTileNew extends StatelessWidget {
       interval = total / 8;
     }
     if (interval <= 0) interval = 1;
-    final int majorCount = (total / interval).round().clamp(1, 10);
+    
     int minor = 0;
     if (step != null && step > 0) {
       // Ensure minor ticks align with the chosen step size
@@ -2823,26 +2819,6 @@ class _PromptTabState extends State<_PromptTab> {
       );
     }
 
-    final sysVars = const [
-      '{cur_date}',
-      '{cur_time}',
-      '{cur_datetime}',
-      '{model_id}',
-      '{model_name}',
-      '{locale}',
-      '{timezone}',
-      '{system_version}',
-      '{device_info}',
-      '{battery_level}',
-      '{nickname}',
-    ];
-    final tmplVars = const [
-      '{{ role }}',
-      '{{ message }}',
-      '{{ time }}',
-      '{{ date }}',
-    ];
-
     // Helper to render link-like variable chips
     Widget linkWrap(List<String> vars, void Function(String v) onPick) {
       return Padding(
@@ -2874,7 +2850,6 @@ class _PromptTabState extends State<_PromptTab> {
     // final ts = zh
     //     ? DateFormat('yyyy年M月d日 a h:mm:ss', 'zh').format(now)
     //     : DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-    final sampleUser = l10n.assistantEditSampleUser;
     final sampleMsg = l10n.assistantEditSampleMessage;
     final sampleReply = l10n.assistantEditSampleReply;
 

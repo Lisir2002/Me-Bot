@@ -131,7 +131,6 @@ class _BackupPageState extends State<BackupPage> {
 
   Future<RestoreMode?> _chooseImportModeDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
 
@@ -536,7 +535,6 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<void> _doExport(BuildContext context, BackupProvider vm) async {
-    final l10n = AppLocalizations.of(context)!;
     final file = await _runWithExportingOverlay(context, () => vm.exportToFile());
     if (!mounted) return;
     

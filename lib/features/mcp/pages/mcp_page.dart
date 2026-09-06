@@ -8,6 +8,7 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../theme/design_tokens.dart';
 import '../widgets/mcp_server_edit_sheet.dart';
 import '../widgets/mcp_json_edit_sheet.dart';
+import 'mcp_server_detail_page.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../core/services/haptics.dart';
@@ -29,24 +30,7 @@ class McpPage extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    final mcp = context.watch<McpProvider>();
-    final servers = mcp.servers.toList();
-
-    Widget tag(String text) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.green.withOpacity(0.4)),
-          ),
-          child: Text(text, style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.w600)),
-        );
-
-    Future<void> _showErrorDetails(String serverId, String? message, String name) async {
+  Future<void> _showErrorDetails(BuildContext context, String serverId, String? message, String name) async {
       final cs = Theme.of(context).colorScheme;
       final l10n = AppLocalizations.of(context)!;
       await showModalBottomSheet<void>(
@@ -123,6 +107,13 @@ class McpPage extends StatelessWidget {
       );
     }
 
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final mcp = context.watch<McpProvider>();
+    final servers = mcp.servers.toList();
+
     return Scaffold(
       appBar: AppBar(
         leading: Tooltip(
@@ -158,36 +149,90 @@ class McpPage extends StatelessWidget {
           const SizedBox(width: 12),
         ],
       ),
-      body: servers.isEmpty
-          ? Center(
-              child: Text(
-                l10n.mcpPageNoServers,
-                style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        children: _buildServerList(context),
+      ),
+    );
+  }
+
+  /// 按 内置(MiniMe) / 第三方 分组构建服务器列表，组间插入小标题。
+  List<Widget> _buildServerList(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final mcp = context.watch<McpProvider>();
+    final servers = mcp.servers.toList();
+    if (servers.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.only(top: 120),
+          child: Center(
+            child: Text(
+              l10n.mcpPageNoServers,
+              style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    final builtin = servers.where((s) => s.transport == McpTransportType.inmemory).toList();
+    final third = servers.where((s) => s.transport != McpTransportType.inmemory).toList();
+
+    Widget header(String text, IconData icon) => Padding(
+          padding: const EdgeInsets.fromLTRB(4, 14, 0, 6),
+          child: Row(
+            children: [
+              Icon(icon, size: 14, color: cs.primary),
+              const SizedBox(width: 6),
+              Text(
+                text,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              itemCount: servers.length,
-              itemBuilder: (context, index) {
-                final s = servers[index];
-                final st = mcp.statusFor(s.id);
-                final err = mcp.errorFor(s.id);
+            ],
+          ),
+        );
 
-                Widget tagStyled(String text, {Color? color}) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: (color ?? cs.primary).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: (color ?? cs.primary).withOpacity(0.35)),
-                      ),
-                      child: Text(text, style: TextStyle(fontSize: 11, color: color ?? cs.primary, fontWeight: FontWeight.w700)),
-                    );
+    final out = <Widget>[];
+    if (builtin.isNotEmpty) {
+      out.add(header(l10n.mcpGroupBuiltin, Lucide.Bot));
+      out.addAll(builtin.map((s) => _serverCard(context, s)).toList());
+    }
+    if (third.isNotEmpty) {
+      out.add(header(l10n.mcpGroupThirdParty, Lucide.Terminal));
+      out.addAll(third.map((s) => _serverCard(context, s)).toList());
+    }
+    return out;
+  }
 
-                final isDark = Theme.of(context).brightness == Brightness.dark;
-                final row = _TactileRow(
-                  pressedScale: 1.00,
-                  haptics: false,
-                  onTap: () async { await showMcpServerEditSheet(context, serverId: s.id); },
+  Widget _serverCard(BuildContext context, McpServerConfig s) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final mcp = context.watch<McpProvider>();
+    final st = mcp.statusFor(s.id);
+    final err = mcp.errorFor(s.id);
+
+    Widget tagStyled(String text, {Color? color}) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: (color ?? cs.primary).withOpacity(0.12),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: (color ?? cs.primary).withOpacity(0.35)),
+          ),
+          child: Text(text, style: TextStyle(fontSize: 11, color: color ?? cs.primary, fontWeight: FontWeight.w700)),
+        );
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final row = _TactileRow(
+      pressedScale: 1.00,
+      haptics: false,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => McpServerDetailPage(serverId: s.id),
+          ),
+        );
+      },
                   builder: (pressed) {
                     final base = cs.onSurface.withOpacity(0.9);
                     return _AnimatedPressColor(
@@ -294,7 +339,7 @@ class McpPage extends StatelessWidget {
                                           ),
                                         ),
                                         TextButton(
-                                          onPressed: () => _showErrorDetails(s.id, err, s.name),
+                                          onPressed: () => _showErrorDetails(context, s.id, err, s.name),
                                           child: Text(l10n.mcpPageDetails),
                                         ),
                           ],
@@ -393,9 +438,6 @@ class McpPage extends StatelessWidget {
                     child: row,
                   ),
                 );
-              },
-            ),
-    );
   }
 }
 

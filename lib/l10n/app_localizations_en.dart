@@ -1692,6 +1692,123 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpServerEditSheetUrlRequired => 'Please enter server URL';
 
   @override
+  String get mcpToolEnableLabel => 'Enabled';
+
+  @override
+  String get mcpToolRequireApprovalLabel => 'Require approval';
+
+  @override
+  String get toolApprovalDialogTitle => 'Tool Approval Required';
+
+  @override
+  String get toolApprovalDialogServer => 'Server';
+
+  @override
+  String get toolApprovalDialogTool => 'Tool';
+
+  @override
+  String get toolApprovalDialogHint =>
+      'The model wants to call this tool. Review the arguments and choose whether to allow it.';
+
+  @override
+  String get toolApprovalDialogAllow => 'Allow';
+
+  @override
+  String get toolApprovalDialogDeny => 'Deny';
+
+  @override
+  String get mcpGroupBuiltin => 'Built-in (MiniMe)';
+
+  @override
+  String get mcpGroupThirdParty => 'Third-party servers';
+
+  @override
+  String get mcpDetailEditTooltip => 'Edit config';
+
+  @override
+  String get mcpDetailStatusDisconnected => 'Disconnected';
+
+  @override
+  String get mcpDetailIdLabel => 'ID';
+
+  @override
+  String get mcpDetailUrlLabel => 'URL';
+
+  @override
+  String get mcpDetailToolsCountLabel => 'Tools';
+
+  @override
+  String get mcpDetailBuiltinLabel => 'Type';
+
+  @override
+  String get mcpDetailBuiltinYes => 'Built-in';
+
+  @override
+  String get mcpDetailEnabledLabel => 'Status';
+
+  @override
+  String get mcpDetailDisabled => 'Disabled';
+
+  @override
+  String get mcpDetailToolsSection => 'Tools';
+
+  @override
+  String get mcpDetailHistorySection => 'Recent calls';
+
+  @override
+  String get mcpDetailNoHistory => 'No call history yet';
+
+  @override
+  String get mcpToolTestShort => 'Test';
+
+  @override
+  String get mcpToolSchema => 'Schema';
+
+  @override
+  String mcpToolTestTitle(Object name) {
+    return 'Test · $name';
+  }
+
+  @override
+  String get mcpToolTestArgsLabel => 'Arguments (JSON)';
+
+  @override
+  String get mcpToolTestArgsHint =>
+      'Test invokes the tool directly; the result appears below.';
+
+  @override
+  String get mcpToolTestInvalidJson => 'Arguments are not a valid JSON object';
+
+  @override
+  String get mcpToolTestRun => 'Run';
+
+  @override
+  String get mcpToolTestRunning => 'Running…';
+
+  @override
+  String get mcpToolTestSuccess => 'Success';
+
+  @override
+  String get mcpToolTestFailed => 'Failed';
+
+  @override
+  String mcpToolSchemaTitle(Object name) {
+    return 'Schema · $name';
+  }
+
+  @override
+  String get mcpToolSchemaEnabled => 'Enabled';
+
+  @override
+  String get mcpToolSchemaDisabled => 'Disabled';
+
+  @override
+  String get mcpToolSchemaRequiresApproval => 'Requires approval';
+
+  @override
+  String get mcpToolSchemaNoApproval => 'No approval needed';
+
+  @override
   String get defaultModelPageBackTooltip => 'Back';
 
   @override

@@ -3245,6 +3245,228 @@ abstract class AppLocalizations {
   /// **'Please enter server URL'**
   String get mcpServerEditSheetUrlRequired;
 
+  /// No description provided for @mcpToolEnableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get mcpToolEnableLabel;
+
+  /// No description provided for @mcpToolRequireApprovalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Require approval'**
+  String get mcpToolRequireApprovalLabel;
+
+  /// No description provided for @toolApprovalDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool Approval Required'**
+  String get toolApprovalDialogTitle;
+
+  /// No description provided for @toolApprovalDialogServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get toolApprovalDialogServer;
+
+  /// No description provided for @toolApprovalDialogTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool'**
+  String get toolApprovalDialogTool;
+
+  /// No description provided for @toolApprovalDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The model wants to call this tool. Review the arguments and choose whether to allow it.'**
+  String get toolApprovalDialogHint;
+
+  /// No description provided for @toolApprovalDialogAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get toolApprovalDialogAllow;
+
+  /// No description provided for @toolApprovalDialogDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get toolApprovalDialogDeny;
+
+  /// No description provided for @mcpGroupBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in (MiniMe)'**
+  String get mcpGroupBuiltin;
+
+  /// No description provided for @mcpGroupThirdParty.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party servers'**
+  String get mcpGroupThirdParty;
+
+  /// No description provided for @mcpDetailEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit config'**
+  String get mcpDetailEditTooltip;
+
+  /// No description provided for @mcpDetailStatusDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get mcpDetailStatusDisconnected;
+
+  /// No description provided for @mcpDetailIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get mcpDetailIdLabel;
+
+  /// No description provided for @mcpDetailUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'URL'**
+  String get mcpDetailUrlLabel;
+
+  /// No description provided for @mcpDetailToolsCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get mcpDetailToolsCountLabel;
+
+  /// No description provided for @mcpDetailBuiltinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get mcpDetailBuiltinLabel;
+
+  /// No description provided for @mcpDetailBuiltinYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get mcpDetailBuiltinYes;
+
+  /// No description provided for @mcpDetailEnabledLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get mcpDetailEnabledLabel;
+
+  /// No description provided for @mcpDetailDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get mcpDetailDisabled;
+
+  /// No description provided for @mcpDetailToolsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get mcpDetailToolsSection;
+
+  /// No description provided for @mcpDetailHistorySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent calls'**
+  String get mcpDetailHistorySection;
+
+  /// No description provided for @mcpDetailNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No call history yet'**
+  String get mcpDetailNoHistory;
+
+  /// No description provided for @mcpToolTestShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Test'**
+  String get mcpToolTestShort;
+
+  /// No description provided for @mcpToolSchema.
+  ///
+  /// In en, this message translates to:
+  /// **'Schema'**
+  String get mcpToolSchema;
+
+  /// No description provided for @mcpToolTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test · {name}'**
+  String mcpToolTestTitle(Object name);
+
+  /// No description provided for @mcpToolTestArgsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Arguments (JSON)'**
+  String get mcpToolTestArgsLabel;
+
+  /// No description provided for @mcpToolTestArgsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Test invokes the tool directly; the result appears below.'**
+  String get mcpToolTestArgsHint;
+
+  /// No description provided for @mcpToolTestInvalidJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Arguments are not a valid JSON object'**
+  String get mcpToolTestInvalidJson;
+
+  /// No description provided for @mcpToolTestRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run'**
+  String get mcpToolTestRun;
+
+  /// No description provided for @mcpToolTestRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running…'**
+  String get mcpToolTestRunning;
+
+  /// No description provided for @mcpToolTestSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get mcpToolTestSuccess;
+
+  /// No description provided for @mcpToolTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get mcpToolTestFailed;
+
+  /// No description provided for @mcpToolSchemaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schema · {name}'**
+  String mcpToolSchemaTitle(Object name);
+
+  /// No description provided for @mcpToolSchemaEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get mcpToolSchemaEnabled;
+
+  /// No description provided for @mcpToolSchemaDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get mcpToolSchemaDisabled;
+
+  /// No description provided for @mcpToolSchemaRequiresApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires approval'**
+  String get mcpToolSchemaRequiresApproval;
+
+  /// No description provided for @mcpToolSchemaNoApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'No approval needed'**
+  String get mcpToolSchemaNoApproval;
+
   /// No description provided for @defaultModelPageBackTooltip.
   ///
   /// In en, this message translates to:

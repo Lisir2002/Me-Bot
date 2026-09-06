@@ -101,8 +101,30 @@ class McpToolConfig {
   );
 }
 
+/// 一次工具调用记录（用于详情页展示最近调用）。
+class McpToolCallRecord {
+  final String toolName;
+  final Map<String, dynamic> arguments;
+  final String? result;
+  final bool isError;
+  final String? error;
+  final DateTime time;
+  final int durationMs;
+
+  McpToolCallRecord({
+    required this.toolName,
+    required this.arguments,
+    this.result,
+    this.isError = false,
+    this.error,
+    required this.time,
+    this.durationMs = 0,
+  });
+}
+
 class McpServerConfig {
   final String id; // stable id
+  /// When false, the server is registered but not auto-connected / used.
   final bool enabled;
   final String name;
   final McpTransportType transport;
@@ -223,6 +245,8 @@ class McpProvider extends ChangeNotifier {
   final Map<String, mcp.Client> _clients = {};
   final Map<String, McpStatus> _status = {}; // id -> status
   final Map<String, String> _errors = {}; // id -> last error
+  final Map<String, List<McpToolCallRecord>> _callHistory = {}; // id -> recent tool calls
+  static const int _maxCallHistory = 50;
   List<McpServerConfig> _servers = [];
   // Reconnect bookkeeping to avoid duplicate concurrent retries
   final Set<String> _reconnecting = <String>{};
@@ -1098,6 +1122,39 @@ class McpProvider extends ChangeNotifier {
     await _reconnectWithBackoff(id, maxAttempts: 3);
   }
 
+  /// 该服务器最近一次工具调用记录。
+  McpToolCallRecord? lastToolCall(String serverId) {
+    final list = _callHistory[serverId];
+    return (list == null || list.isEmpty) ? null : list.last;
+  }
+
+  /// 最近调用记录（按时间正序，最新的在末尾）。
+  List<McpToolCallRecord> toolCallHistory(String serverId) =>
+      List.unmodifiable(_callHistory[serverId] ?? const []);
+
+  /// 记录一次工具调用（内存态，不持久化）。
+  void recordToolCall(String serverId, String toolName, Map<String, dynamic> arguments, {
+    String? result,
+    bool isError = false,
+    String? error,
+    int durationMs = 0,
+  }) {
+    final list = _callHistory.putIfAbsent(serverId, () => <McpToolCallRecord>[]);
+    list.add(McpToolCallRecord(
+      toolName: toolName,
+      arguments: arguments,
+      result: result,
+      isError: isError,
+      error: error,
+      time: DateTime.now(),
+      durationMs: durationMs,
+    ));
+    if (list.length > _maxCallHistory) {
+      list.removeRange(0, list.length - _maxCallHistory);
+    }
+    notifyListeners();
+  }
+
   Future<mcp.CallToolResult?> callTool(String serverId, String toolName, Map<String, dynamic> args) async {
     try {
       await ensureConnected(serverId);
@@ -1113,6 +1170,8 @@ class McpProvider extends ChangeNotifier {
       final start = DateTime.now();
       final result = await client.callTool(toolName, normalized);
       final durMs = DateTime.now().difference(start).inMilliseconds;
+      recordToolCall(serverId, toolName, normalized,
+          result: _resultSummary(result), durationMs: durMs);
       // Detailed call timing/content logging disabled
       return result;
     } catch (e, st) {
@@ -1124,6 +1183,7 @@ class McpProvider extends ChangeNotifier {
         if (e is mcp.McpError && (e.code == -32602)) {
           // Keep connection healthy status; surface error to caller via null
           _errors[serverId] = e.toString();
+          recordToolCall(serverId, toolName, args, isError: true, error: e.toString());
           // debugPrint('[MCP/Call] invalid arguments; skipping reconnect');
           return null;
         }
@@ -1135,14 +1195,22 @@ class McpProvider extends ChangeNotifier {
       // Auto-reconnect a few times and try once more
       try {
         await _reconnectWithBackoff(serverId, maxAttempts: 3);
-        if (!isConnected(serverId)) return null;
+        if (!isConnected(serverId)) {
+          recordToolCall(serverId, toolName, args, isError: true, error: e.toString());
+          return null;
+        }
         final client = _clients[serverId];
-        if (client == null) return null;
+        if (client == null) {
+          recordToolCall(serverId, toolName, args, isError: true, error: e.toString());
+          return null;
+        }
         // debugPrint('[MCP/Call] retry serverId=$serverId tool=$toolName');
         final start = DateTime.now();
         final normalized = _normalizeArgsForTool(serverId, toolName, args);
         final result = await client.callTool(toolName, normalized);
         final durMs = DateTime.now().difference(start).inMilliseconds;
+        recordToolCall(serverId, toolName, normalized,
+            result: _resultSummary(result), durationMs: durMs);
         // Detailed retry logging disabled
         // Mark healthy again
         _status[serverId] = McpStatus.connected;
@@ -1153,9 +1221,26 @@ class McpProvider extends ChangeNotifier {
         // debugPrint('[MCP/Call/RetryError] serverId=$serverId tool=$toolName');
         // _logMcpException('callTool-retry', serverId: serverId, toolName: toolName, error: e2, stack: st2);
         // Keep error state; give up
+        recordToolCall(serverId, toolName, args, isError: true, error: e2.toString());
         return null;
       }
     }
+  }
+
+  String _resultSummary(mcp.CallToolResult r) {
+    final buf = StringBuffer();
+    for (final c in r.content) {
+      if (c is mcp.TextContent) {
+        buf.writeln(c.text);
+      } else {
+        buf.writeln(c.toString());
+      }
+      if (buf.length > 2000) {
+        buf.write('\n[... truncated ...]');
+        break;
+      }
+    }
+    return buf.toString().trim();
   }
 
   void _logMcpException(

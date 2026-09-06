@@ -1640,6 +1640,121 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpServerEditSheetUrlRequired => '请输入服务器地址';
 
   @override
+  String get mcpToolEnableLabel => '启用';
+
+  @override
+  String get mcpToolRequireApprovalLabel => '调用需审批';
+
+  @override
+  String get toolApprovalDialogTitle => '工具调用审批';
+
+  @override
+  String get toolApprovalDialogServer => '服务器';
+
+  @override
+  String get toolApprovalDialogTool => '工具';
+
+  @override
+  String get toolApprovalDialogHint => '模型请求调用该工具，请确认参数后选择是否允许执行。';
+
+  @override
+  String get toolApprovalDialogAllow => '允许';
+
+  @override
+  String get toolApprovalDialogDeny => '拒绝';
+
+  @override
+  String get mcpGroupBuiltin => '内置 (MiniMe)';
+
+  @override
+  String get mcpGroupThirdParty => '第三方服务器';
+
+  @override
+  String get mcpDetailEditTooltip => '编辑配置';
+
+  @override
+  String get mcpDetailStatusDisconnected => '未连接';
+
+  @override
+  String get mcpDetailIdLabel => 'ID';
+
+  @override
+  String get mcpDetailUrlLabel => '地址';
+
+  @override
+  String get mcpDetailToolsCountLabel => '工具';
+
+  @override
+  String get mcpDetailBuiltinLabel => '类型';
+
+  @override
+  String get mcpDetailBuiltinYes => '内置';
+
+  @override
+  String get mcpDetailEnabledLabel => '状态';
+
+  @override
+  String get mcpDetailDisabled => '已禁用';
+
+  @override
+  String get mcpDetailToolsSection => '工具';
+
+  @override
+  String get mcpDetailHistorySection => '最近调用';
+
+  @override
+  String get mcpDetailNoHistory => '暂无调用记录';
+
+  @override
+  String get mcpToolTestShort => '试调';
+
+  @override
+  String get mcpToolSchema => 'Schema';
+
+  @override
+  String mcpToolTestTitle(Object name) {
+    return '试调 · $name';
+  }
+
+  @override
+  String get mcpToolTestArgsLabel => '参数 (JSON)';
+
+  @override
+  String get mcpToolTestArgsHint => '点击试调将直接调用该工具，返回结果会显示在下方。';
+
+  @override
+  String get mcpToolTestInvalidJson => '参数不是合法的 JSON 对象';
+
+  @override
+  String get mcpToolTestRun => '运行';
+
+  @override
+  String get mcpToolTestRunning => '运行中…';
+
+  @override
+  String get mcpToolTestSuccess => '调用成功';
+
+  @override
+  String get mcpToolTestFailed => '调用失败';
+
+  @override
+  String mcpToolSchemaTitle(Object name) {
+    return 'Schema · $name';
+  }
+
+  @override
+  String get mcpToolSchemaEnabled => '已启用';
+
+  @override
+  String get mcpToolSchemaDisabled => '已停用';
+
+  @override
+  String get mcpToolSchemaRequiresApproval => '调用需审批';
+
+  @override
+  String get mcpToolSchemaNoApproval => '无需审批';
+
+  @override
   String get defaultModelPageBackTooltip => '返回';
 
   @override

@@ -89,8 +89,9 @@ class LogContext {
     required Future<T> Function() fn,
   }) async {
     final data = LogContextData(traceId: traceId, context: context);
-    return runZoned<T>(
-      fn,
+    // runZoned 的 body 签名是 Z Function()，显式让 Z = Future<T>
+    return runZoned<Future<T>>(
+      () async => await fn(),
       zoneValues: {#LogContext: data},
     );
   }

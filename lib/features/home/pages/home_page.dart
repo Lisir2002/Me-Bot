@@ -23,6 +23,7 @@ import '../../../core/providers/memory_provider.dart';
 import '../../../core/services/chat/prompt_transformer.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/api/chat_api_service.dart';
+import '../../../core/services/storage/chat_log_writer.dart';
 import '../../../core/services/chat/document_text_extractor.dart';
 import '../../../core/services/mcp/mcp_tool_service.dart';
 import '../../../core/models/token_usage.dart';
@@ -1649,6 +1650,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     DateTime? _reasoningStartAt;
     bool _finishHandled = false;
     bool _titleQueued = false;
+    bool _turnLogged = false;
+
+    // 记录本轮对话日志（只写一次，避免重复）
+    void _logTurn(String answer, {String? error}) {
+      if (_turnLogged) return;
+      _turnLogged = true;
+      ChatLogWriter.recordTurn(question: content, answer: answer, error: error);
+    }
 
     try {
       // Prepare tools (Search tool + MCP tools)
@@ -1837,6 +1846,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         }
         // Replace extremely long inline base64 images with local files to avoid jank
         final processedContent = await MarkdownMediaSanitizer.replaceInlineBase64Images(fullContent);
+        _logTurn(processedContent);
         await _chatService.updateMessage(
           assistantMessage.id,
           content: processedContent,
@@ -2204,6 +2214,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           // Preserve partial content; if empty, write error message into bubble
           final errText = '${AppLocalizations.of(context)!.generationInterrupted}: $e';
           final displayContent = fullContent.isNotEmpty ? fullContent : errText;
+          _logTurn(fullContent, error: '$e');
           await _chatService.updateMessage(
             assistantMessage.id,
             content: displayContent,
@@ -2291,6 +2302,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       // Preserve partial content on outer error as well; if empty, show error text in bubble
       final errText = '${AppLocalizations.of(context)!.generationInterrupted}: $e';
       final displayContent = fullContent.isNotEmpty ? fullContent : errText;
+      _logTurn(fullContent, error: '$e');
       await _chatService.updateMessage(
         assistantMessage.id,
         content: displayContent,

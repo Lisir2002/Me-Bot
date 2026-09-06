@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import 'storage_ios_widgets.dart';
 
 /// 日志设置底部弹窗：保存响应输出 / 省略大载荷 / 自动删除 / 日志大小上限。
 class LogSettingsSheet extends StatefulWidget {
@@ -142,7 +143,7 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cs.outlineVariant.withOpacity(0.06), width: 0.6),
+                border: storageCardBorder(context),
               ),
               clipBehavior: Clip.antiAlias,
               child: Column(

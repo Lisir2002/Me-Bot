@@ -25,17 +25,12 @@ class StorageSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
+    final bg = storageCardBackground(theme);
     return Container(
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06),
-          width: 0.6,
-        ),
+        border: storageCardBorder(context, width: 0.8),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -44,6 +39,22 @@ class StorageSectionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 卡片背景色：浅色为近白，深色为半透明白。
+Color storageCardBackground(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? Colors.white10
+      : Colors.white.withOpacity(0.96);
+}
+
+/// 细微黑边：浅色下用低透明度黑，深色下用低透明度白，保证卡片轮廓清晰但不刺眼。
+Border storageCardBorder(BuildContext context, {double width = 0.8}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Border.all(
+    color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.10),
+    width: width,
+  );
 }
 
 /// iOS 风格分组标题。

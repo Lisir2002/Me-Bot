@@ -190,7 +190,7 @@ class _InfoHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.06), width: 0.6),
+        border: storageCardBorder(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

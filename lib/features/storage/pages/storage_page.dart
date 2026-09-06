@@ -252,7 +252,7 @@ class _UsageCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.06), width: 0.6),
+        border: storageCardBorder(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

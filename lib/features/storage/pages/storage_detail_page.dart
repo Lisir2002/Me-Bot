@@ -197,6 +197,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final themeDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = themeDark ? Colors.white10 : Colors.white.withOpacity(0.96);
+    final cardBorder = storageCardBorder(context);
     return Column(
       children: [
         StorageTactileRow(
@@ -206,7 +207,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: cs.outlineVariant.withOpacity(themeDark ? 0.08 : 0.06), width: 0.6),
+              border: cardBorder,
             ),
             child: Row(
               children: [
@@ -229,7 +230,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cs.outlineVariant.withOpacity(themeDark ? 0.08 : 0.06), width: 0.6),
+            border: cardBorder,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +274,7 @@ class _InfoHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.06), width: 0.6),
+        border: storageCardBorder(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

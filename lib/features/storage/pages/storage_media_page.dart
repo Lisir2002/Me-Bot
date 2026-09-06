@@ -84,7 +84,7 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
     final items = _filtered;
-    final isImage = cfg.id == 'images';
+    final isImage = cfg.id == 'images' || cfg.id == 'avatars';
 
     return Scaffold(
       appBar: AppBar(
@@ -234,7 +234,7 @@ class _InfoHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.06), width: 0.6),
+        border: storageCardBorder(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

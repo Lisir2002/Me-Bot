@@ -53,8 +53,11 @@ List<StorageCategoryConfig> buildStorageCategories(AppLocalizations l10n) {
       title: l10n.storageCateAvatars,
       icon: Lucide.Boxes,
       color: const Color(0xFFF08C2E),
-      type: StorageCategoryType.readOnlyDetail,
+      type: StorageCategoryType.media,
       caution: l10n.storageCautionRisk,
+      supportSourceFilter: true,
+      supportOrderFilter: true,
+      supportDelete: true,
     ),
     StorageCategoryConfig(
       id: 'cache',

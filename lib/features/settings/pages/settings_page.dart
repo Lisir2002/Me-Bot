@@ -23,6 +23,8 @@ import 'usage_stats_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/services/haptics.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../theme/design_tokens.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -103,21 +105,16 @@ class SettingsPage extends StatelessWidget {
           ),
         );
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-        ),
-        title: Text(l10n.settingsPageTitle),
+    return AppPage(
+      title: l10n.settingsPageTitle,
+      // 用自定义 leading 保留原来的 Tooltip 文案（AppPage 默认用系统 backButtonTooltip）
+      leading: Tooltip(
+        message: l10n.settingsPageBackButton,
+        child: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: cs.onSurface),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.md),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (!settings.hasAnyActiveModel)
             Material(
@@ -355,8 +352,6 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-// --- iOS-style widgets for Settings page ---
-
 Widget _iosSectionCard({required List<Widget> children}) {
   return Builder(builder: (context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -491,66 +486,6 @@ class _TactileRowState extends State<_TactileRow> {
               widget.onTap!.call();
             },
       child: widget.builder(_pressed),
-    );
-  }
-}
-
-// Icon-only tactile button for AppBar: no ripple, slight press scale
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
-    this.size = 22,
-    this.haptics = true,
-  });
-
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
-  final double size;
-  final bool haptics;
-
-  @override
-  State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color;
-    final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
-
-    return Semantics(
-      button: true,
-      label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () {
-          if (widget.haptics) Haptics.light();
-          widget.onTap();
-        },
-        onLongPress: widget.onLongPress == null
-            ? null
-            : () {
-                if (widget.haptics) Haptics.light();
-                widget.onLongPress!.call();
-              },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-          child: icon,
-        ),
-      ),
     );
   }
 }

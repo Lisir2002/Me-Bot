@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
-import 'package:go_router/go_router.dart';
 // import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'features/home/pages/home_page.dart';
 import 'desktop/desktop_home_page.dart';
-import 'core/router/app_router.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import 'desktop/desktop_window_controller.dart';
@@ -45,10 +43,6 @@ import 'core/services/notification_service.dart';
 final RouteObserver<ModalRoute<dynamic>> routeObserver = RouteObserver<ModalRoute<dynamic>>();
 bool _didCheckUpdates = false; // one-time update check flag
 bool _didEnsureAssistants = false; // ensure defaults after l10n ready
-
-// go_router root key (mobile only; desktop keeps MaterialApp.home)
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-bool _routerInitialized = false;
 
 
 Future<void> main() async {
@@ -125,14 +119,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── 仅 Android/iOS 初始化 go_router（只一次）──
-    if (!_routerInitialized &&
-        !kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS)) {
-      AppRouter.init(rootNavigatorKey: _rootNavigatorKey);
-      _routerInitialized = true;
-    }
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ChatProvider()),
@@ -170,16 +156,6 @@ class MyApp extends StatelessWidget {
           }
           return DynamicColorBuilder(
             builder: (lightDynamic, darkDynamic) {
-              // if (lightDynamic != null) {
-              //   debugPrint('[DynamicColor] Light dynamic detected. primary=${lightDynamic.primary.value.toRadixString(16)} surface=${lightDynamic.surface.value.toRadixString(16)}');
-              // } else {
-              //   debugPrint('[DynamicColor] Light dynamic not available');
-              // }
-              // if (darkDynamic != null) {
-              //   debugPrint('[DynamicColor] Dark dynamic detected. primary=${darkDynamic.primary.value.toRadixString(16)} surface=${darkDynamic.surface.value.toRadixString(16)}');
-              // } else {
-              //   debugPrint('[DynamicColor] Dark dynamic not available');
-              // }
               final isAndroid = Theme.of(context).platform == TargetPlatform.android;
               // Update dynamic color capability for settings UI (avoid notify during build)
               final dynSupported = isAndroid && (lightDynamic != null || darkDynamic != null);
@@ -279,15 +255,8 @@ class MyApp extends StatelessWidget {
               }
               final themedLight = _applyAppFont(light);
               final themedDark = _applyAppFont(dark);
-              // Log top-level colors likely used by widgets (card/bg/shadow approximations)
-              // debugPrint('[Theme/App] Light scaffoldBg=${light.colorScheme.surface.value.toRadixString(16)} card≈${light.colorScheme.surface.value.toRadixString(16)} shadow=${light.colorScheme.shadow.value.toRadixString(16)}');
-              // debugPrint('[Theme/App] Dark scaffoldBg=${dark.colorScheme.surface.value.toRadixString(16)} card≈${dark.colorScheme.surface.value.toRadixString(16)} shadow=${dark.colorScheme.shadow.value.toRadixString(16)}');
-              // ── 判断平台：仅 Android/iOS 走 router；桌面/web 继续用 home ──
-              final _isMobile = !kIsWeb &&
-                  (defaultTargetPlatform == TargetPlatform.android ||
-                      defaultTargetPlatform == TargetPlatform.iOS);
 
-              // builder 闭包（两个 MaterialApp 分支共用）
+              // builder 闭包
               Widget appBuilder(BuildContext ctx, Widget? child) {
                 final bright = Theme.of(ctx).brightness;
                 final overlay = bright == Brightness.dark
@@ -328,32 +297,19 @@ class MyApp extends StatelessWidget {
                 );
               }
 
-              return _isMobile
-                  ? MaterialApp.router(
-                      debugShowCheckedModeBanner: false,
-                      title: 'MiniMe-Core',
-                      locale: settings.appLocaleForMaterialApp,
-                      supportedLocales: AppLocalizations.supportedLocales,
-                      localizationsDelegates: AppLocalizations.localizationsDelegates,
-                      theme: themedLight,
-                      darkTheme: themedDark,
-                      themeMode: settings.themeMode,
-                      routerConfig: AppRouter.router,
-                      builder: appBuilder,
-                    )
-                  : MaterialApp(
-                      debugShowCheckedModeBanner: false,
-                      title: 'MiniMe-Core',
-                      locale: settings.appLocaleForMaterialApp,
-                      supportedLocales: AppLocalizations.supportedLocales,
-                      localizationsDelegates: AppLocalizations.localizationsDelegates,
-                      theme: themedLight,
-                      darkTheme: themedDark,
-                      themeMode: settings.themeMode,
-                      navigatorObservers: <NavigatorObserver>[routeObserver],
-                      home: _selectHome(),
-                      builder: appBuilder,
-                    );
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'MiniMe-Core',
+                locale: settings.appLocaleForMaterialApp,
+                supportedLocales: AppLocalizations.supportedLocales,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                theme: themedLight,
+                darkTheme: themedDark,
+                themeMode: settings.themeMode,
+                navigatorObservers: <NavigatorObserver>[routeObserver],
+                home: _selectHome(),
+                builder: appBuilder,
+              );
             },
           );
         },

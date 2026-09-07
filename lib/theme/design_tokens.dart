@@ -21,12 +21,7 @@ class AppGap {
   static const double none = xxxs;   // 2
   static const double defaultSm = sm;
   static const double defaultMd = md;
-  static const double defaultLg = lg;
 }
-
-// 兼容旧类名（AppSpacing 已废弃，用 AppGap）
-@Deprecated('Use AppGap instead')
-class AppSpacing extends AppGap {}
 
 /// 圆角体系（对应 Material 3 shape scale）
 class AppRadius {
@@ -44,9 +39,34 @@ class AppRadius {
   static const double defaultMd = md;
 }
 
+// 兼容旧类名（AppSpacing 已废弃，用 AppGap）
+@Deprecated('Use AppGap instead')
+class AppSpacing {
+  // 镜像 AppGap 的值，保持旧代码能编译
+  static const double xxxs = AppGap.xxxs;
+  static const double xxs = AppGap.xxs;
+  static const double xs = AppGap.xs;
+  static const double sm = AppGap.sm;
+  static const double md = AppGap.md;
+  static const double lg = AppGap.lg;
+  static const double xl = AppGap.xl;
+  static const double xxl = AppGap.xxl;
+  static const double xxxl = AppGap.xxxl;
+}
+
 // 兼容旧类名（AppRadii 已废弃，用 AppRadius）
 @Deprecated('Use AppRadius instead')
-class AppRadii extends AppRadius {}
+class AppRadii {
+  static const double none = AppRadius.none;
+  static const double tiny = AppRadius.tiny;
+  static const double xs = AppRadius.xs;
+  static const double sm = AppRadius.sm;
+  static const double md = AppRadius.md;
+  static const double lg = AppRadius.lg;
+  static const double xl = AppRadius.xl;
+  static const double capsule = AppRadius.capsule;
+  static const double circular = AppRadius.circular;
+}
 
 /// 页面级 padding 预设
 class AppPagePadding {

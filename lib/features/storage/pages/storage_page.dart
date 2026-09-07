@@ -70,7 +70,7 @@ class _StoragePageState extends State<StoragePage> {
     final Widget body = provider.loading && !provider.hasData
         ? const AppLoading()
         : provider.error != null && !provider.hasData
-            ? AppError(message: provider.error!, onRetry: _refresh)
+            ? AppError(message: provider.error.toString(), onRetry: _refresh)
             : _StorageBody(
                 categories: categories,
                 onOpen: (config) {

@@ -60,7 +60,7 @@ class AppPageStates<T> {
 
 class AppPage extends StatefulWidget {
   final String title;
-  final Widget body;
+  final Widget? body;
   final List<Widget>? actions;
   final Widget? leading;
   final bool showBack;
@@ -85,7 +85,7 @@ class AppPage extends StatefulWidget {
   const AppPage({
     super.key,
     required this.title,
-    required this.body,
+    this.body,
     this.actions,
     this.leading,
     this.showBack = true,
@@ -212,7 +212,7 @@ class _AppPageState extends State<AppPage> {
   /// 根据 segments / body 组装内容体
   Widget _buildContent(BuildContext context) {
     final segs = widget.segments;
-    if (segs == null) return widget.body;
+    if (segs == null) return widget.body ?? const SizedBox.shrink();
 
     switch (widget.segmentsMode) {
       case AppSegmentMode.top:

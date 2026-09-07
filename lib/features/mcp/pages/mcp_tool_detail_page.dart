@@ -8,6 +8,7 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../widgets/mcp_tool_test_sheet.dart';
 
 /// 工具详情独立页：顶栏 Tab「工具操作 / 操作记录」。
@@ -67,7 +68,6 @@ class McpToolDetailPage extends StatelessWidget {
 
     final toolSnap = tool;
     return AppPage(
-      // 顶栏 Tab（top 分段）—— 引擎自动生成 AppBar.bottom TabBar + TabBarView
       title: tool.name,
       segmentsMode: AppSegmentMode.top,
       segments: [

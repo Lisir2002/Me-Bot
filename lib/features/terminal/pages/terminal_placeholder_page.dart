@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../conversation/widgets/mobile_bottom_nav.dart';
 
 /// 终端页面（占位，后续要用到）。
 /// 真实骨架：标题 + 图标 + 简短说明 + 版本号。
@@ -19,6 +20,7 @@ class TerminalPlaceholderPage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
       ),
+      bottomNavigationBar: const MobileBottomNav(currentIndex: 1),
       body: SafeArea(
         child: Center(
           child: Column(

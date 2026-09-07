@@ -8,6 +8,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../core/models/chat_item.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../shared/widgets/snackbar.dart';
+import '../widgets/mobile_bottom_nav.dart';
 
 /// 对话列表页 —— 移动端首页（Conversations tab）。
 ///
@@ -75,6 +76,7 @@ class _ConversationListPageState extends State<ConversationListPage> {
 
     return Scaffold(
       appBar: _buildAppBar(context, l10n, cs),
+      bottomNavigationBar: const MobileBottomNav(currentIndex: 0),
       body: Column(
         children: [
           // 搜索框（折叠展开由 AppBar 控制，这里只在展开时显示）

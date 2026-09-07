@@ -3,21 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../theme/design_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_tactile.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../core/services/haptics.dart';
 
 Future<void> showReasoningBudgetSheet(BuildContext context) async {
-  await showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => const _ReasoningBudgetSheet(),
-  );
+  await showAppSheet(context: context, builder: const _ReasoningBudgetSheet());
 }
 
 class _ReasoningBudgetSheet extends StatefulWidget {
@@ -127,42 +119,14 @@ class _ReasoningBudgetSheetState extends State<_ReasoningBudgetSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    final maxHeight = MediaQuery.of(context).size.height * 0.8;
-    return SafeArea(
-      top: false,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 12),
-                Container(width: 40, height: 4, decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(999))),
-                const SizedBox(height: 6),
-                // No title per iOS style; keep content close to handle
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    children: [
-                      _tile(Lucide.X, l10n.reasoningBudgetSheetOff, 0),
-                      _tile(Lucide.Settings2, l10n.reasoningBudgetSheetAuto, -1),
-                      _tile(Lucide.Brain, l10n.reasoningBudgetSheetLight, 1024, deepthink: true),
-                      _tile(Lucide.Brain, l10n.reasoningBudgetSheetMedium, 16000, deepthink: true),
-                      _tile(Lucide.Brain, l10n.reasoningBudgetSheetHeavy, 32000, deepthink: true),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return AppSheet(
+      children: [
+        _tile(Lucide.X, l10n.reasoningBudgetSheetOff, 0),
+        _tile(Lucide.Settings2, l10n.reasoningBudgetSheetAuto, -1),
+        _tile(Lucide.Brain, l10n.reasoningBudgetSheetLight, 1024, deepthink: true),
+        _tile(Lucide.Brain, l10n.reasoningBudgetSheetMedium, 16000, deepthink: true),
+        _tile(Lucide.Brain, l10n.reasoningBudgetSheetHeavy, 32000, deepthink: true),
+      ],
     );
   }
 }

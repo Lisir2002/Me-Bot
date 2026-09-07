@@ -7,6 +7,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_switch.dart';
+import '../../../shared/widgets/app_page.dart';
 import '../widgets/mcp_tool_test_sheet.dart';
 
 /// 工具详情独立页：顶栏 Tab「工具操作 / 操作记录」。
@@ -49,50 +50,36 @@ class McpToolDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final mcp = context.watch<McpProvider>();
     final server = mcp.getById(serverId);
     final tool = server == null ? null : _findTool(server.tools);
 
     if (tool == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(toolName)),
-        body: Center(child: Text(l10n.mcpToolDetailNotFound)),
+      return AppPage(
+        title: toolName,
+        body: AppEmpty(
+          message: l10n.mcpToolDetailNotFound,
+          icon: Icons.search_off_rounded,
+        ),
       );
     }
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          leading: Tooltip(
-            message: l10n.mcpPageBackTooltip,
-            child: IconButton(
-              icon: const Icon(Lucide.ArrowLeft),
-              color: cs.onSurface,
-              onPressed: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          title: Text(tool.name),
-          bottom: TabBar(
-            indicatorColor: cs.primary,
-            labelColor: cs.primary,
-            unselectedLabelColor: cs.onSurface.withOpacity(0.6),
-            tabs: [
-              Tab(text: l10n.mcpToolDetailTabActions),
-              Tab(text: l10n.mcpToolDetailTabHistory),
-            ],
-          ),
+    final toolSnap = tool;
+    return AppPage(
+      // 顶栏 Tab（top 分段）—— 引擎自动生成 AppBar.bottom TabBar + TabBarView
+      title: tool.name,
+      segmentsMode: AppSegmentMode.top,
+      segments: [
+        AppSegment(
+          label: l10n.mcpToolDetailTabActions,
+          body: (ctx) => _buildActionsTab(ctx, toolSnap),
         ),
-        body: TabBarView(
-          children: [
-            _buildActionsTab(context, tool),
-            _buildHistoryTab(context, tool),
-          ],
+        AppSegment(
+          label: l10n.mcpToolDetailTabHistory,
+          body: (ctx) => _buildHistoryTab(ctx, toolSnap),
         ),
-      ),
+      ],
     );
   }
 

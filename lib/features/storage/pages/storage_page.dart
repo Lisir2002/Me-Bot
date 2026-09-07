@@ -6,6 +6,8 @@ import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
 import '../widgets/storage_categories.dart';
 import '../widgets/storage_ios_widgets.dart';
 import 'storage_cache_page.dart';
@@ -64,60 +66,44 @@ class _StoragePageState extends State<StoragePage> {
     final provider = context.watch<StorageProvider>();
     final categories = buildStorageCategories(l10n);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: StorageTactileIconButton(
-          icon: Lucide.ArrowLeft,
+    // 三态：provider 驱动的 loading/error/data
+    final Widget body = provider.loading && !provider.hasData
+        ? const AppLoading()
+        : provider.error != null && !provider.hasData
+            ? AppError(message: provider.error!, onRetry: _refresh)
+            : _StorageBody(
+                categories: categories,
+                onOpen: (config) {
+                  final scan = provider.scanFor(config.id);
+                  if (scan == null) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => _subPage(config),
+                    ),
+                  );
+                },
+              );
+
+    return AppPage(
+      title: l10n.storagePageTitle,
+      leading: StorageTactileIconButton(
+        icon: Lucide.ArrowLeft,
+        color: cs.onSurface,
+        size: 22,
+        onTap: () => Navigator.of(context).maybePop(),
+      ),
+      actions: [
+        StorageTactileIconButton(
+          icon: Lucide.RotateCw,
           color: cs.onSurface,
-          size: 22,
-          onTap: () => Navigator.of(context).maybePop(),
+          size: 20,
+          semanticLabel: l10n.storageRefresh,
+          onTap: _refresh,
         ),
-        title: Text(l10n.storagePageTitle),
-        actions: [
-          StorageTactileIconButton(
-            icon: Lucide.RotateCw,
-            color: cs.onSurface,
-            size: 20,
-            semanticLabel: l10n.storageRefresh,
-            onTap: _refresh,
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          if (provider.loading && !provider.hasData)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 60),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (provider.error != null && !provider.hasData)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(
-                  '${l10n.storageEmpty}\n${provider.error}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            )
-          else
-            _StorageBody(
-              categories: categories,
-              onOpen: (config) {
-                final scan = provider.scanFor(config.id);
-                if (scan == null) return;
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => _subPage(config),
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
+        const SizedBox(width: 12),
+      ],
+      bodyPadding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      body: body,
     );
   }
 }

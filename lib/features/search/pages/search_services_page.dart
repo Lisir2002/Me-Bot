@@ -1,17 +1,48 @@
+// ──────────────────────────────────────────────────────────────
+// 迁移到 AppPage 骨架（批次 4 第 3 页，1533 → 见下方行数）
+//
+//   Scaffold + AppBar + ListView   → AppPage(title / leading / actions / body)
+//   _iosSectionCard / _iosDivider  → AppSectionCard / AppSectionDivider（shared）
+//   _TactileRow / _AnimatedPressColor → IosTactileRow / IosPressColor
+//   _TactileIconButton             → IosIconButton(haptics: true, minSize: 44)
+//   showModalBottomSheet ×3 中收敛 2 个 → showAppSheet（新增/编辑/操作表）
+//
+// ⚠️ body 是 Column + CrossAxisAlignment.stretch —— scrollable 模式下子部件拿到
+//    「无界高度 + 紧凑宽度」，不 stretch 卡片会缩到内容宽度（清单 3d）。
+// ⚠️ `_addService` 的弹层**保留手写 showModalBottomSheet**：它需要
+//    `constraints: maxHeight(0.85h)`（showAppSheet 不支持 constraints），
+//    且内容是 AnimatedSize + AnimatedSwitcher + Flexible 的自绘结构，
+//    套进 AppSheet 的 SingleChildScrollView 会双重滚动（见经验 #19 同类判断）。
+// ⚠️ `_showServiceActions` 是无把手、行满宽的操作表 → 不用 AppSheet 组件
+//    （经验 #19），只换 showAppSheet 外壳；**原弹层 isScrollControlled 是默认
+//    false，必须显式传**（经验 #20）。
+//
+// 保留私有的：`_SmallTactileIcon`（0.9/0.6/0.3 透明度阶梯 + enabled，经验 #16）、
+// `_sheetOption` / `_sheetDivider`（弹层内行样式，leading 可选、无右箭头，见经验 #15）、
+// `_BrandBadge` / `_ServiceIcon` / `_AddServiceBottomSheet` / `_EditServiceSheet`。
+//
+// 清掉的死代码（基线 14 条 warning 中 9 条）：`_selectService`（0 引用）、
+// `_iosProviderRow` 里未使用的 `selected`、`_getServiceIcon` / `_getServiceStatus`
+// （0 引用）、`_AddServiceBottomSheetState.build` 里未使用的 `isDark`、
+// `_brandBadgeForName`（0 引用 + `// ignore: unused_element` 掩盖）、
+// `_BrandBadge.build` 的 4 处无效 `!`、2 个重复 import。
+// ──────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../core/providers/settings_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import '../../../core/services/search/search_service.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/services/search/search_service.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
+import '../../../theme/design_tokens.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../core/services/haptics.dart';
-import '../../../shared/widgets/card_surface.dart';
 
 class SearchServicesPage extends StatefulWidget {
   const SearchServicesPage({super.key});
@@ -36,6 +67,8 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
   }
 
   void _addService() {
+    // ⚠️ 保留手写 showModalBottomSheet：需要 constraints(maxHeight 0.85h)，
+    // 且内容是 AnimatedSize + AnimatedSwitcher + Flexible 的自绘结构。
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -56,13 +89,11 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
 
   void _editService(int index) {
     final service = _services[index];
-    final cs = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    // 外层换 showAppSheet：统一圆角/surface 背景/SafeArea/键盘避让
+    // （_EditServiceSheet 自身因此不再包 SafeArea 与 viewInsets Padding）。
+    showAppSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => _EditServiceSheet(
+      builder: _EditServiceSheet(
         service: service,
         onSave: (updated) {
           setState(() {
@@ -84,7 +115,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
       );
       return;
     }
-    
+
     setState(() {
       _services.removeAt(index);
       if (_selectedIndex >= _services.length) {
@@ -92,13 +123,6 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
       } else if (_selectedIndex > index) {
         _selectedIndex--;
       }
-    });
-    _saveChanges();
-  }
-
-  void _selectService(int index) {
-    setState(() {
-      _selectedIndex = index;
     });
     _saveChanges();
   }
@@ -137,9 +161,11 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     } catch (_) {
       context.read<SettingsProvider>().setSearchConnection(id, false);
     } finally {
-      setState(() {
-        _testing[id] = false;
-      });
+      if (mounted) {
+        setState(() {
+          _testing[id] = false;
+        });
+      }
     }
   }
 
@@ -149,43 +175,48 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     final cs = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return AppPage(
+      title: l10n.searchServicesPageTitle,
       backgroundColor: cs.surface,
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.searchServicesPageBackTooltip,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
+      leading: Tooltip(
+        message: l10n.searchServicesPageBackTooltip,
+        child: IosIconButton(
+          haptics: true,
+          icon: Lucide.ArrowLeft,
+          color: cs.onSurface,
+          size: 22,
+          minSize: 44,
+          onTap: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      actions: [
+        Tooltip(
+          message: l10n.searchServicesPageAddProvider,
+          child: IosIconButton(
+            haptics: true,
+            icon: Lucide.Plus,
             color: cs.onSurface,
             size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
+            minSize: 44,
+            onTap: _addService,
           ),
         ),
-        title: Text(l10n.searchServicesPageTitle),
-        actions: [
-          Tooltip(
-            message: l10n.searchServicesPageAddProvider,
-            child: _TactileIconButton(
-              icon: Lucide.Plus,
-              color: cs.onSurface,
-              size: 22,
-              onTap: _addService,
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        const SizedBox(width: AppGap.sm),
+      ],
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+      // ⚠️ scrollable 模式下子部件拿到「无界高度 + 紧凑宽度」，
+      // Column 必须 stretch，否则卡片缩到内容宽度。
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _sectionHeader(l10n.searchServicesPageSearchProviders, cs, first: true),
-          _iosSectionCard(children: [
+          AppSectionCard(children: [
             for (int i = 0; i < _services.length; i++) ...[
               _iosProviderRow(context, index: i),
-              if (i != _services.length - 1) _iosDivider(context),
+              if (i != _services.length - 1) const AppSectionDivider(),
             ],
           ]),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppGap.md),
           _sectionHeader(l10n.searchServicesPageGeneralOptions, cs),
           _buildCommonOptionsSection(context),
         ],
@@ -194,7 +225,8 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
   }
 
   Widget _sectionHeader(String text, ColorScheme cs, {bool first = false}) => Padding(
-        padding: EdgeInsets.fromLTRB(12, first ? 2 : 18, 12, 6),
+        // 18 / 6 无精确 token（md=16 / lg=20、xs=8），保留字面量
+        padding: EdgeInsets.fromLTRB(AppGap.sm, first ? AppGap.xxxs : 18, AppGap.sm, 6),
         child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.8))),
       );
 
@@ -203,7 +235,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     final settings = context.watch<SettingsProvider>();
     final common = settings.searchCommonOptions;
     final l10n = AppLocalizations.of(context)!;
-    
+
     Widget stepper({required int value, required VoidCallback onMinus, required VoidCallback onPlus, String? unit}) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -213,9 +245,9 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
             onTap: onMinus,
             enabled: true,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppGap.xs),
           Text(unit == null ? '$value' : '$value$unit', style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.8))),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppGap.xs),
           _SmallTactileIcon(
             icon: Lucide.Plus,
             onTap: onPlus,
@@ -225,89 +257,66 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
       );
     }
 
-    return _iosSectionCard(children: [
-      _TactileRow(
-        onTap: null, // no navigation, so no chevron
-        pressedScale: 1.00,
-        haptics: false,
-        builder: (pressed) {
-          final baseColor = cs.onSurface.withOpacity(0.9);
-          return _AnimatedPressColor(
-            pressed: pressed,
-            base: baseColor,
-            builder: (c) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                child: Row(
-                  children: [
-                    SizedBox(width: 36, child: Icon(Lucide.ListOrdered, size: 18, color: c)),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(l10n.searchServicesPageMaxResults, style: TextStyle(fontSize: 15, color: c))),
-                    stepper(
-                      value: common.resultSize,
-                      onMinus: common.resultSize > 1
-                          ? () => context.read<SettingsProvider>().updateSettings(
-                                settings.copyWith(
-                                  searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize - 1, timeout: common.timeout),
-                                ),
-                              )
-                          : () {},
-                      onPlus: common.resultSize < 20
-                          ? () => context.read<SettingsProvider>().updateSettings(
-                                settings.copyWith(
-                                  searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize + 1, timeout: common.timeout),
-                                ),
-                              )
-                          : () {},
+    // 原 _TactileRow(onTap: null) 包裹 → onTapDown 从未挂上、pressed 恒 false，
+    // _AnimatedPressColor 退化为一次颜色透传。直接展开为静态行（死分支，经验 #31）。
+    Widget staticRow({required IconData icon, required String label, required Widget trailing}) {
+      final c = cs.onSurface.withOpacity(0.9);
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
+        child: Row(
+          children: [
+            SizedBox(width: 36, child: Icon(icon, size: 18, color: c)),
+            const SizedBox(width: AppGap.sm),
+            Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c))),
+            trailing,
+          ],
+        ),
+      );
+    }
+
+    return AppSectionCard(children: [
+      staticRow(
+        icon: Lucide.ListOrdered,
+        label: l10n.searchServicesPageMaxResults,
+        trailing: stepper(
+          value: common.resultSize,
+          onMinus: common.resultSize > 1
+              ? () => context.read<SettingsProvider>().updateSettings(
+                    settings.copyWith(
+                      searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize - 1, timeout: common.timeout),
                     ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                  )
+              : () {},
+          onPlus: common.resultSize < 20
+              ? () => context.read<SettingsProvider>().updateSettings(
+                    settings.copyWith(
+                      searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize + 1, timeout: common.timeout),
+                    ),
+                  )
+              : () {},
+        ),
       ),
-      _iosDivider(context),
-      _TactileRow(
-        onTap: null,
-        pressedScale: 1.00,
-        haptics: false,
-        builder: (pressed) {
-          final baseColor = cs.onSurface.withOpacity(0.9);
-          return _AnimatedPressColor(
-            pressed: pressed,
-            base: baseColor,
-            builder: (c) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                child: Row(
-                  children: [
-                    SizedBox(width: 36, child: Icon(Lucide.History, size: 18, color: c)),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(l10n.searchServicesPageTimeoutSeconds, style: TextStyle(fontSize: 15, color: c))),
-                    stepper(
-                      value: common.timeout ~/ 1000,
-                      onMinus: common.timeout > 1000
-                          ? () => context.read<SettingsProvider>().updateSettings(
-                                settings.copyWith(
-                                  searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize, timeout: common.timeout - 1000),
-                                ),
-                              )
-                          : () {},
-                      onPlus: common.timeout < 30000
-                          ? () => context.read<SettingsProvider>().updateSettings(
-                                settings.copyWith(
-                                  searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize, timeout: common.timeout + 1000),
-                                ),
-                              )
-                          : () {},
+      const AppSectionDivider(),
+      staticRow(
+        icon: Lucide.History,
+        label: l10n.searchServicesPageTimeoutSeconds,
+        trailing: stepper(
+          value: common.timeout ~/ 1000,
+          onMinus: common.timeout > 1000
+              ? () => context.read<SettingsProvider>().updateSettings(
+                    settings.copyWith(
+                      searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize, timeout: common.timeout - 1000),
                     ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                  )
+              : () {},
+          onPlus: common.timeout < 30000
+              ? () => context.read<SettingsProvider>().updateSettings(
+                    settings.copyWith(
+                      searchCommonOptions: SearchCommonOptions(resultSize: common.resultSize, timeout: common.timeout + 1000),
+                    ),
+                  )
+              : () {},
+        ),
       ),
     ]);
   }
@@ -316,7 +325,6 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     final s = _services[index];
     final cs = Theme.of(context).colorScheme;
     final name = SearchService.getService(s).name;
-    final selected = index == _selectedIndex;
     // Connection/testing status for capsule
     final l10n = AppLocalizations.of(context)!;
     final testing = _testing[s.id] == true;
@@ -341,56 +349,52 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
       statusBg = cs.onSurface.withOpacity(0.06);
       statusFg = cs.onSurface.withOpacity(0.7);
     }
-    return _TactileRow(
-      onTap: () {
-        // Tap to edit (bottom sheet)
-        _editService(index);
-      },
-      pressedScale: 1.00,
+    // 原实现是外层 _TactileRow(tap) + 内层 GestureDetector(longPress) 两层手势，
+    // 合并到 IosTactileRow 的 onTap/onLongPress 后行为一致（点按 → 编辑，长按 → 操作表）。
+    // 本行原本 haptics: false（点按无触觉），长按也无 —— 保持 false。
+    return IosTactileRow(
       haptics: false,
-      builder: (pressed) {
+      onTap: () => _editService(index),
+      onLongPress: () => _showServiceActions(context, index),
+      builder: (ctx, pressed) {
         final base = cs.onSurface.withOpacity(0.9);
-        return _AnimatedPressColor(
+        return IosPressColor(
           pressed: pressed,
           base: base,
           builder: (c) {
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onLongPress: () => _showServiceActions(context, index),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                child: Row(
-                  children: [
-                    SizedBox(width: 36, child: Center(child: _BrandBadge.forService(s, size: 22))),
-                    const SizedBox(width: 12),
-                    Expanded(
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
+              child: Row(
+                children: [
+                  SizedBox(width: 36, child: Center(child: _BrandBadge.forService(s, size: 22))),
+                  const SizedBox(width: AppGap.sm),
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 15, color: c, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  if (s is! BingLocalOptions && statusText.isNotEmpty) ...[
+                    const SizedBox(width: AppGap.xs),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AppGap.xs, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(AppRadius.circular),
+                      ),
                       child: Text(
-                        name,
+                        statusText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 15, color: c, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11, color: statusFg),
                       ),
                     ),
-                    if (s is! BingLocalOptions && statusText.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          statusText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 11, color: statusFg),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-                    Icon(Lucide.ChevronRight, size: 16, color: c),
                   ],
-                ),
+                  const SizedBox(width: AppGap.xs),
+                  Icon(Lucide.ChevronRight, size: 16, color: c),
+                ],
               ),
             );
           },
@@ -400,70 +404,32 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
   }
 
   Future<void> _showServiceActions(BuildContext context, int index) async {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    await showModalBottomSheet(
+    // 无把手、行满宽的操作表 → 不套 AppSheet 组件（经验 #19），
+    // 只用 showAppSheet 收敛圆角/背景/SafeArea。
+    // ⚠️ 原弹层 isScrollControlled 是默认 false，必须显式传（经验 #20）。
+    await showAppSheet<void>(
       context: context,
-      backgroundColor: cs.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _sheetOption(ctx, icon: Lucide.Activity, label: l10n.searchServicesPageTestConnectionTooltip, onTap: () {
-                  Navigator.of(ctx).pop();
-                  _testConnection(index);
-                }),
-                _sheetDivider(ctx),
-                _sheetOption(ctx, icon: Lucide.Trash2, label: l10n.providerDetailPageDeleteButton, onTap: () {
-                  Navigator.of(ctx).pop();
-                  _deleteService(index);
-                }),
-              ],
-            ),
-          ),
-        );
-      },
+      isScrollControlled: false,
+      builder: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _sheetOption(context, icon: Lucide.Activity, label: l10n.searchServicesPageTestConnectionTooltip, onTap: () {
+              Navigator.of(context).pop();
+              _testConnection(index);
+            }),
+            _sheetDivider(context),
+            _sheetOption(context, icon: Lucide.Trash2, label: l10n.providerDetailPageDeleteButton, onTap: () {
+              Navigator.of(context).pop();
+              _deleteService(index);
+            }),
+          ],
+        ),
+      ),
     );
   }
-
-  IconData _getServiceIcon(SearchServiceOptions service) {
-    if (service is BingLocalOptions) return Lucide.Search;
-    if (service is TavilyOptions) return Lucide.Sparkles;
-    if (service is ExaOptions) return Lucide.Brain;
-    if (service is ZhipuOptions) return Lucide.Languages;
-    if (service is SearXNGOptions) return Lucide.Shield;
-    if (service is LinkUpOptions) return Lucide.Link2;
-    if (service is BraveOptions) return Lucide.Shield;
-    if (service is MetasoOptions) return Lucide.Compass;
-    if (service is JinaOptions) return Lucide.Sparkles;
-    if (service is PerplexityOptions) return Lucide.Search;
-    if (service is BochaOptions) return Lucide.Search;
-    return Lucide.Search;
-  }
-
-  String? _getServiceStatus(SearchServiceOptions service) {
-    final l10n = AppLocalizations.of(context)!;
-    if (service is BingLocalOptions) return null;
-    if (service is TavilyOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is ExaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is ZhipuOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is SearXNGOptions) return service.url.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageUrlRequiredStatus;
-    if (service is LinkUpOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is BraveOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is MetasoOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is OllamaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is JinaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (service is BochaOptions) return service.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    return null;
-  }
-
-  // Brand badge for known services using assets/icons; falls back to letter if unknown
-  // ignore: unused_element
-  Widget _brandBadgeForName(String name, {double size = 20}) => _BrandBadge(name: name, size: size);
 }
 
 class _BrandBadge extends StatelessWidget {
@@ -500,15 +466,15 @@ class _BrandBadge extends StatelessWidget {
     final asset = BrandAssets.assetForName(name);
     final bg = isDark ? Colors.white10 : cs.primary.withOpacity(0.1);
     if (asset != null) {
-      if (asset!.endsWith('.svg')) {
-        final isColorful = asset!.contains('color');
+      if (asset.endsWith('.svg')) {
+        final isColorful = asset.contains('color');
         final ColorFilter? tint = (isDark && !isColorful) ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null;
         return Container(
           width: size,
           height: size,
           decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: SvgPicture.asset(asset!, width: size * 0.62, height: size * 0.62, colorFilter: tint),
+          child: SvgPicture.asset(asset, width: size * 0.62, height: size * 0.62, colorFilter: tint),
         );
       } else {
         return Container(
@@ -516,7 +482,7 @@ class _BrandBadge extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: Image.asset(asset!, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain),
+          child: Image.asset(asset, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain),
         );
       }
     }
@@ -557,8 +523,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -601,7 +566,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
                   ),
                 ),
               ),
-              
+
               // Service type selection or form with fade animation
               Flexible(
                 child: AnimatedSwitcher(
@@ -686,7 +651,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
 
   Widget _buildFormView() {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return SingleChildScrollView(
       key: const ValueKey('form_view'),
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -695,7 +660,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
         child: Column(
           children: [
             ..._buildFieldsForType(_selectedType!),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppGap.xl),
             // Add button
             SizedBox(
               width: double.infinity,
@@ -710,7 +675,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
                 child: Text(
@@ -729,8 +694,8 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    Widget _buildTextField({
+
+    Widget buildTextField({
       required String key,
       required String label,
       String? hint,
@@ -741,7 +706,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
       return Container(
         decoration: BoxDecoration(
           color: cs.surfaceVariant.withOpacity(isDark ? 0.18 : 0.5),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: TextFormField(
           controller: _controllers[key],
@@ -751,7 +716,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
             labelText: label,
             hintText: hint,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide.none,
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -760,20 +725,20 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
         ),
       );
     }
-    
+
     switch (type) {
       case 'bing_local':
         return [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppGap.md),
             decoration: BoxDecoration(
               color: cs.surfaceVariant.withOpacity(isDark ? 0.18 : 0.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
                 Icon(Lucide.Search, size: 20, color: cs.primary),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppGap.sm),
                 Expanded(
                   child: Text(
                     l10n.searchServiceNameBingLocal,
@@ -798,7 +763,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
       case 'perplexity':
       case 'bocha':
         return [
-          _buildTextField(
+          buildTextField(
             key: 'apiKey',
             label: 'API Key',
             validator: (value) {
@@ -811,7 +776,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
         ];
       case 'searxng':
         return [
-          _buildTextField(
+          buildTextField(
             key: 'url',
             label: l10n.searchServicesAddDialogInstanceUrl,
             validator: (value) {
@@ -821,25 +786,25 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
               return null;
             },
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
+          const SizedBox(height: AppGap.sm),
+          buildTextField(
             key: 'engines',
             label: l10n.searchServicesAddDialogEnginesOptional,
             hint: 'google,duckduckgo',
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
+          const SizedBox(height: AppGap.sm),
+          buildTextField(
             key: 'language',
             label: l10n.searchServicesAddDialogLanguageOptional,
             hint: 'en-US',
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
+          const SizedBox(height: AppGap.sm),
+          buildTextField(
             key: 'username',
             label: l10n.searchServicesAddDialogUsernameOptional,
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
+          const SizedBox(height: AppGap.sm),
+          buildTextField(
             key: 'password',
             label: l10n.searchServicesAddDialogPasswordOptional,
             obscureText: true,
@@ -853,7 +818,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   SearchServiceOptions _createService() {
     final uuid = const Uuid();
     final id = uuid.v4().substring(0, 8);
-    
+
     switch (_selectedType) {
       case 'bing_local':
         return BingLocalOptions(id: id);
@@ -988,65 +953,59 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
     final l10n = AppLocalizations.of(context)!;
     final searchService = SearchService.getService(widget.service);
     final cs = Theme.of(context).colorScheme;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(999)),
+    // ⚠️ SafeArea 与键盘避让由外层 showAppSheet 提供，这里只保留四周留白
+    // （bottom 16 + showAppSheet 的 AnimatedPadding(viewInsets) == 原来的 viewInsets + 16）。
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.md),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(AppRadius.circular)),
+            ),
+          ),
+          // Title (match Add sheet style: centered name)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Center(
+              child: Text(
+                searchService.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ),
-            // Title (match Add sheet style: centered name)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: Center(
-                child: Text(
-                  searchService.name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
+          ),
+          Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: _buildFields(),
               ),
             ),
-            Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: _buildFields(),
-                ),
+          ),
+          const SizedBox(height: AppGap.sm),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  final updated = _updateService();
+                  widget.onSave(updated);
+                  Navigator.of(context).pop();
+                }
+              },
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
               ),
+              child: Text(l10n.searchServicesEditDialogSave, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    final updated = _updateService();
-                    widget.onSave(updated);
-                    Navigator.of(context).pop();
-                  }
-                },
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(l10n.searchServicesEditDialogSave, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1057,7 +1016,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    Widget _buildTextField({
+    Widget buildTextField({
       required String key,
       required String label,
       String? hint,
@@ -1068,7 +1027,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
       return Container(
         decoration: BoxDecoration(
           color: cs.surfaceVariant.withOpacity(isDark ? 0.18 : 0.5),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: TextFormField(
           controller: _controllers[key],
@@ -1078,7 +1037,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
             labelText: label,
             hintText: hint,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide.none,
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1100,7 +1059,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
         service is JinaOptions ||
         service is BochaOptions) {
       return [
-        _buildTextField(
+        buildTextField(
           key: 'apiKey',
           label: 'API Key',
           validator: (value) {
@@ -1113,7 +1072,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
       ];
     } else if (service is SearXNGOptions) {
       return [
-        _buildTextField(
+        buildTextField(
           key: 'url',
           label: l10n.searchServicesEditDialogInstanceUrl,
           validator: (value) {
@@ -1123,25 +1082,25 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
             return null;
           },
         ),
-        const SizedBox(height: 12),
-        _buildTextField(
+        const SizedBox(height: AppGap.sm),
+        buildTextField(
           key: 'engines',
           label: l10n.searchServicesEditDialogEnginesOptional,
           hint: 'google,duckduckgo',
         ),
-        const SizedBox(height: 12),
-        _buildTextField(
+        const SizedBox(height: AppGap.sm),
+        buildTextField(
           key: 'language',
           label: l10n.searchServicesEditDialogLanguageOptional,
           hint: 'en-US',
         ),
-        const SizedBox(height: 12),
-        _buildTextField(
+        const SizedBox(height: AppGap.sm),
+        buildTextField(
           key: 'username',
           label: l10n.searchServicesEditDialogUsernameOptional,
         ),
-        const SizedBox(height: 12),
-        _buildTextField(
+        const SizedBox(height: AppGap.sm),
+        buildTextField(
           key: 'password',
           label: l10n.searchServicesEditDialogPasswordOptional,
           obscureText: true,
@@ -1154,7 +1113,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
 
   SearchServiceOptions _updateService() {
     final service = widget.service;
-    
+
     if (service is TavilyOptions) {
       return TavilyOptions(
         id: service.id,
@@ -1222,7 +1181,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
         exclude: service.exclude,
       );
     }
-    
+
     return service;
   }
 }
@@ -1247,7 +1206,7 @@ class _ServiceIcon extends StatelessWidget {
     final matchName = _getMatchName(type);
     final asset = BrandAssets.assetForName(matchName);
     final bg = isDark ? Colors.white10 : cs.primary.withOpacity(0.1);
-    
+
     return Container(
       width: size,
       height: size,
@@ -1266,8 +1225,8 @@ class _ServiceIcon extends StatelessWidget {
     final iconSize = size * 0.62;
     if (asset.endsWith('.svg')) {
       final isColorful = asset.contains('color');
-      final ColorFilter? tint = (isDark && !isColorful) 
-          ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) 
+      final ColorFilter? tint = (isDark && !isColorful)
+          ? const ColorFilter.mode(Colors.white, BlendMode.srcIn)
           : null;
       return SvgPicture.asset(
         asset,
@@ -1327,125 +1286,10 @@ class _ServiceIcon extends StatelessWidget {
   }
 }
 
-// --- iOS-style tactile + section helpers (local copy to avoid ripple) ---
+// --- Sheet helpers (align with settings page) ---
 
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
-    this.size = 22,
-    this.haptics = true,
-  });
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
-  final double size;
-  final bool haptics;
-  @override
-  State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color;
-    final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
-    return Semantics(
-      button: true,
-      label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
-      ),
-    );
-  }
-}
-
-class _TactileRow extends StatefulWidget {
-  const _TactileRow({required this.builder, this.onTap, this.pressedScale = 1.00, this.haptics = true});
-  final Widget Function(bool pressed) builder;
-  final VoidCallback? onTap;
-  final double pressedScale;
-  final bool haptics;
-  @override
-  State<_TactileRow> createState() => _TactileRowState();
-}
-
-class _TactileRowState extends State<_TactileRow> {
-  bool _pressed = false;
-  void _setPressed(bool v) { if (_pressed != v) setState(() => _pressed = v); }
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
-      onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
-      onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
-      onTap: widget.onTap == null ? null : () {
-        if (widget.haptics && context.read<SettingsProvider>().hapticsOnListItemTap) Haptics.soft();
-        widget.onTap!.call();
-      },
-      child: widget.builder(_pressed),
-    );
-  }
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: AppCardSurface.border(context),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
-
-Widget _iosDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
-// Sheet helpers (align with settings page)
+/// 弹层内的选项行：leading 可选（图标 / 自定义部件 / 退化为右箭头）、无右箭头、
+/// 可选按压底色。与 `AppNavRow` 的差异见经验 #15 —— 保留私有。
 Widget _sheetOption(
   BuildContext context, {
   required String label,
@@ -1456,16 +1300,15 @@ Widget _sheetOption(
 }) {
   final cs = Theme.of(context).colorScheme;
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  return _TactileRow(
-    pressedScale: 1.00,
+  return IosTactileRow(
     haptics: true,
     onTap: onTap,
-    builder: (pressed) {
+    builder: (ctx, pressed) {
       final base = cs.onSurface;
       final bgTarget = (bgOnPress && pressed)
           ? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05))
           : Colors.transparent;
-      return _AnimatedPressColor(
+      return IosPressColor(
         pressed: pressed,
         base: base,
         builder: (c) {
@@ -1480,7 +1323,7 @@ Widget _sheetOption(
                   dimension: 36,
                   child: Center(child: leading ?? Icon(icon ?? Lucide.ChevronRight, size: 20, color: c)),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppGap.sm),
                 Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c))),
               ],
             ),
@@ -1493,9 +1336,12 @@ Widget _sheetOption(
 
 Widget _sheetDivider(BuildContext context) {
   final cs = Theme.of(context).colorScheme;
+  // height 1 / indent 56 与 AppSectionDivider（height 6 / indent 54）形状不同，保留字面量
   return Divider(height: 1, thickness: 0.6, indent: 56, endIndent: 16, color: cs.outlineVariant.withOpacity(0.18));
 }
 
+/// 步进器用的 ± 小图标键：0.9 / 0.6 按压 / 0.3 禁用的透明度阶梯，无按压底色，
+/// 与 `IosIconButton` 的「向白/黑混合 + 按压底色」语义不同 → 保留私有（经验 #16）。
 class _SmallTactileIcon extends StatefulWidget {
   const _SmallTactileIcon({required this.icon, required this.onTap, this.enabled = true});
   final IconData icon;
@@ -1529,5 +1375,3 @@ class _SmallTactileIconState extends State<_SmallTactileIcon> {
     );
   }
 }
-
-// (removed: now implemented as instance method on state)

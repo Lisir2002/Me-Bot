@@ -19,6 +19,7 @@ class IosIconButton extends StatefulWidget {
     this.minSize,
     this.semanticLabel,
     this.enabled = true,
+    this.haptics = false,
   }) : assert(icon != null || builder != null, 'Either icon or builder must be provided');
 
   final IconData? icon;
@@ -33,6 +34,14 @@ class IosIconButton extends StatefulWidget {
   final double? minSize; // min tap target (e.g., 44 for AppBar)
   final String? semanticLabel;
   final bool enabled;
+
+  /// 点按/长按时是否给 `Haptics.light()` 触觉反馈。
+  ///
+  /// 默认 `false`（保持本组件既有行为不变，属纯增量参数）。
+  /// 项目里各页原先的私有 `_TactileIconButton` 普遍会在点按时触发触觉，
+  /// 迁移到本组件时应显式传 `haptics: true` 以保住手感
+  /// （`StorageTactileIconButton` 也是无条件触觉，未受设置开关约束）。
+  final bool haptics;
 
   @override
   State<IosIconButton> createState() => _IosIconButtonState();
@@ -96,8 +105,18 @@ class _IosIconButtonState extends State<IosIconButton> {
           onTapDown: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = true) : null,
           onTapUp: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = false) : null,
           onTapCancel: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? () => setState(() => _pressed = false) : null,
-          onTap: widget.enabled ? widget.onTap : null,
-          onLongPress: widget.enabled ? widget.onLongPress : null,
+          onTap: widget.enabled
+              ? () {
+                  if (widget.haptics) Haptics.light();
+                  widget.onTap?.call();
+                }
+              : null,
+          onLongPress: widget.enabled
+              ? () {
+                  if (widget.haptics) Haptics.light();
+                  widget.onLongPress?.call();
+                }
+              : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOutCubic,
@@ -212,6 +231,132 @@ class _IosCardPressState extends State<IosCardPress> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// IosTactileRow / IosPressColor —— 「自绘按压效果」用的两个原语
+//
+// IosCardPress 的按压效果是固定的「底色向白/黑混合」，只适合纯底色卡；
+// 当行卡需要 透明底+文字变色、自绘边框/覆盖层 时，它表达不了。
+// 这两个组件把按压态交还给调用方：
+//   IosTactileRow  —— 只负责手势/触觉/可选缩放，把 pressed 回传给 builder
+//   IosPressColor  —— 只负责文字/图标颜色的按压过渡（透明底不变）
+// 二者可组合使用：IosTactileRow(builder: (_, pressed) => IosPressColor(...))
+// ──────────────────────────────────────────────────────────────
+
+/// 无背景绘制的通用可按压行/卡容器，把按压态回传给 builder。
+///
+/// 与 [IosCardPress] 的分工：
+/// - IosCardPress：整体底色按压过渡（固定向白/黑混合），适合纯底色卡
+/// - IosTactileRow：自绘边框/覆盖层/文字变色的行卡
+///
+/// 触觉反馈沿用「设置 → 列表项点按触觉」开关（[haptics] 可整体关闭）。
+class IosTactileRow extends StatefulWidget {
+  const IosTactileRow({
+    super.key,
+    required this.builder,
+    this.onTap,
+    this.onLongPress,
+    this.pressedScale,
+    this.releaseDelay = Duration.zero,
+    this.haptics = true,
+  });
+
+  /// `pressed` 为当前是否按压中，调用方据此自绘按压效果。
+  final Widget Function(BuildContext context, bool pressed) builder;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  /// 按压时缩放（如 0.98）；null = 不缩放。
+  final double? pressedScale;
+
+  /// 抬起后延迟复位按压态，让按压色多停留一瞬（如 120ms）。
+  final Duration releaseDelay;
+
+  /// 是否在点按时给软触觉反馈（仍受 设置→列表项触觉 开关约束）。
+  final bool haptics;
+
+  @override
+  State<IosTactileRow> createState() => _IosTactileRowState();
+}
+
+class _IosTactileRowState extends State<IosTactileRow> {
+  bool _pressed = false;
+  void _set(bool v) { if (_pressed != v) setState(() => _pressed = v); }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null || widget.onLongPress != null;
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: enabled ? (_) => _set(true) : null,
+        onTapUp: enabled
+            ? (_) {
+                if (widget.releaseDelay == Duration.zero) {
+                  _set(false);
+                } else {
+                  Future.delayed(widget.releaseDelay, () { if (mounted) _set(false); });
+                }
+              }
+            : null,
+        onTapCancel: enabled ? () => _set(false) : null,
+        onTap: widget.onTap == null
+            ? null
+            : () {
+                if (widget.haptics && context.read<SettingsProvider>().hapticsOnListItemTap) {
+                  Haptics.soft();
+                }
+                widget.onTap!.call();
+              },
+        child: AnimatedScale(
+          scale: _pressed ? (widget.pressedScale ?? 1.0) : 1.0,
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOutCubic,
+          child: widget.builder(context, _pressed),
+        ),
+      ),
+    );
+  }
+}
+
+/// 按压时文字/图标颜色的过渡（向暗/亮色混合 55%），无背景、无缩放。
+///
+/// 与 [IosTactileRow] 组合使用：
+/// ```dart
+/// IosTactileRow(
+///   onTap: ...,
+///   builder: (ctx, pressed) => IosPressColor(
+///     pressed: pressed,
+///     base: cs.onSurface.withOpacity(0.9),
+///     builder: (c) => Text(title, style: TextStyle(color: c)),
+///   ),
+/// )
+/// ```
+class IosPressColor extends StatelessWidget {
+  const IosPressColor({
+    super.key,
+    required this.pressed,
+    required this.base,
+    required this.builder,
+  });
+
+  final bool pressed;
+  final Color base;
+  final Widget Function(Color color) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(end: target),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, color, _) => builder(color ?? base),
     );
   }
 }

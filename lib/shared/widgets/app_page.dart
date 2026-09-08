@@ -15,6 +15,14 @@ import 'ios_tactile.dart';
 //   FAB/抽屉 : floatingActionButton / drawer / endDrawer
 //
 // 内容优先级：states > segments > body
+//
+// ⚠️ 使用约定（重要）：
+//   1. states: 是「一次性 Future」语义，适合开页拉一次的页面。
+//      Provider / ChangeNotifier 驱动的响应式页面请勿使用 states:
+//      改为在 body 里手动判断 provider.loading / provider.error，
+//      直接渲染 AppLoading / AppError / AppEmpty（见 storage_page.dart 范例）。
+//   2. 需要重新加载时，改变 AppPageStates.reloadKey 即可触发，
+//      父级单纯重建不会重复拉取。
 // ──────────────────────────────────────────────────────────────
 
 /// 一个分段：label + 内容 builder
@@ -38,6 +46,9 @@ class AppSegment {
 enum AppSegmentMode { top, bottom }
 
 /// 三态状态机配置（AsyncSnapshot 驱动）
+///
+/// 仅在「一次性 Future」场景使用，且默认只在首次挂载时加载一次。
+/// 需要重新加载时，请改变 [reloadKey]（推荐）或调用 [onRetry]。
 class AppPageStates<T> {
   final Future<T> Function() load;
   final Widget Function(BuildContext context, T data) buildData;
@@ -47,6 +58,16 @@ class AppPageStates<T> {
   final Future<void> Function()? onRetry;
   final String? loadingMessage;
 
+  /// 重新加载的「钥匙」：值发生变化才触发一次新的 load。
+  ///
+  /// - 为 null（默认）：只在首次挂载时加载一次，父级重建不会重复拉取。
+  /// - 非 null：当新旧 [reloadKey] 不相等时触发重新加载（例如筛选条件变化）。
+  ///
+  /// 之所以不用「比较 config 对象引用」来决定是否重载，是因为父级 build
+  /// 每次都会 new 一个 AppPageStates，引用永不相等，会导致父级每次重建
+  /// 都重新拉取 Future（在 Provider 响应式页面里会形成重建→refetch 循环）。
+  final Object? reloadKey;
+
   const AppPageStates({
     required this.load,
     required this.buildData,
@@ -55,11 +76,28 @@ class AppPageStates<T> {
     this.emptyHint,
     this.onRetry,
     this.loadingMessage,
+    this.reloadKey,
   });
 }
 
-class AppPage extends StatefulWidget {
+/// ⚠️ `states:` 是泛型参数 [T] 的唯一来源。
+///
+/// 之所以让 AppPage 泛型化：若不泛型，`states` 的静态类型只能是
+/// `AppPageStates<dynamic>`，而 `AppPageStates<String>.buildData` 的运行时类型是
+/// `(BuildContext, String) => Widget`；引擎读取该字段时会插入一次隐式转型检查，
+/// 在运行期抛出 `_TypeError: type '(BuildContext, String) => Text' is not a
+/// subtype of type '(BuildContext, dynamic) => Widget'`。
+/// 泛型化后 `buildData` 全程保持 `T`，无需任何 `as dynamic` 绕过。
+/// 不使用 `states:` 的页面无需改动（T 会被推断为 `dynamic`）。
+class AppPage<T> extends StatefulWidget {
   final String title;
+
+  /// 自定义标题组件（可选）。
+  ///
+  /// `title` 只能是纯文本，而部分页面（如 provider_detail_page）的标题是
+  /// 「品牌头像 + 动态名称」的富标题。传入 [titleWidget] 时完全覆盖
+  /// `Text(title)` 的渲染；未传则回落到纯文本标题，两者互不干扰。
+  final Widget? titleWidget;
   final Widget? body;
   final List<Widget>? actions;
   final Widget? leading;
@@ -77,7 +115,7 @@ class AppPage extends StatefulWidget {
   final AppSegmentMode segmentsMode;
 
   /// 三态状态机（可选，包住内容区）
-  final AppPageStates? states;
+  final AppPageStates<T>? states;
 
   /// 自定义底部槽位
   final Widget? bottom;
@@ -85,6 +123,7 @@ class AppPage extends StatefulWidget {
   const AppPage({
     super.key,
     required this.title,
+    this.titleWidget,
     this.body,
     this.actions,
     this.leading,
@@ -103,10 +142,10 @@ class AppPage extends StatefulWidget {
   });
 
   @override
-  State<AppPage> createState() => _AppPageState();
+  State<AppPage<T>> createState() => _AppPageState<T>();
 }
 
-class _AppPageState extends State<AppPage> {
+class _AppPageState<T> extends State<AppPage<T>> {
   int _bottomIndex = 0;
 
   /// 是否片状内容（分段由引擎自管，无需外层 padding/scrollable）
@@ -121,6 +160,7 @@ class _AppPageState extends State<AppPage> {
             ? Tooltip(
                 message: MaterialLocalizations.of(context).backButtonTooltip,
                 child: IosIconButton(
+                  haptics: true,
                   icon: Icons.arrow_back_ios_new_rounded,
                   size: 20,
                   minSize: 44,
@@ -134,7 +174,7 @@ class _AppPageState extends State<AppPage> {
 
     // states 包裹内容区
     if (widget.states != null) {
-      content = _StatesScope(config: widget.states!, child: content);
+      content = _StatesScope<T>(config: widget.states!, child: content);
     }
 
     // 非分段内容：外层 padding + 可选滚动
@@ -193,7 +233,7 @@ class _AppPageState extends State<AppPage> {
         titleSpacing: 4,
         leadingWidth: effectiveLeading != null ? 56 : null,
         leading: effectiveLeading,
-        title: Text(widget.title),
+        title: widget.titleWidget ?? Text(widget.title),
         actions: widget.actions,
         bottom: appBarBottom,
       ),
@@ -228,19 +268,32 @@ class _AppPageState extends State<AppPage> {
 // ──────────────────────────────────────────────────────────────
 // 内部：AsyncSnapshot 三态作用域（自管 future）
 // ──────────────────────────────────────────────────────────────
-class _StatesScope extends StatefulWidget {
-  final AppPageStates config;
+class _StatesScope<T> extends StatefulWidget {
+  final AppPageStates<T> config;
   final Widget? child;
   const _StatesScope({required this.config, this.child});
 
   @override
-  State<_StatesScope> createState() => _StatesScopeState();
+  State<_StatesScope<T>> createState() => _StatesScopeState<T>();
 }
 
-class _StatesScopeState extends State<_StatesScope> {
-  Future<dynamic>? _future;
+class _StatesScopeState<T> extends State<_StatesScope<T>> {
+  Future<T>? _future;
 
-  Future<dynamic> _fetch() => widget.config.load();
+  /// 当前已加载的 reloadKey，用于判断是否真的需要重新拉取
+  Object? _loadedReloadKey;
+
+  Future<T> _fetch() {
+    _loadedReloadKey = widget.config.reloadKey;
+    final Future<T> f = widget.config.load();
+    // ⚠️ 必须立刻挂一个「只吞错误」的监听。
+    // 重试场景下 setState 要下一帧才重建，FutureBuilder 那时才订阅；
+    // 而 future 可能已经以错误完成，会被判定为「未处理的异步异常」上报
+    // （测试里直接判失败，真机上走 FlutterError.onError 产生噪声日志）。
+    // 挂了这个监听后，后续 FutureBuilder 仍能正常拿到 snapshot.hasError。
+    f.ignore();
+    return f;
+  }
 
   @override
   void initState() {
@@ -249,24 +302,38 @@ class _StatesScopeState extends State<_StatesScope> {
   }
 
   @override
-  void didUpdateWidget(_StatesScope old) {
+  void didUpdateWidget(_StatesScope<T> old) {
     super.didUpdateWidget(old);
-    if (old.config != widget.config && widget.config != null) {
-      _future = null;
+    // ✅ 修复：只按 reloadKey 判断是否重载，不再按 config 对象引用比较。
+    // 旧实现中父级 build 每次 new 一个 AppPageStates，引用永远不等，
+    // 导致父级每次重建都重新拉取 Future（Provider 页面会重建→refetch 循环）。
+    final nextKey = widget.config.reloadKey;
+    if (nextKey != null && nextKey != _loadedReloadKey) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _future = _fetch());
+        if (!mounted) return;
+        // ⚠️ 不能写成 setState(() => _future = _fetch())：赋值表达式的值就是
+        // 那个 Future，setState 会断言「回调返回了 Future」。
+        final next = _fetch();
+        setState(() {
+          _future = next;
+        });
       });
     }
   }
 
   void _retry() {
-    setState(() => _future = _fetch());
+    // 同上：先取 Future，再同步 setState。原实现 `setState(() => _future = _fetch())`
+    // 在点「重试」时会触发 Flutter 断言失败。
+    final next = _fetch();
+    setState(() {
+      _future = next;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final cfg = widget.config;
-    return FutureBuilder<dynamic>(
+    return FutureBuilder<T>(
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -288,7 +355,7 @@ class _StatesScopeState extends State<_StatesScope> {
                 : FilledButton.tonal(onPressed: cfg.onRetry, child: const Text('重试')),
           );
         }
-        return cfg.buildData(context, data);
+        return cfg.buildData(context, data as T);
       },
     );
   }

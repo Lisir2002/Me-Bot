@@ -8,8 +8,9 @@ import '../widgets/add_provider_sheet.dart';
 // grid reorder removed in favor of iOS-style list reordering
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../core/services/haptics.dart';
 import '../widgets/share_provider_sheet.dart';
@@ -18,8 +19,42 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'dart:ui' as ui show ImageFilter;
+import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
 import '../../../shared/widgets/ios_checkbox.dart';
+import '../../../theme/design_tokens.dart';
+
+// ──────────────────────────────────────────────────────────────
+// 迁移到 AppPage 骨架（批次 3 收官页，1123 行 → ~950 行）
+//
+// 骨架层：
+//   Scaffold + AppBar + Stack        → AppPage(title / actions / body)
+//   AppBar leading 的私有返回按钮      → AppPage 默认 showBack（44pt 热区）
+//   ⚠️ safeArea: false               —— 本页自己用 `MediaQuery.padding.bottom`
+//                                      手动给列表留出系统栏空间（列表要"贴底"，
+//                                      底栏还是浮层），引擎再包一层 SafeArea 会二次叠加
+//   ⚠️ scrollable: false             —— 内容是 `ReorderableListView`，自带滚动（清单 3c）
+//   ⚠️ bodyPadding: zero             —— `_ProvidersList` 自带 `fromLTRB(16, 8, 16, 0)`
+//   Stack + Positioned 浮层           —— **不用 `bottom:` 槽位**：它会变成
+//                                      bottomNavigationBar 常驻占位并把 body 顶上去，
+//                                      而选择栏是「滑入/滑出」的浮层
+//
+// 组件层：
+//   _TactileIconButton（4 处 AppBar）  → IosIconButton(haptics: true, minSize: 44)
+//   _TactileRow（供应商行）            → IosTactileRow(haptics: false)（触觉由 onTap 内按需触发）
+//   _AnimatedPressColor               → IosPressColor
+//   _showMultiExportSheet             → showAppSheet（把手 + 居中标题，故内容自建）
+//
+// 顺带清理：`settings_provider.dart` import 两遍；4 处死代码——
+//   `_items` 字段（声明后从未读写）、`_CapsuleButton`（65 行，无调用点）、
+//   `_Pill`（17 行）、`_DragHandle`（32 行，注释已写"drag handle removed"）。
+//
+// 仍留在本地的私有件：
+//   _ProvidersList —— 卡片的圆角会随「是否触底」变化（触底则下缘拉直），是独一份的形状
+//   _iosDivider    —— 与 `SettingsDivider` 默认值逐值相同，但 provider 不便反向依赖
+//                     features/settings（同 `_iosSectionCard`，见迁移计划「待办 F」）
+//   _GlassCircleButton / _SettleAnim / _BrandAvatar / _IconAsset —— 视觉语义独一份
+// ──────────────────────────────────────────────────────────────
 
 class ProvidersPage extends StatefulWidget {
   const ProvidersPage({super.key});
@@ -29,7 +64,6 @@ class ProvidersPage extends StatefulWidget {
 }
 
 class _ProvidersPageState extends State<ProvidersPage> {
-  List<_Provider>? _items;
   final Set<String> _settleKeys = {};
   bool _selectMode = false;
   final Set<String> _selected = {};
@@ -71,72 +105,74 @@ class _ProvidersPageState extends State<ProvidersPage> {
     tmp.addAll(map.values);
     final items = tmp;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
+    return AppPage(
+      title: l10n.providersPageTitle,
+      // 见文件头注释：本页自己处理系统栏，关掉引擎的 SafeArea 避免二次叠加
+      safeArea: false,
+      // 见文件头注释：ReorderableListView 自带滚动
+      scrollable: false,
+      bodyPadding: AppPagePadding.zero,
+      actions: [
+        Tooltip(
+          message: _selectMode ? l10n.searchServicesPageDone : l10n.providersPageMultiSelectTooltip,
+          child: IosIconButton(
+            haptics: true,
+            icon: _selectMode ? Lucide.Check : Lucide.circleDot,
             color: cs.onSurface,
             size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
+            minSize: 44,
+            onTap: () {
+              setState(() {
+                if (_selectMode) {
+                  _selected.clear();
+                }
+                _selectMode = !_selectMode;
+              });
+            },
           ),
         ),
-        title: Text(l10n.providersPageTitle),
-        actions: [
-          Tooltip(
-            message: _selectMode ? l10n.searchServicesPageDone : l10n.providersPageMultiSelectTooltip,
-            child: _TactileIconButton(
-              icon: _selectMode ? Lucide.Check : Lucide.circleDot,
-              color: cs.onSurface,
-              size: 22,
-              onTap: () {
-                setState(() {
-                  if (_selectMode) {
-                    _selected.clear();
-                  }
-                  _selectMode = !_selectMode;
-                });
-              },
-            ),
+        Tooltip(
+          message: l10n.providersPageImportTooltip,
+          child: IosIconButton(
+            haptics: true,
+            icon: Lucide.cloudDownload,
+            color: cs.onSurface,
+            size: 22,
+            minSize: 44,
+            onTap: () async {
+              await showImportProviderSheet(context);
+              if (!mounted) return;
+              setState(() {});
+            },
           ),
-          Tooltip(
-            message: l10n.providersPageImportTooltip,
-            child: _TactileIconButton(
-              icon: Lucide.cloudDownload,
-              color: cs.onSurface,
-              size: 22,
-              onTap: () async {
-                await showImportProviderSheet(context);
-                if (!mounted) return;
+        ),
+        Tooltip(
+          message: l10n.providersPageAddTooltip,
+          child: IosIconButton(
+            haptics: true,
+            icon: Lucide.Plus,
+            color: cs.onSurface,
+            size: 22,
+            minSize: 44,
+            onTap: () async {
+              final createdKey = await showAddProviderSheet(context);
+              if (!mounted) return;
+              if (createdKey != null && createdKey.isNotEmpty) {
                 setState(() {});
-              },
-            ),
+                final msg = l10n.providersPageProviderAddedSnackbar;
+                showAppSnackBar(
+                  context,
+                  message: msg,
+                  type: NotificationType.success,
+                );
+              }
+            },
           ),
-          Tooltip(
-            message: l10n.providersPageAddTooltip,
-            child: _TactileIconButton(
-              icon: Lucide.Plus,
-              color: cs.onSurface,
-              size: 22,
-              onTap: () async {
-                final createdKey = await showAddProviderSheet(context);
-                if (!mounted) return;
-                if (createdKey != null && createdKey.isNotEmpty) {
-                  setState(() {});
-                  final msg = l10n.providersPageProviderAddedSnackbar;
-                  showAppSnackBar(
-                    context,
-                    message: msg,
-                    type: NotificationType.success,
-                  );
-                }
-              },
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
+        ),
+        const SizedBox(width: AppGap.sm),
+      ],
+      // 选择栏是「滑入/滑出」的浮层，必须盖在列表之上，
+      // 因此这里用 Stack + Positioned，而不是 `bottom:` 槽位（后者会常驻占位）。
       body: Stack(
         children: [
           _ProvidersList(
@@ -325,7 +361,7 @@ class _ProvidersList extends StatelessWidget {
 
     // Adapt height: wrap to content if short; flush to bottom if long
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.xs, AppGap.md, 0),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final media = MediaQuery.of(context);
@@ -350,17 +386,17 @@ class _ProvidersList extends StatelessWidget {
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(12),
-                topRight: const Radius.circular(12),
+                topLeft: Radius.circular(AppRadius.md),
+                topRight: Radius.circular(AppRadius.md),
                 // If not reaching bottom, use rounded corners; if reaching bottom, flush
-                bottomLeft: Radius.circular(reachesBottom ? 0 : 12),
-                bottomRight: Radius.circular(reachesBottom ? 0 : 12),
+                bottomLeft: Radius.circular(reachesBottom ? 0 : AppRadius.md),
+                bottomRight: Radius.circular(reachesBottom ? 0 : AppRadius.md),
               ),
               border: Border.all(color: borderColor, width: 0.6),
             ),
             clipBehavior: Clip.antiAlias,
             child: ReorderableListView.builder(
-              padding: EdgeInsets.only(top: 4, bottom: reachesBottom ? bottomGapIfFlush : 4),
+              padding: EdgeInsets.only(top: AppGap.xxs, bottom: reachesBottom ? bottomGapIfFlush : AppGap.xxs),
               itemCount: items.length,
               onReorder: onReorder,
               buildDefaultDragHandles: false,
@@ -420,10 +456,12 @@ class _ProviderRow extends StatelessWidget {
     final statusBg = enabled ? Colors.green.withOpacity(0.12) : Colors.orange.withOpacity(0.15);
     final statusFg = enabled ? Colors.green : Colors.orange;
 
-    final isFirst = index == 0;
     final isLast = index == total - 1;
 
-    final row = _TactileRow(
+    // pressedScale 不传 = 不缩放（对上原来的 1.00）；
+    // haptics: false —— 触觉由 onTap 内按「是否选择模式」决定是否触发，
+    // 而 IosTactileRow 的触觉开关是「列表项点按」全局设置，语义不同。
+    final row = IosTactileRow(
       onTap: () {
         if (selectMode) {
           Haptics.light();
@@ -439,16 +477,14 @@ class _ProviderRow extends StatelessWidget {
           );
         }
       },
-      pressedScale: 1.00, // no scale per spec
       haptics: false,
-      builder: (pressed) {
-        final base = cs.onSurface.withOpacity(0.9);
-        return _AnimatedPressColor(
+      builder: (ctx, pressed) {
+        return IosPressColor(
           pressed: pressed,
-          base: base,
+          base: cs.onSurface.withOpacity(0.9),
           builder: (color) {
             final rowContent = Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
               child: AnimatedSize(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
@@ -476,9 +512,9 @@ class _ProviderRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (selectMode) const SizedBox(width: 4),
+                  if (selectMode) const SizedBox(width: AppGap.xxs),
                   SizedBox(width: 36, child: Center(child: _BrandAvatar(name: (cfg.name.isNotEmpty ? cfg.name : provider.keyName), size: 22))),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppGap.sm),
                   Expanded(
                     child: Text(
                       (cfg.name.isNotEmpty ? cfg.name : provider.name),
@@ -487,19 +523,19 @@ class _ProviderRow extends StatelessWidget {
                       style: TextStyle(fontSize: 15, color: color, fontWeight: FontWeight.w600),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppGap.xs),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: AppGap.xs, vertical: 3),
                     decoration: BoxDecoration(
                       color: statusBg,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.circular),
                     ),
                     child: Text(
                       enabled ? l10n.providersPageEnabledStatus : l10n.providersPageDisabledStatus,
                       style: TextStyle(fontSize: 11, color: statusFg),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppGap.xs),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 150),
                     switchInCurve: Curves.easeOut,
@@ -517,7 +553,7 @@ class _ProviderRow extends StatelessWidget {
             if (!selectMode) {
               line = ReorderableDelayedDragStartListener(index: index, child: line);
             }
-            return Column(children: [line, if (!isLast) _iosDivider(context)]);
+            return Column(children: [line, if (!isLast) _iosDivider(ctx)]);
           },
         );
       },
@@ -561,7 +597,7 @@ class _SelectionBar extends StatelessWidget {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 46),
+              padding: const EdgeInsets.fromLTRB(AppGap.md, 10, AppGap.md, 46),
               child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -588,73 +624,6 @@ class _SelectionBar extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CapsuleButton extends StatefulWidget {
-  const _CapsuleButton({required this.label, required this.icon, required this.color, required this.onTap, this.outlined = false});
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final bool outlined;
-  @override
-  State<_CapsuleButton> createState() => _CapsuleButtonState();
-}
-
-class _CapsuleButtonState extends State<_CapsuleButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    // iOS glass style: grey border + frosted background; keep icon/label tinted by provided color
-    final glassBase = isDark ? Colors.black.withOpacity(0.06) : Colors.white.withOpacity(0.65);
-    final overlay = isDark ? Colors.black.withOpacity(0.06) : Colors.black.withOpacity(0.05);
-    final tileColor = _pressed ? Color.alphaBlend(overlay, glassBase) : glassBase;
-    final borderColor = cs.outlineVariant.withOpacity(isDark ? 0.35 : 0.40); // subtle grey border
-    final fg = widget.color; // use provided color for content only
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {
-        Haptics.light();
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 110),
-        curve: Curves.easeOutCubic,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: tileColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor, width: 1.0),
-              ),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(widget.icon, size: 16, color: fg),
-                  const SizedBox(width: 6),
-                  Text(widget.label, style: TextStyle(color: fg, fontSize: 14, fontWeight: FontWeight.w600)),
-                ],
               ),
             ),
           ),
@@ -750,36 +719,49 @@ Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) asyn
       }()
   ];
   final text = entries.map((e) => e['code']).join('\n');
-  await showModalBottomSheet<void>(
+  // 自建内容：标题居中，`AppSheet.title` 只有左对齐一种，套不进去（把手需自己画）。
+  // SafeArea + 键盘避让由 showAppSheet 统一处理，故去掉手写的 viewInsets.bottom。
+  await showAppSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: cs.surface,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-    builder: (ctx) {
-      final bool showQr = keys.length <= 4;
-      Rect shareAnchorRect(BuildContext bctx) {
-        try {
-          final ro = bctx.findRenderObject();
-          if (ro is RenderBox && ro.hasSize && ro.size.width > 0 && ro.size.height > 0) {
-            final origin = ro.localToGlobal(Offset.zero);
-            return origin & ro.size;
-          }
-        } catch (_) {}
-        final size = MediaQuery.of(bctx).size;
-        return Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: 1, height: 1);
-      }
-      return SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 10, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
+    builder: Builder(
+      builder: (ctx) {
+        final bool showQr = keys.length <= 4;
+        Rect shareAnchorRect(BuildContext bctx) {
+          try {
+            final ro = bctx.findRenderObject();
+            if (ro is RenderBox && ro.hasSize && ro.size.width > 0 && ro.size.height > 0) {
+              final origin = ro.localToGlobal(Offset.zero);
+              return origin & ro.size;
+            }
+          } catch (_) {}
+          final size = MediaQuery.of(bctx).size;
+          return Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: 1, height: 1);
+        }
+        return Padding(
+          // 10 无精确 token（xs=8 / sm=12），保留字面量
+          padding: const EdgeInsets.fromLTRB(AppGap.md, 10, AppGap.md, AppGap.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(999)))),
-              const SizedBox(height: 12),
-              Center(child: Text(l10n.providersPageExportSelectedTitle(keys.length), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
-              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurface.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(AppRadius.circular),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppGap.sm),
+              Center(
+                child: Text(
+                  l10n.providersPageExportSelectedTitle(keys.length),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: AppGap.sm),
               // Show QR only when selection is small to avoid overlong input
               if (showQr) ...[
                 Center(
@@ -787,7 +769,7 @@ Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) asyn
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
                     ),
                     child: PrettyQr(
@@ -798,7 +780,7 @@ Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) asyn
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppGap.sm),
               ],
               // Limited preview of codes (6-7 lines), full content still copied/shared
               SizedBox(
@@ -812,7 +794,7 @@ Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) asyn
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppGap.sm),
               Row(
                 children: [
                   Expanded(
@@ -840,9 +822,9 @@ Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) asyn
               ),
             ],
           ),
-        ),
-      );
-    },
+        );
+      },
+    ),
   );
 }
 
@@ -874,29 +856,10 @@ class _SettleAnim extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({required this.text, required this.bg, required this.fg});
-  final String text;
-  final Color bg;
-  final Color fg;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Text(text, style: TextStyle(color: fg, fontSize: 11)),
-    );
-  }
-}
-
 class _BrandAvatar extends StatelessWidget {
   const _BrandAvatar({required this.name, this.size = 40});
   final String name;
   final double size;
-
 
   bool _preferMonochromeWhite(String n) {
     final k = n.toLowerCase();
@@ -904,11 +867,6 @@ class _BrandAvatar extends StatelessWidget {
     if (RegExp(r'grok|xai').hasMatch(k)) return true;
     if (RegExp(r'openrouter').hasMatch(k)) return true;
     return false;
-  }
-
-  bool _tintPurpleSilicon(String n) {
-    final k = n.toLowerCase();
-    return RegExp(r'silicon|硅基').hasMatch(k);
   }
 
   @override
@@ -974,150 +932,10 @@ class _Provider {
   _Provider({required this.name, required this.keyName, required this.enabled, required this.modelCount});
 }
 
-class _DragHandle extends StatelessWidget {
-  const _DragHandle({required this.onDragStarted, required this.onDragEnd, required this.feedback, required this.data});
-  final VoidCallback onDragStarted;
-  final VoidCallback onDragEnd;
-  final Widget feedback;
-  final int data;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return LongPressDraggable<int>(
-      data: data,
-      dragAnchorStrategy: pointerDragAnchorStrategy,
-      onDragStarted: onDragStarted,
-      onDragEnd: (_) => onDragEnd(),
-      feedback: Material(
-        color: Colors.transparent,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 200),
-          child: Opacity(opacity: 0.95, child: feedback),
-        ),
-      ),
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        child: Icon(Lucide.GripHorizontal, size: 24, color: cs.onSurface.withOpacity(0.7)),
-      ),
-      childWhenDragging: const SizedBox(width: 40, height: 40),
-    );
-  }
-}
-
-// Icon-only tactile icon button for AppBar: no ripple, scale + color on press, no haptics
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
-    this.size = 22,
-    this.haptics = true,
-  });
-
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
-  final double size;
-  final bool haptics;
-
-  @override
-  State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color;
-    final pressColor = base.withOpacity(0.7);
-    final icon = Icon(
-      widget.icon,
-      size: widget.size,
-      color: _pressed ? pressColor : base,
-      semanticLabel: widget.semanticLabel,
-    );
-
-    return Semantics(
-      button: true,
-      label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
-        child: AnimatedScale(
-          scale: _pressed ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-            child: icon,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Row tactile wrapper for iOS-style lists: no ripple, optional haptics, color-only press feedback
-class _TactileRow extends StatefulWidget {
-  const _TactileRow({required this.builder, this.onTap, this.pressedScale = 1.00, this.haptics = true});
-  final Widget Function(bool pressed) builder;
-  final VoidCallback? onTap;
-  final double pressedScale;
-  final bool haptics;
-  @override
-  State<_TactileRow> createState() => _TactileRowState();
-}
-
-class _TactileRowState extends State<_TactileRow> {
-  bool _pressed = false;
-  void _setPressed(bool v) { if (_pressed != v) setState(() => _pressed = v); }
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
-      onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
-      onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
-      onTap: widget.onTap == null ? null : () {
-        if (widget.haptics && context.read<SettingsProvider>().hapticsOnListItemTap) Haptics.soft();
-        widget.onTap!.call();
-      },
-      child: widget.builder(_pressed),
-    );
-  }
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
+/// 行间分隔线。与 `SettingsDivider` 的默认值逐值相同（height 6 / thickness 0.6 /
+/// indent 54 / endIndent 12），但 provider 不便反向依赖 features/settings，
+/// 故本地保留（全仓统一收敛见迁移计划「待办 F」）。
 Widget _iosDivider(BuildContext context) {
   final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
+  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: AppGap.sm, color: cs.outlineVariant.withOpacity(0.18));
 }

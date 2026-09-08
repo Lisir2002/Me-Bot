@@ -1,17 +1,28 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../core/providers/settings_provider.dart';
-import 'package:provider/provider.dart';
-import '../../../icons/lucide_adapter.dart';
-import '../../../core/providers/settings_provider.dart';
-import '../widgets/model_select_sheet.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:characters/characters.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../utils/brand_assets.dart';
-import '../../../core/services/haptics.dart';
-import '../../../shared/widgets/card_surface.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/providers/settings_provider.dart';
+import '../../../icons/lucide_adapter.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/card_surface.dart';
+import '../../../shared/widgets/ios_tactile.dart';
+import '../../../theme/design_tokens.dart';
+import '../../../utils/brand_assets.dart';
+import '../widgets/model_select_sheet.dart';
+
+/// 默认模型页：聊天 / 标题 / 翻译 三个模型位，每个位可选模型 + 可选提示词配置。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + ListView → AppPage(title / leading / actions / body)
+/// - padding LTRB(16,16,16,24) → fromLTRB(AppGap.md, AppGap.md, AppGap.md, AppGap.xl)
+/// - body 用 Column(crossAxisAlignment: stretch)（引擎滚动容器给紧宽度，
+///   Column 默认 center 会放宽宽度导致卡片缩成内容宽度）
+/// - 两个逐字重复的 showModalBottomSheet → 参数化 _showPromptSheet + AppSheet
+/// - 私有 _TactileIconButton / _TactileRow → IosIconButton / IosTactileRow
 class DefaultModelPage extends StatelessWidget {
   const DefaultModelPage({super.key});
 
@@ -21,37 +32,23 @@ class DefaultModelPage extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     final l10n = AppLocalizations.of(context)!;
 
-    String displayText({String? providerKey, String? modelId, String? fbProvider, String? fbModel}) {
-      // If not explicitly set, use current model text
-      if (providerKey == null || modelId == null) return l10n.defaultModelPageUseCurrentModel;
-      try {
-        final cfg = settings.getProviderConfig(providerKey);
-        final providerName = cfg.name.isNotEmpty ? cfg.name : providerKey;
-        final ov = cfg.modelOverrides[modelId] as Map?;
-        final modelDisplay = (ov != null && (ov['name'] as String?)?.isNotEmpty == true) ? (ov['name'] as String) : modelId;
-        return modelDisplay;
-      } catch (_) {
-        return fbModel ?? providerKey;
-      }
-    }
-
-    return Scaffold(
-      backgroundColor: cs.surface,
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.defaultModelPageBackTooltip,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
+    return AppPage(
+      title: l10n.defaultModelPageTitle,
+      leading: Tooltip(
+        message: l10n.defaultModelPageBackTooltip,
+        child: IosIconButton(
+          haptics: true,
+          icon: Lucide.ArrowLeft,
+          color: cs.onSurface,
+          size: 22,
+          onTap: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(l10n.defaultModelPageTitle),
-        actions: const [SizedBox(width: 12)],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      // 与原先一致：右侧留一个等宽占位，保证标题视觉居中
+      actions: const [SizedBox(width: AppGap.sm)],
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.md, AppGap.md, AppGap.xl),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ModelCard(
             icon: Lucide.MessageCircle,
@@ -66,7 +63,7 @@ class DefaultModelPage extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppGap.md),
           _ModelCard(
             icon: Lucide.NotebookTabs,
             title: l10n.defaultModelPageTitleModelTitle,
@@ -81,9 +78,9 @@ class DefaultModelPage extends StatelessWidget {
                 await context.read<SettingsProvider>().setTitleModel(sel.providerKey, sel.modelId);
               }
             },
-            configAction: () => _showTitlePromptSheet(context),
+            configAction: () => _showPromptSheet(context, _PromptKind.title),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppGap.md),
           _ModelCard(
             icon: Lucide.Languages,
             title: l10n.defaultModelPageTranslateModelTitle,
@@ -98,164 +95,108 @@ class DefaultModelPage extends StatelessWidget {
                 await context.read<SettingsProvider>().setTranslateModel(sel.providerKey, sel.modelId);
               }
             },
-            configAction: () => _showTranslatePromptSheet(context),
+            configAction: () => _showPromptSheet(context, _PromptKind.translate),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _showTitlePromptSheet(BuildContext context) async {
+  /// 标题 / 翻译 提示词弹层（两者结构完全一致，仅文案与读写方法不同）。
+  ///
+  /// 原实现是两个 110 行的 `showModalBottomSheet`，逐字重复。
+  /// 现在用 AppSheet 承载（左对齐标题 + 内置拖拽把手 + footer 放操作行），
+  /// 键盘避让与 SafeArea 由 `showAppSheet` 统一处理。
+  Future<void> _showPromptSheet(BuildContext context, _PromptKind kind) async {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final settings = context.read<SettingsProvider>();
-    final controller = TextEditingController(text: settings.titlePrompt);
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 12,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(999)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(l10n.defaultModelPagePromptLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: controller,
-                  maxLines: 8,
-                  decoration: InputDecoration(
-                    hintText: l10n.defaultModelPageTitlePromptHint,
-                    filled: true,
-                    fillColor: Theme.of(ctx).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF2F3F5),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.primary.withOpacity(0.5))),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: () async {
-                        await settings.resetTitlePrompt();
-                        controller.text = settings.titlePrompt;
-                      },
-                      child: Text(l10n.defaultModelPageResetDefault),
-                    ),
-                    const Spacer(),
-                    FilledButton(
-                      onPressed: () async {
-                        await settings.setTitlePrompt(controller.text.trim());
-                        if (ctx.mounted) Navigator.of(ctx).pop();
-                      },
-                      child: Text(l10n.defaultModelPageSave),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(l10n.defaultModelPageTitleVars('{content}', '{locale}'), style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+    final controller = TextEditingController(text: kind.read(settings));
 
-  Future<void> _showTranslatePromptSheet(BuildContext context) async {
-    final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    final settings = context.read<SettingsProvider>();
-    final controller = TextEditingController(text: settings.translatePrompt);
-    await showModalBottomSheet(
+    OutlineInputBorder fieldBorder(Color color, double opacity) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide(color: color.withOpacity(opacity)),
+        );
+
+    await showAppSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 12,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(999)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(l10n.defaultModelPagePromptLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: controller,
-                  maxLines: 8,
-                  decoration: InputDecoration(
-                    hintText: l10n.defaultModelPageTranslatePromptHint,
-                    filled: true,
-                    fillColor: Theme.of(ctx).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF2F3F5),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: cs.primary.withOpacity(0.5))),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: () async {
-                        await settings.resetTranslatePrompt();
-                        controller.text = settings.translatePrompt;
-                      },
-                      child: Text(l10n.defaultModelPageResetDefault),
-                    ),
-                    const Spacer(),
-                    FilledButton(
-                      onPressed: () async {
-                        await settings.setTranslatePrompt(controller.text.trim());
-                        if (ctx.mounted) Navigator.of(ctx).pop();
-                      },
-                      child: Text(l10n.defaultModelPageSave),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(l10n.defaultModelPageTranslateVars('{source_text}', '{target_lang}'), style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12)),
-              ],
+      builder: AppSheet(
+        title: l10n.defaultModelPagePromptLabel,
+        contentPadding: const EdgeInsets.fromLTRB(AppGap.md, 4, AppGap.md, AppGap.md),
+        // ignore: sort_child_properties_last —— AppSheet 语义顺序是 title → children → footer，与 lint 的「children 放最后」冲突
+        children: [
+          TextField(
+            controller: controller,
+            maxLines: 8,
+            decoration: InputDecoration(
+              hintText: kind.hint(l10n),
+              filled: true,
+              fillColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white10
+                  : const Color(0xFFF2F3F5),
+              border: fieldBorder(cs.outlineVariant, 0.4),
+              enabledBorder: fieldBorder(cs.outlineVariant, 0.4),
+              focusedBorder: fieldBorder(cs.primary, 0.5),
             ),
           ),
-        );
-      },
+        ],
+        footer: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () async {
+                    await kind.reset(settings);
+                    controller.text = kind.read(settings);
+                  },
+                  child: Text(l10n.defaultModelPageResetDefault),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: () async {
+                    await kind.save(settings, controller.text.trim());
+                    if (context.mounted) Navigator.of(context).pop();
+                  },
+                  child: Text(l10n.defaultModelPageSave),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              kind.vars(l10n),
+              style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12),
+            ),
+          ],
+        ),
+      ),
     );
   }
+}
+
+/// 提示词弹层的两种形态，把「读 / 重置 / 保存 / 提示文案 / 变量说明」的差异收在这里。
+enum _PromptKind { title, translate }
+
+extension _PromptKindX on _PromptKind {
+  String read(SettingsProvider s) =>
+      this == _PromptKind.title ? s.titlePrompt : s.translatePrompt;
+
+  String hint(AppLocalizations l10n) =>
+      this == _PromptKind.title
+          ? l10n.defaultModelPageTitlePromptHint
+          : l10n.defaultModelPageTranslatePromptHint;
+
+  String vars(AppLocalizations l10n) =>
+      this == _PromptKind.title
+          ? l10n.defaultModelPageTitleVars('{content}', '{locale}')
+          : l10n.defaultModelPageTranslateVars('{source_text}', '{target_lang}');
+
+  Future<void> reset(SettingsProvider s) =>
+      this == _PromptKind.title ? s.resetTitlePrompt() : s.resetTranslatePrompt();
+
+  Future<void> save(SettingsProvider s, String value) =>
+      this == _PromptKind.title ? s.setTitlePrompt(value) : s.setTranslatePrompt(value);
 }
 
 class _ModelCard extends StatelessWidget {
@@ -301,7 +242,9 @@ class _ModelCard extends StatelessWidget {
       final cfg = settings.getProviderConfig(effectiveProvider);
       providerName = cfg.name.isNotEmpty ? cfg.name : effectiveProvider;
       final ov = cfg.modelOverrides[effectiveModelId] as Map?;
-      modelDisplay = (ov != null && (ov['name'] as String?)?.isNotEmpty == true) ? (ov['name'] as String) : effectiveModelId;
+      modelDisplay = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
+          ? (ov['name'] as String)
+          : effectiveModelId;
     }
 
     // Override display text if using fallback
@@ -312,10 +255,11 @@ class _ModelCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: baseBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: AppCardSurface.border(context),
       ),
       child: Padding(
+        // 14 无精确 token（sm=12 / md=16），保留字面量
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,7 +267,7 @@ class _ModelCard extends StatelessWidget {
             Row(
               children: [
                 Icon(icon, size: 18, color: cs.onSurface),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppGap.xs),
                 Expanded(
                   child: Text(
                     title,
@@ -333,7 +277,8 @@ class _ModelCard extends StatelessWidget {
                   ),
                 ),
                 if (configAction != null)
-                  _TactileIconButton(
+                  IosIconButton(
+                    haptics: true,
                     icon: Lucide.Settings,
                     color: cs.onSurface,
                     size: 20,
@@ -344,40 +289,39 @@ class _ModelCard extends StatelessWidget {
             const SizedBox(height: 6),
             // description under title
             Text(subtitle, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
-            const SizedBox(height: 4),
-            const SizedBox(height: 8),
-            _TactileRow(
+            // 原实现是相邻两个 SizedBox(4) + SizedBox(8)，合计 12，等价于 AppGap.sm
+            const SizedBox(height: AppGap.sm),
+            IosTactileRow(
               onTap: onPick,
-              builder: (pressed) {
+              pressedScale: 0.98,
+              releaseDelay: const Duration(milliseconds: 60),
+              builder: (_, pressed) {
                 final bg = isDark ? Colors.white10 : const Color(0xFFF2F3F5);
-                final overlay = isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05);
+                final overlay = isDark
+                    ? Colors.white.withOpacity(0.06)
+                    : Colors.black.withOpacity(0.05);
                 final pressedBg = Color.alphaBlend(overlay, bg);
-                return AnimatedScale(
-                  scale: pressed ? 0.98 : 1.0,
-                  duration: const Duration(milliseconds: 110),
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
                   curve: Curves.easeOutCubic,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: pressed ? pressedBg : bg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        _BrandAvatar(name: modelDisplay ?? (providerName ?? '?'), size: 24),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            modelDisplay ?? (providerName ?? '-'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                          ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: pressed ? pressedBg : bg,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    children: [
+                      _BrandAvatar(name: modelDisplay ?? (providerName ?? '?'), size: 24),
+                      const SizedBox(width: AppGap.xs),
+                      Expanded(
+                        child: Text(
+                          modelDisplay ?? (providerName ?? '-'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -393,8 +337,6 @@ class _BrandAvatar extends StatelessWidget {
   const _BrandAvatar({required this.name, this.size = 20});
   final String name;
   final double size;
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -419,7 +361,11 @@ class _BrandAvatar extends StatelessWidget {
         inner = Image.asset(asset, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain);
       }
     } else {
-      inner = Text(name.isNotEmpty ? name.characters.first.toUpperCase() : '?', style: TextStyle(color: cs.primary, fontWeight: FontWeight.w700, fontSize: size * 0.42));
+      inner = Text(
+        name.isNotEmpty ? name.characters.first.toUpperCase() : '?',
+        style: TextStyle(
+            color: cs.primary, fontWeight: FontWeight.w700, fontSize: size * 0.42),
+      );
     }
     return Container(
       width: size,
@@ -430,145 +376,6 @@ class _BrandAvatar extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: inner,
-    );
-  }
-}
-
-// --- iOS-style helpers ---
-
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: AppCardSurface.border(context),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
-
-Widget _iosDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.onLongPress, this.semanticLabel, this.size = 22, this.haptics = true});
-  final IconData icon; final Color color; final VoidCallback onTap; final VoidCallback? onLongPress; final String? semanticLabel; final double size; final bool haptics;
-  @override State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color; final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
-    return Semantics(
-      button: true, label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
-      ),
-    );
-  }
-}
-
-Widget _iosNavRow(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  String? detailText,
-  Widget? accessory,
-  VoidCallback? onTap,
-}) {
-  final cs = Theme.of(context).colorScheme; final interactive = onTap != null;
-  return _TactileRow(
-    onTap: onTap, haptics: true,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.8);
-      return _AnimatedPressColor(
-        pressed: pressed, base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            child: Row(children: [
-              SizedBox(width: 36, child: Icon(icon, size: 20, color: c)),
-              const SizedBox(width: 12),
-              Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c), maxLines: 1, overflow: TextOverflow.ellipsis)),
-              if (detailText != null) Padding(padding: const EdgeInsets.only(right: 6), child: Text(detailText, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)), maxLines: 1, overflow: TextOverflow.ellipsis)),
-              if (accessory != null) accessory,
-              if (interactive) Icon(Lucide.ChevronRight, size: 16, color: c),
-            ]),
-          );
-        },
-      );
-    },
-  );
-}
-
-class _TactileRow extends StatefulWidget {
-  const _TactileRow({required this.builder, this.onTap, this.haptics = true});
-  final Widget Function(bool pressed) builder;
-  final VoidCallback? onTap;
-  final bool haptics;
-  @override
-  State<_TactileRow> createState() => _TactileRowState();
-}
-
-class _TactileRowState extends State<_TactileRow> {
-  bool _pressed = false;
-  void _setPressed(bool v) { if (_pressed != v) setState(() => _pressed = v); }
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
-      onTapUp: widget.onTap == null
-          ? null
-          : (_) async {
-              // Keep pressed state for a short moment to avoid flicker
-              await Future.delayed(const Duration(milliseconds: 60));
-              if (mounted) _setPressed(false);
-            },
-      onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
-      onTap: widget.onTap == null ? null : () {
-        if (widget.haptics && context.read<SettingsProvider>().hapticsOnListItemTap) Haptics.soft();
-        widget.onTap!.call();
-      },
-      child: widget.builder(_pressed),
     );
   }
 }

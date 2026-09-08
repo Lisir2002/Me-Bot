@@ -5,14 +5,23 @@ import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
+import '../../../theme/design_tokens.dart';
 import '../../../utils/app_directories.dart';
 import '../widgets/storage_ios_widgets.dart';
+import '../widgets/storage_info_header.dart';
 import 'local_snapshot_page.dart';
 
 /// 只读明细型 / 本地副本型 子页面。
 /// 展示：顶部信息（分类名 + 大小 + 文件数 + 风险提示）
 ///       明细卡片列表（名称 / 大小 · N 个文件 / 完整路径）
 /// 本地副本额外提供「管理副本」入口与说明卡。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + ListView → AppPage(title/leading/actions/body)
+/// - padding LTRB(16,12,16,24) → fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl)
+/// - 空态 → AppEmpty
 class StorageDetailPage extends StatefulWidget {
   const StorageDetailPage({super.key, required this.config});
   final StorageCategoryConfig config;
@@ -74,32 +83,38 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
     final scan = _scan;
     final rows = _rows(l10n, scan);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: StorageTactileIconButton(
-          icon: Lucide.ArrowLeft,
-          color: cs.onSurface,
-          size: 22,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(cfg.title),
-        actions: [
-          StorageTactileIconButton(
-            icon: Lucide.RefreshCw,
-            color: cs.onSurface,
-            size: 20,
-            semanticLabel: l10n.storageRefresh,
-            onTap: _refresh,
-          ),
-          const SizedBox(width: 12),
-        ],
+    return AppPage(
+      title: cfg.title,
+      leading: StorageTactileIconButton(
+        icon: Lucide.ArrowLeft,
+        color: cs.onSurface,
+        size: 22,
+        onTap: () => Navigator.of(context).maybePop(),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      actions: [
+        StorageTactileIconButton(
+          icon: Lucide.RefreshCw,
+          color: cs.onSurface,
+          size: 20,
+          semanticLabel: l10n.storageRefresh,
+          onTap: _refresh,
+        ),
+        const SizedBox(width: AppGap.sm),
+      ],
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+      // crossAxisAlignment.stretch 必需：AppPage 的滚动容器给子项紧宽度，
+      // 但 Column 默认 center 会把宽度放宽，卡片会缩成内容宽度。
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _InfoHeader(config: cfg, bytes: scan.bytes, count: scan.fileCount),
+          StorageInfoHeader(
+            title: cfg.title,
+            bytes: scan.bytes,
+            count: scan.fileCount,
+            note: cfg.caution,
+          ),
           if (cfg.type == StorageCategoryType.snapshotDetail && _rootPath != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppGap.sm),
             _ManageSnapshotsCard(
               explain: l10n.storageSnapshotPathNote,
               path: '$_rootPath/snapshots',
@@ -112,12 +127,7 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
           StorageSectionHeader(l10n.storageDetailHeader, first: true),
           const SizedBox(height: 6),
           if (rows.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(l10n.storageEmpty, style: TextStyle(color: cs.onSurface.withOpacity(0.6))),
-              ),
-            )
+            AppEmpty(message: l10n.storageEmpty)
           else
             StorageSectionCard(
               children: [
@@ -148,7 +158,7 @@ class _DetailRowTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -169,7 +179,7 @@ class _DetailRowTile extends StatelessWidget {
             ],
           ),
           if (row.path.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppGap.xxs),
             Text(
               row.path,
               style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.5)),
@@ -206,16 +216,16 @@ class _ManageSnapshotsCard extends StatelessWidget {
         StorageTactileRow(
           onTap: onTap,
           builder: (_) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: cardBorder,
             ),
             child: Row(
               children: [
                 Icon(Lucide.HardDrive, size: 18, color: cs.onSurface.withOpacity(0.7)),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppGap.sm),
                 Expanded(
                   child: Text(
                     l10n.storageManageSnapshots,
@@ -229,10 +239,10 @@ class _ManageSnapshotsCard extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppGap.sm),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: cardBorder,
           ),
           child: Row(
@@ -242,7 +252,7 @@ class _ManageSnapshotsCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 1),
                 child: Icon(Lucide.BadgeInfo, size: 14, color: cs.onSurface.withOpacity(0.5)),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppGap.xs),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,67 +275,6 @@ class _ManageSnapshotsCard extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// 顶部信息：分类名 + 大小 + 文件数 + 风险提示。
-class _InfoHeader extends StatelessWidget {
-  const _InfoHeader({required this.config, required this.bytes, required this.count});
-  final StorageCategoryConfig config;
-  final int bytes;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: storageCardBorder(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            config.title,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.7)),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                storageFormatBytes(bytes),
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  l10n.storageItemsCount(count),
-                  style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              config.caution,
-              style: const TextStyle(fontSize: 11, color: Colors.orange),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

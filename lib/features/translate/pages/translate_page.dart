@@ -10,12 +10,24 @@ import '../../../utils/brand_assets.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/services/api/chat_api_service.dart';
+import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
+import '../../../theme/design_tokens.dart';
 import '../../settings/widgets/language_select_sheet.dart' show LanguageOption, supportedLanguages, showLanguageSelector;
-import '../../../core/services/haptics.dart';
 import '../../model/widgets/model_select_sheet.dart' show showModelSelector;
 
+/// 翻译页：固定高度输入区 + 可伸缩输出区 + 底部「目标语言 / 翻译」操作条。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + `SafeArea(Column[...])` → `AppPage(body:, bottom:)`
+///   - 底部操作条（语言选择 + 翻译/停止）→ **`bottom:` 槽位**
+///   - 引擎已对 body 套 SafeArea，故删除页面自带的 `SafeArea`
+///   - `bottomNavigationBar` 在 SafeArea 之外，所以底栏单独补 `SafeArea(top: false)`
+/// - `scrollable: false` + `bodyPadding: zero`：两个 TextField 都是 `expands: true` /
+///   `maxLines: null`，必须有界高度；内边距由各区自己声明
+/// - **私有 `_TactileIconButton` → 共享 `IosIconButton`**，随之移除 `haptics` import
+/// - 魔法数字 → AppGap / AppRadius
 class TranslatePage extends StatefulWidget {
   const TranslatePage({super.key});
 
@@ -49,7 +61,7 @@ class _TranslatePageState extends State<TranslatePage> {
   void _initDefaults() {
     final settings = context.read<SettingsProvider>();
     final assistant = context.read<AssistantProvider>().currentAssistant;
-    // default language
+    // 默认语言
     final lc = Localizations.localeOf(context).languageCode.toLowerCase();
     setState(() {
       if (lc.startsWith('zh')) {
@@ -71,7 +83,7 @@ class _TranslatePageState extends State<TranslatePage> {
         _providerKey = sel.providerKey;
         _modelId = sel.modelId;
       });
-      // Persist translate model selection so it’s remembered next time
+      // 记住翻译模型选择，下次进入自动回填
       await context.read<SettingsProvider>().setTranslateModel(sel.providerKey, sel.modelId);
     }
   }
@@ -120,7 +132,7 @@ class _TranslatePageState extends State<TranslatePage> {
         (chunk) {
           final s = chunk.content;
           if (_dst.text.isEmpty) {
-            // Remove any leading whitespace/newlines from the first chunk to avoid top gap
+            // 去掉首个分块的前导空白，避免译文顶部出现空行
             final cleaned = s.replaceFirst(RegExp(r'^\s+'), '');
             _dst.text = cleaned;
           } else {
@@ -189,137 +201,154 @@ class _TranslatePageState extends State<TranslatePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final asset = (_modelId != null) ? BrandAssets.assetForName(_modelId!) : null;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: lucide.Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
+    return AppPage(
+      title: l10n.desktopNavTranslateTooltip,
+      leading: Tooltip(
+        message: l10n.settingsPageBackButton,
+        child: IosIconButton(
+          haptics: true,
+          icon: lucide.Lucide.ArrowLeft,
+          color: cs.onSurface,
+          size: 22,
+          minSize: 44,
+          semanticLabel: l10n.settingsPageBackButton,
+          onTap: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      actions: [
+        // 粘贴
+        Tooltip(
+          message: l10n.translatePagePasteButton,
+          child: Padding(
+            padding: const EdgeInsets.only(right: AppGap.xxs),
+            child: IosIconButton(
+              haptics: true,
+              icon: lucide.Lucide.Clipboard,
+              size: 20,
+              padding: const EdgeInsets.all(AppGap.xs),
+              onTap: _pasteFromClipboard,
+            ),
           ),
         ),
-        title: Text(l10n.desktopNavTranslateTooltip),
-        actions: [
-          // Paste
-          Tooltip(
-            message: l10n.translatePagePasteButton,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: IosIconButton(
-                icon: lucide.Lucide.Clipboard,
-                size: 20,
-                padding: const EdgeInsets.all(8),
-                onTap: _pasteFromClipboard,
-              ),
-            ),
-          ),
-          // Copy result
-          Tooltip(
-            message: l10n.translatePageCopyResult,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: IosIconButton(
-                icon: lucide.Lucide.Copy,
-                size: 20,
-                padding: const EdgeInsets.all(8),
-                onTap: _copyResult,
-              ),
-            ),
-          ),
-          // Clear all
-          Tooltip(
-            message: l10n.translatePageClearAll,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: IosIconButton(
-                icon: lucide.Lucide.Eraser,
-                size: 20,
-                padding: const EdgeInsets.all(8),
-                onTap: _clearAll,
-              ),
-            ),
-          ),
-          // Model brand icon (keep original colors)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
+        // 复制结果
+        Tooltip(
+          message: l10n.translatePageCopyResult,
+          child: Padding(
+            padding: const EdgeInsets.only(right: AppGap.xxs),
             child: IosIconButton(
-              padding: const EdgeInsets.all(8),
-              builder: (color) {
-                if (asset != null && asset.toLowerCase().endsWith('.svg')) {
-                  return SvgPicture.asset(asset, width: 22, height: 22);
-                }
-                if (asset != null) {
-                  return Image.asset(asset, width: 22, height: 22);
-                }
-                return Icon(lucide.Lucide.Bot, size: 22, color: color);
-              },
-              onTap: _pickModel,
+              haptics: true,
+              icon: lucide.Lucide.Copy,
+              size: 20,
+              padding: const EdgeInsets.all(AppGap.xs),
+              onTap: _copyResult,
+            ),
+          ),
+        ),
+        // 清空
+        Tooltip(
+          message: l10n.translatePageClearAll,
+          child: Padding(
+            padding: const EdgeInsets.only(right: AppGap.xxs),
+            child: IosIconButton(
+              haptics: true,
+              icon: lucide.Lucide.Eraser,
+              size: 20,
+              padding: const EdgeInsets.all(AppGap.xs),
+              onTap: _clearAll,
+            ),
+          ),
+        ),
+        // 模型品牌图标（保留原色）
+        Padding(
+          padding: const EdgeInsets.only(right: AppGap.xs),
+          child: IosIconButton(
+            haptics: true,
+            padding: const EdgeInsets.all(AppGap.xs),
+            builder: (color) {
+              if (asset != null && asset.toLowerCase().endsWith('.svg')) {
+                return SvgPicture.asset(asset, width: 22, height: 22);
+              }
+              if (asset != null) {
+                return Image.asset(asset, width: 22, height: 22);
+              }
+              return Icon(lucide.Lucide.Bot, size: 22, color: color);
+            },
+            onTap: _pickModel,
+          ),
+        ),
+      ],
+      scrollable: false,
+      bodyPadding: AppPagePadding.zero,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 输入
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppGap.md, 10, AppGap.md, 6),
+            child: SizedBox(
+              height: 200,
+              child: _Card(
+                child: TextField(
+                  controller: _src,
+                  keyboardType: TextInputType.multiline,
+                  expands: true,
+                  maxLines: null,
+                  minLines: null,
+                  decoration: InputDecoration(
+                    hintText: l10n.translatePageInputHint,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.fromLTRB(
+                        AppGap.sm, AppGap.xs, AppGap.sm, AppGap.sm),
+                  ),
+                  contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                ),
+              ),
+            ),
+          ),
+          // 输出
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppGap.md, 10, AppGap.md, 6),
+              child: _Card(
+                child: TextField(
+                  controller: _dst,
+                  readOnly: true,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  expands: true,
+                  decoration: InputDecoration(
+                    hintText: l10n.translatePageOutputHint,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.fromLTRB(
+                        AppGap.sm, AppGap.xs, AppGap.sm, AppGap.sm),
+                  ),
+                  enableInteractiveSelection: false,
+                  contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                ),
+              ),
             ),
           ),
         ],
       ),
-      body: SafeArea(
+      // 底部：目标语言 + 翻译/停止
+      bottom: SafeArea(
+        top: false,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Input
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-              child: SizedBox(
-                height: 200,
-                child: _Card(
-                  child: TextField(
-                    controller: _src,
-                    keyboardType: TextInputType.multiline,
-                    expands: true,
-                    maxLines: null,
-                    minLines: null,
-                    decoration: InputDecoration(
-                      hintText: l10n.translatePageInputHint,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                    ),
-                    contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
-                    style: const TextStyle(fontSize: 15, height: 1.4),
-                  ),
-                ),
-              ),
-            ),
-            // Output
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                child: _Card(
-                  child: TextField(
-                    controller: _dst,
-                    readOnly: true,
-                    keyboardType: TextInputType.multiline,
-                    maxLines: null,
-                    expands: true,
-                    decoration: InputDecoration(
-                      hintText: l10n.translatePageOutputHint,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                    ),
-                    enableInteractiveSelection: false,
-                    contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
-                    style: const TextStyle(fontSize: 15, height: 1.4),
-                  ),
-                ),
-              ),
-            ),
-            // Bottom: language card + translate button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(AppGap.md, 0, AppGap.md, AppGap.sm),
               child: Row(
                 children: [
                   Expanded(
                     child: IosCardPress(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       baseColor: Theme.of(context).cardColor,
                       onTap: _pickLanguage,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppGap.xs),
                       child: Row(
                         children: [
                           Text((_lang ?? supportedLanguages.first).flag, style: const TextStyle(fontSize: 18)),
@@ -338,13 +367,13 @@ class _TranslatePageState extends State<TranslatePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppGap.sm),
                   IosCardPress(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     baseColor: cs.primary,
                     pressedBlendStrength: isDark ? 0.08 : 0.06,
                     onTap: _loading ? _stop : _translate,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: AppGap.md, vertical: AppGap.xs),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
                       transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: FadeTransition(opacity: anim, child: child)),
@@ -354,7 +383,7 @@ class _TranslatePageState extends State<TranslatePage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 SvgPicture.asset('assets/icons/stop.svg', width: 18, height: 18, colorFilter: ColorFilter.mode(isDark ? Colors.black : Colors.white, BlendMode.srcIn)),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: AppGap.xs),
                                 Text(l10n.chatMessageWidgetStopTooltip, style: TextStyle(color: isDark ? Colors.black : Colors.white, fontWeight: FontWeight.w700)),
                               ],
                             )
@@ -363,7 +392,7 @@ class _TranslatePageState extends State<TranslatePage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(lucide.Lucide.Languages, size: 18, color: isDark ? Colors.black : Colors.white),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: AppGap.xs),
                                 Text(l10n.chatMessageWidgetTranslateTooltip, style: TextStyle(color: isDark ? Colors.black : Colors.white, fontWeight: FontWeight.w700)),
                               ],
                             ),
@@ -382,45 +411,18 @@ class _TranslatePageState extends State<TranslatePage> {
 class _Card extends StatelessWidget {
   const _Card({required this.child});
   final Widget child;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.25)),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: cs.outlineVariant.withOpacity(0.25)),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
-    );
-  }
-}
-
-// Copy of the tactile back icon used on settings-like pages
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.onLongPress, this.semanticLabel, this.size = 22, this.haptics = true});
-  final IconData icon; final Color color; final VoidCallback onTap; final VoidCallback? onLongPress; final String? semanticLabel; final double size; final bool haptics;
-  @override State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color; final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
-    return Semantics(
-      button: true, label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { if (widget.haptics) Haptics.light(); widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
-      ),
     );
   }
 }

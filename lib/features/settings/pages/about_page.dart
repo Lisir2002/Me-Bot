@@ -3,18 +3,34 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../icons/lucide_adapter.dart';
 import 'package:haptic_feedback/haptic_feedback.dart' as HF;
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_switch.dart';
+import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
-import '../../../core/services/haptics.dart';
-import '../../../shared/widgets/card_surface.dart';
+import '../../../theme/design_tokens.dart';
+import '../widgets/settings_ios_widgets.dart';
 
+/// 关于页：应用信息卡 + 链接列表 + 版本号连点 7 次的彩蛋测试面板。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + ListView → AppPage(title/leading/body)，body 用 Column(stretch)
+/// - padding LTRB(16,20,16,16) → fromLTRB(AppGap.md, AppGap.lg, AppGap.md, AppGap.md)
+/// - **私有 `_TactileIconButton` → 共享 `IosIconButton`**
+/// - **私有 `_TactileRow` / `_AnimatedPressColor` → 共享 `IosTactileRow` + `IosPressColor`**
+///
+/// 彩蛋弹层**保持自建**：`FractionallySizedBox(0.7) + StatefulBuilder + 内部滚动 + Expanded`
+/// 属于 AppSheet 明示不适用的复杂弹层（内部滚动的定高面板 + 居中关闭按钮），不强行套模板。
+///
+/// iOS 风格行/卡已收敛到共享组件（[收尾代办 C]）：
+/// `_iosSectionCard` / `_iosDivider` / `_iosNavRow` / `_iosNavRowSvgLeading`
+/// → `SettingsSectionCard` / `SettingsDivider` / `SettingsNavRow`
+/// （见 `../widgets/settings_ios_widgets.dart`）。仍保留私有的只有 `_TestButton`。
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
 
@@ -95,7 +111,7 @@ class _AboutPageState extends State<AboutPage> {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (ctx) {
         // Local state for preview controls inside the sheet
@@ -103,12 +119,12 @@ class _AboutPageState extends State<AboutPage> {
         return StatefulBuilder(
           builder: (dialogContext, dialogSetState) {
             int testCounter = 0;
-            
+
             return SafeArea(
               child: FractionallySizedBox(
                 heightFactor: 0.7,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                  padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.md, AppGap.md, AppGap.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -118,7 +134,7 @@ class _AboutPageState extends State<AboutPage> {
                         l10n.aboutPageEasterEggTitle,
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppGap.xs),
                       Expanded(
                         child: SingleChildScrollView(
                           child: Column(
@@ -127,9 +143,9 @@ class _AboutPageState extends State<AboutPage> {
                                 l10n.aboutPageEasterEggMessage,
                                 style: TextStyle(color: cs.onSurface.withValues(alpha: 0.75), height: 1.3),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: AppGap.xl),
                               const Divider(),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppGap.md),
                               Text(
                                 'Toast Notification Test Area',
                                 style: TextStyle(
@@ -138,10 +154,10 @@ class _AboutPageState extends State<AboutPage> {
                                   color: cs.onSurface,
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppGap.md),
                               Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
+                                spacing: AppGap.xs,
+                                runSpacing: AppGap.xs,
                                 alignment: WrapAlignment.center,
                                 children: [
                                   _TestButton(
@@ -253,9 +269,9 @@ class _AboutPageState extends State<AboutPage> {
                                 ],
                               ),
                               // Removed vibration/flutter_vibrate sections.
-                              const SizedBox(height: 24),
+                              const SizedBox(height: AppGap.xl),
                               const Divider(),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppGap.md),
                               Text(
                                 'Haptic Feedback (Plugin) Test',
                                 style: TextStyle(
@@ -264,10 +280,10 @@ class _AboutPageState extends State<AboutPage> {
                                   color: cs.onSurface,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppGap.sm),
                               Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
+                                spacing: AppGap.xs,
+                                runSpacing: AppGap.xs,
                                 alignment: WrapAlignment.center,
                                 children: [
                                   for (final e in [
@@ -293,11 +309,11 @@ class _AboutPageState extends State<AboutPage> {
                                           }
                                         } catch (_) {}
                                       },
-                              ),
-                              _TestButton(
-                                label: 'Play All',
-                                color: cs.secondary,
-                                onTap: () async {
+                                    ),
+                                  _TestButton(
+                                    label: 'Play All',
+                                    color: cs.secondary,
+                                    onTap: () async {
                                       if (!context.read<SettingsProvider>().hapticsGlobalEnabled) return;
                                       try {
                                         final can = await HF.Haptics.canVibrate();
@@ -322,9 +338,9 @@ class _AboutPageState extends State<AboutPage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: AppGap.xl),
                               const Divider(),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppGap.md),
                               Text(
                                 'Custom Switch Preview',
                                 style: TextStyle(
@@ -333,11 +349,11 @@ class _AboutPageState extends State<AboutPage> {
                                   color: cs.onSurface,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppGap.sm),
                               Material(
                                 color: Colors.transparent,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: AppGap.xxs, vertical: 6),
                                   child: Row(
                                     children: [
                                       Text(
@@ -357,7 +373,7 @@ class _AboutPageState extends State<AboutPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppGap.sm),
                       FilledButton(
                         onPressed: () => Navigator.of(ctx).maybePop(),
                         child: Text(l10n.aboutPageEasterEggButton),
@@ -378,38 +394,41 @@ class _AboutPageState extends State<AboutPage> {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
+    return AppPage(
+      title: l10n.settingsPageAbout,
+      leading: Tooltip(
+        message: l10n.settingsPageBackButton,
+        child: IosIconButton(
+          haptics: true,
+          icon: Lucide.ArrowLeft,
+          color: cs.onSurface,
+          size: 22,
+          minSize: 44,
+          semanticLabel: l10n.settingsPageBackButton,
+          onTap: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(l10n.settingsPageAbout),
-        actions: const [SizedBox(width: 12)],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      actions: const [SizedBox(width: AppGap.sm)],
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.lg, AppGap.md, AppGap.md),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header card: left icon + right title/description
-          _iosSectionCard(children: [
+          // 头部卡：左图标 + 右标题/描述
+          SettingsSectionCard(children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              // 10 无精确 token
+              padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 10),
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     child: SizedBox(
                       width: 54,
                       height: 54,
                       child: Image.asset('assets/app_icon.png', fit: BoxFit.cover),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppGap.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,7 +439,7 @@ class _AboutPageState extends State<AboutPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppGap.xxs),
                         Text(
                           l10n.aboutPageAppDescription,
                           style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.65), height: 1.2),
@@ -435,30 +454,27 @@ class _AboutPageState extends State<AboutPage> {
             ),
           ]),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.sm),
 
-          // iOS-style list card
-          _iosSectionCard(children: [
-            // Version (tap 7x to unlock easter egg) — logic unchanged
-            _iosNavRow(
-              context,
-              icon: Lucide.Code,
+          // iOS 风格列表卡
+          SettingsSectionCard(children: [
+            // 版本号（连点 7 次解锁彩蛋）— 逻辑不变
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.Code,
               label: l10n.aboutPageVersion,
               detailBuilder: (_) => Text(_version.isEmpty ? '...' : '$_version / $_buildNumber'),
               onTap: _onVersionTap,
             ),
-            _iosDivider(context),
-            _iosNavRow(
-              context,
-              icon: Lucide.Phone,
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.Phone,
               label: l10n.aboutPageSystem,
               detailBuilder: (_) => Text(_systemInfo.isEmpty ? '...' : _systemInfo),
-              onTap: null, // informational only
+              onTap: null, // 仅展示
             ),
-            _iosDivider(context),
-            _iosNavRow(
-              context,
-              icon: Lucide.Earth,
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.Earth,
               label: l10n.aboutPageWebsite,
               onTap: () async {
                 final uri = Uri.parse('https://minime-core.psycheas.top/');
@@ -467,311 +483,34 @@ class _AboutPageState extends State<AboutPage> {
                 }
               },
             ),
-            _iosDivider(context),
-            _iosNavRow(
-              context,
-              icon: Lucide.Github,
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.Github,
               label: 'GitHub',
               onTap: () => _openUrl('https://github.com/Chevey339/minime-core'),
             ),
-            _iosDivider(context),
-          _iosNavRow(
-            context,
-            icon: Lucide.FileText,
-            label: l10n.aboutPageLicense,
-            onTap: () => _openUrl('https://github.com/Chevey339/minime-core/blob/master/LICENSE'),
-          ),
-          _iosDivider(context),
-          _iosNavRowSvgLeading(
-            context,
-            svgAsset: 'assets/icons/tencent-qq.svg',
-            label: l10n.aboutPageJoinQQGroup,
-            onTap: () => _openUrl('https://qm.qq.com/q/OQaXetKssC'),
-          ),
-          _iosDivider(context),
-          _iosNavRowSvgLeading(
-            context,
-            svgAsset: 'assets/icons/discord.svg',
-            label: l10n.aboutPageJoinDiscord,
-            onTap: () => _openUrl('https://discord.gg/Tb8DyvvV5T'),
-          ),
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.FileText,
+              label: l10n.aboutPageLicense,
+              onTap: () => _openUrl('https://github.com/Chevey339/minime-core/blob/master/LICENSE'),
+            ),
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              svgAsset: 'assets/icons/tencent-qq.svg',
+              label: l10n.aboutPageJoinQQGroup,
+              onTap: () => _openUrl('https://qm.qq.com/q/OQaXetKssC'),
+            ),
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              svgAsset: 'assets/icons/discord.svg',
+              label: l10n.aboutPageJoinDiscord,
+              onTap: () => _openUrl('https://discord.gg/Tb8DyvvV5T'),
+            ),
           ]),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppGap.xl),
         ],
-      ),
-    );
-  }
-}
-
-// --- iOS-style helpers (mirroring Settings/Display pages) ---
-
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: AppCardSurface.border(context),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
-
-Widget _iosDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
-class _TactileRow extends StatefulWidget {
-  const _TactileRow({required this.builder, this.onTap, this.pressedScale = 1.00, this.haptics = false});
-  final Widget Function(bool pressed) builder;
-  final VoidCallback? onTap;
-  final double pressedScale;
-  final bool haptics;
-  @override
-  State<_TactileRow> createState() => _TactileRowState();
-}
-
-class _TactileRowState extends State<_TactileRow> {
-  bool _pressed = false;
-  void _setPressed(bool v) {
-    if (_pressed != v) setState(() => _pressed = v);
-  }
-  @override
-  Widget build(BuildContext context) {
-    final child = widget.builder(_pressed);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
-      onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
-      onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
-      onTap: widget.onTap == null
-          ? null
-          : () {
-              if (widget.haptics && context.read<SettingsProvider>().hapticsOnListItemTap) Haptics.soft();
-              widget.onTap!.call();
-            },
-      child: widget.pressedScale == 1.0
-          ? child
-          : AnimatedScale(
-              scale: _pressed ? widget.pressedScale : 1.0,
-              duration: const Duration(milliseconds: 120),
-              curve: Curves.easeOutCubic,
-              child: child,
-            ),
-    );
-  }
-}
-
-Widget _iosNavRow(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  VoidCallback? onTap,
-  String? detailText,
-  Widget Function(BuildContext ctx)? detailBuilder,
-}) {
-  final cs = Theme.of(context).colorScheme;
-  final interactive = onTap != null;
-  return _TactileRow(
-    onTap: onTap,
-    pressedScale: 1.00, // list rows: color shift only, no scale
-    haptics: false,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.9);
-      return _AnimatedPressColor(
-        pressed: pressed,
-        base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                SizedBox(width: 36, child: Icon(icon, size: 20, color: c)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(fontSize: 15, color: c),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (detailBuilder != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: DefaultTextStyle(
-                      style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
-                      child: detailBuilder(context),
-                    ),
-                  )
-                else if (detailText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Text(detailText, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6))),
-                  ),
-                if (interactive) Icon(Lucide.ChevronRight, size: 16, color: c),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-Widget _iosNavRowSvgLeading(
-  BuildContext context, {
-  required String svgAsset,
-  required String label,
-  VoidCallback? onTap,
-  String? detailText,
-  Widget Function(BuildContext ctx)? detailBuilder,
-}) {
-  final cs = Theme.of(context).colorScheme;
-  final interactive = onTap != null;
-  return _TactileRow(
-    onTap: onTap,
-    pressedScale: 1.00,
-    haptics: false,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.9);
-      return _AnimatedPressColor(
-        pressed: pressed,
-        base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 36,
-                  child: SvgPicture.asset(
-                    svgAsset,
-                    width: 20,
-                    height: 20,
-                    colorFilter: ColorFilter.mode(c, BlendMode.srcIn),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(fontSize: 15, color: c),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (detailBuilder != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: DefaultTextStyle(
-                      style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
-                      child: detailBuilder(context),
-                    ),
-                  )
-                else if (detailText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Text(detailText, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6))),
-                  ),
-                if (interactive) Icon(Lucide.ChevronRight, size: 16, color: c),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-// AppBar tactile icon button copied from provider detail page (with slight press scale)
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
-    this.size = 22,
-    this.haptics = true,
-  });
-
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final String? semanticLabel;
-  final double size;
-  final bool haptics;
-
-  @override
-  State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color;
-    final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
-
-    return Semantics(
-      button: true,
-      label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () {
-          // Follow provider detail: no haptics on tap
-          widget.onTap();
-        },
-        onLongPress: widget.onLongPress == null
-            ? null
-            : () {
-                if (widget.haptics) Haptics.light();
-                widget.onLongPress!.call();
-              },
-        child: AnimatedScale(
-          scale: _pressed ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-            child: icon,
-          ),
-        ),
       ),
     );
   }
@@ -793,12 +532,13 @@ class _TestButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+      // 10 无精确 token（AppRadius.sm=8 / md=12），保留字面量
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: AppGap.xs),
           child: Text(
             label,
             style: TextStyle(

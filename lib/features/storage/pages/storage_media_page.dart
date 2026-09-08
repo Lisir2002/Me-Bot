@@ -5,11 +5,29 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
+import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
+import '../../../theme/design_tokens.dart';
 import '../widgets/storage_ios_widgets.dart';
+import '../widgets/storage_info_header.dart';
 
 /// 媒体型子页面：缩略图网格 + 来源/排序筛选 + 全选 + 多选删除。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + Column[Expanded(ListView), 底部操作条]
+///   → AppPage(body: ListView, bottom: 操作条)
+///   —— 这是本批次第一个真正用上 `bottom:` 槽位的页面：底部"全选/删除"操作条
+///      原来靠 Expanded + Column 撑在列表下方，现在由引擎固定到底栏区。
+/// - scrollable: false —— 引擎的 scrollable 用的是 ListView(children:[body])，会给子内容
+///   **无界高度**；本页 body 自带 ListView 需要撑满剩余空间，因此必须关掉引擎滚动。
+/// - bodyPadding: zero —— padding 交给内部 ListView 自带（保持与原实现一致的滚动内缩视觉）
+/// - 空态 → 居中 AppEmpty（同时 bottom 传 null，与原来"空态不显示底栏"一致）
+/// - debugPrint → Logger.e（审计 P2-01）
+/// - 底部操作条补 SafeArea(top: false)：原实现全页无 SafeArea，iOS 机型上删除按钮会被
+///   home indicator 压住；AppPage 只对 body 加 SafeArea，底栏不在其中，故单独补。
 class StorageMediaPage extends StatefulWidget {
   const StorageMediaPage({super.key, required this.config});
   final StorageCategoryConfig config;
@@ -83,7 +101,7 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
       if (!mounted) return;
       setState(() => _selected.clear());
     } catch (e, s) {
-      debugPrint('[StorageMediaPage._confirmDelete] failed: $e\n$s');
+      Logger.e('StorageMedia', 'delete selected failed', e, s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('删除失败: $e')),
@@ -102,192 +120,131 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
     final items = _filteredFor(scan);
     final isImage = cfg.id == 'images' || cfg.id == 'avatars';
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: StorageTactileIconButton(
-          icon: Lucide.ArrowLeft,
-          color: cs.onSurface,
-          size: 22,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(cfg.title),
-        actions: [
-          StorageTactileIconButton(
-            icon: Lucide.RefreshCw,
-            color: cs.onSurface,
-            size: 20,
-            semanticLabel: l10n.storageRefresh,
-            onTap: _refresh,
-          ),
-          const SizedBox(width: 12),
-        ],
+    return AppPage(
+      title: cfg.title,
+      leading: StorageTactileIconButton(
+        icon: Lucide.ArrowLeft,
+        color: cs.onSurface,
+        size: 22,
+        onTap: () => Navigator.of(context).maybePop(),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      actions: [
+        StorageTactileIconButton(
+          icon: Lucide.RefreshCw,
+          color: cs.onSurface,
+          size: 20,
+          semanticLabel: l10n.storageRefresh,
+          onTap: _refresh,
+        ),
+        const SizedBox(width: AppGap.sm),
+      ],
+      scrollable: false,
+      bodyPadding: AppPagePadding.zero,
+      body: items.isEmpty
+          ? Center(child: AppEmpty(message: l10n.storageEmpty))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(
+                  AppGap.md, AppGap.sm, AppGap.md, AppGap.sm),
               children: [
-                _InfoHeader(
+                StorageInfoHeader(
                   title: cfg.title,
                   bytes: scan.bytes,
                   count: scan.fileCount,
-                  caution: cfg.caution,
+                  note: cfg.caution,
                 ),
-                if (items.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _FilterBar(
-                    source: _source,
-                    newest: _newest,
-                    largest: _largest,
-                    onSource: (v) => setState(() => _source = v),
-                    onOrder: (newest, largest) =>
-                        setState(() { _newest = newest; _largest = largest; }),
+                const SizedBox(height: AppGap.sm),
+                _FilterBar(
+                  source: _source,
+                  newest: _newest,
+                  largest: _largest,
+                  onSource: (v) => setState(() => _source = v),
+                  onOrder: (newest, largest) =>
+                      setState(() { _newest = newest; _largest = largest; }),
+                ),
+                const SizedBox(height: AppGap.sm),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: AppGap.xs,
+                    crossAxisSpacing: AppGap.xs,
                   ),
-                  const SizedBox(height: 12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                    ),
-                    itemCount: items.length,
-                    itemBuilder: (context, i) {
-                      final e = items[i];
-                      final selected = _selected.contains(e.path);
-                      return _ThumbTile(
-                        entry: e,
-                        isImage: isImage,
-                        selected: selected,
-                        onTap: () => _toggleSelect(e.path),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                  itemCount: items.length,
+                  itemBuilder: (context, i) {
+                    final e = items[i];
+                    final selected = _selected.contains(e.path);
+                    return _ThumbTile(
+                      entry: e,
+                      isImage: isImage,
+                      selected: selected,
+                      onTap: () => _toggleSelect(e.path),
+                    );
+                  },
+                ),
+                const SizedBox(height: AppGap.sm),
               ],
             ),
-          ),
-          if (items.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.storageSelectedItems(_selected.length),
-                  style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7)),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Row(
+      bottom: items.isEmpty
+          ? null
+          : SafeArea(
+              top: false,
+              // stretch 必需：Row 里有 Expanded，需要子项拿到有界宽度。
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: StorageOutlineButton(
-                      icon: Lucide.CheckSquare,
-                      label: l10n.storageSelectAll,
-                      onTap: () {
-                        setState(() {
-                          if (_selected.length == items.length) {
-                            _selected.clear();
-                          } else {
-                            _selected
-                              ..clear()
-                              ..addAll(items.map((e) => e.path));
-                          }
-                        });
-                      },
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppGap.md, AppGap.xxs, AppGap.md, AppGap.xxxs),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l10n.storageSelectedItems(_selected.length),
+                        style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7)),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: StorageFilledButton(
-                      icon: Lucide.Trash2,
-                      label: l10n.storageDelete,
-                      bg: const Color(0xFFFF5F5F),
-                      onTap: _selected.isEmpty ? () {} : _confirmDelete,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppGap.md, 0, AppGap.md, AppGap.sm),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: StorageOutlineButton(
+                            icon: Lucide.CheckSquare,
+                            label: l10n.storageSelectAll,
+                            onTap: () {
+                              setState(() {
+                                if (_selected.length == items.length) {
+                                  _selected.clear();
+                                } else {
+                                  _selected
+                                    ..clear()
+                                    ..addAll(items.map((e) => e.path));
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppGap.sm),
+                        Expanded(
+                          child: StorageFilledButton(
+                            icon: Lucide.Trash2,
+                            label: l10n.storageDelete,
+                            bg: const Color(0xFFFF5F5F),
+                            // 保持原语义：未选中时给空回调而非禁用。
+                            // TODO(优化)：若 StorageFilledButton.onTap 改为可空，这里传
+                            // `_selected.isEmpty ? null : _confirmDelete` 更规范（按钮自动置灰）。
+                            onTap: _selected.isEmpty ? () {} : _confirmDelete,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ] else
-            Expanded(
-              child: Center(
-                child: Text(
-                  l10n.storageEmpty,
-                  style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoHeader extends StatelessWidget {
-  const _InfoHeader({
-    required this.title,
-    required this.bytes,
-    required this.count,
-    required this.caution,
-  });
-  final String title;
-  final int bytes;
-  final int count;
-  final String caution;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: storageCardBorder(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.7)),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                storageFormatBytes(bytes),
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  l10n.storageItemsCount(count),
-                  style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(caution, style: const TextStyle(fontSize: 11, color: Colors.orange)),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -320,7 +277,7 @@ class _FilterBarState extends State<_FilterBar> {
       return Row(
         children: [
           for (var i = 0; i < opts.length; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
+            if (i > 0) const SizedBox(width: AppGap.xs),
             Expanded(child: _SegmentButton(
               label: opts[i].$1,
               active: opts[i].$2,
@@ -385,8 +342,9 @@ class _SegmentButtonState extends State<_SegmentButton> {
         duration: const Duration(milliseconds: 110),
         curve: Curves.easeOutCubic,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: AppGap.xxs),
           alignment: Alignment.center,
+          // 9 无精确 token，保留字面量
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(9),
@@ -429,6 +387,7 @@ class _ThumbTile extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           ClipRRect(
+            // 10 无精确 token（AppRadius.sm=8 / md=12），保留字面量
             borderRadius: BorderRadius.circular(10),
             child: isImage
                 ? Image.file(File(entry.path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => _Fallback(entry: entry))
@@ -480,7 +439,7 @@ class _Fallback extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Lucide.FileText, size: 26, color: cs.onSurface.withOpacity(0.5)),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppGap.xxs),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text(

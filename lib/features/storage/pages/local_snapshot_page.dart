@@ -9,10 +9,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/models/backup.dart';
 import '../../../core/services/backup/data_sync.dart';
 import '../../../core/services/chat/chat_service.dart';
-import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
+import '../../../theme/design_tokens.dart';
 import '../../../utils/app_directories.dart';
 import '../widgets/storage_ios_widgets.dart';
 
@@ -34,6 +37,13 @@ class SnapshotInfo {
 }
 
 /// 本地副本管理页：设置卡 + 副本列表 + 立即备份 + 恢复/导出/删除/保留。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + ListView → AppPage(title / leading / actions / body)
+/// - padding LTRB(16,12,16,24) → fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl)
+/// - 三态走手动分支（本页是「本地可变状态 + 多次异步刷新」，
+///   不是「整页一个 Future」，不适合 AppPageStates）
+/// - 私有 _ActionChip 的按压 + 触觉逻辑收敛到 IosTactileRow
 class LocalSnapshotPage extends StatefulWidget {
   const LocalSnapshotPage({super.key});
 
@@ -43,7 +53,9 @@ class LocalSnapshotPage extends StatefulWidget {
 
 class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
   List<SnapshotInfo> _snapshots = const [];
-  bool _loading = false;
+  // 首帧即为加载态：_load() 里要先 await SharedPreferences 才会置 _loading，
+  // 初值给 false 会闪一帧空态再变加载，视觉上是一次多余的闪烁。
+  bool _loading = true;
   bool _busy = false;
 
   // 设置状态
@@ -299,31 +311,33 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     final l10n = l10nOf();
     final cs = Theme.of(context).colorScheme;
     final themeDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = themeDark ? Colors.white10 : Colors.white.withOpacity(0.96);
+    // 与 storage 分组卡一致的底色，直接复用 storage 的工具函数避免重复定义。
+    final cardBg = storageCardBackground(Theme.of(context));
     final totalBytes = _snapshots.fold<int>(0, (s, e) => s + e.bytes);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: StorageTactileIconButton(
-          icon: Lucide.ArrowLeft,
-          color: cs.onSurface,
-          size: 22,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(l10n.snapshotTitle),
-        actions: [
-          StorageTactileIconButton(
-            icon: Lucide.RefreshCw,
-            color: cs.onSurface,
-            size: 20,
-            semanticLabel: l10n.storageRefresh,
-            onTap: _refresh,
-          ),
-          const SizedBox(width: 12),
-        ],
+    return AppPage(
+      title: l10n.snapshotTitle,
+      leading: StorageTactileIconButton(
+        icon: Lucide.ArrowLeft,
+        color: cs.onSurface,
+        size: 22,
+        onTap: () => Navigator.of(context).maybePop(),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      actions: [
+        StorageTactileIconButton(
+          icon: Lucide.RefreshCw,
+          color: cs.onSurface,
+          size: 20,
+          semanticLabel: l10n.storageRefresh,
+          onTap: _refresh,
+        ),
+        const SizedBox(width: AppGap.sm),
+      ],
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+      // crossAxisAlignment.stretch 必需：AppPage 的滚动容器给子项是紧宽度，
+      // 但 Column 默认 center 会把宽度放宽，卡片会缩成内容宽度。
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 设置卡
           StorageSectionHeader(l10n.snapshotSettingsHeader, first: true),
@@ -391,12 +405,12 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.sm),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppGap.sm),
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
                 color: cs.outlineVariant.withOpacity(themeDark ? 0.08 : 0.06),
                 width: 0.6,
@@ -411,7 +425,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.sm),
           StorageTactileRow(
             onTap: _busy ? null : _backupNow,
             builder: (_) => StorageOutlineButton(
@@ -421,9 +435,9 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.sm),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            padding: const EdgeInsets.symmetric(vertical: AppGap.xxs, horizontal: AppGap.xxxs),
             child: Text(
               l10n.snapshotListHeader(_snapshots.length, storageFormatBytes(totalBytes)),
               style: TextStyle(
@@ -436,20 +450,9 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
           const SizedBox(height: 6),
 
           if (_loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 30),
-              child: Center(child: CircularProgressIndicator()),
-            )
+            AppLoading(verticalPadding: AppGap.xxl)
           else if (_snapshots.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(
-                  l10n.storageEmpty,
-                  style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            )
+            AppEmpty(message: l10n.storageEmpty)
           else
             StorageSectionCard(
               children: [
@@ -513,9 +516,10 @@ class _ModeCard extends StatelessWidget {
     return StorageTactileRow(
       onTap: onTap,
       builder: (_) => Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppGap.sm),
         decoration: BoxDecoration(
           color: color,
+          // 14 无精确 token（md=12 / lg=16），保留字面量
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: cs.outlineVariant.withOpacity(0.18)),
         ),
@@ -526,18 +530,19 @@ class _ModeCard extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: cs.primary.withOpacity(0.10),
+                // 10 无精确 token（sm=8 / md=12），保留字面量
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
               child: Icon(icon, color: cs.primary),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppGap.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppGap.xxxs),
                   Text(
                     subtitle,
                     style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7)),
@@ -583,7 +588,7 @@ class _SnapshotTile extends StatelessWidget {
         : snap.name;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -605,7 +610,7 @@ class _SnapshotTile extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Lucide.Cpu, size: 12, color: cs.onSurface.withOpacity(0.5)),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppGap.xxs),
                         Expanded(
                           child: Text(
                             '${l10n.snapshotAutoBadge} · ${storageFormatBytes(snap.bytes)}',
@@ -622,11 +627,11 @@ class _SnapshotTile extends StatelessWidget {
               ),
               if (snap.pinned) ...[
                 Icon(Lucide.MapPin, size: 16, color: cs.primary),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppGap.xxs),
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppGap.xs),
           Row(
             children: [
               _ActionChip(
@@ -661,7 +666,12 @@ class _SnapshotTile extends StatelessWidget {
   }
 }
 
-class _ActionChip extends StatefulWidget {
+/// 副本条目上的小操作胶囊（恢复 / 导出 / 固定 / 删除）。
+///
+/// 按压效果（缩放 0.95 + 抬起后延迟 80ms 复位）与触觉反馈统一交给
+/// [IosTactileRow]，本组件只负责外观，去掉了原来手写的
+/// GestureDetector + AnimatedScale + Haptics 三件套。
+class _ActionChip extends StatelessWidget {
   const _ActionChip({
     required this.icon,
     required this.label,
@@ -674,53 +684,34 @@ class _ActionChip extends StatefulWidget {
   final bool danger;
 
   @override
-  State<_ActionChip> createState() => _ActionChipState();
-}
-
-class _ActionChipState extends State<_ActionChip> {
-  bool _pressed = false;
-  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final color = widget.danger ? cs.error : cs.primary;
+    final color = danger ? cs.error : cs.primary;
     final themeDark = Theme.of(context).brightness == Brightness.dark;
     final bg = themeDark ? Colors.white10 : const Color(0xFFF7F7F9);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => Future.delayed(const Duration(milliseconds: 80), () {
-        if (mounted) setState(() => _pressed = false);
-      }),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {
-        Haptics.soft();
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 110),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: (widget.danger ? cs.error : cs.primary).withOpacity(0.3),
+    return IosTactileRow(
+      onTap: onTap,
+      pressedScale: 0.95,
+      releaseDelay: const Duration(milliseconds: 80),
+      builder: (_, __) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: bg,
+          // 9 无精确 token（sm=8 / md=12），保留字面量
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: AppGap.xxs),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, size: 13, color: color),
-              const SizedBox(width: 4),
-              Text(
-                widget.label,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

@@ -1,3 +1,27 @@
+// ──────────────────────────────────────────────────────────────
+// 迁移到 AppPage 骨架（批次 4 第 2 页，1405 → 见下方行数）
+//
+//   Scaffold + AppBar + ListView        → AppPage(title / leading / actions / body)
+//   _iosSectionCard / _iosDivider       → AppSectionCard / AppSectionDivider（shared）
+//   _iosNavRow                          → AppNavRow（shared）
+//   _iosSwitchRow                       → AppSwitchRow（shared，原「待办 E」落地）
+//   _TactileRow / _AnimatedPressColor   → IosTactileRow / IosPressColor
+//   _TactileIconButton                  → IosIconButton(haptics: true, minSize: 44)
+//   _TactileTextButton                  → IosIconButton(builder:) 渲染文字
+//   showModalBottomSheet ×3             → showAppSheet / AppSheet
+//
+// ⚠️ body 是 Column + crossAxisAlignment.stretch —— scrollable 模式下子部件拿到
+//    「无界高度 + 紧凑宽度」，不 stretch 卡片会缩到内容宽度（清单 3d）。
+// ⚠️ 三处弹层都**没有**用 AppSheet 的 title 槽位：它们的标题是居中/三段式的，
+//    而 AppSheet.title 是 Align(centerLeft)。故 title 留空、把居中标题作为
+//    第一个 child，其余（把手 / 滚动 / 键盘避让 / 最大高度）交给模板（经验 #38）。
+// ⚠️ _RemoteListSheet 是 DraggableScrollableSheet —— 超出 AppSheet 模板能力，
+//    只把外层换成 showAppSheet（safeArea + 键盘避让），内部保持自建。
+//
+// 保留私有的：`_SmallTactileIcon`（0.7 按压透明度 + soft 触觉，无共享对应件，
+// 见经验 #16）、`_IosOutlineButton` / `_IosFilledButton` / `_InputRow` /
+// `_PasswordToggleButton` / `_ActionCard` / `_SnapshotNavRow`。
+// ──────────────────────────────────────────────────────────────
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -6,7 +30,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
-import '../../../shared/widgets/card_surface.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -17,9 +40,13 @@ import '../../../core/models/backup.dart';
 import '../../../core/providers/backup_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
-import '../../../shared/widgets/ios_switch.dart';
 import '../../../core/services/backup/cherry_importer.dart';
 import '../../../utils/app_directories.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/ios_tactile.dart';
+import '../../../theme/design_tokens.dart';
 import '../../storage/pages/local_snapshot_page.dart';
 import '../widgets/backup_progress_card.dart';
 
@@ -69,81 +96,42 @@ class _BackupPageState extends State<BackupPage> {
         ? '此功能目前仍处于实验阶段。\n目前仅能导入助手，对话内容，供应商和文件，\n一些供应商需要在baseurl后面添加/v1 or /v1beta。 \n为确保数据安全，建议在导入前先执行备份。\n是否已知晓并继续选择文件？'
         : 'This feature is experimental.\nTo keep your data safe, it is recommended to back up before importing.\nProceed to choose a file?';
 
-    return showModalBottomSheet<bool>(
+    return showAppSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final bottom = MediaQuery.of(ctx).viewInsets.bottom;
-        final onSurface60 = cs.onSurface.withOpacity(0.72);
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, bottom + 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: cs.onSurface.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    l10n.backupPageImportFromCherryStudio,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Padding(
-                    //   padding: const EdgeInsets.only(top: 2),
-                    //   child: Icon(Lucide.BadgeInfo, size: 18, color: cs.primary),
-                    // ),
-                    // const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        body,
-                        style: TextStyle(fontSize: 14, height: 1.35, color: onSurface60),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _IosOutlineButton(
-                        label: l10n.backupPageCancel,
-                        onTap: () => Navigator.of(ctx).pop(false),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _IosFilledButton(
-                        label: l10n.backupPageOK,
-                        onTap: () => Navigator.of(ctx).pop(true),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+      builder: AppSheet(
+        // ignore: sort_child_properties_last —— AppSheet 语义顺序是 title → children → footer，与 lint 的「children 放最后」冲突
+        contentPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.md),
+        children: [
+          Center(
+            child: Text(
+              l10n.backupPageImportFromCherryStudio,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
-        );
-      },
+          const SizedBox(height: AppGap.sm),
+          Text(
+            body,
+            style: TextStyle(fontSize: 14, height: 1.35, color: cs.onSurface.withOpacity(0.72)),
+          ),
+        ],
+        footer: Row(
+          children: [
+            Expanded(
+              child: _IosOutlineButton(
+                label: l10n.backupPageCancel,
+                onTap: () => Navigator.of(context).pop(false),
+              ),
+            ),
+            const SizedBox(width: AppGap.sm),
+            Expanded(
+              child: _IosFilledButton(
+                label: l10n.backupPageOK,
+                onTap: () => Navigator.of(context).pop(true),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -249,7 +237,7 @@ class _BackupPageState extends State<BackupPage> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
-    
+
     return ChangeNotifierProvider(
       create: (_) => BackupProvider(
         chatService: context.read<ChatService>(),
@@ -261,7 +249,8 @@ class _BackupPageState extends State<BackupPage> {
 
         // iOS-style section header
         Widget header(String text, {bool first = false}) => Padding(
-          padding: EdgeInsets.fromLTRB(12, first ? 2 : 18, 12, 6),
+          // 18 / 6 无精确 token（md=16 / lg=20、xs=8），保留字面量
+          padding: EdgeInsets.fromLTRB(AppGap.sm, first ? AppGap.xxxs : 18, AppGap.sm, 6),
           child: Text(
             text,
             style: TextStyle(
@@ -272,28 +261,30 @@ class _BackupPageState extends State<BackupPage> {
           ),
         );
 
-        return Scaffold(
-          appBar: AppBar(
-            leading: Tooltip(
-              message: l10n.settingsPageBackButton,
-              child: _TactileIconButton(
-                icon: Lucide.ArrowLeft,
-                color: cs.onSurface,
-                size: 22,
-                onTap: () => Navigator.of(context).maybePop(),
-              ),
+        return AppPage(
+          title: l10n.backupPageTitle,
+          leading: Tooltip(
+            message: l10n.settingsPageBackButton,
+            child: IosIconButton(
+              haptics: true,
+              icon: Lucide.ArrowLeft,
+              color: cs.onSurface,
+              size: 22,
+              minSize: 44,
+              onTap: () => Navigator.of(context).maybePop(),
             ),
-            title: Text(l10n.backupPageTitle),
-            actions: const [SizedBox(width: 12)],
           ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          actions: const [SizedBox(width: AppGap.sm)],
+          bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+          // ⚠️ scrollable 模式下子部件拿到「无界高度 + 紧凑宽度」，
+          // Column 必须 stretch，否则卡片缩到内容宽度。
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Section 1: 备份管理
               header(l10n.backupPageBackupManagement, first: true),
-              _iosSectionCard(children: [
-                _iosSwitchRow(
-                  context,
+              AppSectionCard(children: [
+                AppSwitchRow(
                   icon: Lucide.MessageSquare,
                   label: l10n.backupPageChatsLabel,
                   value: cfg.includeChats,
@@ -303,9 +294,8 @@ class _BackupPageState extends State<BackupPage> {
                     vm.updateConfig(newCfg);
                   },
                 ),
-                _iosDivider(context),
-                _iosSwitchRow(
-                  context,
+                const AppSectionDivider(),
+                AppSwitchRow(
                   icon: Lucide.FileText,
                   label: l10n.backupPageFilesLabel,
                   value: cfg.includeFiles,
@@ -319,9 +309,8 @@ class _BackupPageState extends State<BackupPage> {
 
               // Section 1.5: 备份提醒
               header(l10n.backupPageReminderHeader),
-              _iosSectionCard(children: [
-                _iosSwitchRow(
-                  context,
+              AppSectionCard(children: [
+                AppSwitchRow(
                   icon: Lucide.Bell,
                   label: l10n.backupPageRemindMe,
                   value: _remindBackup,
@@ -335,9 +324,8 @@ class _BackupPageState extends State<BackupPage> {
 
               // Section 1.6: 本地副本
               header(l10n.backupPageLocalCopiesHeader),
-              _iosSectionCard(children: [
-                _iosSwitchRow(
-                  context,
+              AppSectionCard(children: [
+                AppSwitchRow(
                   icon: Lucide.Save,
                   label: l10n.backupPageKeepLocalCopy,
                   value: cfg.keepLocalCopy,
@@ -347,7 +335,7 @@ class _BackupPageState extends State<BackupPage> {
                     vm.updateConfig(newCfg);
                   },
                 ),
-                _iosDivider(context),
+                const AppSectionDivider(),
                 _SnapshotNavRow(
                   onTap: () {
                     Navigator.of(context).push(
@@ -359,16 +347,14 @@ class _BackupPageState extends State<BackupPage> {
 
               // Section 2: WebDAV备份
               header(l10n.backupPageWebDavBackup),
-              _iosSectionCard(children: [
-                _iosNavRow(
-                  context,
+              AppSectionCard(children: [
+                AppNavRow(
                   icon: Lucide.Settings,
                   label: l10n.backupPageWebDavServerSettings,
                   onTap: () => _showWebDavSettingsSheet(context, settings, vm, cfg),
                 ),
-                _iosDivider(context),
-                _iosNavRow(
-                  context,
+                const AppSectionDivider(),
+                AppNavRow(
                   icon: Lucide.Cable,
                   label: l10n.backupPageTestConnection,
                   onTap: vm.busy ? null : () async {
@@ -385,9 +371,8 @@ class _BackupPageState extends State<BackupPage> {
                     );
                   },
                 ),
-                _iosDivider(context),
-                _iosNavRow(
-                  context,
+                const AppSectionDivider(),
+                AppNavRow(
                   icon: Lucide.Import,
                   label: l10n.backupPageRestore,
                   onTap: vm.busy ? null : () async {
@@ -413,16 +398,11 @@ class _BackupPageState extends State<BackupPage> {
                     } finally {
                       setState(() => _loadingRemote = false);
                     }
-                    
+
                     if (!mounted) return;
-                    await showModalBottomSheet(
+                    await showAppSheet(
                       context: context,
-                      isScrollControlled: true,
-                      backgroundColor: cs.surface,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                      ),
-                      builder: (ctx) => _RemoteListSheet(
+                      builder: _RemoteListSheet(
                         items: _remote,
                         loading: _loadingRemote,
                         onDelete: (item) async {
@@ -444,13 +424,13 @@ class _BackupPageState extends State<BackupPage> {
                           setState(() => _remote = list);
                         },
                         onRestore: (item) async {
-                          Navigator.of(ctx).pop();
-                          
+                          Navigator.of(context).pop();
+
                           if (!mounted) return;
                           final mode = await _chooseImportModeDialog(context);
-                          
+
                           if (mode == null) return;
-                          
+
                           await _runWithImportingOverlay(context, () => vm.restoreFromItem(item, mode: mode));
                           if (!mounted) return;
                           await showDialog(
@@ -468,9 +448,8 @@ class _BackupPageState extends State<BackupPage> {
                     );
                   },
                 ),
-                _iosDivider(context),
-                _iosNavRow(
-                  context,
+                const AppSectionDivider(),
+                AppNavRow(
                   icon: Lucide.Upload,
                   label: l10n.backupPageBackupNow,
                   onTap: vm.busy ? null : () async {
@@ -489,23 +468,20 @@ class _BackupPageState extends State<BackupPage> {
 
               // Section 3: 本地备份
               header(l10n.backupPageLocalBackup),
-              _iosSectionCard(children: [
-                _iosNavRow(
-                  context,
+              AppSectionCard(children: [
+                AppNavRow(
                   icon: Lucide.Export,
                   label: l10n.backupPageExportToFile,
                   onTap: () => _doExport(context, vm),
                 ),
-                _iosDivider(context),
-                _iosNavRow(
-                  context,
+                const AppSectionDivider(),
+                AppNavRow(
                   icon: Lucide.Import2,
                   label: l10n.backupPageImportBackupFile,
                   onTap: () => _doImportLocal(context, vm),
                 ),
-                _iosDivider(context),
-                _iosNavRow(
-                  context,
+                const AppSectionDivider(),
+                AppNavRow(
                   icon: Lucide.Box,
                   label: l10n.backupPageImportFromCherryStudio,
                   onTap: () async {
@@ -578,7 +554,7 @@ class _BackupPageState extends State<BackupPage> {
   Future<void> _doExport(BuildContext context, BackupProvider vm) async {
     final file = await _runWithExportingOverlay(context, () => vm.exportToFile());
     if (!mounted) return;
-    
+
     // iPad: anchor popover to the overlay's center
     Rect rect;
     final overlay = Overlay.of(context);
@@ -591,7 +567,7 @@ class _BackupPageState extends State<BackupPage> {
       final size = MediaQuery.of(context).size;
       rect = Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: 1, height: 1);
     }
-    
+
     await Future.delayed(const Duration(milliseconds: 50));
     await Share.shareXFiles(
       [XFile(file.path)],
@@ -604,12 +580,12 @@ class _BackupPageState extends State<BackupPage> {
     final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['zip']);
     final path = result?.files.single.path;
     if (path == null) return;
-    
+
     if (!mounted) return;
     final mode = await _chooseImportModeDialog(context);
-    
+
     if (mode == null) return;
-    
+
     await _runWithImportingOverlay(context, () => vm.restoreFromLocalFile(File(path), mode: mode));
     if (!mounted) return;
     await showDialog(
@@ -623,14 +599,9 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<void> _showWebDavSettingsSheet(BuildContext context, SettingsProvider settings, BackupProvider vm, WebDavConfig cfg) async {
-    await showModalBottomSheet(
+    await showAppSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => _WebDavSettingsSheet(
+      builder: _WebDavSettingsSheet(
         settings: settings,
         vm: vm,
         cfg: cfg,
@@ -654,7 +625,7 @@ class _InputRow extends StatelessWidget {
   final String? hint;
   final bool obscure;
   final Widget? suffix;
-  
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -678,115 +649,6 @@ class _InputRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.size = 22});
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final double size;
-  @override
-  State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color;
-    final press = base.withOpacity(0.7);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {
-        Haptics.light();
-        widget.onTap();
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Icon(widget.icon, size: widget.size, color: _pressed ? press : base),
-      ),
-    );
-  }
-}
-
-class _TactileTextButton extends StatefulWidget {
-  const _TactileTextButton({required this.label, required this.color, required this.onTap});
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  @override
-  State<_TactileTextButton> createState() => _TactileTextButtonState();
-}
-
-class _TactileTextButtonState extends State<_TactileTextButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color;
-    final press = base.withOpacity(0.7);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {
-        Haptics.light();
-        widget.onTap();
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Text(
-          widget.label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: _pressed ? press : base,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TactileRow extends StatefulWidget {
-  const _TactileRow({required this.builder, this.onTap, this.pressedScale = 1.0});
-  final Widget Function(bool pressed) builder;
-  final VoidCallback? onTap;
-  final double pressedScale;
-  @override
-  State<_TactileRow> createState() => _TactileRowState();
-}
-
-class _TactileRowState extends State<_TactileRow> {
-  bool _pressed = false;
-  void _set(bool v) {
-    if (_pressed != v) setState(() => _pressed = v);
-  }
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _set(true),
-      onTapUp: widget.onTap == null ? null : (_) => _set(false),
-      onTapCancel: widget.onTap == null ? null : () => _set(false),
-      onTap: widget.onTap == null
-          ? null
-          : () {
-              if (context.read<SettingsProvider>().hapticsOnListItemTap) Haptics.soft();
-              widget.onTap!.call();
-            },
-      child: AnimatedScale(
-        scale: _pressed ? widget.pressedScale : 1.0,
-        duration: const Duration(milliseconds: 110),
-        curve: Curves.easeOutCubic,
-        child: widget.builder(_pressed),
-      ),
     );
   }
 }
@@ -821,99 +683,6 @@ class _SmallTactileIconState extends State<_SmallTactileIcon> {
       ),
     );
   }
-}
-
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: AppCardSurface.border(context),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
-
-Widget _iosDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
-Widget _iosNavRow(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  VoidCallback? onTap,
-  String? detailText,
-}) {
-  final cs = Theme.of(context).colorScheme;
-  final interactive = onTap != null;
-  return _TactileRow(
-    onTap: onTap,
-    pressedScale: 1.00,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.9);
-      return _AnimatedPressColor(
-        pressed: pressed,
-        base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 36,
-                  child: Icon(icon, size: 20, color: c),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(fontSize: 15, color: c),  //, fontWeight: FontWeight.w500),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (detailText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Text(detailText, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6))),
-                  ),
-                if (interactive) Icon(Lucide.ChevronRight, size: 16, color: c),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
 }
 
 // 本地副本导航行：展示 份数 + 大小，点击进入管理页。
@@ -961,8 +730,7 @@ class _SnapshotNavRowState extends State<_SnapshotNavRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return _iosNavRow(
-      context,
+    return AppNavRow(
       icon: Lucide.Box,
       label: l10n.storageManageSnapshots,
       detailText: l10n.backupPageManageCopiesDetail(_count, _fmtBytes(_bytes)),
@@ -980,7 +748,7 @@ class _IosOutlineButton extends StatefulWidget {
 
 class _IosOutlineButtonState extends State<_IosOutlineButton> {
   bool _pressed = false;
-  void _set(bool v){ if(_pressed!=v) setState(()=>_pressed=v);} 
+  void _set(bool v){ if(_pressed!=v) setState(()=>_pressed=v);}
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -1015,7 +783,7 @@ class _IosFilledButton extends StatefulWidget {
 
 class _IosFilledButtonState extends State<_IosFilledButton> {
   bool _pressed = false;
-  void _set(bool v){ if(_pressed!=v) setState(()=>_pressed=v);} 
+  void _set(bool v){ if(_pressed!=v) setState(()=>_pressed=v);}
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -1039,36 +807,6 @@ class _IosFilledButtonState extends State<_IosFilledButton> {
   }
 }
 
-Widget _iosSwitchRow(BuildContext context, {IconData? icon, required String label, required bool value, required ValueChanged<bool> onChanged}) {
-  final cs = Theme.of(context).colorScheme;
-  return _TactileRow(
-    onTap: () => onChanged(!value),
-    pressedScale: 1.00,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.9);
-      return _AnimatedPressColor(
-        pressed: pressed,
-        base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-            child: Row(
-              children: [
-                if (icon != null) ...[
-                  SizedBox(width: 36, child: Icon(icon, size: 20, color: c)),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c))), //, fontWeight: FontWeight.w500))),
-                IosSwitch(value: value, onChanged: onChanged),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
 class _RemoteListSheet extends StatelessWidget {
   const _RemoteListSheet({required this.items, required this.loading, required this.onDelete, required this.onRestore});
   final List<BackupFileItem> items;
@@ -1080,78 +818,76 @@ class _RemoteListSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    return SafeArea(
-      top: false,
-      child: DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (ctx, controller) => Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
-          child: Column(
-            children: [
-              Container(width: 42, height: 4, decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 10),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Center(
-                    child: Text(l10n.backupPageRemoteBackups, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+    // ⚠️ 这里的 safeArea 由外层 showAppSheet 提供，不要再套一层（否则底部重复留白）。
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (ctx, controller) => Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
+        child: Column(
+          children: [
+            Container(width: 42, height: 4, decoration: BoxDecoration(color: cs.onSurface.withOpacity(0.2), borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 10),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Center(
+                  child: Text(l10n.backupPageRemoteBackups, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
+                if (loading)
+                  Positioned(
+                    right: 0,
+                    child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                   ),
-                  if (loading)
-                    Positioned(
-                      right: 0,
-                      child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: (items.isEmpty)
-                    ? Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Text(l10n.backupPageNoBackups, style: TextStyle(color: cs.onSurface.withOpacity(0.6))),
-                      )
-                    : ListView.builder(
-                        controller: controller,
-                        itemCount: items.length,
-                        itemBuilder: (ctx, i) {
-                          final it = items[i];
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: cs.outlineVariant.withOpacity(0.18)),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(it.displayName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                        const SizedBox(height: 4),
-                                        Text(_fmtBytes(it.size), style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
-                                      ],
-                                    ),
-                                  ),
-                                  _SmallTactileIcon(icon: Lucide.Import, onTap: () => onRestore(it)),
-                                  const SizedBox(width: 6),
-                                  _SmallTactileIcon(icon: Lucide.Trash2, onTap: () => onDelete(it), baseColor: cs.error),
-                                ],
-                              ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: (items.isEmpty)
+                  ? Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(l10n.backupPageNoBackups, style: TextStyle(color: cs.onSurface.withOpacity(0.6))),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      itemCount: items.length,
+                      itemBuilder: (ctx, i) {
+                        final it = items[i];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: cs.outlineVariant.withOpacity(0.18)),
                             ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(it.displayName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 4),
+                                      Text(_fmtBytes(it.size), style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
+                                    ],
+                                  ),
+                                ),
+                                _SmallTactileIcon(icon: Lucide.Import, onTap: () => onRestore(it)),
+                                const SizedBox(width: 6),
+                                _SmallTactileIcon(icon: Lucide.Trash2, onTap: () => onDelete(it), baseColor: cs.error),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -1168,10 +904,10 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return _TactileRow(
+    return IosTactileRow(
       pressedScale: 0.98,
       onTap: onTap,
-      builder: (pressed) {
+      builder: (context, pressed) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final overlay = pressed ? (isDark ? Colors.black.withOpacity(0.06) : Colors.white.withOpacity(0.05)) : Colors.transparent;
         return AnimatedContainer(
@@ -1257,102 +993,84 @@ class _WebDavSettingsSheetState extends State<_WebDavSettingsSheet> {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
 
-    return SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 12,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: cs.onSurface.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+    return AppSheet(
+      // 三段式 header（关闭 / 居中标题 / 保存）：AppSheet.title 是左对齐的，
+      // 故整行自绘并作为第一个 child（见文件头说明）。
+      contentPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.md),
+      children: [
+        Row(
+          children: [
+            IosIconButton(
+              haptics: true,
+              icon: Lucide.X,
+              color: cs.onSurface,
+              size: 20,
+              minSize: 44,
+              onTap: () => Navigator.of(context).pop(),
+            ),
+            Expanded(
+              child: Center(
+                child: Text(
+                  l10n.backupPageWebDavServerSettings,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
-              const SizedBox(height: 12),
-              
-              // Header: Close (X) - Title (center) - Save (text)
-              Row(
-                children: [
-                  _TactileIconButton(
-                    icon: Lucide.X,
-                    color: cs.onSurface,
-                    size: 20,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        l10n.backupPageWebDavServerSettings,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                  _TactileTextButton(
-                    label: l10n.backupPageSave,
-                    color: cs.primary,
-                    onTap: () async {
-                      final newCfg = widget.cfg.copyWith(
-                        url: _urlCtrl.text.trim(),
-                        username: _userCtrl.text.trim(),
-                        password: _passCtrl.text,
-                        path: _pathCtrl.text.trim().isEmpty ? 'minime-core_backups' : _pathCtrl.text.trim(),
-                      );
-                      await widget.settings.setWebDavConfig(newCfg);
-                      widget.vm.updateConfig(newCfg);
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                  ),
-                ],
+            ),
+            IosIconButton(
+              haptics: true,
+              color: cs.primary,
+              minSize: 44,
+              builder: (c) => Text(
+                l10n.backupPageSave,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c),
               ),
-              const SizedBox(height: 16),
-              
-              // Input fields
-              _InputRow(
-                label: l10n.backupPageWebDavServerUrl,
-                controller: _urlCtrl,
-                hint: 'https://example.com/dav',
-              ),
-              const SizedBox(height: 12),
-              _InputRow(
-                label: l10n.backupPageUsername,
-                controller: _userCtrl,
-              ),
-              const SizedBox(height: 12),
-              _InputRow(
-                label: l10n.backupPagePassword,
-                controller: _passCtrl,
-                obscure: !_showPassword,
-                suffix: _PasswordToggleButton(
-                  showPassword: _showPassword,
-                  onPressed: () => setState(() => _showPassword = !_showPassword),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _InputRow(
-                label: l10n.backupPagePath,
-                controller: _pathCtrl,
-                hint: 'minime-core_backups',
-              ),
-              const SizedBox(height: 16),
-            ],
+              onTap: () async {
+                final newCfg = widget.cfg.copyWith(
+                  url: _urlCtrl.text.trim(),
+                  username: _userCtrl.text.trim(),
+                  password: _passCtrl.text,
+                  path: _pathCtrl.text.trim().isEmpty ? 'minime-core_backups' : _pathCtrl.text.trim(),
+                );
+                await widget.settings.setWebDavConfig(newCfg);
+                widget.vm.updateConfig(newCfg);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: AppGap.md),
+
+        // Input fields
+        _InputRow(
+          label: l10n.backupPageWebDavServerUrl,
+          controller: _urlCtrl,
+          hint: 'https://example.com/dav',
+        ),
+        const SizedBox(height: AppGap.sm),
+        _InputRow(
+          label: l10n.backupPageUsername,
+          controller: _userCtrl,
+        ),
+        const SizedBox(height: AppGap.sm),
+        _InputRow(
+          label: l10n.backupPagePassword,
+          controller: _passCtrl,
+          obscure: !_showPassword,
+          suffix: _PasswordToggleButton(
+            showPassword: _showPassword,
+            onPressed: () => setState(() => _showPassword = !_showPassword),
           ),
         ),
-      ),
+        const SizedBox(height: AppGap.sm),
+        _InputRow(
+          label: l10n.backupPagePath,
+          controller: _pathCtrl,
+          hint: 'minime-core_backups',
+        ),
+        const SizedBox(height: AppGap.md),
+      ],
     );
   }
 }
@@ -1378,7 +1096,7 @@ class _PasswordToggleButtonState extends State<_PasswordToggleButton> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final color = _pressed ? cs.onSurface.withOpacity(0.5) : cs.onSurface.withOpacity(0.7);
-    
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) => setState(() => _pressed = true),

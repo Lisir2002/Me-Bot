@@ -5,13 +5,24 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
+import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
+import '../../../theme/design_tokens.dart';
 import '../widgets/storage_ios_widgets.dart';
+import '../widgets/storage_info_header.dart';
 import 'log_viewer_page.dart';
 
 /// 可清理明细型（日志）子页面。
 /// 顶部：查看日志 / 清理日志；下方日志明细卡（无独立按钮）。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + ListView → AppPage(title/leading/actions/body)
+/// - padding LTRB(16,12,16,24) → fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl)
+/// - 空态 → AppEmpty
+/// - debugPrint → Logger.e（顺带对齐 P0 日志升级，审计 P2-01）
 class StorageLogPage extends StatefulWidget {
   const StorageLogPage({super.key, required this.config});
   final StorageCategoryConfig config;
@@ -39,10 +50,13 @@ class _StorageLogPageState extends State<StorageLogPage> {
           title: Text(l10n.storageLogClearConfirmTitle),
           content: Text(l10n.storageLogClearConfirmBody),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.storageCancel)),
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l10n.storageCancel)),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.storageConfirmDeleteBtn, style: const TextStyle(color: Colors.red)),
+              child: Text(l10n.storageConfirmDeleteBtn,
+                  style: const TextStyle(color: Colors.red)),
             ),
           ],
         ),
@@ -56,7 +70,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
       }
       await _refresh();
     } catch (e, s) {
-      debugPrint('[StorageLogPage._clearLogs] failed: $e\n$s');
+      Logger.e('StorageLog', 'clear logs failed', e, s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('清理日志失败: $e')),
@@ -73,31 +87,38 @@ class _StorageLogPageState extends State<StorageLogPage> {
     context.watch<StorageProvider>();
     final scan = _scan;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: StorageTactileIconButton(
-          icon: Lucide.ArrowLeft,
-          color: cs.onSurface,
-          size: 22,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(cfg.title),
-        actions: [
-          StorageTactileIconButton(
-            icon: Lucide.RefreshCw,
-            color: cs.onSurface,
-            size: 20,
-            semanticLabel: l10n.storageRefresh,
-            onTap: _refresh,
-          ),
-          const SizedBox(width: 12),
-        ],
+    return AppPage(
+      title: cfg.title,
+      leading: StorageTactileIconButton(
+        icon: Lucide.ArrowLeft,
+        color: cs.onSurface,
+        size: 22,
+        onTap: () => Navigator.of(context).maybePop(),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      actions: [
+        StorageTactileIconButton(
+          icon: Lucide.RefreshCw,
+          color: cs.onSurface,
+          size: 20,
+          semanticLabel: l10n.storageRefresh,
+          onTap: _refresh,
+        ),
+        const SizedBox(width: AppGap.sm),
+      ],
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+      // crossAxisAlignment.stretch 必需：AppPage 的滚动容器给子项紧宽度，
+      // 但 Column 默认 center 会把宽度放宽，卡片会缩成内容宽度。
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _InfoHeader(config: cfg, scan: scan),
-          const SizedBox(height: 12),
+          StorageInfoHeader(
+            title: cfg.title,
+            bytes: scan.bytes,
+            count: scan.fileCount,
+            note: l10n.storageCleanableNote,
+            noteStyle: StorageInfoNoteStyle.cleanable,
+          ),
+          const SizedBox(height: AppGap.sm),
           Row(
             children: [
               Expanded(
@@ -111,7 +132,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppGap.sm),
               Expanded(
                 child: StorageFilledButton(
                   icon: Lucide.Trash2,
@@ -126,15 +147,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
           StorageSectionHeader(l10n.storageDetailHeader, first: true),
           const SizedBox(height: 6),
           if (scan.entries.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(
-                  l10n.storageEmpty,
-                  style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            )
+            AppEmpty(message: l10n.storageEmpty)
           else
             StorageSectionCard(
               children: [
@@ -153,11 +166,12 @@ class _StorageLogPageState extends State<StorageLogPage> {
 class _LogRow extends StatelessWidget {
   const _LogRow({required this.entry});
   final StorageEntry entry;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 11),
       child: Row(
         children: [
           Icon(Lucide.FileText, size: 16, color: cs.onSurface.withOpacity(0.6)),
@@ -182,68 +196,10 @@ class _LogRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppGap.xs),
           Text(
             storageFormatBytes(entry.bytes),
             style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoHeader extends StatelessWidget {
-  const _InfoHeader({required this.config, required this.scan});
-  final StorageCategoryConfig config;
-  final StorageScan scan;
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: storageCardBorder(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            config.title,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.7)),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                storageFormatBytes(scan.bytes),
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  l10n.storageItemsCount(scan.fileCount),
-                  style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              l10n.storageCleanableNote,
-              style: const TextStyle(fontSize: 11, color: Colors.green),
-            ),
           ),
         ],
       ),

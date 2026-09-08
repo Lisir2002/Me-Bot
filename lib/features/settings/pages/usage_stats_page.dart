@@ -8,7 +8,28 @@ import '../../../core/models/chat_message.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/ios_tactile.dart';
+import '../../../theme/design_tokens.dart';
+
+// ──────────────────────────────────────────────────────────────
+// 迁移到 AppPage 骨架（批次 4，1297 行）
+//
+// 这是**全仓第一个真正用上 `states:` 槽位的生产页面**——
+// 整页就是一个 Future（`loadStatsData`），正好符合 `states:` 的语义
+// （见 `app_page.dart` 文件头约定）。手写 `FutureBuilder` 三态删掉。
+//
+//   Scaffold + AppBar + FutureBuilder → AppPage(title / actions / states)
+//   IconButton(refresh)               → IosIconButton(haptics: true, minSize: 44)
+//   setState(() => _future = ...)     → reloadKey: _reloadToken（自增即重载）
+//   ⚠️ scrollable: false              —— `UsageStatsBody` 自带 ListView(padding 16)
+//   ⚠️ bodyPadding: zero              —— 同上，不能叠第二层 padding
+//
+// `DesktopStatsPane` 没有 Scaffold（它是桌面设置页里内嵌的面板），
+// 不在本轮骨架迁移范围内，保持原样。
+// ──────────────────────────────────────────────────────────────
 
 /// 统计页面：GitHub 风格热力图 + 总览卡片 + 用量趋势柱状图 + 模型/助手/话题三表。
 class UsageStatsPage extends StatefulWidget {
@@ -67,54 +88,48 @@ Future<StatsData> loadStatsData(BuildContext context) async {
 class _UsageStatsPageState extends State<UsageStatsPage> {
   StatsRange _range = StatsRange.all;
 
-  late final Future<StatsData> _future;
+  /// 刷新令牌：自增 → `AppPageStates.reloadKey` 变化 → 引擎重新 `load()`。
+  /// 注意不能靠「父级重建」触发（reloadKey 不变时引擎不会重复拉取）。
+  int _reloadToken = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _future = loadStatsData(context);
-  }
-
-  void _reload() {
-    setState(() {
-      _future = loadStatsData(context);
-    });
-  }
+  void _reload() => setState(() => _reloadToken++);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.settingsPageStats ?? '统计'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: '刷新',
-            onPressed: _reload,
+    final cs = Theme.of(context).colorScheme;
+    return AppPage<StatsData>(
+      title: l10n?.settingsPageStats ?? '统计',
+      actions: [
+        Tooltip(
+          message: '刷新',
+          child: IosIconButton(
+            haptics: true,
+            icon: Lucide.RefreshCw,
+            color: cs.onSurface,
+            size: 20,
+            minSize: 44,
+            onTap: _reload,
           ),
-        ],
-      ),
-      body: FutureBuilder<StatsData>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('统计加载失败\n${snapshot.error}'));
-          }
-          final data = snapshot.data!;
-          return UsageStatsBody(
-            data: data,
-            range: _range,
-            onRangeChanged: (r) => setState(() => _range = r),
-          );
-        },
+        ),
+        const SizedBox(width: AppGap.sm),
+      ],
+      // UsageStatsBody 自带 ListView(padding: all(16))，故不包滚动、不叠 padding
+      scrollable: false,
+      bodyPadding: AppPagePadding.zero,
+      states: AppPageStates<StatsData>(
+        load: () => loadStatsData(context),
+        reloadKey: _reloadToken,
+        buildData: (ctx, data) => UsageStatsBody(
+          data: data,
+          range: _range,
+          onRangeChanged: (r) => setState(() => _range = r),
+        ),
       ),
     );
   }
 }
+
 
 /// 桌面端设置页内嵌的统计面板（复用同一加载与视图主体）。
 class DesktopStatsPane extends StatefulWidget {

@@ -10,10 +10,24 @@ import 'package:socks5_proxy/socks_client.dart' as socks;
 import '../../../l10n/app_localizations.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/card_surface.dart';
+import '../../../theme/design_tokens.dart';
 
+/// 全局网络代理设置页。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + ListView → AppPage(title/leading/body)，body 用 Column(stretch)
+/// - padding LTRB(16,12,16,16) → fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.md)
+/// - **私有 `_TactileIconButton` → 共享 `IosIconButton`**（删除私有副本）
+/// - **代理类型选择：手写 `showModalBottomSheet` → `showAppSheet` + `AppSheet`**
+/// - 删除死代码 `_divider`（全文件无引用）
+/// - `_sheetOption` 里未使用的 `isDark` 一并移除
+///
+/// 注：6 / 10 / 14 / 48 等数值在设计 Token 中无精确对应，保留字面量并就近注释。
 class NetworkProxyPage extends StatefulWidget {
   const NetworkProxyPage({super.key});
 
@@ -73,25 +87,28 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
+    return AppPage(
+      title: l10n.settingsPageNetworkProxy,
+      leading: Tooltip(
+        message: l10n.settingsPageBackButton,
+        child: IosIconButton(
+          haptics: true,
+          icon: Lucide.ArrowLeft,
+          color: cs.onSurface,
+          size: 22,
+          minSize: 44,
+          semanticLabel: l10n.settingsPageBackButton,
+          onTap: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(l10n.settingsPageNetworkProxy),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.md),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _sectionCard(children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              // 10 无精确 token
+              padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 10),
               child: Row(
                 children: [
                   Expanded(child: Text(l10n.networkProxyEnableLabel, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
@@ -156,32 +173,34 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xs, AppGap.sm, 10),
               child: Text(l10n.networkProxyPriorityNote, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.6))),
             ),
           ]),
-          const SizedBox(height: 12),
-          // Bottom: connection test section with card wrapper
+          const SizedBox(height: AppGap.sm),
+          // 连接测试区
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+            padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xxxs, AppGap.sm, 6),
             child: Text(l10n.networkProxyTestHeader, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           ),
           _sectionCard(children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xs, AppGap.sm, AppGap.xxs),
               child: TextField(
                 controller: _testUrlCtl,
                 decoration: _deskInputDecoration(context).copyWith(hintText: l10n.networkProxyTestUrlHint),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+              padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xxs, AppGap.sm, 10),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: _DeskIosButton(
                   label: _testing ? l10n.networkProxyTesting : l10n.networkProxyTestButton,
                   filled: false,
                   dense: true,
+                  // TODO(优化)：_DeskIosButton.onTap 若改为可空，这里传 `_testing ? null : _onTest`
+                  // 可让按钮在测试中自动置灰，比空回调更规范。
                   onTap: _testing ? (){} : _onTest,
                 ),
               ),
@@ -189,12 +208,12 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
           ]),
           if (_ok == true)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xs, AppGap.sm, 0),
               child: Text(l10n.networkProxyTestSuccess, style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.w600)),
             ),
           if (_ok == false)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xs, AppGap.sm, 0),
               child: Text(l10n.networkProxyTestFailed(_testErr ?? ''), style: TextStyle(color: cs.error)),
             ),
         ],
@@ -240,10 +259,11 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
   }
 }
 
-// Bottom-sheet selector styled like Display Settings language/background sheets (no ripple)
+/// 代理类型下拉选择器（点击弹出 AppSheet）。
 class _ProxyTypeSheetField extends StatelessWidget {
   const _ProxyTypeSheetField({required this.value, required this.onChanged});
-  final String value; final ValueChanged<String?> onChanged;
+  final String value;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -262,28 +282,21 @@ class _ProxyTypeSheetField extends StatelessWidget {
     }
 
     Future<void> openSheet() async {
-      final cs = Theme.of(context).colorScheme;
-      final selected = await showModalBottomSheet<String>(
+      // 手写 showModalBottomSheet → showAppSheet + AppSheet（统一圆角/底色/键盘避让）
+      final selected = await showAppSheet<String>(
         context: context,
-        backgroundColor: cs.surface,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-        builder: (ctx) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _sheetOption(ctx, text: l10n.networkProxyTypeHttp, value: 'http', selected: value == 'http'),
-                  _sheetDivider(ctx),
-                  _sheetOption(ctx, text: l10n.networkProxyTypeHttps, value: 'https', selected: value == 'https'),
-                  _sheetDivider(ctx),
-                  _sheetOption(ctx, text: l10n.networkProxyTypeSocks5, value: 'socks5', selected: value == 'socks5'),
-                ],
-              ),
-            ),
-          );
-        },
+        builder: AppSheet(
+          children: [
+            _sheetOption(context, text: l10n.networkProxyTypeHttp, selected: value == 'http',
+                onTap: () => Navigator.of(context).pop('http')),
+            _sheetDivider(context),
+            _sheetOption(context, text: l10n.networkProxyTypeHttps, selected: value == 'https',
+                onTap: () => Navigator.of(context).pop('https')),
+            _sheetDivider(context),
+            _sheetOption(context, text: l10n.networkProxyTypeSocks5, selected: value == 'socks5',
+                onTap: () => Navigator.of(context).pop('socks5')),
+          ],
+        ),
       );
       if (selected != null) onChanged(selected);
     }
@@ -292,9 +305,10 @@ class _ProxyTypeSheetField extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: openSheet,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: AppGap.sm),
         decoration: BoxDecoration(
           color: fillColor,
+          // 10 无精确 token（AppRadius.sm=8 / md=12），保留字面量
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: cs.outlineVariant.withOpacity(0.12), width: 0.6),
         ),
@@ -315,18 +329,19 @@ class _ProxyTypeSheetField extends StatelessWidget {
     );
   }
 
-  Widget _sheetOption(BuildContext ctx, {required String text, required String value, required bool selected}) {
-    final cs = Theme.of(ctx).colorScheme; final isDark = Theme.of(ctx).brightness == Brightness.dark;
+  Widget _sheetOption(BuildContext ctx,
+      {required String text, required bool selected, required VoidCallback onTap}) {
+    final cs = Theme.of(ctx).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppGap.xxs),
       child: SizedBox(
         height: 48,
         child: IosCardPress(
           borderRadius: BorderRadius.circular(14),
           baseColor: cs.surface,
           duration: const Duration(milliseconds: 220),
-          onTap: () => Navigator.of(ctx).pop(value),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          onTap: onTap,
+          padding: const EdgeInsets.symmetric(horizontal: AppGap.sm),
           child: Row(
             children: [
               Expanded(child: Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
@@ -339,37 +354,10 @@ class _ProxyTypeSheetField extends StatelessWidget {
   }
 
   Widget _sheetDivider(BuildContext ctx) {
-    final cs = Theme.of(ctx).colorScheme; final isDark = Theme.of(ctx).brightness == Brightness.dark;
-    return Divider(height: 1, thickness: 0.6, indent: 12, endIndent: 12, color: cs.outlineVariant.withOpacity(isDark ? 0.10 : 0.08));
-  }
-}
-
-// Local minimal copies of iOS-style bits to match app style
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.size, required this.onTap});
-  final IconData icon;
-  final Color color;
-  final double size;
-  final VoidCallback onTap;
-  @override
-  State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1,
-        duration: const Duration(milliseconds: 80),
-        child: Icon(widget.icon, size: widget.size, color: widget.color),
-      ),
-    );
+    final cs = Theme.of(ctx).colorScheme;
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    return Divider(height: 1, thickness: 0.6, indent: AppGap.sm, endIndent: AppGap.sm,
+        color: cs.outlineVariant.withOpacity(isDark ? 0.10 : 0.08));
   }
 }
 
@@ -381,27 +369,22 @@ Widget _sectionCard({required List<Widget> children}) {
     return Container(
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: AppCardSurface.border(context),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: AppGap.xxs),
         child: Column(children: children),
       ),
     );
   });
 }
 
-Widget _divider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 12, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
 Widget _labeledField(BuildContext context, {required String label, required Widget child}) {
   final cs = Theme.of(context).colorScheme;
   return Padding(
-    padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+    padding: const EdgeInsets.fromLTRB(AppGap.sm, 10, AppGap.sm, AppGap.xs),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -415,7 +398,7 @@ Widget _labeledField(BuildContext context, {required String label, required Widg
   );
 }
 
-// Reuse desktop input styles to keep consistent look
+/// 与桌面端一致的输入框样式。
 InputDecoration _deskInputDecoration(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final cs = Theme.of(context).colorScheme;
@@ -436,7 +419,7 @@ InputDecoration _deskInputDecoration(BuildContext context) {
       borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide(color: cs.primary.withOpacity(0.35), width: 0.8),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    contentPadding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 10),
   );
 }
 
@@ -467,10 +450,15 @@ class _DeskIosButtonState extends State<_DeskIosButton> {
         duration: const Duration(milliseconds: 110),
         curve: Curves.easeOutCubic,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: widget.dense ? 8 : 12, horizontal: 12),
+          padding: EdgeInsets.symmetric(
+              vertical: widget.dense ? AppGap.xs : AppGap.sm, horizontal: AppGap.sm),
           alignment: Alignment.center,
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
-          child: Text(widget.label, style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: widget.dense ? 13 : 14)),
+          decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: borderColor)),
+          child: Text(widget.label,
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: widget.dense ? 13 : 14)),
         ),
       ),
     );

@@ -1,14 +1,29 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../core/providers/settings_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../core/services/haptics.dart';
-import '../../../shared/widgets/card_surface.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/ios_tactile.dart';
+import '../../../theme/design_tokens.dart';
+import '../widgets/settings_ios_widgets.dart';
 
+/// 赞助页。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar + 手写 ListView → AppPage(title/leading/body)，
+///   ListView 交给引擎的 scrollable，body 直接给 Column
+/// - padding LTRB(16,12,16,16) → AppPagePadding.content
+/// - 私有 `_TactileIconButton` → 共享 `IosIconButton`（checklist 第 8 条），并删除本文件的私有副本
+/// - FutureBuilder 的 loading/empty → AppLoading / AppEmpty
+///
+/// ⚠️ 为什么不用 `states:` 槽位：本页的 Future 只负责「赞助者列表」这一块，
+///   而 `states:` 会替换整页内容区（上方的「赞助方式」卡片会被吞掉）。
+///   `states:` 仅适用于「整页就是一个 Future」的页面，局部 Future 请用手动三态组件。
 class SponsorPage extends StatefulWidget {
   const SponsorPage({super.key});
 
@@ -54,8 +69,10 @@ class _SponsorPageState extends State<SponsorPage> {
   Widget _header(BuildContext context, String text, {bool first = false}) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: EdgeInsets.fromLTRB(12, first ? 2 : 18, 12, 6),
-      child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.8))),
+      padding: EdgeInsets.fromLTRB(AppGap.sm, first ? AppGap.xxxs : 18, AppGap.sm, 6),
+      child: Text(text,
+          style:
+              TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.8))),
     );
   }
 
@@ -75,29 +92,31 @@ class _SponsorPageState extends State<SponsorPage> {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final wechatQrUrl = isDark ? 'https://c.img.dasctf.com/LightPicture/2025/10/ee10ae78acbd01f3.png' : 'https://c.img.dasctf.com/LightPicture/2025/10/6ba60ac0f2f8e2b4.png';
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
+    final wechatQrUrl = isDark
+        ? 'https://c.img.dasctf.com/LightPicture/2025/10/ee10ae78acbd01f3.png'
+        : 'https://c.img.dasctf.com/LightPicture/2025/10/6ba60ac0f2f8e2b4.png';
+
+    return AppPage(
+      title: l10n.settingsPageSponsor,
+      // 保留自定义返回 Tooltip 文案，但改用共享 IosIconButton
+      leading: Tooltip(
+        message: l10n.settingsPageBackButton,
+        child: IosIconButton(
+          haptics: true,
+          icon: Lucide.ArrowLeft,
+          color: cs.onSurface,
+          size: 22,
+          minSize: 44,
+          onTap: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(l10n.settingsPageSponsor),
-        actions: const [SizedBox(width: 12)],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      bodyPadding: AppPagePadding.content,
+      body: Column(
         children: [
           _header(context, l10n.sponsorPageMethodsSectionTitle, first: true),
-          _iosSectionCard(children: [
-            _iosNavRow(
-              context,
-              icon: Lucide.Heart,
+          SettingsSectionCard(children: [
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.Heart,
               label: l10n.sponsorPageAfdianTitle,
               onTap: () async {
                 final uri = Uri.parse('https://afdian.com/a/minime-core');
@@ -106,10 +125,9 @@ class _SponsorPageState extends State<SponsorPage> {
                 }
               },
             ),
-            _iosDivider(context),
-            _iosNavRow(
-              context,
-              icon: Lucide.Link,
+            const SettingsDivider(),
+            SettingsNavRow(
+              haptics: false,              icon: Lucide.Link,
               label: l10n.sponsorPageWeChatTitle,
               onTap: () async {
                 final uri = Uri.parse(wechatQrUrl);
@@ -120,31 +138,21 @@ class _SponsorPageState extends State<SponsorPage> {
             ),
           ]),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.sm),
           _header(context, l10n.sponsorPageSponsorsSectionTitle),
           FutureBuilder<_SponsorData>(
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(color: cs.primary, strokeWidth: 3),
-                    ),
-                  ),
-                );
+                return const AppLoading(verticalPadding: 40);
               }
-              final data = snapshot.data ?? const _SponsorData(updatedAt: '', sponsors: <_Sponsor>[]);
+              final data =
+                  snapshot.data ?? const _SponsorData(updatedAt: '', sponsors: <_Sponsor>[]);
               final sponsors = data.sponsors;
               if (sponsors.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 32),
-                  child: Center(
-                    child: Text(l10n.sponsorPageEmpty, style: TextStyle(color: cs.onSurface.withOpacity(0.6))),
-                  ),
+                return AppEmpty(
+                  message: l10n.sponsorPageEmpty,
+                  verticalPadding: AppGap.xxl,
                 );
               }
               return LayoutBuilder(
@@ -154,7 +162,7 @@ class _SponsorPageState extends State<SponsorPage> {
                   int cross = (w >= 480) ? 6 : 5;
                   final itemSize = (w - 24 - (cross - 1) * 10) / cross; // 12 padding each side, 10 spacing
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.sm),
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -237,162 +245,6 @@ class _SponsorTile extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// --- iOS-style helpers (mirroring Settings/Display/About) ---
-
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: AppCardSurface.border(context),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
-
-Widget _iosDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 54, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
-class _AnimatedPressColor extends StatelessWidget {
-  const _AnimatedPressColor({required this.pressed, required this.base, required this.builder});
-  final bool pressed;
-  final Color base;
-  final Widget Function(Color color) builder;
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final target = pressed ? (Color.lerp(base, isDark ? Colors.black : Colors.white, 0.55) ?? base) : base;
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: target),
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      builder: (context, color, _) => builder(color ?? base),
-    );
-  }
-}
-
-class _TactileRow extends StatefulWidget {
-  const _TactileRow({required this.builder, this.onTap, this.pressedScale = 1.00, this.haptics = false});
-  final Widget Function(bool pressed) builder;
-  final VoidCallback? onTap;
-  final double pressedScale;
-  final bool haptics;
-  @override
-  State<_TactileRow> createState() => _TactileRowState();
-}
-
-class _TactileRowState extends State<_TactileRow> {
-  bool _pressed = false;
-  void _setPressed(bool v) { if (_pressed != v) setState(() => _pressed = v); }
-  @override
-  Widget build(BuildContext context) {
-    final child = widget.builder(_pressed);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
-      onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
-      onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
-      onTap: widget.onTap == null ? null : () {
-        if (widget.haptics && context.read<SettingsProvider>().hapticsOnListItemTap) Haptics.soft();
-        widget.onTap!.call();
-      },
-      child: widget.pressedScale == 1.0
-          ? child
-          : AnimatedScale(scale: _pressed ? widget.pressedScale : 1.0, duration: const Duration(milliseconds: 120), curve: Curves.easeOutCubic, child: child),
-    );
-  }
-}
-
-Widget _iosNavRow(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  VoidCallback? onTap,
-  String? detailText,
-  Widget Function(BuildContext ctx)? detailBuilder,
-}) {
-  final cs = Theme.of(context).colorScheme;
-  final interactive = onTap != null;
-  return _TactileRow(
-    onTap: onTap,
-    pressedScale: 1.00,
-    haptics: false,
-    builder: (pressed) {
-      final baseColor = cs.onSurface.withOpacity(0.9);
-      return _AnimatedPressColor(
-        pressed: pressed,
-        base: baseColor,
-        builder: (c) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                SizedBox(width: 36, child: Icon(icon, size: 20, color: c)),
-                const SizedBox(width: 12),
-                Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                if (detailBuilder != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: DefaultTextStyle(style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6)), child: detailBuilder(context)),
-                  )
-                else if (detailText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Text(detailText, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6))),
-                  ),
-                if (interactive) Icon(Lucide.ChevronRight, size: 16, color: c),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-class _TactileIconButton extends StatefulWidget {
-  const _TactileIconButton({required this.icon, required this.color, required this.onTap, this.onLongPress, this.semanticLabel, this.size = 22, this.haptics = true});
-  final IconData icon; final Color color; final VoidCallback onTap; final VoidCallback? onLongPress; final String? semanticLabel; final double size; final bool haptics;
-  @override State<_TactileIconButton> createState() => _TactileIconButtonState();
-}
-
-class _TactileIconButtonState extends State<_TactileIconButton> {
-  bool _pressed = false;
-  @override
-  Widget build(BuildContext context) {
-    final base = widget.color; final pressColor = base.withOpacity(0.7);
-    final icon = Icon(widget.icon, size: widget.size, color: _pressed ? pressColor : base, semanticLabel: widget.semanticLabel);
-    return Semantics(
-      button: true, label: widget.semanticLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: () { /* no haptics on tap to match provider */ widget.onTap(); },
-        onLongPress: widget.onLongPress == null ? null : () { if (widget.haptics) Haptics.light(); widget.onLongPress!.call(); },
-        child: AnimatedScale(
-          scale: _pressed ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), child: icon),
-        ),
-      ),
     );
   }
 }

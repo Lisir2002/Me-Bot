@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/providers/tag_provider.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../icons/lucide_adapter.dart';
-import '../../../shared/widgets/ios_tactile.dart';
 
+import '../../../core/providers/tag_provider.dart';
+import '../../../icons/lucide_adapter.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/ios_tactile.dart';
+import '../../../theme/design_tokens.dart';
+
+/// 标签管理页（助手维度）。
+///
+/// 已迁移到 AppPage 槽位骨架：
+/// - Scaffold + AppBar → AppPage(title/leading/actions/body)
+/// - ⚠️ body 是 ReorderableListView（自带滚动）→ 必须 scrollable: false，
+///   且 bodyPadding 置零（条目自带 LTRB(12,10,12,2) 内边距）
+/// - 顶栏按钮复用共享 IosIconButton（符合 checklist 第 8 条）
+/// - 魔法数字 → AppGap（无精确 token 的 10/14 保留字面量）
 class TagsManagerPage extends StatefulWidget {
   const TagsManagerPage({super.key, required this.assistantId});
   final String assistantId;
@@ -27,8 +38,12 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
           decoration: InputDecoration(hintText: l10n.assistantTagsNameHint),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantTagsCreateDialogCancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantTagsCreateDialogOk)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.assistantTagsCreateDialogCancel)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.assistantTagsCreateDialogOk)),
         ],
       ),
     );
@@ -54,8 +69,12 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
           decoration: InputDecoration(hintText: l10n.assistantTagsNameHint),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantTagsCreateDialogCancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantTagsRenameDialogOk)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.assistantTagsCreateDialogCancel)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.assistantTagsRenameDialogOk)),
         ],
       ),
     );
@@ -76,8 +95,12 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
         title: Text(l10n.assistantTagsDeleteConfirmTitle),
         content: Text(l10n.assistantTagsDeleteConfirmContent),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantTagsDeleteConfirmCancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantTagsDeleteConfirmOk)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.assistantTagsDeleteConfirmCancel)),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.assistantTagsDeleteConfirmOk)),
         ],
       ),
     );
@@ -91,35 +114,40 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
     final l10n = AppLocalizations.of(context)!;
     final tp = context.watch<TagProvider>();
     final tags = tp.tags;
-    return Scaffold(
-      appBar: AppBar(
-        leadingWidth: 52,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
+
+    return AppPage(
+      title: l10n.assistantTagsManageTitle,
+      // 保留 iOS 风格 ChevronLeft（AppPage 默认是 arrow_back_ios_new_rounded）
+      leading: Padding(
+        padding: const EdgeInsets.only(left: AppGap.xs),
+        child: IosIconButton(
+          haptics: true,
+          icon: Lucide.ChevronLeft,
+          minSize: 44,
+          onTap: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: AppGap.xs),
           child: IosIconButton(
-            icon: Lucide.ChevronLeft,
+            haptics: true,
+            icon: Lucide.Plus,
             minSize: 44,
-            onTap: () => Navigator.of(context).maybePop(),
+            onTap: () => _createTag(context),
           ),
         ),
-        title: Text(l10n.assistantTagsManageTitle),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: IosIconButton(
-              icon: Lucide.Plus,
-              minSize: 44,
-              onTap: () => _createTag(context),
-            ),
-          ),
-        ],
-      ),
+      ],
+      // body 自带滚动容器 → 必须 false
+      scrollable: false,
+      bodyPadding: AppPagePadding.zero,
       body: ReorderableListView.builder(
         itemCount: tags.length,
         buildDefaultDragHandles: false,
         proxyDecorator: (child, index, animation) {
           // No shadow during drag; slight scale only
-          return ScaleTransition(scale: Tween<double>(begin: 1.0, end: 1.02).animate(animation), child: child);
+          return ScaleTransition(
+              scale: Tween<double>(begin: 1.0, end: 1.02).animate(animation), child: child);
         },
         onReorder: (oldIndex, newIndex) async {
           if (newIndex > oldIndex) newIndex -= 1;
@@ -130,13 +158,15 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
           return KeyedSubtree(
             key: ValueKey('tag-mobile-${t.id}'),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+              padding: const EdgeInsets.fromLTRB(AppGap.sm, 10, AppGap.sm, AppGap.xxxs),
               child: ReorderableDelayedDragStartListener(
                 index: i,
                 child: _MobileTagCard(
                   title: t.name,
                   onTap: () async {
-                    await context.read<TagProvider>().assignAssistantToTag(widget.assistantId, t.id);
+                    await context
+                        .read<TagProvider>()
+                        .assignAssistantToTag(widget.assistantId, t.id);
                     if (mounted) Navigator.of(context).maybePop();
                   },
                   onRename: () => _renameTag(context, t.id, t.name),
@@ -152,24 +182,37 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
 }
 
 class _MobileTagCard extends StatelessWidget {
-  const _MobileTagCard({required this.title, required this.onTap, required this.onRename, required this.onDelete});
-  final String title; final VoidCallback onTap; final VoidCallback onRename; final VoidCallback onDelete;
+  const _MobileTagCard(
+      {required this.title,
+      required this.onTap,
+      required this.onRename,
+      required this.onDelete});
+  final String title;
+  final VoidCallback onTap;
+  final VoidCallback onRename;
+  final VoidCallback onDelete;
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme; final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
     final borderColor = cs.outlineVariant.withOpacity(isDark ? 0.12 : 0.10);
+
     Widget iconBtn(IconData icon, VoidCallback onPressed, {Color? color}) {
       return IosCardPress(
         baseColor: Colors.transparent,
+        // 10 无精确 token，保留字面量
         borderRadius: BorderRadius.circular(10),
         onTap: onPressed,
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppGap.xs),
         child: Icon(icon, size: 18, color: color ?? cs.onSurface),
       );
     }
+
     return IosCardPress(
       baseColor: bg,
+      // 14 无精确 token，保留字面量
       borderRadius: BorderRadius.circular(14),
       pressedBlendStrength: 0.06,
       onTap: onTap,
@@ -179,7 +222,7 @@ class _MobileTagCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor, width: 1.0),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 10),
         child: Row(
           children: [
             Expanded(
@@ -191,7 +234,7 @@ class _MobileTagCard extends StatelessWidget {
               ),
             ),
             iconBtn(Lucide.Pencil, onRename),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppGap.xxs),
             iconBtn(Lucide.Trash2, onDelete, color: cs.error),
           ],
         ),

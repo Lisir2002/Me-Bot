@@ -1,3 +1,4 @@
+import 'package:characters/characters.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/stats/stats_aggregator.dart';

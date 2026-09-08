@@ -371,10 +371,10 @@ Future<void> showImportProviderSheet(BuildContext context) async {
                                   }
                                 } catch (_) {}
                               }
-                              if (code == null || code!.isEmpty) throw 'QR not detected';
+                              if (code == null || code.isEmpty) throw 'QR not detected';
                               final settings = ctx.read<SettingsProvider>();
                               final results = <_ImportResult>[];
-                              final parts = code!.split(RegExp(r'\r?\n+')).map((e)=>e.trim()).where((e)=>e.isNotEmpty).toList();
+                              final parts = code.split(RegExp(r'\r?\n+')).map((e)=>e.trim()).where((e)=>e.isNotEmpty).toList();
                               if (parts.length > 1) {
                                 for (final p in parts) {
                                   try {

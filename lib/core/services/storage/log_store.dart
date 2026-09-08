@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import '../../../core/services/logging/log_parser.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../utils/app_directories.dart';
 

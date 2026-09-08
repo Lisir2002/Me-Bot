@@ -797,7 +797,7 @@ class McpProvider extends ChangeNotifier {
         final fut = client.listTools();
         // Add a soft timeout to avoid piling up
         await fut.timeout(const Duration(seconds: 6));
-      } catch (e, st) {
+      } catch (e) {
         // debugPrint('[MCP/Heartbeat] liveness check failed id=$id');
         // _logMcpException('heartbeat', serverId: id, error: e, stack: st);
         // Consider connection lost; mark error and try auto-reconnect
@@ -924,7 +924,7 @@ class McpProvider extends ChangeNotifier {
         final props = (schema['properties'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
         final req = (schema['required'] as List?)?.map((e) => e.toString()).toSet() ?? const <String>{};
         final out = <String, dynamic>{};
-        final input = (value is Map) ? (value as Map).cast<String, dynamic>() : const <String, dynamic>{};
+        final input = (value is Map) ? (value).cast<String, dynamic>() : const <String, dynamic>{};
         // copy passthrough unknowns
         input.forEach((k, v) {
           if (!props.containsKey(k)) out[k] = v;
@@ -1028,10 +1028,10 @@ class McpProvider extends ChangeNotifier {
     final anyOf = schema['anyOf'];
     final oneOf = schema['oneOf'];
     if (anyOf is List) {
-      out.addAll(anyOf.whereType<Map>().map((e) => (e as Map).cast<String, dynamic>()));
+      out.addAll(anyOf.whereType<Map>().map((e) => (e).cast<String, dynamic>()));
     }
     if (oneOf is List) {
-      out.addAll(oneOf.whereType<Map>().map((e) => (e as Map).cast<String, dynamic>()));
+      out.addAll(oneOf.whereType<Map>().map((e) => (e).cast<String, dynamic>()));
     }
     return out;
   }
@@ -1070,33 +1070,31 @@ class McpProvider extends ChangeNotifier {
         Map<String, dynamic>? schemaJson;
         try {
           final schema = t.inputSchema; // dynamic; depends on package
-          if (schema != null) {
-            // We attempt to read JSON schema-ish fields via toJson if provided
-            final Map<String, dynamic> js = (schema is Map<String, dynamic>)
-                ? schema
-                : (schema is Object && schema.toString().isNotEmpty)
-                    ? (schema as dynamic).toJson?.call() as Map<String, dynamic>? ?? {}
-                    : {};
-            schemaJson = js;
-            final props = (js['properties'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
-            final req = (js['required'] as List?)?.map((e) => e.toString()).toSet() ?? const <String>{};
-            props.forEach((key, val) {
-              String? ty;
-              dynamic defVal;
-              try {
-                final v = (val as Map).cast<String, dynamic>();
-                final ttype = v['type'];
-                if (ttype is String) {
-                  ty = ttype;
-                } else if (ttype is List) {
-                  ty = ttype.map((e) => e.toString()).join('|');
-                }
-                defVal = v['default'];
-              } catch (_) {}
-              params.add(McpParamSpec(name: key, required: req.contains(key), type: ty, defaultValue: defVal));
-            });
-          }
-        } catch (_) {}
+          // We attempt to read JSON schema-ish fields via toJson if provided
+          final Map<String, dynamic> js = (schema is Map<String, dynamic>)
+              ? schema
+              : (schema.toString().isNotEmpty)
+                  ? (schema as dynamic).toJson?.call() as Map<String, dynamic>? ?? {}
+                  : {};
+          schemaJson = js;
+          final props = (js['properties'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          final req = (js['required'] as List?)?.map((e) => e.toString()).toSet() ?? const <String>{};
+          props.forEach((key, val) {
+            String? ty;
+            dynamic defVal;
+            try {
+              final v = (val as Map).cast<String, dynamic>();
+              final ttype = v['type'];
+              if (ttype is String) {
+                ty = ttype;
+              } else if (ttype is List) {
+                ty = ttype.map((e) => e.toString()).join('|');
+              }
+              defVal = v['default'];
+            } catch (_) {}
+            params.add(McpParamSpec(name: key, required: req.contains(key), type: ty, defaultValue: defVal));
+          });
+                } catch (_) {}
 
         merged.add(McpToolConfig(
           enabled: prior?.enabled ?? true,
@@ -1111,7 +1109,7 @@ class McpProvider extends ChangeNotifier {
       _servers[idx] = _servers[idx].copyWith(tools: merged);
       await _persist();
       notifyListeners();
-    } catch (e, st) {
+    } catch (e) {
       // debugPrint('[MCP/Tools] listTools() failed for id=$id');
       // _logMcpException('listTools', serverId: id, error: e, stack: st);
       // ignore tool refresh errors; status stays connected
@@ -1299,7 +1297,7 @@ class McpProvider extends ChangeNotifier {
       final uri = _safeString(() => dyn.uri as String?);
       if (uri != null && uri.isNotEmpty) return 'uri=$uri';
       // Try toJson
-      final toJson = (dyn.toJson as dynamic?)?.call();
+      final toJson = (dyn.toJson as dynamic)?.call();
       if (toJson is Map) {
         return jsonEncode(toJson);
       }

@@ -72,7 +72,7 @@ class _SearchSettingsSheet extends StatelessWidget {
     bool hasBuiltInSearch = false;
     if ((isOfficialGemini || isClaude || isOpenAIResponses) && providerKey != null && (modelId ?? '').isNotEmpty) {
       final mid = modelId!;
-      final ov = cfg!.modelOverrides[mid] as Map?;
+      final ov = cfg.modelOverrides[mid] as Map?;
       final list = (ov?['builtInTools'] as List?) ?? const <dynamic>[];
       hasBuiltInSearch = list.map((e) => e.toString().toLowerCase()).contains('search');
     }
@@ -91,7 +91,7 @@ class _SearchSettingsSheet extends StatelessWidget {
       final m = id.toLowerCase();
       return m.startsWith('gpt-4o') || m.startsWith('gpt-4.1') || m.startsWith('o4-mini') || m == 'o3' || m.startsWith('o3-') || m.startsWith('gpt-5');
     }
-    final isOpenAIResponsesSupportedModel = isOpenAIResponses && (modelId != null) && _isOpenAIResponsesSupportedModel(modelId!);
+    final isOpenAIResponsesSupportedModel = isOpenAIResponses && (modelId != null) && _isOpenAIResponsesSupportedModel(modelId);
 
     final maxHeight = MediaQuery.of(context).size.height * 0.8;
     return SafeArea(
@@ -132,11 +132,11 @@ class _SearchSettingsSheet extends StatelessWidget {
                     baseColor: cs.surface,
                     duration: const Duration(milliseconds: 260),
                     onTap: () async {
-                      if (providerKey == null || (modelId ?? '').isEmpty) return;
+                      if ((modelId ?? '').isEmpty) return;
                       Haptics.light();
                       final bool v = !hasBuiltInSearch;
                       final mid = modelId!;
-                      final overrides = Map<String, dynamic>.from(cfg!.modelOverrides);
+                      final overrides = Map<String, dynamic>.from(cfg.modelOverrides);
                       final mo = Map<String, dynamic>.from((overrides[mid] as Map?)?.map((k, val) => MapEntry(k.toString(), val)) ?? const <String, dynamic>{});
                       final list = List<String>.from(((mo['builtInTools'] as List?) ?? const <dynamic>[]).map((e) => e.toString()));
                       if (v) {
@@ -174,10 +174,10 @@ class _SearchSettingsSheet extends StatelessWidget {
                         IosSwitch(
                           value: hasBuiltInSearch,
                           onChanged: (v) async {
-                            if (providerKey == null || (modelId ?? '').isEmpty) return;
+                            if ((modelId ?? '').isEmpty) return;
                             Haptics.light();
                             final mid = modelId!;
-                            final overrides = Map<String, dynamic>.from(cfg!.modelOverrides);
+                            final overrides = Map<String, dynamic>.from(cfg.modelOverrides);
                             final mo = Map<String, dynamic>.from((overrides[mid] as Map?)?.map((k, val) => MapEntry(k.toString(), val)) ?? const <String, dynamic>{});
                             final list = List<String>.from(((mo['builtInTools'] as List?) ?? const <dynamic>[]).map((e) => e.toString()));
                             if (v) {
@@ -414,15 +414,15 @@ class _BrandBadge extends StatelessWidget {
     final asset = BrandAssets.assetForName(name);
     final bg = isDark ? Colors.white10 : cs.primary.withOpacity(0.1);
     if (asset != null) {
-      if (asset!.endsWith('.svg')) {
-        final isColorful = asset!.contains('color');
+      if (asset.endsWith('.svg')) {
+        final isColorful = asset.contains('color');
         final ColorFilter? tint = (isDark && !isColorful) ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null;
         return Container(
           width: size,
           height: size,
           decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: SvgPicture.asset(asset!, width: size * 0.62, height: size * 0.62, colorFilter: tint),
+          child: SvgPicture.asset(asset, width: size * 0.62, height: size * 0.62, colorFilter: tint),
         );
       } else {
         return Container(
@@ -430,7 +430,7 @@ class _BrandBadge extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: Image.asset(asset!, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain),
+          child: Image.asset(asset, width: size * 0.62, height: size * 0.62, fit: BoxFit.contain),
         );
       }
     }

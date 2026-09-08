@@ -587,7 +587,7 @@ class _MermaidInlineWebViewState extends State<_MermaidInlineWebView> {
       await file.writeAsBytes(bytes);
       Rect rect;
       final overlay = Overlay.of(context);
-      final ro = overlay?.context.findRenderObject();
+      final ro = overlay.context.findRenderObject();
       if (ro is RenderBox && ro.hasSize) {
         final size = ro.size;
         final centerGlobal = ro.localToGlobal(Offset(size.width / 2, size.height / 2));

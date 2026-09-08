@@ -9,10 +9,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 ### 🔧 For Developers
 - **Added**：AI 协助开发规范体系——`AGENTS.md`（环境现实 / 7 条带事故锚点的铁律 / 行动边界三级 / 发布 SOP / 版本日志三档）、`CLAUDE.md` 桥接、本文件（Keep a Changelog 三档结构）。
-- **Added**：CI android job 接入 `flutter analyze` 观察步骤（`continue-on-error: true`）。
+- **Added**：CI android job 接入 `flutter analyze` 观察步骤（`continue-on-error: true`，过滤 info 明细以避开 Actions 单步输出截断）。
+- **Added**：`docs/WARNING_CLEARANCE.md`——438 warning 清零批次计划（B0–B6）、进度看板、红线。
+- **Changed**：本地分析环境打通：`/opt/flutter335`（Flutter 3.35.7 / Dart 3.9.2，与 CI 对齐）可用，全量 `flutter analyze` 约 48s，实测与 CI 逐条一致。`AGENTS.md` §1 原「禁止本地 analyze」条款作废；`/opt/flutter`（2.17）仍禁用。
 
 ### 🤖 For Agents
-- 首轮 analyze 基线（2026-09-08）：**3074 issues**（~235 warning；585 条 `deprecated_member_use` 集中在 `lib/desktop/`，desktop_settings_page.dart 单文件 244 条）。硬化策略与增量红线见 `AGENTS.md` §5.4。
+- **基线修正**：首轮报的「~235 warning」是 Actions 单步输出截断导致的错数（3074 条只落 1028 行）。准确基线（commit `c203caa`）：**3074 issues = 438 warning + 2836 info + 0 error**。warning 三条大头 `unused_local_variable` 84 / `unnecessary_cast` 73 / `unused_element` 60；最脏文件 `lib/core/services/api/chat_api_service.dart` 89 条。
+- 本地 analyze 用法：`export PATH=/opt/flutter335/bin:$PATH PUB_HOSTED_URL=https://pub.flutter-io.cn`（`storage.googleapis.com` 在本沙箱不可达，须用 `storage.flutter-io.cn` / `pub.flutter-io.cn` 镜像）。
+- **坑**：`dart fix --apply` 会顺带应用 `missing_dependency`，实测往 `pubspec.yaml` 注入 `path/characters/syncfusion_flutter_core/vector_math: any`——每批 apply 后必须 `diff pubspec.yaml` 并还原。
+- `dart fix` 对 `unused_local_variable` / `unused_element` / `unused_field` / `unused_shown_name` / `dead_code` / `dead_null_aware_expression` / `unreachable_switch_default` **无机器修复**（剩余 214 条中的 210 条），只能人工判读。
 - 本文件三档结构本身是规范的一部分：发版时用户档→Release body，开发者档+模型档→本文件，勿混写。
 
 ## [0.0.43] - 2026-09-08

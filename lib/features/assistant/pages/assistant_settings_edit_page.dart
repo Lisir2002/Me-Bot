@@ -9,8 +9,6 @@ import 'package:syncfusion_flutter_core/theme.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:characters/characters.dart';
 import '../../../shared/widgets/emoji_text.dart';
@@ -23,7 +21,6 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../theme/design_tokens.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/providers/assistant_provider.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../model/widgets/model_select_sheet.dart';
 import '../../chat/widgets/reasoning_budget_sheet.dart';
@@ -2700,7 +2697,7 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
         );
         return;
       }
-    } on PlatformException catch (e) {
+    } on PlatformException {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
       showAppSnackBar(
@@ -4780,8 +4777,8 @@ class _BrandAvatarLike extends StatelessWidget {
     String? asset;
     asset = BrandAssets.assetForName(name);
     if (asset != null) {
-      if (asset!.endsWith('.svg')) {
-        final isColorful = asset!.contains('color');
+      if (asset.endsWith('.svg')) {
+        final isColorful = asset.contains('color');
         final ColorFilter? tint = (isDark && !isColorful)
             ? const ColorFilter.mode(Colors.white, BlendMode.srcIn)
             : null;
@@ -4794,7 +4791,7 @@ class _BrandAvatarLike extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: SvgPicture.asset(
-            asset!,
+            asset,
             width: size * 0.62,
             height: size * 0.62,
             colorFilter: tint,
@@ -4810,7 +4807,7 @@ class _BrandAvatarLike extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Image.asset(
-            asset!,
+            asset,
             width: size * 0.62,
             height: size * 0.62,
             fit: BoxFit.contain,

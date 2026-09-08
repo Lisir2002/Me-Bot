@@ -75,7 +75,6 @@ Future<void> preRenderMermaidCodesForExport(
   if (distinct.isEmpty) return;
 
   final overlay = Overlay.of(context);
-  if (overlay == null) return;
 
   // Sequentially render codes with a single offscreen overlay to avoid heavy composites
   for (final code in distinct) {

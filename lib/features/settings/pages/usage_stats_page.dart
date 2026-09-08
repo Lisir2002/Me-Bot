@@ -14,7 +14,6 @@ import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
 import '../widgets/stats_heatmap.dart';
-import '../widgets/stats_l10n.dart';
 import '../widgets/stats_overview.dart';
 import '../widgets/stats_range_bar.dart';
 import '../widgets/stats_tables.dart';

@@ -421,7 +421,7 @@ class _LanguageDropdownState extends State<_LanguageDropdown> {
         ),
       ]);
     });
-    Overlay.of(context)?.insert(_entry!);
+    Overlay.of(context).insert(_entry!);
     setState(() => _open = true);
   }
 

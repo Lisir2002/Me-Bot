@@ -649,7 +649,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
                   backgroundColor: Theme.of(sheetCtx).colorScheme.primary,
                   onTap: () {
                     final p = int.tryParse(priCtrl.text.trim()) ?? k.priority;
-                    final clamped = p.clamp(1, 10) as int;
+                    final clamped = p.clamp(1, 10);
                     Navigator.of(sheetCtx).pop(
                       k.copyWith(
                         name: aliasCtrl.text.trim().isEmpty ? null : aliasCtrl.text.trim(),

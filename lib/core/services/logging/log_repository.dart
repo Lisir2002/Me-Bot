@@ -1,5 +1,4 @@
 
-import 'dart:io';
 
 import 'log_level.dart';
 import 'log_parser.dart';

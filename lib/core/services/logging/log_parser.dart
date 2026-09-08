@@ -1,9 +1,7 @@
 
 import 'dart:io';
-import 'dart:async';
 import 'dart:convert';
 
-import 'logger.dart';
 import 'log_level.dart';
 
 /// 单条解析好的日志记录。

@@ -3755,8 +3755,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsGranularityMonth => 'Monthly';
 
   @override
-  String get statsNoActivity => 'No activity';
-  @override
   String statsHeatmapSummary(String count) {
     return '$count messages in total';
   }
@@ -3766,6 +3764,6 @@ class AppLocalizationsEn extends AppLocalizations {
     return 'No messages on $date';
   }
 
-
-
+  @override
+  String get statsNoActivity => 'No activity';
 }

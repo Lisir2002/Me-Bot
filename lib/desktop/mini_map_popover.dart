@@ -11,7 +11,6 @@ Future<String?> showDesktopMiniMapPopover(
   required List<ChatMessage> messages,
 }) async {
   final overlay = Overlay.of(context);
-  if (overlay == null) return null;
   final keyContext = anchorKey.currentContext;
   if (keyContext == null) return null;
 

@@ -3639,8 +3639,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statsGranularityMonth => '按月';
 
   @override
-  String get statsNoActivity => '无记录';
-  @override
   String statsHeatmapSummary(String count) {
     return '共 $count 条消息';
   }
@@ -3650,8 +3648,8 @@ class AppLocalizationsZh extends AppLocalizations {
     return '$date 无聊天记录';
   }
 
-
-
+  @override
+  String get statsNoActivity => '无记录';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -7107,8 +7105,6 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get statsGranularityMonth => '按月';
 
   @override
-  String get statsNoActivity => '无记录';
-  @override
   String statsHeatmapSummary(String count) {
     return '共 $count 条消息';
   }
@@ -7118,8 +7114,8 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
     return '$date 无聊天记录';
   }
 
-
-
+  @override
+  String get statsNoActivity => '无记录';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -10576,8 +10572,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statsGranularityMonth => '按月';
 
   @override
-  String get statsNoActivity => '無記錄';
-  @override
   String statsHeatmapSummary(String count) {
     return '共 $count 則訊息';
   }
@@ -10587,5 +10581,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
     return '$date 無聊天記錄';
   }
 
-
+  @override
+  String get statsNoActivity => '無記錄';
 }

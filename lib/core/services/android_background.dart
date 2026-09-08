@@ -1,5 +1,4 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'logging/logger.dart';
 import 'logging/log_tags.dart';

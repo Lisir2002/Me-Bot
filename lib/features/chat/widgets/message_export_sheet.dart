@@ -247,7 +247,6 @@ Future<File?> _renderWidgetDirectly(
   double pixelRatio = 3.0,
 }) async {
   final overlay = Overlay.of(context);
-  if (overlay == null) return null;
   
   final boundaryKey = GlobalKey();
   final completer = Completer<void>();
@@ -339,7 +338,6 @@ Future<File?> _renderAndSavePagedOld(
   double pixelRatio = 3.0,
 }) async {
   final overlay = Overlay.of(context);
-  if (overlay == null) return null;
   final boundaryKey = GlobalKey();
   final contentKey = GlobalKey();
   final controller = ScrollController();

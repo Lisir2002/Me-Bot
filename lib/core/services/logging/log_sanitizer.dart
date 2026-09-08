@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 /// 日志脱敏工具（Logger 和 FileAppender 共用，避免重复逻辑）。
 class LogSanitizer {

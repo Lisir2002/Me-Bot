@@ -1,10 +1,7 @@
 
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 
-import 'log_level.dart';
 import 'log_tags.dart';
 import 'logger.dart';
 

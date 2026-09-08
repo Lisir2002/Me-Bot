@@ -13,7 +13,7 @@
 
 | 现实 | 规则 |
 |---|---|
-| 本地 Flutter SDK 2.17，工程要求 `^3.8.1` | **禁止尝试本地 build / analyze / pub get**，编译验证一律走 CI（CI 即编译器） |
+| 本地 SDK 两套：`/opt/flutter335` = **Flutter 3.35.7 / Dart 3.9.2**（与 CI `FLUTTER_VERSION` 对齐，可用）；`/opt/flutter` = 旧版 2.17（**禁用**） | **analyze 走本地**：`export PATH=/opt/flutter335/bin:$PATH PUB_HOSTED_URL=https://pub.flutter-io.cn`，全量约 48s，实测与 CI 逐条一致；**build / 产物仍只走 CI** |
 | 沙箱网络受限（直连 GitHub 时好时坏） | 一切 GitHub 网络操作先读《沙箱受限网络访问GitHub实战经验.md》（hosts/DoH、Git Data API、CI 日志两步法） |
 | CI 无硬性 analyze 门禁（渐进接入中，见 §5.4） | push 前自检：括号/引号平衡、新 API 存在性 grep、脚本产物 NUL 扫描 |
 
@@ -67,10 +67,17 @@
 7. 资产校验：APK 文件名含正确版本号；与上一版 **sha256 必须不同**（防重复包；字节数可能因 zip 对齐恰好相同）
 
 ### 5.4 CI analyze 门禁（分级推进）
-android job 已插入 `flutter analyze` 观察步骤（`continue-on-error: true`）。
-**首轮基线（2026-09-08）：3074 issues**——约 235 warning（unnecessary_cast 63、use_build_context_synchronously 56、unused_local_variable 42 等）+ info 为体；最大单头 585 条 `deprecated_member_use`，集中在 `lib/desktop/`（desktop_settings_page 244 条、chat_api_service 119 条）。
-硬化路径：① 清零 235 个 warning 后，步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）② info 长期逐步消化，不设死线。
-基线归零前：任何变更**不得引入新问题**——改完对照 CI 输出，本次涉及文件不应出现此前没有的条目（AGENTS.md §1 自检清单继续有效）。
+android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`continue-on-error: true`；过滤 info 是因为 Actions 单步输出会截断）。
+**准确基线（2026-09-08，commit `c203caa`）：3074 issues = 438 warning + 2836 info + 0 error**。首轮报的"约 235 warning"是截断导致的错数，作废。
+- warning 三条大头：`unused_local_variable` 84 · `unnecessary_cast` 73 · `unused_element` 60；最脏文件 `chat_api_service.dart` 89 条。
+- info 最大单头 585 条 `deprecated_member_use`，集中在 `lib/desktop/`（desktop_settings_page 244 条）。
+
+**清零行动见 `docs/WARNING_CLEARANCE.md`（批次 B0–B6、进度看板、红线）。** 其中两条硬约束：
+- `dart fix --apply` 会顺带应用 `missing_dependency` 往 `pubspec.yaml` 塞 `xxx: any`——**每批 apply 后必须 diff 并还原 pubspec**（T4）。
+- 三类"未使用"警告（`unused_local_variable` / `unused_element` / `unused_field`，共 167 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。
+
+硬化路径：① 按批次清零 438 个 warning ② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。
+基线归零前：任何变更**不得引入新问题**——本地 analyze（§1）每批必跑，warning 数必须单调下降且 error 恒为 0。
 
 ## 6. 索引表（本文件只做索引，不复制内容）
 
@@ -80,6 +87,7 @@ android job 已插入 `flutter analyze` 观察步骤（`continue-on-error: true`
 | 版本历史与破坏性变更 | `CHANGELOG.md` |
 | 架构与功能概览 | `README.md` |
 | CI workflow | `.github/workflows/build-stable.yml`（FLUTTER_VERSION 3.35.7，无 analyze 硬门禁） |
+| **warning 清零批次、进度看板、红线** | `docs/WARNING_CLEARANCE.md` |
 
 ## 7. 本文件的迭代
 

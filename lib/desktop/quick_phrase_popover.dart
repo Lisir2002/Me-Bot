@@ -13,7 +13,6 @@ Future<QuickPhrase?> showDesktopQuickPhrasePopover(
 }) async {
   if (phrases.isEmpty) return null;
   final overlay = Overlay.of(context);
-  if (overlay == null) return null;
   final keyContext = anchorKey.currentContext;
   if (keyContext == null) return null;
 

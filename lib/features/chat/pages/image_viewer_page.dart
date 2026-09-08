@@ -268,7 +268,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
       Rect anchor;
       try {
         final overlay = Overlay.of(context);
-        final ro = overlay?.context.findRenderObject();
+        final ro = overlay.context.findRenderObject();
         if (ro is RenderBox && ro.hasSize) {
           final center = ro.size.center(Offset.zero);
           final global = ro.localToGlobal(center);

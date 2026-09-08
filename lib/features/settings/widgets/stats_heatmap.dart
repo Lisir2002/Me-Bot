@@ -1,3 +1,5 @@
+import 'dart:ui' as ui show TextDirection;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -135,10 +137,13 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
 
   /// 以窗口起点所在「本地周首日」为首列，生成覆盖整个窗口的周列。
   ///
-  /// 每列固定 7 天；首列/尾列超出窗口的部分由调用方负责跳过绘制。
-  List<List<DateTime>> _buildWeeks(StatsWindow window, int firstDay) {
+  /// [firstDayIndex] 为 `MaterialLocalizations.firstDayOfWeekIndex`
+  /// 语义：0=周日..6=周六。每列固定 7 天；首尾列超出窗口的补位格
+  /// 由绘制层跳过。
+  List<List<DateTime>> _buildWeeks(StatsWindow window, int firstDayIndex) {
     // DateTime.weekday: Mon=1..Sun=7；Dart 的 % 恒非负，无需再包一层
-    final shift = (window.start!.weekday - firstDay) % 7;
+    final firstWeekday = firstDayIndex == 0 ? 7 : firstDayIndex;
+    final shift = (window.start!.weekday - firstWeekday) % 7;
     var cursor = window.start!.subtract(Duration(days: shift));
     final weeks = <List<DateTime>>[];
     while (!cursor.isAfter(window.end!)) {
@@ -202,7 +207,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
     final now = DateTime.now();
 
     final window = _window(now);
-    final weeks = _buildWeeks(window, ml.firstDayOfWeek);
+    final weeks = _buildWeeks(window, ml.firstDayOfWeekIndex);
     final scale = _buildScale(weeks, window);
 
     // 头部汇总：窗口内总消息数（千分位 + 数字加粗）
@@ -224,7 +229,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
     ];
 
     final narrow = ml.narrowWeekdays;
-    final firstDay = ml.firstDayOfWeek;
+    final firstDay = ml.firstDayOfWeekIndex;
     final gridH = 7 * _rowH;
     final gridW = weeks.length * _colW;
 
@@ -297,7 +302,8 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // y 轴：周几标签（第 1/3/5 行，随本地周首日对齐）
+              // y 轴：周几标签（第 1/3/5 行；narrowWeekdays 固定周日起始，
+              // 按 firstDayOfWeekIndex 偏移映射到本地周序）
               Column(
                 children: [
                   for (int i = 0; i < 7; i++)
@@ -307,7 +313,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
                       child: Center(
                         child: Text(
                           (i == 0 || i == 2 || i == 4)
-                              ? narrow[(firstDay - 1 + i) % 7]
+                              ? narrow[(firstDay + i) % 7]
                               : '',
                           style: TextStyle(
                               fontSize: 9, color: cs.onSurfaceVariant),
@@ -659,7 +665,7 @@ class _MonthLabelsPainter extends CustomPainter {
           text: label,
           style: TextStyle(fontSize: 10, color: color),
         ),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       )..layout();
       // 放不下（与上一个标签贴太近）→ 跳过，绝不重叠
       if (x < lastRight + _minGap) {

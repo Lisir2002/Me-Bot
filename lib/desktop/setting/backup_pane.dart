@@ -604,28 +604,6 @@ class _ItemRow extends StatelessWidget {
   }
 }
 
-class _LabeledCheckbox extends StatelessWidget {
-  const _LabeledCheckbox({required this.label, required this.value, required this.onChanged});
-  final String label; final bool value; final ValueChanged<bool>? onChanged;
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return MouseRegion(
-      cursor: onChanged != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: onChanged != null ? () => onChanged!(!value) : null,
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Checkbox(
-            value: value,
-            onChanged: onChanged == null ? null : (bool? v) => onChanged!(v ?? false),
-          ),
-          Text(label, style: TextStyle(color: cs.onSurface.withOpacity(0.9))),
-        ]),
-      ),
-    );
-  }
-}
-
 class _RestoreModeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

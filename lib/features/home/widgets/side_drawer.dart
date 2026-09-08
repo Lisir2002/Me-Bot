@@ -520,15 +520,6 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   }
 
 
-  String _greeting(BuildContext context) {
-    final hour = DateTime.now().hour;
-    final l10n = AppLocalizations.of(context)!;
-    if (hour < 11) return l10n.sideDrawerGreetingMorning;
-    if (hour < 13) return l10n.sideDrawerGreetingNoon;
-    if (hour < 18) return l10n.sideDrawerGreetingAfternoon;
-    return l10n.sideDrawerGreetingEvening;
-  }
-
   String _dateLabel(BuildContext context, DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

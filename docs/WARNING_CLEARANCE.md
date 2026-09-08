@@ -72,7 +72,7 @@
 | **B1** | A 档 10 条规则 | 190 | `dart fix --apply --code=…` 逐规则执行 | **248** ✅ |
 | **B2** | `unused_shown_name` + `unused_field` | 27 | 脚本 + 逐条确认 | 221 |
 | **B3** | `unused_local_variable` | 84 | **逐条人眼判读**（副作用风险） | 137 |
-| **B4** | `unused_element` + `unused_element_parameter` | 94 | 逐条判读，区分"真废弃 / 预留 API / 误报" | 43 |
+| **B4** | `unused_element` + `unused_element_parameter` | 93 | 逐条判读，区分"真废弃 / 预留 API / 误报" | **44** ✅（43 C档 + 1 保留字段）|
 | **B5** | C 档全部 | 43 | 逐条判读 + 少量重构 | 0 |
 | **B6** | 门禁硬化 | — | CI 改 `--no-fatal-infos` | 0 |
 
@@ -90,6 +90,14 @@
 | P1 | `unreachable_switch_default`（14） | **保留 default + `// ignore: unreachable_switch_default`**，注释写明"防御未来新增枚举值" |
 | P2 | `unused_element` / `unused_field`（83） | **逐条判断**：真废弃的删；确属预留能力的加 `// ignore:` 并注明原因 |
 | P3 | B1 落地方式 | **直接落 + 本地验证 + push**，push 前贴改动清单 |
+
+---
+
+**B4 判读判据（已执行）**：93 条逐条判读的处置规则——
+1. **删除**（56 条）：局部 helper 闭包、一行薄封装、重复实现遗留（`_mapDeviceLocaleToSupportedTag` vs `_localeToTag`）、注释标明旧版但无保留价值的 UI 件、体内无读取的纯可选参数。
+2. **保留 + ignore**（37 条）：① 注释明示保留（`Keep original button for compatibility` 的 `_CircleIconButton`/`_SendButton`、`Keep the old paginated version for reference` 的 `_renderAndSavePagedOld`）；② 完整功能未挂入口（§9a 五项）；③ 预留 API 参数——构造参数在方法体内被读取（`size`/`onLongPress`/`haptics`/`hint` 等，删参数会破坏行为），仅是调用方暂不传值。
+3. **连锁清理**（8 条）：删除后新暴露的 `_safeString`、`_TileStatus`、4 条 unused_import 一并删除；`pressedScale`（体内读取）加 ignore；`_userMenuActive` 入 §9a。
+4. **方法学**：块边界用括号平衡时，`{` 仅在 `paren==0` 时计为函数体开始（否则命名参数表 `{...}` 同行闭合会被误判为块结束，B4 实测踩坑并回滚重做）。
 
 ---
 
@@ -115,9 +123,9 @@
 | B0 环境+基线 | ✅ 完成 | 438 | 438 | 438 | `c203caa` |
 | B1 A 档自动修复（10 条规则） | ✅ 完成 | 438 | 248 | **248** | `78b9c1c` |
 | B2 shown_name + field | ✅ 完成 | 248 | 220 | **220** | `0a3124d` |
-| B3 local_variable | ✅ 完成 | 220 | 136 | **136** | 见 git log |
-| B4 element + element_parameter | ⬜ 待执行 | 136 | 42 | — | — |
-| B5 C 档语义 | ⬜ 待执行 | 42 | 0 | — | |
+| B3 local_variable | ✅ 完成 | 220 | 136 | **136** | `3703d87`（CI ✅ 136/0 核对）|
+| B4 element + element_parameter | ✅ 完成 | 136 | 44 | **44** | 见 git log（27 文件 +40/−1011）|
+| B5 C 档语义 | ⬜ 待执行 | 44 | 0 | — | |
 | B6 门禁硬化 | ⬜ 待执行 | — | 0 | — | — |
 
 ---
@@ -128,7 +136,19 @@
 
 ---
 
-## 9. 疑似功能未完成清单（B2 发现，待用户确认）
+## 9. 疑似功能未完成清单（B2/B4 发现，待用户确认）
+
+### 9a. B4 新增：完整实现但未挂入口的 UI（已加 `// ignore: unused_element` 保留）
+
+| 文件 | 元素 | 现象 |
+|---|---|---|
+| `lib/desktop/desktop_settings_page.dart` | `_showNetworkDialog` | 完整的代理设置对话框（proxyHost/Port/用户名密码），无调用入口 |
+| `lib/desktop/desktop_settings_page.dart` | `_ToggleRowHaptics*` ×6 | 触觉反馈开关行（绑定 `hapticsGlobalEnabled` 等真实 provider 状态，`Haptics.setEnabled` 已生效），入口未挂载 |
+| `lib/features/assistant/pages/assistant_settings_edit_page.dart` | `_McpTab`（165 行） | 助手 MCP 标签页，watch 两个 provider 过滤已连接服务器，未挂入 tab 栏 |
+| `lib/features/assistant/pages/assistant_settings_edit_page.dart` | `_pickLocalAvatar` / `_inputEmojiDialog` | 本地相册选头像 + emoji 输入对话框，完整实现无入口 |
+| `lib/features/chat/widgets/chat_message_widget.dart` | `_userMenuActive` | 用户菜单激活态，注释"for bubble highlight/scale"，只写不读（B4 删除 `_removeUserMenuOverlay` 连锁暴露）|
+
+### 9b. B2 发现：被赋值但从未读取的字段（已加 `// ignore: unused_field` 保留）
 
 以下字段**被赋值但从未读取**——状态维护了、UI 没消费。已加 `// ignore: unused_field` 保留（删除会丢失功能意图）。需确认是"补完 UI"还是"删掉状态"：
 

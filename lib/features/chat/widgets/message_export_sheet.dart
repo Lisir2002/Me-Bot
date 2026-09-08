@@ -330,6 +330,7 @@ Future<File?> _renderWidgetDirectly(
 }
 
 // Keep the old paginated version for reference but renamed
+// ignore: unused_element
 Future<File?> _renderAndSavePagedOld(
   BuildContext context,
   Widget content, {

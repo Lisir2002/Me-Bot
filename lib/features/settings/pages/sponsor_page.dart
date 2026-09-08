@@ -76,17 +76,6 @@ class _SponsorPageState extends State<SponsorPage> {
     );
   }
 
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
-      }
-    } catch (_) {
-      await launchUrl(uri);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;

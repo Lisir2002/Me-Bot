@@ -75,9 +75,9 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 **清零行动见 `docs/WARNING_CLEARANCE.md`（批次 B0–B6、进度看板、红线）。** 已拍板政策：`unreachable_switch_default` 保留 default + ignore 注释；`unused_element` / `unused_field` 逐条判断。三条硬约束：
 - `dart fix --apply` 会顺带应用 `missing_dependency` 往 `pubspec.yaml` 塞 `xxx: any`——**每批 apply 后必须 diff 并还原 pubspec**（T4）。
 - **禁止对 `unused_element_parameter` 用 `dart fix`**：Dart 3.9 对初始化形参 `this.x` 是误报（`widget.x` 明明在用），机器修复会直接删构造参数，实测引入 15 个 `final_not_initialized_constructor` 编译错误。B1 已整条撤出，转人工。
-- "未使用"类警告（`unused_local_variable` / `unused_element` / `unused_field` / `unused_element_parameter`，共 201 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。
+- "未使用"类警告（原 201 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。B3/B4 已消化 179 条（unused_local_variable / unused_element / unused_element_parameter 已归零；剩 unused_field 1 条为保留字段）。
 
-硬化路径：① 按批次清零 438 个 warning（**B1 已落地：`78b9c1c`，438 → 248，error 0**）② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。
+硬化路径：① 按批次清零 438 个 warning（**B1 `78b9c1c` 438→248 · B2 `0a3124d` 248→220 · B3 `3703d87` 220→136 · B4 136→44（unused_element/parameter 归零，27 文件 +40/−1011），全程 error 0，B1/B2/B3 均 CI 核对通过**）② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。剩余 44 条：C 档 43（dead_null_aware_expression 20 · unreachable_switch_default 14 · dead_code 6 · unnecessary_type_check 2 · invalid_use_of_protected_member 1）+ `_userMenuActive` 1（§9a 保留）。
 基线归零前：任何变更**不得引入新问题**——本地 analyze（§1）每批必跑，warning 数必须单调下降且 error 恒为 0。
 
 ## 6. 索引表（本文件只做索引，不复制内容）

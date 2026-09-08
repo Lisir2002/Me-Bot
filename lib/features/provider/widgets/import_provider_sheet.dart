@@ -556,7 +556,7 @@ class _TactileIconButton extends StatefulWidget {
     required this.onTap,
     this.semanticLabel,
     this.size = 22,
-    this.haptics = true,
+    this.haptics = true, // ignore: unused_element_parameter
   });
 
   final IconData icon;

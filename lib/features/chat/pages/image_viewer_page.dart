@@ -546,11 +546,6 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
     return brightness == Brightness.dark ? Colors.white : Colors.black;
   }
 
-  double _currentScale() {
-    if (_index < 0 || _index >= _zoomCtrls.length) return 1.0;
-    return _zoomCtrls[_index].value.getMaxScaleOnAxis();
-  }
-
   Color _smartIconColorForKey(BuildContext context, GlobalKey key) {
     final src = (_index >= 0 && _index < widget.images.length) ? widget.images[_index] : null;
     if (src == null) return _fallbackIconColor(context);
@@ -759,27 +754,12 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
   }
 }
 
-Route _buildFancyRoute(Widget page) {
-  return PageRouteBuilder(
-    pageBuilder: (_, __, ___) => page,
-    transitionDuration: const Duration(milliseconds: 260),
-    reverseTransitionDuration: const Duration(milliseconds: 220),
-    transitionsBuilder: (context, anim, sec, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-      return FadeTransition(
-        opacity: curved,
-        child: ScaleTransition(scale: Tween<double>(begin: 0.98, end: 1).animate(curved), child: child),
-      );
-    },
-  );
-}
-
 class _GlassCircleButton extends StatefulWidget {
   const _GlassCircleButton({
     super.key,
     required this.child,
     this.onTap,
-    this.size = 48,
+    this.size = 48, // ignore: unused_element_parameter
   });
 
   final Widget child;

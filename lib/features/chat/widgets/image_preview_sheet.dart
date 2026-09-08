@@ -330,7 +330,7 @@ class _DesktopIconButton extends StatefulWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
-    this.size = 36,
+    this.size = 36, // ignore: unused_element_parameter
   });
 
   final Widget icon;

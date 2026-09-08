@@ -761,19 +761,6 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   // Supported locales mapping
-  String _mapDeviceLocaleToSupportedTag(Locale device) {
-    final lc = (device.languageCode).toLowerCase();
-    final region = (device.countryCode ?? '').toUpperCase();
-    final script = (device.scriptCode ?? '').toLowerCase();
-    if (lc == 'zh') {
-      // Map Traditional Chinese by script or common regions
-      if (script == 'hant' || region == 'TW' || region == 'HK' || region == 'MO') {
-        return 'zh_Hant';
-      }
-      return 'zh_CN';
-    }
-    return 'en_US';
-  }
 
   String _localeToTag(Locale l) {
     final lc = l.languageCode.toLowerCase();

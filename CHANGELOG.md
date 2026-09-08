@@ -13,6 +13,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **Added**：`docs/WARNING_CLEARANCE.md`——438 warning 清零批次计划（B0–B6）、进度看板、红线。
 - **Changed**：本地分析环境打通：`/opt/flutter335`（Flutter 3.35.7 / Dart 3.9.2，与 CI 对齐）可用，全量 `flutter analyze` 约 48s，实测与 CI 逐条一致。`AGENTS.md` §1 原「禁止本地 analyze」条款作废；`/opt/flutter`（2.17）仍禁用。
 - **Changed**：warning 清零 B1 批次落地（`78b9c1c`）：`dart fix --apply` 应用 10 条规则，**438 → 248 warning，error 0**，涉及 53 个源文件。
+- **Changed**：B2 批次落地（`0a3124d`）：`unused_shown_name` + `unused_field`，248 → 220；B3 批次落地（`3703d87`）：`unused_local_variable` 连锁死代码，220 → 136；B4 批次落地：`unused_element`/`unused_element_parameter` 逐条判读，136 → **44**（27 文件 +40/−1011，净删 971 行），全程 error 0。B1/B2/B3 已过 CI 并逐条核对。
 - **Fixed**：0.0.43 遗留——`lib/l10n/app_localizations.dart` 中 `statsHeatmapSummary` / `statsHeatmapNoActivity` 被注入到类外（顶层无体函数声明），本地不跑 `pub get` 重新生成会报 `missing_function_body`；本次由 `flutter pub get` 重新生成到类内正确位置。
 
 ### 🤖 For Agents
@@ -24,6 +25,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **坑（B1 实测）**：`unnecessary_cast` 修复后残留 `(body)[k]` 这类多余括号；批量去括号会把 `Overlay.of(context).x` 误伤成 `Overlay.ofcontext`（`(…)` 可能是调用参数表而非分组）。已尝试并撤回——自动修复产物不要"顺手美化"。
 - **坑**：`flutter pub get` 会按 ARB 重新生成 `lib/l10n/app_localizations*.dart`（这就是 0.0.43 类外注入能在 CI 侥幸通过的原因）。改 l10n 永远先改 ARB，手改生成物会被覆盖。
 - 已拍板政策：`unreachable_switch_default` 保留 default + `// ignore:` 注释；`unused_element` / `unused_field` 逐条判断（真废弃删、预留能力加 ignore 注明原因）。
+- **B4 判读判据**（写进 `WARNING_CLEARANCE.md` §5）：① 注释明示保留（`Keep original button for compatibility` / `Keep the old paginated version for reference`）→ ignore；② 完整功能未挂入口（haptics 开关行 ×6、代理设置对话框、MCP tab、头像选取）→ ignore + §9a 清单；③ 构造参数在体内被读取（`size`/`haptics`/`onLongPress` 等）→ ignore；④ 局部 helper / 薄封装 / 重复实现遗留 → 删。
+- **坑（B4 实测）**：脚本按括号平衡找块尾时，`{` 必须仅在 `paren==0` 时计为函数体开始——否则命名参数表 `{...}`（如 `void f({int x}) {`）的同行闭合会被误判为块结束，只删声明行留孤儿函数体。实测 6 处中招，已回滚重做。
+- **坑（B4 实测）**：删除大块代码会连锁暴露新警告（B4 删除后新增 `_safeString`、`_TileStatus`、4 条 unused_import、`pressedScale`、`_userMenuActive` 共 8 条）——每批删除后必须重新 analyze，连锁项逐条判读，不能只看批次目标清单。
 - 本文件三档结构本身是规范的一部分：发版时用户档→Release body，开发者档+模型档→本文件，勿混写。
 
 ## [0.0.43] - 2026-09-08

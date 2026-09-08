@@ -1011,26 +1011,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
     final ap = context.watch<AssistantProvider>();
     final a = ap.getById(widget.assistantId)!;
 
-    Widget titleDesc(String title, String? desc) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        if (desc != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            desc,
-            style: TextStyle(
-              fontSize: 12,
-              color: cs.onSurface.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ],
-    );
-
     Widget avatarWidget({double size = 56}) {
       final bg = cs.primary.withOpacity(isDark ? 0.18 : 0.12);
       Widget inner;
@@ -2797,49 +2777,7 @@ class _PromptTabState extends State<_PromptTab> {
     final ap = context.watch<AssistantProvider>();
     final a = ap.getById(widget.assistantId)!;
 
-    Widget chips(List<String> items, void Function(String v) onPick) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final t in items)
-              ActionChip(
-                label: Text(t, style: const TextStyle(fontSize: 12)),
-                onPressed: () => onPick(t),
-              ),
-          ],
-        ),
-      );
-    }
-
-
     // Helper to render link-like variable chips
-    Widget linkWrap(List<String> vars, void Function(String v) onPick) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            for (final t in vars)
-              InkWell(
-                onTap: () => onPick(t),
-                child: Text(
-                  t,
-                  style: TextStyle(
-                    color: cs.primary,
-                    decoration: TextDecoration.underline,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      );
-    }
 
     // Sample preview for message template
     final now = DateTime.now();
@@ -3623,6 +3561,7 @@ class _VarExplainList extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _McpTab extends StatelessWidget {
   const _McpTab({required this.assistantId});
   final String assistantId;
@@ -4163,7 +4102,7 @@ class _QuickPhraseTab extends StatelessWidget {
 
 // Local glass circle button for Quick Phrase (icon-only, frosted background)
 class _GlassCircleButtonQP extends StatefulWidget {
-  const _GlassCircleButtonQP({required this.icon, required this.color, required this.onTap, this.size = 48});
+  const _GlassCircleButtonQP({required this.icon, required this.color, required this.onTap, this.size = 48}); // ignore: unused_element_parameter
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
@@ -4505,77 +4444,16 @@ class _SegTabBar extends StatelessWidget {
   }
 }
 
-class _SliderTile extends StatelessWidget {
-  const _SliderTile({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.label,
-    required this.onChanged,
-  });
-  final double value;
-  final double min;
-  final double max;
-  final int divisions;
-  final String label;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cs.surfaceVariant.withOpacity(
-            Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 44,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: cs.onSurface.withOpacity(0.7),
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Slider(
-                  value: value,
-                  min: min,
-                  max: max,
-                  divisions: divisions,
-                  label: label,
-                  onChanged: onChanged,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _InputRow extends StatelessWidget {
   const _InputRow({
     required this.label,
     required this.controller,
-    this.hint,
+    this.hint, // ignore: unused_element_parameter
     this.onChanged,
-    this.enabled = true,
-    this.suffix,
-    this.keyboardType,
-    this.hideLabel = false,
+    this.enabled = true, // ignore: unused_element_parameter
+    this.suffix, // ignore: unused_element_parameter
+    this.keyboardType, // ignore: unused_element_parameter
+    this.hideLabel = false, // ignore: unused_element_parameter
   });
   final String label;
   final TextEditingController controller;
@@ -4632,101 +4510,6 @@ class _InputRow extends StatelessWidget {
                 ),
               ],
             ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AssistantModelCard extends StatelessWidget {
-  const _AssistantModelCard({
-    required this.title,
-    required this.subtitle,
-    required this.onPick,
-    this.onLongPress,
-    this.providerKey,
-    this.modelId,
-  });
-
-  final String title;
-  final String subtitle;
-  final VoidCallback onPick;
-  final VoidCallback? onLongPress;
-  final String? providerKey;
-  final String? modelId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    String display = l10n.assistantEditModelUseGlobalDefault;
-    if (providerKey != null && modelId != null) {
-      try {
-        final settings = context.read<SettingsProvider>();
-        final cfg = settings.getProviderConfig(providerKey!);
-        final ov = cfg.modelOverrides[modelId] as Map?;
-        final mdl = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
-            ? (ov['name'] as String)
-            : modelId!;
-        display = mdl;
-      } catch (_) {
-        display = modelId ?? '';
-      }
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7)),
-        ),
-        const SizedBox(height: 10),
-        Material(
-          color: isDark ? Colors.white10 : cs.surface,
-          borderRadius: BorderRadius.circular(14),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: onPick,
-            onLongPress: onLongPress,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : cs.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: cs.outlineVariant.withOpacity(0.25)),
-                boxShadow: isDark ? [] : AppShadows.soft,
-              ),
-              child: Row(
-                children: [
-                  _BrandAvatarLike(name: (modelId ?? display), size: 24),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      display,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Lucide.ChevronRight,
-                    size: 18,
-                    color: cs.onSurface.withOpacity(0.5),
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ],
@@ -4812,10 +4595,10 @@ class _TactileIconButton extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.onLongPress,
-    this.semanticLabel,
+    this.onLongPress, // ignore: unused_element_parameter
+    this.semanticLabel, // ignore: unused_element_parameter
     this.size = 22,
-    this.haptics = true,
+    this.haptics = true, // ignore: unused_element_parameter
   });
   final IconData icon;
   final Color color;
@@ -5383,18 +5166,6 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
     super.dispose();
   }
 
-  String _tempTitle(BuildContext context) {
-    final lc = Localizations.localeOf(context).languageCode;
-    if (lc.startsWith('zh')) return '温度';
-    return 'Temperature';
-  }
-
-  String _topPTitle(BuildContext context) {
-    final lc = Localizations.localeOf(context).languageCode;
-    if (lc.startsWith('zh')) return 'Top‑p';
-    return 'Top‑p';
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -5923,6 +5694,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
     );
   }
 
+// ignore: unused_element
   Future<void> _pickLocalAvatar(BuildContext context, Assistant a) async {
     try {
       final picker = ImagePicker();
@@ -5971,6 +5743,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
     }
   }
 
+// ignore: unused_element
   Future<String?> _inputEmojiDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;

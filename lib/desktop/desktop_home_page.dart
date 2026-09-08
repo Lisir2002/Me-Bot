@@ -121,7 +121,7 @@ class _DesktopHomePageState extends State<DesktopHomePage> {
 // No extra router/shim; we import DesktopSettingsPage directly above.
 
 class _TitleBarLeading extends StatelessWidget {
-  const _TitleBarLeading({super.key});
+  const _TitleBarLeading({super.key}); // ignore: unused_element_parameter
 
   @override
   Widget build(BuildContext context) {

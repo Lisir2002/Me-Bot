@@ -638,7 +638,7 @@ class _GlassCircleButton extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.size = 46,
+    this.size = 46, // ignore: unused_element_parameter
     this.semanticLabel,
   });
   final IconData icon;

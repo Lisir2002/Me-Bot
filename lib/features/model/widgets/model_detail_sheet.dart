@@ -472,12 +472,6 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
 
   Widget _label(BuildContext context, String text) => Text(text, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8)));
 
-  Color _segSelectedColor(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? cs.primary.withOpacity(0.20) : cs.primary.withOpacity(0.14);
-  }
-
   Future<void> _save() async {
     final settings = context.read<SettingsProvider>();
     final old = settings.getProviderConfig(widget.providerKey);
@@ -575,36 +569,6 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
     }
     if (!mounted) return;
     Navigator.of(context).pop(true);
-  }
-}
-
-class _TabChip extends StatelessWidget {
-  const _TabChip({required this.label, required this.selected, this.onTap});
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = selected ? (isDark ? cs.primary.withOpacity(0.25) : cs.primary.withOpacity(0.15)) : Colors.transparent;
-    final fg = selected ? (isDark ? cs.primary : cs.primary) : cs.onSurface.withOpacity(0.8);
-    return Padding(
-      padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? cs.primary.withOpacity(0.25) : cs.outlineVariant.withOpacity(0.4), width: 1),
-          ),
-          child: Text(label, style: TextStyle(fontSize: 13, color: fg, fontWeight: FontWeight.w600)),
-        ),
-      ),
-    );
   }
 }
 

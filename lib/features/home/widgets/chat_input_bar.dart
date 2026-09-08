@@ -1332,14 +1332,15 @@ class _CompactIconButton extends StatelessWidget {
 }
 
 // Keep original button for compatibility if needed elsewhere
+// ignore: unused_element
 class _CircleIconButton extends StatelessWidget {
   const _CircleIconButton({
     required this.icon,
-    this.onTap,
-    this.tooltip,
-    this.active = false,
-    this.child,
-    this.padding,
+    this.onTap, // ignore: unused_element_parameter
+    this.tooltip, // ignore: unused_element_parameter
+    this.active = false, // ignore: unused_element_parameter
+    this.child, // ignore: unused_element_parameter
+    this.padding, // ignore: unused_element_parameter
   });
 
   final IconData icon;
@@ -1430,14 +1431,15 @@ class _CompactSendButton extends StatelessWidget {
 }
 
 // Keep original button for compatibility if needed elsewhere
+// ignore: unused_element
 class _SendButton extends StatelessWidget {
   const _SendButton({
     required this.enabled,
     required this.onSend,
     required this.color,
     required this.icon,
-    this.loading = false,
-    this.onStop,
+    this.loading = false, // ignore: unused_element_parameter
+    this.onStop, // ignore: unused_element_parameter
   });
 
   final bool enabled;

@@ -53,24 +53,7 @@ class _ReasoningBudgetSheetState extends State<_ReasoningBudgetSheet> {
     return 32000;
   }
 
-  String _bucketName(BuildContext context, int? n) {
-    final l10n = AppLocalizations.of(context)!;
-    final b = _bucket(n);
-    switch (b) {
-      case 0:
-        return l10n.reasoningBudgetSheetOff;
-      case -1:
-        return l10n.reasoningBudgetSheetAuto;
-      case 1024:
-        return l10n.reasoningBudgetSheetLight;
-      case 16000:
-        return l10n.reasoningBudgetSheetMedium;
-      default:
-        return l10n.reasoningBudgetSheetHeavy;
-    }
-  }
-
-  Widget _tile(IconData icon, String title, int value, {String? subtitle, bool deepthink = false}) {
+  Widget _tile(IconData icon, String title, int value, {bool deepthink = false}) {
     final cs = Theme.of(context).colorScheme;
     final active = _bucket(_selected) == value;
     final Color iconColor = active ? cs.primary : cs.onSurface.withOpacity(0.7);

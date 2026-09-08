@@ -87,35 +87,6 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    String titleFor(_SettingsMenuItem it) {
-      switch (it) {
-        case _SettingsMenuItem.assistant:
-          return l10n.settingsPageAssistant;
-        case _SettingsMenuItem.providers:
-          return l10n.settingsPageProviders;
-        case _SettingsMenuItem.display:
-          return l10n.settingsPageDisplay;
-        case _SettingsMenuItem.stats:
-          return l10n.settingsPageStats;
-        case _SettingsMenuItem.defaultModel:
-          return l10n.settingsPageDefaultModel;
-        case _SettingsMenuItem.search:
-          return l10n.settingsPageSearch;
-        case _SettingsMenuItem.mcp:
-          return l10n.settingsPageMcp;
-        case _SettingsMenuItem.quickPhrases:
-          return l10n.settingsPageQuickPhrase;
-        case _SettingsMenuItem.tts:
-          return l10n.settingsPageTts;
-        case _SettingsMenuItem.networkProxy:
-          return l10n.settingsPageNetworkProxy;
-        case _SettingsMenuItem.backup:
-          return l10n.settingsPageBackup;
-        case _SettingsMenuItem.about:
-          return l10n.settingsPageAbout;
-      }
-    }
-
     const double menuWidth = 250;
     final topBar = SizedBox(
       height: 36,
@@ -1995,6 +1966,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
     );
   }
 
+// ignore: unused_element
   Future<void> _showNetworkDialog(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
     final sp = context.read<SettingsProvider>();
@@ -2828,23 +2800,6 @@ Widget _rowSwitch(BuildContext context, {required String label, required bool va
   );
 }
 
-Widget _rowButton(BuildContext context, {required String label, required VoidCallback onTap}) {
-  final cs = Theme.of(context).colorScheme;
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: onTap,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600))),
-          const Icon(lucide.Lucide.ChevronRight, size: 16),
-        ],
-      ),
-    ),
-  );
-}
-
 // Small, consistent section label used in providers pane dialogs
 Widget _sectionLabel(BuildContext context, String text, {bool bold = false}) {
   final cs = Theme.of(context).colorScheme;
@@ -3285,17 +3240,6 @@ class _ModelRow extends StatelessWidget {
     }
     final info = _effective();
 
-    Widget cap(String text) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      final bg = isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF2F3F5);
-      final fg = cs.onSurface.withOpacity(0.85);
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-        child: Text(text, style: TextStyle(fontSize: 11, color: fg)),
-      );
-    }
-
     // Build capsule pill style like mobile
     final caps = <Widget>[];
     Widget pillCapsule(Widget icon, Color color) {
@@ -3696,62 +3640,6 @@ class _ThemeModeSegmentedState extends State<_ThemeModeSegmented> {
             if (i != items.length - 1) const SizedBox(width: 4),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _HoverPill extends StatelessWidget {
-  const _HoverPill({
-    required this.hovered,
-    required this.selected,
-    required this.onHover,
-    required this.onTap,
-    required this.label,
-    required this.icon,
-  });
-  final bool hovered;
-  final bool selected;
-  final ValueChanged<bool> onHover;
-  final VoidCallback onTap;
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = selected
-        ? cs.primary.withOpacity(0.12)
-        : hovered
-            ? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04))
-            : Colors.transparent;
-    final fg = selected ? cs.primary : cs.onSurface.withOpacity(0.86);
-    return MouseRegion(
-      onEnter: (_) => onHover(true),
-      onExit: (_) => onHover(false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? cs.primary.withOpacity(0.35) : cs.outlineVariant.withOpacity(0.18)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Keep pill text size aligned with row labels
-              Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: fg, decoration: TextDecoration.none)),
-              const SizedBox(width: 8),
-              Icon(icon, size: 16, color: fg),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -5559,6 +5447,7 @@ class _ToggleRowNewChatOnLaunch extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ToggleRowHapticsGlobal extends StatelessWidget {
   const _ToggleRowHapticsGlobal();
   @override
@@ -5573,6 +5462,7 @@ class _ToggleRowHapticsGlobal extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ToggleRowHapticsSwitch extends StatelessWidget {
   const _ToggleRowHapticsSwitch();
   @override
@@ -5587,6 +5477,7 @@ class _ToggleRowHapticsSwitch extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ToggleRowHapticsSidebar extends StatelessWidget {
   const _ToggleRowHapticsSidebar();
   @override
@@ -5601,6 +5492,7 @@ class _ToggleRowHapticsSidebar extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ToggleRowHapticsListItem extends StatelessWidget {
   const _ToggleRowHapticsListItem();
   @override
@@ -5615,6 +5507,7 @@ class _ToggleRowHapticsListItem extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ToggleRowHapticsCardTap extends StatelessWidget {
   const _ToggleRowHapticsCardTap();
   @override
@@ -5629,6 +5522,7 @@ class _ToggleRowHapticsCardTap extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ToggleRowHapticsGenerate extends StatelessWidget {
   const _ToggleRowHapticsGenerate();
   @override

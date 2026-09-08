@@ -3137,42 +3137,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _conversationStreams[_cid] = _sub2;
   }
 
-  ChatInputData _parseInputFromRaw(String raw) {
-    final imgRe = RegExp(r"\[image:(.+?)\]");
-    final fileRe = RegExp(r"\[file:(.+?)\|(.+?)\|(.+?)\]");
-    final images = <String>[];
-    final docs = <DocumentAttachment>[];
-    final buffer = StringBuffer();
-    int idx = 0;
-    while (idx < raw.length) {
-      final imgMatch = imgRe.matchAsPrefix(raw, idx);
-      final fileMatch = fileRe.matchAsPrefix(raw, idx);
-      if (imgMatch != null) {
-        final p = imgMatch.group(1)?.trim();
-        if (p != null && p.isNotEmpty) images.add(p);
-        idx = imgMatch.end;
-        continue;
-      }
-      if (fileMatch != null) {
-        final path = fileMatch.group(1)?.trim() ?? '';
-        final name = fileMatch.group(2)?.trim() ?? 'file';
-        final mime = fileMatch.group(3)?.trim() ?? 'text/plain';
-        docs.add(DocumentAttachment(path: path, fileName: name, mime: mime));
-        idx = fileMatch.end;
-        continue;
-      }
-      buffer.write(raw[idx]);
-      idx++;
-    }
-    return ChatInputData(text: buffer.toString().trim(), imagePaths: images, documents: docs);
-  }
-
-  Future<void> _maybeGenerateTitle({bool force = false}) async {
-    final convo = _currentConversation;
-    if (convo == null) return;
-    await _maybeGenerateTitleFor(convo.id, force: force);
-  }
-
   Future<void> _maybeGenerateTitleFor(String conversationId, {bool force = false}) async {
     final convo = _chatService.getConversation(conversationId);
     if (convo == null) return;
@@ -5893,14 +5857,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  void _triggerConversationFade() {
-    try {
-      _convoFadeController.stop();
-      _convoFadeController.value = 0;
-      _convoFadeController.forward();
-    } catch (_) {}
-  }
-
   @override
   void didPushNext() {
     // Navigating away: drop focus so it won't be restored.
@@ -6169,7 +6125,7 @@ class _GlassCircleButtonSmall extends StatefulWidget {
     required this.color,
     required this.onTap,
     this.semanticLabel,
-    this.size = 40,
+    this.size = 40, // ignore: unused_element_parameter
   });
   final IconData icon;
   final Color color;

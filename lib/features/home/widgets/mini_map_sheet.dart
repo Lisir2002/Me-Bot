@@ -80,10 +80,6 @@ class _MiniMapSheet extends StatelessWidget {
     );
   }
 
-  Widget _legendDot(Color c) {
-    return Container(width: 10, height: 10, decoration: BoxDecoration(color: c.withOpacity(0.8), shape: BoxShape.circle));
-  }
-
   List<_QaPair> _buildPairs(List<ChatMessage> items) {
     final pairs = <_QaPair>[];
     ChatMessage? pendingUser;

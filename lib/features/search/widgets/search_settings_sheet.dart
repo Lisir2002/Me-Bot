@@ -32,23 +32,6 @@ class _SearchSettingsSheet extends StatelessWidget {
     return svc.name;
   }
 
-  String? _statusOf(BuildContext context, SearchServiceOptions s) {
-    final l10n = AppLocalizations.of(context)!;
-    if (s is BingLocalOptions) return null;
-    if (s is TavilyOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is ExaOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is ZhipuOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is SearXNGOptions) return s.url.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageUrlRequiredStatus;
-    if (s is LinkUpOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is BraveOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is MetasoOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is OllamaOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is JinaOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is PerplexityOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    if (s is BochaOptions) return s.apiKey.isNotEmpty ? l10n.searchServicesPageConfiguredStatus : l10n.searchServicesPageApiKeyRequiredStatus;
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -302,81 +285,6 @@ class _SearchSettingsSheet extends StatelessWidget {
   }
 }
 
-class _ServiceTileLarge extends StatelessWidget {
-  const _ServiceTileLarge({
-    this.leading,
-    required this.label,
-    required this.selected,
-    this.status,
-    required this.onTap,
-  });
-  final Widget? leading;
-  final String label;
-  final bool selected;
-  final _TileStatus? status;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = selected ? cs.primary.withOpacity(isDark ? 0.18 : 0.12) : (isDark ? Colors.white12 : const Color(0xFFF7F7F9));
-    final fg = selected ? cs.primary : cs.onSurface.withOpacity(0.85);
-    final border = selected ? Border.all(color: cs.primary, width: 1.2) : null;
-    final statusBg = status?.bg ?? cs.onSurface.withOpacity(0.06);
-    final statusFg = status?.fg ?? cs.onSurface.withOpacity(0.7);
-
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: border),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(color: fg.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-                alignment: Alignment.center,
-                child: leading ?? Icon(Lucide.Search, size: 18, color: fg),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: fg)),
-                    if ((status?.text ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(6)),
-                        child: Text(status!.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, color: statusFg)),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TileStatus {
-  final String text;
-  final Color bg;
-  final Color fg;
-  const _TileStatus({required this.text, required this.bg, required this.fg});
-}
 
 // Brand badge for known services using assets/icons; falls back to letter if unknown
 class _BrandBadge extends StatelessWidget {

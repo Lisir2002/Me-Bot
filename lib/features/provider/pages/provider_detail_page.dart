@@ -1497,42 +1497,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     );
   }
 
-  Widget _capPill(BuildContext context, IconData icon, String label) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(color: cs.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(999)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 12, color: cs.primary),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: cs.primary)),
-      ]),
-    );
-  }
-}
-
-Widget _buildDismissBg(BuildContext context, {required bool alignStart}) {
-  final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
-  return Container(
-    decoration: BoxDecoration(
-      color: cs.error.withOpacity(0.12),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    alignment: alignStart ? Alignment.centerLeft : Alignment.centerRight,
-    child: Row(
-      mainAxisAlignment: alignStart ? MainAxisAlignment.start : MainAxisAlignment.end,
-      children: [
-        Icon(Lucide.Trash2, color: cs.error, size: 20),
-        const SizedBox(width: 6),
-        Text(
-          l10n.providerDetailPageDeleteText,
-          style: TextStyle(color: cs.error, fontWeight: FontWeight.w600),
-        ),
-      ],
-    ),
-  );
 }
 
 class _ModelCard extends StatelessWidget {
@@ -1639,18 +1603,6 @@ class _ModelCard extends StatelessWidget {
     return modelId;
   }
 
-  Widget _pill(BuildContext context, IconData icon, String label) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(color: cs.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(999)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 12, color: cs.primary),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: cs.primary)),
-      ]),
-    );
-  }
 }
 
 class _ConnectionTestDialog extends StatefulWidget {
@@ -1864,40 +1816,6 @@ Future<String?> showModelPickerForTest(BuildContext context, String providerKey,
   final sel = await showModelSelector(context, limitProviderKey: providerKey);
   return sel?.modelId;
 }
-
-ModelInfo _effectiveFor(BuildContext context, String providerKey, String providerDisplayName, ModelInfo base) {
-  final cfg = context.read<SettingsProvider>().getProviderConfig(providerKey, defaultName: providerDisplayName);
-  final ov = cfg.modelOverrides[base.id] as Map?;
-  if (ov == null) return base;
-  ModelType? type;
-  final t = (ov['type'] as String?) ?? '';
-  if (t == 'embedding') type = ModelType.embedding; else if (t == 'chat') type = ModelType.chat;
-  List<Modality>? input;
-  if (ov['input'] is List) {
-    input = [
-      for (final e in (ov['input'] as List)) (e.toString() == 'image' ? Modality.image : Modality.text)
-    ];
-  }
-  List<Modality>? output;
-  if (ov['output'] is List) {
-    output = [
-      for (final e in (ov['output'] as List)) (e.toString() == 'image' ? Modality.image : Modality.text)
-    ];
-  }
-  List<ModelAbility>? abilities;
-  if (ov['abilities'] is List) {
-    abilities = [
-      for (final e in (ov['abilities'] as List)) (e.toString() == 'reasoning' ? ModelAbility.reasoning : ModelAbility.tool)
-    ];
-  }
-  return base.copyWith(
-    type: type ?? base.type,
-    input: input ?? base.input,
-    output: output ?? base.output,
-    abilities: abilities ?? base.abilities,
-  );
-}
-
 
 // Using flutter_slidable for reliable swipe actions with confirm + undo.
 

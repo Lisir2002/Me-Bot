@@ -223,18 +223,6 @@ class _NetworkServiceCardState extends State<_NetworkServiceCard> {
     );
   }
 
-  IconData _iconForKind(NetworkTtsKind k) {
-    switch (k) {
-      case NetworkTtsKind.openai:
-        return lucide.Lucide.Bot;
-      case NetworkTtsKind.gemini:
-        return lucide.Lucide.Bot;
-      case NetworkTtsKind.minimax:
-        return lucide.Lucide.Bot;
-      case NetworkTtsKind.elevenlabs:
-        return lucide.Lucide.Bot;
-    }
-  }
 }
 
 class _ErrorInline extends StatelessWidget {
@@ -599,26 +587,6 @@ class _SmallIconBtnState extends State<_SmallIconBtn> {
       ),
     );
   }
-}
-
-Widget _sectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.08 : 0.06), width: 0.6),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Column(children: children),
-      ),
-    );
-  });
 }
 
 Widget _deskDivider(BuildContext context) {

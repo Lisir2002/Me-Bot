@@ -123,7 +123,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   // User message context menu state
   final GlobalKey _userBubbleKey = GlobalKey();
   OverlayEntry? _userMenuOverlay;
-  bool _userMenuActive = false; // for bubble highlight/scale
+  bool _userMenuActive = false; // for bubble highlight/scale // ignore: unused_field
   // Desktop anchored menus for bottom action buttons
   final GlobalKey _moreBtnKey1 = GlobalKey();
   final GlobalKey _moreBtnKey2 = GlobalKey();
@@ -277,12 +277,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
     _ticker.dispose();
     _reasoningScroll.dispose();
     super.dispose();
-  }
-
-  void _removeUserMenuOverlay() {
-    try { _userMenuOverlay?.remove(); } catch (_) {}
-    _userMenuOverlay = null;
-    if (mounted && _userMenuActive) setState(() => _userMenuActive = false);
   }
 
   void _showUserContextMenu() {
@@ -2308,41 +2302,6 @@ class _ToolCallItem extends StatelessWidget {
   }
 }
 
-class _SourcesList extends StatelessWidget {
-  const _SourcesList({required this.items});
-  final List<Map<String, dynamic>> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
-      ),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text(
-              l10n.chatMessageWidgetCitationsTitle(items.length),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.75)),
-            ),
-          ),
-          for (int i = 0; i < items.length; i++)
-            _SourceRow(index: (items[i]['index'] ?? (i + 1)).toString(), title: (items[i]['title'] ?? '').toString(), url: (items[i]['url'] ?? '').toString()),
-        ],
-      ),
-    );
-  }
-}
-
 class _SourceRow extends StatelessWidget {
   const _SourceRow({required this.index, required this.title, required this.url});
   final String index;
@@ -2501,25 +2460,6 @@ class _ReasoningSectionState extends State<_ReasoningSection> with SingleTickerP
     final over = _scroll.position.maxScrollExtent > 0.5;
     if (over != _hasOverflow && mounted) setState(() => _hasOverflow = over);
   }
-
-  String _sanitizedeepthink(String s) {
-    // 统一换行
-    s = s.replaceAll('\r\n', '\n');
-
-    // 去掉首尾零宽字符（模型有时会插入）
-    s = s
-        .replaceAll(RegExp(r'^[\u200B\u200C\u200D\uFEFF]+'), '')
-        .replaceAll(RegExp(r'[\u200B\u200C\u200D\uFEFF]+$'), '');
-
-    // 去掉**开头**的纯空白行
-    s = s.replaceFirst(RegExp(r'^\s*\n+'), '');
-
-    // 去掉**结尾**的纯空白行
-    s = s.replaceFirst(RegExp(r'\n+\s*$'), '');
-
-    return s;
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -2772,8 +2712,8 @@ class _Marquee extends StatefulWidget {
   const _Marquee({
     required this.text,
     required this.style,
-    this.maxWidth = 160,
-    this.duration = const Duration(milliseconds: 3000),
+    this.maxWidth = 160, // ignore: unused_element_parameter
+    this.duration = const Duration(milliseconds: 3000), // ignore: unused_element_parameter
   });
 
   @override

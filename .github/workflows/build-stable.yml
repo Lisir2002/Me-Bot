@@ -93,6 +93,13 @@ jobs:
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "版本号: $VERSION"
+      # 静态分析门禁（观察期）：continue-on-error 收集存量问题清单，
+      # 清理后摘掉此开关变硬门禁（见 AGENTS.md §5.4）
+      - name: 🔍 静态分析（观察期）
+        continue-on-error: true
+        run: |
+          flutter pub get
+          flutter analyze
       # 如果有签名密钥，写入密钥文件
       - name: 🔑 写入签名密钥
         env:

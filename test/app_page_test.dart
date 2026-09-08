@@ -13,6 +13,7 @@ import 'package:minime_core/shared/widgets/app_states.dart';
 ///   2. scrollable: false
 ///   3. leading 与 showBack
 ///   3b. titleWidget（富标题覆盖纯文本标题；未传回落 Text(title)）
+///   3c. title 可空（String?：null 不渲染标题；空串等价）
 ///   4. segments top（TabBar + TabBarView）
 ///   5. segments bottom（NavigationBar）
 ///   6. bottom 槽位
@@ -96,6 +97,26 @@ void main() {
     ));
     expect(find.text('纯文本'), findsOneWidget);
     expect(find.byIcon(Icons.star), findsNothing);
+  });
+
+  // ────────────────────────────────────────────────────────────
+  // 3c. title 可空（String?）
+  // ────────────────────────────────────────────────────────────
+  testWidgets('title: 为 null 时 AppBar.title 为 null（不渲染标题）',
+      (tester) async {
+    await tester.pumpWidget(wrap(const AppPage(title: null, body: Text('BODY'))));
+    expect(find.text('BODY'), findsOneWidget);
+    final appBar = tester.widget<AppBar>(find.byType(AppBar).first);
+    expect(appBar.title, isNull,
+        reason: 'title 为 null 且未传 titleWidget 时，引擎应传 null 标题');
+  });
+
+  testWidgets('title: 空串时渲染空 Text 标题（与 null 视觉等价）',
+      (tester) async {
+    await tester.pumpWidget(wrap(const AppPage(title: '', body: Text('BODY'))));
+    final appBar = tester.widget<AppBar>(find.byType(AppBar).first);
+    expect(appBar.title, isA<Text>());
+    expect((appBar.title as Text).data, '');
   });
 
   // ────────────────────────────────────────────────────────────

@@ -1139,5 +1139,10 @@
   "backupPhaseExporting": "正在匯出",
   "backupPhaseDone": "完成",
   "backupPhaseRestoring": "正在回復",
-  "backupPhaseUploading": "正在上傳"
+  "backupPhaseUploading": "正在上傳",
+  "morePageLlmLeaderboard": "LLM排行榜",
+  "@morePageLlmLeaderboard": {
+    "description": "「更多」页 LLM 排行榜入口标题",
+    "type": "String"
+  }
 }

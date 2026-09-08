@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/favicon.dart';
 import '../../../theme/design_tokens.dart';
@@ -9,9 +10,8 @@ import '../../../utils/url_launcher_ext.dart';
 ///
 /// 已迁移到 AppPage 槽位骨架：
 /// - Scaffold + AppBar(title: null) → AppPage
-///   ⚠️ 原页面刻意无标题，但 AppPage.title 为必填非空，故传空串占位（视觉等价）。
-///   TODO: 若后续还有无标题页，建议把 AppPage.title 改为 String?，为 null 时不渲染 Text
-///         （改引擎需同步补 test/app_page_test.dart 用例）。
+///   本页刻意无标题，AppPage.title 现已支持 `String?`，故直接省略该参数
+///   （引擎在 title 为 null 且未传 titleWidget 时渲染空标题，视觉等价）。
 /// - SingleChildScrollView + padding LTRB(16,0,16,16) → 交给引擎的 ListView，
 ///   body 直接给 Column，padding 用 AppGap 表达
 /// - 魔法数字间距/圆角 → AppGap / AppRadius
@@ -22,26 +22,25 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    Widget title(String text) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppGap.md),
-          child: Text(
-            text,
-            style: theme.textTheme.titleSmall?.copyWith(color: cs.primary),
-          ),
-        );
+  Widget title(String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppGap.md),
+        child: Text(
+          text,
+          style: theme.textTheme.titleSmall?.copyWith(color: cs.primary),
+        ),
+      );
 
     return AppPage(
-      // Page intentionally has no title for now
-      title: '',
+      // 本页刻意无标题（AppPage.title 已支持 String?，省略即不渲染）
       // 原 SingleChildScrollView 的 LTRB(16, 0, 16, 16)
       bodyPadding: const EdgeInsets.fromLTRB(AppGap.md, 0, AppGap.md, AppGap.md),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // LeaderBoard section
-          // TODO(后续修复)：硬编码中文文案，缺 l10n。建议补 app_*.arb 后改为 l10n.xxx
-          title('LLM排行榜'),
+          title(l10n.morePageLlmLeaderboard),
           Row(
             children: const [
               Expanded(

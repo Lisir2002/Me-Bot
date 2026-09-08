@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_page.dart';
@@ -14,6 +15,9 @@ import '../../../theme/design_tokens.dart';
 /// - 魔法数字间距/圆角 → AppGap / AppRadius
 class TerminalPlaceholderPage extends StatelessWidget {
   const TerminalPlaceholderPage({super.key});
+
+  /// 版本号来源：仅在首次挂载时解析一次（避免每次 build 重复调用平台通道）。
+  static final Future<PackageInfo> _versionFuture = PackageInfo.fromPlatform();
 
   @override
   Widget build(BuildContext context) {
@@ -57,21 +61,24 @@ class TerminalPlaceholderPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppGap.xxl),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 6),
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              // TODO(后续修复)：硬编码版本号已过期（pubspec 现为 0.0.37+37）。
-              // 建议改用已有的 package_info_plus：
-              //   final info = await PackageInfo.fromAppInfo();  → 'v${info.version}'
-              child: Text(
-                'v0.0.28',
-                style: textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withOpacity(0.5),
-                ),
-              ),
+            FutureBuilder<PackageInfo>(
+              future: _versionFuture,
+              builder: (context, snap) {
+                final v = snap.hasData ? 'v${snap.data!.version}' : '';
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    v,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: cs.onSurface.withOpacity(0.5),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

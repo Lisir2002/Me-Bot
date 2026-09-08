@@ -112,6 +112,10 @@ class ThemeSettingsPage extends StatelessWidget {
 
 // --- iOS 风格辅助组件 ---
 
+// 本页保留自有 _iosSwitchRow，而非改用共享 AppSwitchRow：
+// 1) 本页开关需要 subtitle（动态取色 / 纯背景的说明文案），共享 AppSwitchRow 不支持 subtitle；
+// 2) 横向内边距用 AppGap.md（与列表项对齐），而 AppSwitchRow 固定为 AppGap.sm。
+// 二者视觉刻意不同，属于"私有的、与共享件不等价的实现应保留"（迁移计划经验 #43）。
 Widget _iosSwitchRow(BuildContext context,
     {required IconData icon,
     required String label,

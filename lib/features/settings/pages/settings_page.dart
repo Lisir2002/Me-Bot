@@ -8,7 +8,6 @@ import '../../model/pages/default_model_page.dart';
 import '../../provider/pages/providers_page.dart';
 import 'display_settings_page.dart';
 import '../../../core/services/chat/chat_service.dart';
-import '../../../shared/widgets/card_surface.dart';
 import '../../mcp/pages/mcp_page.dart';
 import '../../assistant/pages/assistant_settings_page.dart';
 import 'about_page.dart';
@@ -23,6 +22,8 @@ import 'usage_stats_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/services/haptics.dart';
+import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../theme/design_tokens.dart';
 
@@ -48,44 +49,32 @@ class SettingsPage extends StatelessWidget {
     }
 
     Future<void> pickThemeMode() async {
-      final selected = await showModalBottomSheet<ThemeMode>(
+      final selected = await showAppSheet<ThemeMode>(
         context: context,
-        backgroundColor: cs.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (ctx) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _sheetOption(
-                    ctx,
-                    icon: Lucide.Monitor,
-                    label: modeLabel(ThemeMode.system),
-                    onTap: () => Navigator.of(ctx).pop(ThemeMode.system),
-                  ),
-                  _sheetDivider(ctx),
-                  _sheetOption(
-                    ctx,
-                    icon: Lucide.Sun,
-                    label: modeLabel(ThemeMode.light),
-                    onTap: () => Navigator.of(ctx).pop(ThemeMode.light),
-                  ),
-                  _sheetDivider(ctx),
-                  _sheetOption(
-                    ctx,
-                    icon: Lucide.Moon,
-                    label: modeLabel(ThemeMode.dark),
-                    onTap: () => Navigator.of(ctx).pop(ThemeMode.dark),
-                  ),
-                ],
-              ),
+        builder: AppSheet(
+          children: [
+            _sheetOption(
+              context,
+              icon: Lucide.Monitor,
+              label: modeLabel(ThemeMode.system),
+              onTap: () => Navigator.of(context).pop(ThemeMode.system),
             ),
-          );
-        },
+            _sheetDivider(context),
+            _sheetOption(
+              context,
+              icon: Lucide.Sun,
+              label: modeLabel(ThemeMode.light),
+              onTap: () => Navigator.of(context).pop(ThemeMode.light),
+            ),
+            _sheetDivider(context),
+            _sheetOption(
+              context,
+              icon: Lucide.Moon,
+              label: modeLabel(ThemeMode.dark),
+              onTap: () => Navigator.of(context).pop(ThemeMode.dark),
+            ),
+          ],
+        ),
       );
       if (selected != null) {
         await context.read<SettingsProvider>().setThemeMode(selected);
@@ -139,7 +128,7 @@ class SettingsPage extends StatelessWidget {
 
           // 通用设置：使用iOS风格分组卡片，黑色（中性）图标与标题，无描述
           header(l10n.settingsPageGeneralSection, first: true),
-          _iosSectionCard(children: [
+          AppSectionCard(children: [
             _iosNavRow(
               context,
               icon: Lucide.SunMoon,
@@ -173,7 +162,7 @@ class SettingsPage extends StatelessWidget {
 
           const SizedBox(height: 12),
           header(l10n.settingsPageModelsServicesSection),
-          _iosSectionCard(children: [
+          AppSectionCard(children: [
             _iosNavRow(
               context,
               icon: Lucide.Heart,
@@ -248,7 +237,7 @@ class SettingsPage extends StatelessWidget {
 
           const SizedBox(height: 12),
           header(l10n.settingsPageDataSection),
-          _iosSectionCard(children: [
+          AppSectionCard(children: [
             _iosNavRow(
               context,
               icon: Lucide.Activity,
@@ -285,7 +274,7 @@ class SettingsPage extends StatelessWidget {
 
           const SizedBox(height: 12),
           header(l10n.settingsPageAboutSection),
-          _iosSectionCard(children: [
+          AppSectionCard(children: [
             _iosNavRow(
               context,
               icon: Lucide.BadgeInfo,
@@ -352,26 +341,6 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-Widget _iosSectionCard({required List<Widget> children}) {
-  return Builder(builder: (context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Light: white with slight transparency; Dark: subtle translucent dark
-    final Color bg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        // 统一细黑边规范
-        border: AppCardSurface.border(context),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: children),
-      ),
-    );
-  });
-}
 
 Widget _iosDivider(BuildContext context) {
   final cs = Theme.of(context).colorScheme;

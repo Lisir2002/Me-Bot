@@ -90,7 +90,11 @@ class AppPageStates<T> {
 /// 泛型化后 `buildData` 全程保持 `T`，无需任何 `as dynamic` 绕过。
 /// 不使用 `states:` 的页面无需改动（T 会被推断为 `dynamic`）。
 class AppPage<T> extends StatefulWidget {
-  final String title;
+  /// 页面标题（纯文本）。
+  ///
+  /// 允许为 null：当页面本身「无标题」（如 more_page 的入口页）时，
+  /// 可省略该参数，引擎渲染 `null` 标题（等同不显示）。富标题请用 [titleWidget]。
+  final String? title;
 
   /// 自定义标题组件（可选）。
   ///
@@ -122,7 +126,7 @@ class AppPage<T> extends StatefulWidget {
 
   const AppPage({
     super.key,
-    required this.title,
+    this.title,
     this.titleWidget,
     this.body,
     this.actions,
@@ -233,7 +237,7 @@ class _AppPageState<T> extends State<AppPage<T>> {
         titleSpacing: 4,
         leadingWidth: effectiveLeading != null ? 56 : null,
         leading: effectiveLeading,
-        title: widget.titleWidget ?? Text(widget.title),
+        title: widget.titleWidget ?? (widget.title == null ? null : Text(widget.title!)),
         actions: widget.actions,
         bottom: appBarBottom,
       ),

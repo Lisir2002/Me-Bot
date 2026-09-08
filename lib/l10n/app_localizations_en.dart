@@ -3608,7 +3608,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get conversationDeleteConfirmTitle => 'Delete Conversation?';
 
   @override
-  String conversationDeleteConfirmContent(String title) => '"$title" and all its messages will be permanently deleted.';
+  String conversationDeleteConfirmContent(String title) {
+    return '\"$title\" and all its messages will be permanently deleted.';
+  }
 
   @override
   String get conversationRenameTitle => 'Rename Conversation';
@@ -3632,8 +3634,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatPleaseSelectModel => 'Please select a model first';
 
   @override
-  String chatGenerationFailed(String error) => 'Generation failed: $error';
+  String chatGenerationFailed(String error) {
+    return 'Generation failed: $error';
+  }
 
   @override
   String get terminalComingSoon => 'Coming soon — CLI for AI agent commands';
+
+  @override
+  String get morePageLlmLeaderboard => 'LLM Leaderboard';
 }

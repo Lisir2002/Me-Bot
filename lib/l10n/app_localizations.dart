@@ -6792,59 +6792,100 @@ abstract class AppLocalizations {
   String get backupPhaseUploading;
 
   /// No description provided for @mobileTabConversations.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
   String get mobileTabConversations;
 
   /// No description provided for @mobileTabTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
   String get mobileTabTerminal;
 
   /// No description provided for @mobileDrawerGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
   String get mobileDrawerGuest;
 
   /// No description provided for @mobileDrawerComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation menu coming soon'**
   String get mobileDrawerComingSoon;
 
   /// No description provided for @conversationDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Conversation?'**
   String get conversationDeleteConfirmTitle;
 
   /// No description provided for @conversationDeleteConfirmContent.
   ///
   /// In en, this message translates to:
-  /// **"{title}" and all its messages will be permanently deleted."**
-  ///
-  /// {title}: placeholder
+  /// **'\"{title}\" and all its messages will be permanently deleted.'**
   String conversationDeleteConfirmContent(String title);
 
   /// No description provided for @conversationRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Conversation'**
   String get conversationRenameTitle;
 
   /// No description provided for @conversationListEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to start a new chat'**
   String get conversationListEmptyHint;
 
   /// No description provided for @conversationDeletedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation deleted'**
   String get conversationDeletedSnackbar;
 
   /// No description provided for @chatPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
   String get chatPageTitle;
 
   /// No description provided for @chatEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a conversation'**
   String get chatEmptyTitle;
 
   /// No description provided for @chatEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message below'**
   String get chatEmptySubtitle;
 
   /// No description provided for @chatPleaseSelectModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a model first'**
   String get chatPleaseSelectModel;
 
   /// No description provided for @chatGenerationFailed.
   ///
   /// In en, this message translates to:
-  /// **Generation failed: {error}**
-  ///
-  /// {error}: placeholder
+  /// **'Generation failed: {error}'**
   String chatGenerationFailed(String error);
 
   /// No description provided for @terminalComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon — CLI for AI agent commands'**
   String get terminalComingSoon;
+
+  /// 「更多」页 LLM 排行榜入口标题
+  ///
+  /// In en, this message translates to:
+  /// **'LLM Leaderboard'**
+  String get morePageLlmLeaderboard;
 }
 
 class _AppLocalizationsDelegate

@@ -10,10 +10,10 @@ import '../../../core/providers/settings_provider.dart';
 import 'theme_settings_page.dart';
 import '../../../theme/palettes.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/widgets/ios_switch.dart';
 import 'package:file_picker/file_picker.dart';
 import 'google_fonts_picker_page.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -575,10 +575,10 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
 // 已迁走的（改用共享层）：
 //   _iosSectionCard / _iosDivider / _iosNavRow  → settings_ios_widgets.dart
 //   _TactileRow / _TactileIconButton / _AnimatedPressColor → ios_tactile.dart
-// 仍留在本地的：
-//   _iosSwitchRow —— 只有本文件的 4 个子页面用（跨文件重复度待评估，见迁移计划）
-//   _sheetOption / _OptionSheet —— 无标题、无把手的「iOS 操作表」，
-//                                  AppSheet 会加把手与内边距，故自建
+//   _iosSwitchRow → 共享 AppSwitchRow（批次 4 后归并，见迁移计划「待办 E」收尾）
+// 仍留在本地的（滑杆主题 / 无标题无把手的「iOS 操作表」，AppSheet 会加把手故自建）：
+//   _sliderTheme / _sliderThumb / _OptionSheet / _SheetOption /
+//   _SheetDividerNoIcon / _sheetOption
 // ──────────────────────────────────────────────────────────────
 
 /// 三个滑杆弹层（字号 / 自动滚动空闲 / 背景遮罩）共用的滑杆主题。
@@ -693,33 +693,6 @@ Widget _sheetOption(BuildContext context, {required String label, required VoidC
   );
 }
 
-Widget _iosSwitchRow(
-  BuildContext context, {
-  IconData? icon,
-  required String label,
-  required bool value,
-  required ValueChanged<bool> onChanged,
-}) {
-  final cs = Theme.of(context).colorScheme;
-  return IosTactileRow(
-    onTap: () => onChanged(!value),
-    builder: (_, pressed) => IosPressColor(
-      pressed: pressed,
-      base: cs.onSurface.withOpacity(0.9),
-      builder: (c) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: 2),
-        child: Row(children: [
-          if (icon != null) ...[
-            SizedBox(width: 36, child: Icon(icon, size: 20, color: c)),
-            const SizedBox(width: AppGap.sm),
-          ],
-          Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c))),
-          IosSwitch(value: value, onChanged: onChanged),
-        ]),
-      ),
-    ),
-  );
-}
 
 // --- Subpages ---
 
@@ -748,17 +721,17 @@ class ChatItemDisplaySettingsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
         SettingsSectionCard(children: [
-          _iosSwitchRow(context, icon: Lucide.User, label: l10n.displaySettingsPageShowUserAvatarTitle, value: sp.showUserAvatar, onChanged: (v) => context.read<SettingsProvider>().setShowUserAvatar(v)),
+          AppSwitchRow( icon: Lucide.User, label: l10n.displaySettingsPageShowUserAvatarTitle, value: sp.showUserAvatar, onChanged: (v) => context.read<SettingsProvider>().setShowUserAvatar(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.MessageCircle, label: l10n.displaySettingsPageShowUserNameTimestampTitle, value: sp.showUserNameTimestamp, onChanged: (v) => context.read<SettingsProvider>().setShowUserNameTimestamp(v)),
+          AppSwitchRow( icon: Lucide.MessageCircle, label: l10n.displaySettingsPageShowUserNameTimestampTitle, value: sp.showUserNameTimestamp, onChanged: (v) => context.read<SettingsProvider>().setShowUserNameTimestamp(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Ellipsis, label: l10n.displaySettingsPageShowUserMessageActionsTitle, value: sp.showUserMessageActions, onChanged: (v) => context.read<SettingsProvider>().setShowUserMessageActions(v)),
+          AppSwitchRow( icon: Lucide.Ellipsis, label: l10n.displaySettingsPageShowUserMessageActionsTitle, value: sp.showUserMessageActions, onChanged: (v) => context.read<SettingsProvider>().setShowUserMessageActions(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Bot, label: l10n.displaySettingsPageChatModelIconTitle, value: sp.showModelIcon, onChanged: (v) => context.read<SettingsProvider>().setShowModelIcon(v)),
+          AppSwitchRow( icon: Lucide.Bot, label: l10n.displaySettingsPageChatModelIconTitle, value: sp.showModelIcon, onChanged: (v) => context.read<SettingsProvider>().setShowModelIcon(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.MessageSquare, label: l10n.displaySettingsPageShowModelNameTimestampTitle, value: sp.showModelNameTimestamp, onChanged: (v) => context.read<SettingsProvider>().setShowModelNameTimestamp(v)),
+          AppSwitchRow( icon: Lucide.MessageSquare, label: l10n.displaySettingsPageShowModelNameTimestampTitle, value: sp.showModelNameTimestamp, onChanged: (v) => context.read<SettingsProvider>().setShowModelNameTimestamp(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Type, label: l10n.displaySettingsPageShowTokenStatsTitle, value: sp.showTokenStats, onChanged: (v) => context.read<SettingsProvider>().setShowTokenStats(v)),
+          AppSwitchRow( icon: Lucide.Type, label: l10n.displaySettingsPageShowTokenStatsTitle, value: sp.showTokenStats, onChanged: (v) => context.read<SettingsProvider>().setShowTokenStats(v)),
         ]),
       ]),
     );
@@ -788,13 +761,13 @@ class RenderingSettingsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
         SettingsSectionCard(children: [
-          _iosSwitchRow(context, icon: Lucide.Hash, label: l10n.displaySettingsPageEnableDollarLatexTitle, value: sp.enableDollarLatex, onChanged: (v) => context.read<SettingsProvider>().setEnableDollarLatex(v)),
+          AppSwitchRow( icon: Lucide.Hash, label: l10n.displaySettingsPageEnableDollarLatexTitle, value: sp.enableDollarLatex, onChanged: (v) => context.read<SettingsProvider>().setEnableDollarLatex(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Code, label: l10n.displaySettingsPageEnableMathTitle, value: sp.enableMathRendering, onChanged: (v) => context.read<SettingsProvider>().setEnableMathRendering(v)),
+          AppSwitchRow( icon: Lucide.Code, label: l10n.displaySettingsPageEnableMathTitle, value: sp.enableMathRendering, onChanged: (v) => context.read<SettingsProvider>().setEnableMathRendering(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.TextSelect, label: l10n.displaySettingsPageEnableUserMarkdownTitle, value: sp.enableUserMarkdown, onChanged: (v) => context.read<SettingsProvider>().setEnableUserMarkdown(v)),
+          AppSwitchRow( icon: Lucide.TextSelect, label: l10n.displaySettingsPageEnableUserMarkdownTitle, value: sp.enableUserMarkdown, onChanged: (v) => context.read<SettingsProvider>().setEnableUserMarkdown(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Brain, label: l10n.displaySettingsPageEnableReasoningMarkdownTitle, value: sp.enableReasoningMarkdown, onChanged: (v) => context.read<SettingsProvider>().setEnableReasoningMarkdown(v)),
+          AppSwitchRow( icon: Lucide.Brain, label: l10n.displaySettingsPageEnableReasoningMarkdownTitle, value: sp.enableReasoningMarkdown, onChanged: (v) => context.read<SettingsProvider>().setEnableReasoningMarkdown(v)),
         ]),
       ]),
     );
@@ -824,15 +797,15 @@ class BehaviorStartupSettingsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
         SettingsSectionCard(children: [
-          _iosSwitchRow(context, icon: Lucide.Brain, label: l10n.displaySettingsPageAutoCollapseThinkingTitle, value: sp.autoCollapseThinking, onChanged: (v) => context.read<SettingsProvider>().setAutoCollapseThinking(v)),
+          AppSwitchRow( icon: Lucide.Brain, label: l10n.displaySettingsPageAutoCollapseThinkingTitle, value: sp.autoCollapseThinking, onChanged: (v) => context.read<SettingsProvider>().setAutoCollapseThinking(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.BadgeInfo, label: l10n.displaySettingsPageShowUpdatesTitle, value: sp.showAppUpdates, onChanged: (v) => context.read<SettingsProvider>().setShowAppUpdates(v)),
+          AppSwitchRow( icon: Lucide.BadgeInfo, label: l10n.displaySettingsPageShowUpdatesTitle, value: sp.showAppUpdates, onChanged: (v) => context.read<SettingsProvider>().setShowAppUpdates(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.ChevronRight, label: l10n.displaySettingsPageMessageNavButtonsTitle, value: sp.showMessageNavButtons, onChanged: (v) => context.read<SettingsProvider>().setShowMessageNavButtons(v)),
+          AppSwitchRow( icon: Lucide.ChevronRight, label: l10n.displaySettingsPageMessageNavButtonsTitle, value: sp.showMessageNavButtons, onChanged: (v) => context.read<SettingsProvider>().setShowMessageNavButtons(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Calendar, label: l10n.displaySettingsPageShowChatListDateTitle, value: sp.showChatListDate, onChanged: (v) => context.read<SettingsProvider>().setShowChatListDate(v)),
+          AppSwitchRow( icon: Lucide.Calendar, label: l10n.displaySettingsPageShowChatListDateTitle, value: sp.showChatListDate, onChanged: (v) => context.read<SettingsProvider>().setShowChatListDate(v)),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.MessageCirclePlus, label: l10n.displaySettingsPageNewChatOnLaunchTitle, value: sp.newChatOnLaunch, onChanged: (v) => context.read<SettingsProvider>().setNewChatOnLaunch(v)),
+          AppSwitchRow( icon: Lucide.MessageCirclePlus, label: l10n.displaySettingsPageNewChatOnLaunchTitle, value: sp.newChatOnLaunch, onChanged: (v) => context.read<SettingsProvider>().setNewChatOnLaunch(v)),
         ]),
       ]),
     );
@@ -862,41 +835,37 @@ class HapticsSettingsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
         SettingsSectionCard(children: [
-          _iosSwitchRow(
-            context,
+          AppSwitchRow(
             icon: Lucide.Vibrate,
             label: l10n.displaySettingsPageHapticsGlobalTitle,
             value: sp.hapticsGlobalEnabled,
             onChanged: (v) => context.read<SettingsProvider>().setHapticsGlobalEnabled(v),
           ),
           const SettingsDivider(),
-          _iosSwitchRow(
-            context,
+          AppSwitchRow(
             icon: Lucide.toggleRight,
             label: l10n.displaySettingsPageHapticsIosSwitchTitle,
             value: sp.hapticsIosSwitch,
             onChanged: (v) => context.read<SettingsProvider>().setHapticsIosSwitch(v),
           ),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.panelRight, label: l10n.displaySettingsPageHapticsOnSidebarTitle, value: sp.hapticsOnDrawer, onChanged: (v) => context.read<SettingsProvider>().setHapticsOnDrawer(v)),
+          AppSwitchRow( icon: Lucide.panelRight, label: l10n.displaySettingsPageHapticsOnSidebarTitle, value: sp.hapticsOnDrawer, onChanged: (v) => context.read<SettingsProvider>().setHapticsOnDrawer(v)),
           const SettingsDivider(),
-          _iosSwitchRow(
-            context,
+          AppSwitchRow(
             icon: Lucide.ListOrdered,
             label: l10n.displaySettingsPageHapticsOnListItemTapTitle,
             value: sp.hapticsOnListItemTap,
             onChanged: (v) => context.read<SettingsProvider>().setHapticsOnListItemTap(v),
           ),
           const SettingsDivider(),
-          _iosSwitchRow(
-            context,
+          AppSwitchRow(
             icon: Lucide.Square,
             label: l10n.displaySettingsPageHapticsOnCardTapTitle,
             value: sp.hapticsOnCardTap,
             onChanged: (v) => context.read<SettingsProvider>().setHapticsOnCardTap(v),
           ),
           const SettingsDivider(),
-          _iosSwitchRow(context, icon: Lucide.Vibrate, label: l10n.displaySettingsPageHapticsOnGenerateTitle, value: sp.hapticsOnGenerate, onChanged: (v) => context.read<SettingsProvider>().setHapticsOnGenerate(v)),
+          AppSwitchRow( icon: Lucide.Vibrate, label: l10n.displaySettingsPageHapticsOnGenerateTitle, value: sp.hapticsOnGenerate, onChanged: (v) => context.read<SettingsProvider>().setHapticsOnGenerate(v)),
         ]),
       ]),
     );

@@ -1281,5 +1281,10 @@
       }
     }
   },
-  "terminalComingSoon": "即将推出 — AI agent 命令行"
+  "terminalComingSoon": "即将推出 — AI agent 命令行",
+  "morePageLlmLeaderboard": "LLM排行榜",
+  "@morePageLlmLeaderboard": {
+    "description": "「更多」页 LLM 排行榜入口标题",
+    "type": "String"
+  }
 }

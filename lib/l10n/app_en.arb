@@ -1501,5 +1501,10 @@
       }
     }
   },
-  "terminalComingSoon": "Coming soon — CLI for AI agent commands"
+  "terminalComingSoon": "Coming soon — CLI for AI agent commands",
+  "morePageLlmLeaderboard": "LLM Leaderboard",
+  "@morePageLlmLeaderboard": {
+    "description": "「更多」页 LLM 排行榜入口标题",
+    "type": "String"
+  }
 }

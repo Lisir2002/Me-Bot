@@ -3756,5 +3756,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsNoActivity => 'No activity';
+  @override
+  String statsHeatmapSummary(String count) {
+    return '$count messages in total';
+  }
+
+  @override
+  String statsHeatmapNoActivity(String date) {
+    return 'No messages on $date';
+  }
+
+
 
 }

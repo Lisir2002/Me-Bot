@@ -69,6 +69,12 @@ class StatsL10n {
   String heatmapDayDetail(String date, int count) =>
       _l?.statsHeatmapDayDetail(date, count) ?? '$date · $count 条消息';
 
+  String heatmapSummary(String count) =>
+      _l?.statsHeatmapSummary(count) ?? '共 $count 条消息';
+
+  String heatmapNoActivity(String date) =>
+      _l?.statsHeatmapNoActivity(date) ?? '$date 无聊天记录';
+
   // ---------- 趋势 ----------
   String get tokensUnit => _l?.statsTokensUnit ?? 'tokens';
   String get granularityDay => _l?.statsGranularityDay ?? '按天';

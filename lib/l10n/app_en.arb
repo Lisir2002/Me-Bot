@@ -1700,6 +1700,26 @@
     "description": "趋势图粒度-按月",
     "type": "String"
   },
+  "statsHeatmapSummary": "{count} messages in total",
+  "@statsHeatmapSummary": {
+    "description": "热力图窗口内总消息数（头部汇总）",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    },
+    "type": "String"
+  },
+  "statsHeatmapNoActivity": "No messages on {date}",
+  "@statsHeatmapNoActivity": {
+    "description": "热力图某天无任何聊天记录",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    },
+    "type": "String"
+  },
   "statsNoActivity": "No activity",
   "@statsNoActivity": {
     "description": "热力图某天无消息",

@@ -3640,6 +3640,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statsNoActivity => '无记录';
+  @override
+  String statsHeatmapSummary(String count) {
+    return '共 $count 条消息';
+  }
+
+  @override
+  String statsHeatmapNoActivity(String date) {
+    return '$date 无聊天记录';
+  }
+
+
 
 }
 
@@ -7097,6 +7108,17 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get statsNoActivity => '无记录';
+  @override
+  String statsHeatmapSummary(String count) {
+    return '共 $count 条消息';
+  }
+
+  @override
+  String statsHeatmapNoActivity(String date) {
+    return '$date 无聊天记录';
+  }
+
+
 
 }
 
@@ -10450,40 +10472,40 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statsRangeLast30 => '最近30天';
 
   @override
-  String get statsRangeLastMonth => '上个月';
+  String get statsRangeLastMonth => '上個月';
 
   @override
-  String get statsRangeLastQuarter => '上个季度';
+  String get statsRangeLastQuarter => '上個季度';
 
   @override
-  String get statsSectionHeatmap => '聊天热力图';
+  String get statsSectionHeatmap => '聊天熱力圖';
 
   @override
-  String get statsSectionTrend => '用量趋势';
+  String get statsSectionTrend => '用量趨勢';
 
   @override
-  String get statsSectionOverview => '总览';
+  String get statsSectionOverview => '總覽';
 
   @override
-  String get statsOverviewConversations => '总对话数';
+  String get statsOverviewConversations => '總對話數';
 
   @override
-  String get statsOverviewMessages => '总消息数';
+  String get statsOverviewMessages => '總消息數';
 
   @override
-  String get statsOverviewPromptTokens => '输入 Tokens';
+  String get statsOverviewPromptTokens => '輸入 Tokens';
 
   @override
-  String get statsOverviewCompletionTokens => '输出 Tokens';
+  String get statsOverviewCompletionTokens => '輸出 Tokens';
 
   @override
-  String get statsOverviewCachedTokens => '缓存 Tokens';
+  String get statsOverviewCachedTokens => '快取 Tokens';
 
   @override
-  String get statsOverviewLaunchCount => '应用启动次数';
+  String get statsOverviewLaunchCount => '應用啟動次數';
 
   @override
-  String get statsNoData => '暂无数据';
+  String get statsNoData => '暫無資料';
 
   @override
   String get statsModelUsage => '模型使用率';
@@ -10492,31 +10514,31 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statsAssistantUsage => '助手使用率';
 
   @override
-  String get statsTopicUsage => '话题内容量';
+  String get statsTopicUsage => '話題內容量';
 
   @override
   String get statsColModel => '模型';
 
   @override
-  String get statsColMessages => '消息数';
+  String get statsColMessages => '訊息數';
 
   @override
   String get statsColAssistant => '助手';
 
   @override
-  String get statsColTopicCount => '话题数';
+  String get statsColTopicCount => '話題數';
 
   @override
-  String get statsColTopic => '话题';
+  String get statsColTopic => '話題';
 
   @override
   String get statsUnknownModel => '未知';
 
   @override
-  String get statsGlobalAssistant => '全局';
+  String get statsGlobalAssistant => '全域';
 
   @override
-  String get statsUnnamedTopic => '（未命名话题）';
+  String get statsUnnamedTopic => '（未命名話題）';
 
   @override
   String get statsLegendLess => '少';
@@ -10529,22 +10551,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String statsMessageCount(int count) {
-    return '$count 条';
+    return '$count 則';
   }
 
   @override
   String statsTopicCount(int count) {
-    return '$count 个话题';
+    return '$count 個話題';
   }
 
   @override
   String statsHeatmapDayDetail(String date, int count) {
-    return '$date · $count 条消息';
+    return '$date · $count 則訊息';
   }
 
   @override
   String statsTrendTotal(String value) {
-    return '合计 $value';
+    return '合計 $value';
   }
 
   @override
@@ -10554,6 +10576,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statsGranularityMonth => '按月';
 
   @override
-  String get statsNoActivity => '无记录';
+  String get statsNoActivity => '無記錄';
+  @override
+  String statsHeatmapSummary(String count) {
+    return '共 $count 則訊息';
+  }
+
+  @override
+  String statsHeatmapNoActivity(String date) {
+    return '$date 無聊天記錄';
+  }
+
 
 }

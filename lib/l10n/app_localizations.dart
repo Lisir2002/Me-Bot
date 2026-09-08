@@ -7098,6 +7098,17 @@ abstract class AppLocalizations {
   String get statsNoActivity;
 }
 
+  /// 热力图窗口内总消息数（头部汇总）
+  ///
+  /// In en, this message translates to:
+  /// **'{count} messages in total'**
+  String statsHeatmapSummary(String count);
+  /// 热力图某天无任何聊天记录
+  ///
+  /// In en, this message translates to:
+  /// **'No messages on {date}'**
+  String statsHeatmapNoActivity(String date);
+
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();

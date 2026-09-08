@@ -1480,6 +1480,8 @@
     "description": "趋势图粒度-按月",
     "type": "String"
   },
+  "statsHeatmapSummary": "共 {count} 条消息",
+  "statsHeatmapNoActivity": "{date} 无聊天记录",
   "statsNoActivity": "无记录",
   "@statsNoActivity": {
     "description": "热力图某天无消息",

@@ -113,7 +113,7 @@
 |---|---|---:|---:|---:|---|
 | B0 环境+基线 | ✅ 完成 | 438 | 438 | 438 | `c203caa` |
 | B1 A 档自动修复（10 条规则） | ✅ 完成 | 438 | 248 | **248** | `78b9c1c` |
-| B2 shown_name + field | ⬜ 待执行 | 248 | 221 | — | — |
+| B2 shown_name + field | ✅ 完成 | 248 | 220 | **220** | `0a3124d` |
 | B3 local_variable | ⬜ 待执行 | 221 | 137 | — | — |
 | B4 element + element_parameter | ⬜ 待执行 | 137 | 43 | — | — |
 | B5 C 档语义 | ⬜ 待执行 | 43 | 0 | — | — |
@@ -124,5 +124,29 @@
 ## 8. 清零之后
 
 1. CI 步骤改为 `flutter analyze --no-fatal-infos`（去掉 `continue-on-error`），warning/error 阻塞合并。
+
+---
+
+## 9. 疑似功能未完成清单（B2 发现，待用户确认）
+
+以下字段**被赋值但从未读取**——状态维护了、UI 没消费。已加 `// ignore: unused_field` 保留（删除会丢失功能意图）。需确认是"补完 UI"还是"删掉状态"：
+
+| 文件 | 字段 | 现象 |
+|---|---|---|
+| `lib/desktop/setting/backup_pane.dart` | `_remote` / `_loadingRemote` | 拉取了远程备份列表却从不展示 |
+| `lib/features/model/widgets/model_select_sheet.dart` | `_favItems`（×2 处） | 收藏列表加载但未渲染 |
+| `lib/features/provider/pages/provider_detail_page.dart` | `_proxyEnabled` | 代理开关状态未绑定 UI |
+| `lib/features/home/widgets/chat_input_bar.dart` | `_searchEnabled` | 搜索开关状态未被消费 |
+| `lib/desktop/model_edit_dialog.dart` | `_searchTool` / `_urlContextTool` | 工具开关状态未绑定勾选框 |
+| `lib/features/chat/widgets/chat_message_widget.dart` | `_inlineThinkWasLoading` | 思考中状态未被消费 |
+| `lib/shared/pages/webview_page.dart` | `_consoleOpen` | 控制台开合状态未被消费 |
+| `lib/desktop/desktop_nav_rail.dart` | `_hovered` | 悬停态未用于渲染 |
+| `lib/desktop/setting/about_pane.dart` | `_pressed`（×2 处） | 按下态未用于渲染 |
+| `lib/desktop/html_preview_dialog.dart` | `_tempFilePath` | Windows 临时文件路径未释放 |
+| `lib/core/services/logging/logger.dart` | `_maxPayloadChars` | 日志截断上限定义了但未实现截断 |
+
+**其中两个可能是真 bug，建议优先看**：
+- `backup_pane` 的远程备份：列表拉下来了却不显示，用户会以为功能已完成。
+- `html_preview_dialog` 的 `_tempFilePath`：临时文件写出去没清理，Windows 上可能积累残留文件。
 2. 更新 `AGENTS.md` §5.4：基线数字由 438 改为 0，进入"增量红线"阶段。
 3. `lib/desktop/` 的 585 条 `deprecated_member_use` 单独立项（`deprecated_member_use` 是 info，不阻塞门禁）。

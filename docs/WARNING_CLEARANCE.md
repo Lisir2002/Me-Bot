@@ -42,7 +42,7 @@
 |---|---|---:|---|---:|
 | **A 机械** | `unnecessary_cast` | 73 | 删 `as T`（类型已推断，纯语法级） | ✅ 73 |
 | | `unused_import` / `duplicate_import` | 31 / 7 | 删导入 | ✅ 38 |
-| | `unused_element_parameter` | 34 | 参数改名 `_`（回调签名要求不能删参数） | ✅ 34 |
+| | ~~`unused_element_parameter`~~ | 34 | **已撤出自动化**：Dart 3.9 对初始化形参 `this.x` 是误报，机器修复会删构造参数（§6 红线 7） | ❌ |
 | | `unused_catch_stack` / `unused_catch_clause` | 3 / 2 | 删 `catch (e, st)` 的 st / 整句 | ✅ 5 |
 | | `unnecessary_non_null_assertion` | 35 | 删 `!`（接收者已非空，`!` 本就是 no-op） | ✅ 35 |
 | | `invalid_null_aware_operator` | 18 | `a?.b` → `a.b` | ✅ 18 |
@@ -53,12 +53,14 @@
 | | `unused_element` | 60 | 删 or 加 `// ignore: unused_element` 注明预留 | ❌ |
 | | `unused_field` | 23 | 删 or 保留（JSON/序列化/预留） | ❌ |
 | | `unused_shown_name` | 4 | 从 `show` 列表移除 | ❌ |
+| | `unused_element_parameter` | 34 | 多数为误报（初始化形参），逐条判断：加 ignore / 改 `_` / 删 | ❌ |
 | **C 语义** | `dead_null_aware_expression` | 19 | `a ?? b` 中 b 永不执行——**先确认 b 无副作用**再删 | ❌ |
 | | `unreachable_switch_default` | 14 | 防御性 default：倾向保留 + ignore（见 §5 决策） | ❌ |
 | | `dead_code` | 6 | 删恒假分支 | ❌ |
 | | `invalid_use_of_protected_member` | 1 | 重构调用点 | ❌ |
 
-**实测推演**：在副本上执行 A 档 11 条规则的 `dart fix --apply`，**438 → 214（消 224 条）**，且未引入任何 error。剩下 214 条全部落在 B/C 档。
+**B1 实测（已落盘）**：对 A 档 10 条规则执行 `dart fix --apply`，**438 → 248（消 190 条）**，error 0。
+`unused_element_parameter` 原计划一并自动修复，实测引入 15 个 `final_not_initialized_constructor` 错误，已整条撤出（见 §6 红线 7）。
 
 ---
 
@@ -67,11 +69,11 @@
 | 批次 | 内容 | 条数 | 手法 | 预期剩余 |
 |---|---|---:|---|---:|
 | **B0** | 环境打通 + 基线锁定 + 推演 | — | 装 SDK / 对齐 CI / 副本实测 | 438 |
-| **B1** | A 档全部（11 条规则） | 224 | `dart fix --apply --code=…` 逐规则执行 | 214 |
-| **B2** | B 档 `unused_shown_name` + `unused_field` | 27 | 脚本 + 逐条确认 | 187 |
-| **B3** | B 档 `unused_local_variable` | 84 | **逐条人眼判读**（副作用风险） | 103 |
-| **B4** | B 档 `unused_element` | 60 | 逐条判读，区分"真废弃 / 预留 API" | 43 |
-| **B5** | C 档全部 | 40 | 逐条判读 + 少量重构 | 0~14 |
+| **B1** | A 档 10 条规则 | 190 | `dart fix --apply --code=…` 逐规则执行 | **248** ✅ |
+| **B2** | `unused_shown_name` + `unused_field` | 27 | 脚本 + 逐条确认 | 221 |
+| **B3** | `unused_local_variable` | 84 | **逐条人眼判读**（副作用风险） | 137 |
+| **B4** | `unused_element` + `unused_element_parameter` | 94 | 逐条判读，区分"真废弃 / 预留 API / 误报" | 43 |
+| **B5** | C 档全部 | 43 | 逐条判读 + 少量重构 | 0 |
 | **B6** | 门禁硬化 | — | CI 改 `--no-fatal-infos` | 0 |
 
 **执行顺序原则**：先横扫 A 档（收益最大、风险最低、可逆），再按"文件聚集"纵切 B/C 档——同一文件的问题一次改完，diff 集中易 review，避免同一文件被反复改动。
@@ -81,24 +83,27 @@
 
 ---
 
-## 5. 三个必须拍板的处置政策（待用户确认）
+## 5. 已拍板的处置政策（2026-09-09 用户确认）
 
-| # | 议题 | 选项 |
+| # | 议题 | 结论 |
 |---|---|---|
-| P1 | `unreachable_switch_default`（14） | ① 保留 default + `// ignore:`（防御未来新增枚举值）② 直接删 default ③ 逐条定 |
-| P2 | `unused_element` / `unused_field`（83） | ① 一律删 ② 属预留 API 的加 ignore 保留 ③ 逐条判断（默认） |
-| P3 | B1 落地方式 | ① 先出 diff 摘要给你看再落 ② 直接落并 push ③ 先只做单文件试点 |
+| P1 | `unreachable_switch_default`（14） | **保留 default + `// ignore: unreachable_switch_default`**，注释写明"防御未来新增枚举值" |
+| P2 | `unused_element` / `unused_field`（83） | **逐条判断**：真废弃的删；确属预留能力的加 `// ignore:` 并注明原因 |
+| P3 | B1 落地方式 | **直接落 + 本地验证 + push**，push 前贴改动清单 |
 
 ---
 
 ## 6. 红线（违反即停下）
 
 1. **pubspec.yaml 被动了就是事故**：`dart fix --apply` 会顺带应用 `missing_dependency`，实测往 `pubspec.yaml` 塞了 `path/characters/syncfusion_flutter_core/vector_math: any`。**每批 apply 后必须 `diff pubspec.yaml` 并还原**（T4：未经批准不得加依赖）。
-2. **禁止批量盲删**：B/C 档 214 条逐条确认；初始化表达式有副作用（网络/IO/状态变更）的只去变量名，保留表达式。
+2. **禁止批量盲删**：B/C 档逐条确认；初始化表达式有副作用（网络/IO/状态变更）的只去变量名，保留表达式。
 3. **删除前 grep 确认**：`unused_element` 可能被 `dynamic` 调用或字符串反射命中；删除前必须在全仓 grep 标识符。
 4. **不引入新 warning**：每批结束后，本次涉及文件不得出现基线里没有的新条目。
 5. **info 不在本轮范围**：2836 条 info（585 条 `deprecated_member_use` 集中在 `lib/desktop/`）属长期项，等 Flutter SDK 升级窗口再处理，不设死线。
 6. **commit 粒度**：一批一 commit，禁止"顺手重构"混进同一 commit（AGENTS.md §3）。
+7. **禁止对 `unused_element_parameter` 用 `dart fix`**：Dart 3.9 把构造函数初始化形参 `this.x`（哪怕 `widget.x` 明明在用）判为未使用，`dart fix` 会直接删掉构造参数 → 残留 `final x;` 无初始化 → 15 个 `final_not_initialized_constructor` 编译错误。这 34 条只走人工。
+8. **不许"顺手美化"自动修复的产物**：`unnecessary_cast` 修复会留下 `(body)[k]` 这类多余括号；批量去括号时 `Overlay.of(context).x` 会被误伤成 `Overlay.ofcontext`——`(...)` 可能是调用参数而非分组。已尝试并撤回，收益（好看）< 风险（编译错）。
+9. **l10n 生成物会被 `flutter pub get` 覆盖**：`lib/l10n/app_localizations*.dart` 由 ARB 重新生成。0.0.43 曾把 `statsHeatmapSummary` 注入到类外（顶层无体声明），CI 因重新生成而侥幸通过，本地不跑 `pub get` 就报 4 个 error。**改 l10n 永远先改 ARB**（AGENTS.md T2）。
 
 ---
 
@@ -106,12 +111,12 @@
 
 | 批次 | 状态 | 起始 | 结束 | 剩余 | commit |
 |---|---|---:|---:|---:|---|
-| B0 环境+基线 | ✅ 完成 | 438 | 438 | 438 | — |
-| B1 A 档自动修复 | ⬜ 待执行 | 438 | 214（副本实测） | — | — |
-| B2 shown_name+field | ⬜ 待执行 | 214 | 187 | — | — |
-| B3 local_variable | ⬜ 待执行 | 187 | 103 | — | — |
-| B4 unused_element | ⬜ 待执行 | 103 | 43 | — | — |
-| B5 C 档语义 | ⬜ 待执行 | 43 | 0~14 | — | — |
+| B0 环境+基线 | ✅ 完成 | 438 | 438 | 438 | `c203caa` |
+| B1 A 档自动修复（10 条规则） | ✅ 完成 | 438 | 248 | **248** | `78b9c1c` |
+| B2 shown_name + field | ⬜ 待执行 | 248 | 221 | — | — |
+| B3 local_variable | ⬜ 待执行 | 221 | 137 | — | — |
+| B4 element + element_parameter | ⬜ 待执行 | 137 | 43 | — | — |
+| B5 C 档语义 | ⬜ 待执行 | 43 | 0 | — | — |
 | B6 门禁硬化 | ⬜ 待执行 | — | 0 | — | — |
 
 ---

@@ -72,11 +72,12 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 - warning 三条大头：`unused_local_variable` 84 · `unnecessary_cast` 73 · `unused_element` 60；最脏文件 `chat_api_service.dart` 89 条。
 - info 最大单头 585 条 `deprecated_member_use`，集中在 `lib/desktop/`（desktop_settings_page 244 条）。
 
-**清零行动见 `docs/WARNING_CLEARANCE.md`（批次 B0–B6、进度看板、红线）。** 其中两条硬约束：
+**清零行动见 `docs/WARNING_CLEARANCE.md`（批次 B0–B6、进度看板、红线）。** 已拍板政策：`unreachable_switch_default` 保留 default + ignore 注释；`unused_element` / `unused_field` 逐条判断。三条硬约束：
 - `dart fix --apply` 会顺带应用 `missing_dependency` 往 `pubspec.yaml` 塞 `xxx: any`——**每批 apply 后必须 diff 并还原 pubspec**（T4）。
-- 三类"未使用"警告（`unused_local_variable` / `unused_element` / `unused_field`，共 167 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。
+- **禁止对 `unused_element_parameter` 用 `dart fix`**：Dart 3.9 对初始化形参 `this.x` 是误报（`widget.x` 明明在用），机器修复会直接删构造参数，实测引入 15 个 `final_not_initialized_constructor` 编译错误。B1 已整条撤出，转人工。
+- "未使用"类警告（`unused_local_variable` / `unused_element` / `unused_field` / `unused_element_parameter`，共 201 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。
 
-硬化路径：① 按批次清零 438 个 warning ② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。
+硬化路径：① 按批次清零 438 个 warning（**B1 已落地：`78b9c1c`，438 → 248，error 0**）② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。
 基线归零前：任何变更**不得引入新问题**——本地 analyze（§1）每批必跑，warning 数必须单调下降且 error 恒为 0。
 
 ## 6. 索引表（本文件只做索引，不复制内容）

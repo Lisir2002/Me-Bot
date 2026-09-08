@@ -12,12 +12,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **Added**：CI android job 接入 `flutter analyze` 观察步骤（`continue-on-error: true`，过滤 info 明细以避开 Actions 单步输出截断）。
 - **Added**：`docs/WARNING_CLEARANCE.md`——438 warning 清零批次计划（B0–B6）、进度看板、红线。
 - **Changed**：本地分析环境打通：`/opt/flutter335`（Flutter 3.35.7 / Dart 3.9.2，与 CI 对齐）可用，全量 `flutter analyze` 约 48s，实测与 CI 逐条一致。`AGENTS.md` §1 原「禁止本地 analyze」条款作废；`/opt/flutter`（2.17）仍禁用。
+- **Changed**：warning 清零 B1 批次落地（`78b9c1c`）：`dart fix --apply` 应用 10 条规则，**438 → 248 warning，error 0**，涉及 53 个源文件。
+- **Fixed**：0.0.43 遗留——`lib/l10n/app_localizations.dart` 中 `statsHeatmapSummary` / `statsHeatmapNoActivity` 被注入到类外（顶层无体函数声明），本地不跑 `pub get` 重新生成会报 `missing_function_body`；本次由 `flutter pub get` 重新生成到类内正确位置。
 
 ### 🤖 For Agents
 - **基线修正**：首轮报的「~235 warning」是 Actions 单步输出截断导致的错数（3074 条只落 1028 行）。准确基线（commit `c203caa`）：**3074 issues = 438 warning + 2836 info + 0 error**。warning 三条大头 `unused_local_variable` 84 / `unnecessary_cast` 73 / `unused_element` 60；最脏文件 `lib/core/services/api/chat_api_service.dart` 89 条。
 - 本地 analyze 用法：`export PATH=/opt/flutter335/bin:$PATH PUB_HOSTED_URL=https://pub.flutter-io.cn`（`storage.googleapis.com` 在本沙箱不可达，须用 `storage.flutter-io.cn` / `pub.flutter-io.cn` 镜像）。
 - **坑**：`dart fix --apply` 会顺带应用 `missing_dependency`，实测往 `pubspec.yaml` 注入 `path/characters/syncfusion_flutter_core/vector_math: any`——每批 apply 后必须 `diff pubspec.yaml` 并还原。
-- `dart fix` 对 `unused_local_variable` / `unused_element` / `unused_field` / `unused_shown_name` / `dead_code` / `dead_null_aware_expression` / `unreachable_switch_default` **无机器修复**（剩余 214 条中的 210 条），只能人工判读。
+- `dart fix` 对 `unused_local_variable` / `unused_element` / `unused_field` / `unused_shown_name` / `dead_code` / `dead_null_aware_expression` / `unreachable_switch_default` **无机器修复**（剩余 248 条中的 214 条），只能人工判读。
+- **坑（B1 实测）**：`unused_element_parameter` **禁止用 `dart fix`**——Dart 3.9 把构造函数初始化形参 `this.x` 判为未使用（哪怕 `widget.x` 在 build 里用了），机器修复直接删构造参数，残留 `final x;` 无初始化 → 实测 **15 个 `final_not_initialized_constructor` 编译错误**。该规则 34 条整条转人工。
+- **坑（B1 实测）**：`unnecessary_cast` 修复后残留 `(body)[k]` 这类多余括号；批量去括号会把 `Overlay.of(context).x` 误伤成 `Overlay.ofcontext`（`(…)` 可能是调用参数表而非分组）。已尝试并撤回——自动修复产物不要"顺手美化"。
+- **坑**：`flutter pub get` 会按 ARB 重新生成 `lib/l10n/app_localizations*.dart`（这就是 0.0.43 类外注入能在 CI 侥幸通过的原因）。改 l10n 永远先改 ARB，手改生成物会被覆盖。
+- 已拍板政策：`unreachable_switch_default` 保留 default + `// ignore:` 注释；`unused_element` / `unused_field` 逐条判断（真废弃删、预留能力加 ignore 注明原因）。
 - 本文件三档结构本身是规范的一部分：发版时用户档→Release body，开发者档+模型档→本文件，勿混写。
 
 ## [0.0.43] - 2026-09-08

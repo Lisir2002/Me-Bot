@@ -1286,5 +1286,203 @@
   "@morePageLlmLeaderboard": {
     "description": "「更多」页 LLM 排行榜入口标题",
     "type": "String"
+  },
+  "statsRangeAll": "全部",
+  "@statsRangeAll": {
+    "description": "统计页时间区间-全部",
+    "type": "String"
+  },
+  "statsRangeLast30": "最近30天",
+  "@statsRangeLast30": {
+    "description": "统计页时间区间-最近30天",
+    "type": "String"
+  },
+  "statsRangeLastMonth": "上个月",
+  "@statsRangeLastMonth": {
+    "description": "统计页时间区间-上个月",
+    "type": "String"
+  },
+  "statsRangeLastQuarter": "上个季度",
+  "@statsRangeLastQuarter": {
+    "description": "统计页时间区间-上个季度",
+    "type": "String"
+  },
+  "statsSectionHeatmap": "聊天热力图",
+  "@statsSectionHeatmap": {
+    "description": "统计页-聊天热力图区块标题",
+    "type": "String"
+  },
+  "statsSectionTrend": "用量趋势",
+  "@statsSectionTrend": {
+    "description": "统计页-用量趋势区块标题",
+    "type": "String"
+  },
+  "statsSectionOverview": "总览",
+  "@statsSectionOverview": {
+    "description": "统计页-总览区块标题",
+    "type": "String"
+  },
+  "statsOverviewConversations": "总对话数",
+  "@statsOverviewConversations": {
+    "description": "统计页总览-总对话数",
+    "type": "String"
+  },
+  "statsOverviewMessages": "总消息数",
+  "@statsOverviewMessages": {
+    "description": "统计页总览-总消息数",
+    "type": "String"
+  },
+  "statsOverviewPromptTokens": "输入 Tokens",
+  "@statsOverviewPromptTokens": {
+    "description": "统计页总览-输入 Tokens",
+    "type": "String"
+  },
+  "statsOverviewCompletionTokens": "输出 Tokens",
+  "@statsOverviewCompletionTokens": {
+    "description": "统计页总览-输出 Tokens",
+    "type": "String"
+  },
+  "statsOverviewCachedTokens": "缓存 Tokens",
+  "@statsOverviewCachedTokens": {
+    "description": "统计页总览-缓存 Tokens",
+    "type": "String"
+  },
+  "statsOverviewLaunchCount": "应用启动次数",
+  "@statsOverviewLaunchCount": {
+    "description": "统计页总览-应用启动次数",
+    "type": "String"
+  },
+  "statsNoData": "暂无数据",
+  "@statsNoData": {
+    "description": "统计页空态提示",
+    "type": "String"
+  },
+  "statsModelUsage": "模型使用率",
+  "@statsModelUsage": {
+    "description": "统计页-模型使用率表标题",
+    "type": "String"
+  },
+  "statsAssistantUsage": "助手使用率",
+  "@statsAssistantUsage": {
+    "description": "统计页-助手使用率表标题",
+    "type": "String"
+  },
+  "statsTopicUsage": "话题内容量",
+  "@statsTopicUsage": {
+    "description": "统计页-话题内容量表标题",
+    "type": "String"
+  },
+  "statsColModel": "模型",
+  "@statsColModel": {
+    "description": "统计表列名-模型",
+    "type": "String"
+  },
+  "statsColMessages": "消息数",
+  "@statsColMessages": {
+    "description": "统计表列名-消息数",
+    "type": "String"
+  },
+  "statsColAssistant": "助手",
+  "@statsColAssistant": {
+    "description": "统计表列名-助手",
+    "type": "String"
+  },
+  "statsColTopicCount": "话题数",
+  "@statsColTopicCount": {
+    "description": "统计表列名-话题数",
+    "type": "String"
+  },
+  "statsColTopic": "话题",
+  "@statsColTopic": {
+    "description": "统计表列名-话题",
+    "type": "String"
+  },
+  "statsUnknownModel": "未知",
+  "@statsUnknownModel": {
+    "description": "统计页-未知模型",
+    "type": "String"
+  },
+  "statsGlobalAssistant": "全局",
+  "@statsGlobalAssistant": {
+    "description": "统计页-全局（未指定助手）",
+    "type": "String"
+  },
+  "statsUnnamedTopic": "（未命名话题）",
+  "@statsUnnamedTopic": {
+    "description": "统计页-未命名话题",
+    "type": "String"
+  },
+  "statsLegendLess": "少",
+  "@statsLegendLess": {
+    "description": "热力图图例-少",
+    "type": "String"
+  },
+  "statsLegendMore": "多",
+  "@statsLegendMore": {
+    "description": "热力图图例-多",
+    "type": "String"
+  },
+  "statsTokensUnit": "tokens",
+  "@statsTokensUnit": {
+    "description": "统计页 tokens 单位",
+    "type": "String"
+  },
+  "statsMessageCount": "{count} 条",
+  "@statsMessageCount": {
+    "description": "统计页-消息条数",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "type": "String"
+  },
+  "statsTopicCount": "{count} 个话题",
+  "@statsTopicCount": {
+    "description": "统计页-话题个数",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "type": "String"
+  },
+  "statsHeatmapDayDetail": "{date} · {count} 条消息",
+  "@statsHeatmapDayDetail": {
+    "description": "热力图选中某天的详情",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    },
+    "type": "String"
+  },
+  "statsTrendTotal": "合计 {value}",
+  "@statsTrendTotal": {
+    "description": "趋势图 tooltip 合计",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    },
+    "type": "String"
+  },
+  "statsGranularityDay": "按天",
+  "@statsGranularityDay": {
+    "description": "趋势图粒度-按天",
+    "type": "String"
+  },
+  "statsGranularityMonth": "按月",
+  "@statsGranularityMonth": {
+    "description": "趋势图粒度-按月",
+    "type": "String"
+  },
+  "statsNoActivity": "无记录",
+  "@statsNoActivity": {
+    "description": "热力图某天无消息",
+    "type": "String"
   }
 }

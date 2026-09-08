@@ -6886,6 +6886,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LLM Leaderboard'**
   String get morePageLlmLeaderboard;
+
+  /// 统计页时间区间-全部
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get statsRangeAll;
+
+  /// 统计页时间区间-最近30天
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get statsRangeLast30;
+
+  /// 统计页时间区间-上个月
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get statsRangeLastMonth;
+
+  /// 统计页时间区间-上个季度
+  ///
+  /// In en, this message translates to:
+  /// **'Last quarter'**
+  String get statsRangeLastQuarter;
+
+  /// 统计页-聊天热力图区块标题
+  ///
+  /// In en, this message translates to:
+  /// **'Chat heatmap'**
+  String get statsSectionHeatmap;
+
+  /// 统计页-用量趋势区块标题
+  ///
+  /// In en, this message translates to:
+  /// **'Usage trend'**
+  String get statsSectionTrend;
+
+  /// 统计页-总览区块标题
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get statsSectionOverview;
+
+  /// 统计页总览-总对话数
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get statsOverviewConversations;
+
+  /// 统计页总览-总消息数
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get statsOverviewMessages;
+
+  /// 统计页总览-输入 Tokens
+  ///
+  /// In en, this message translates to:
+  /// **'Input tokens'**
+  String get statsOverviewPromptTokens;
+
+  /// 统计页总览-输出 Tokens
+  ///
+  /// In en, this message translates to:
+  /// **'Output tokens'**
+  String get statsOverviewCompletionTokens;
+
+  /// 统计页总览-缓存 Tokens
+  ///
+  /// In en, this message translates to:
+  /// **'Cached tokens'**
+  String get statsOverviewCachedTokens;
+
+  /// 统计页总览-应用启动次数
+  ///
+  /// In en, this message translates to:
+  /// **'App launches'**
+  String get statsOverviewLaunchCount;
+
+  /// 统计页空态提示
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get statsNoData;
+
+  /// 统计页-模型使用率表标题
+  ///
+  /// In en, this message translates to:
+  /// **'Model usage'**
+  String get statsModelUsage;
+
+  /// 统计页-助手使用率表标题
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant usage'**
+  String get statsAssistantUsage;
+
+  /// 统计页-话题内容量表标题
+  ///
+  /// In en, this message translates to:
+  /// **'Topic volume'**
+  String get statsTopicUsage;
+
+  /// 统计表列名-模型
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get statsColModel;
+
+  /// 统计表列名-消息数
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get statsColMessages;
+
+  /// 统计表列名-助手
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get statsColAssistant;
+
+  /// 统计表列名-话题数
+  ///
+  /// In en, this message translates to:
+  /// **'Topics'**
+  String get statsColTopicCount;
+
+  /// 统计表列名-话题
+  ///
+  /// In en, this message translates to:
+  /// **'Topic'**
+  String get statsColTopic;
+
+  /// 统计页-未知模型
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get statsUnknownModel;
+
+  /// 统计页-全局（未指定助手）
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get statsGlobalAssistant;
+
+  /// 统计页-未命名话题
+  ///
+  /// In en, this message translates to:
+  /// **'(Untitled topic)'**
+  String get statsUnnamedTopic;
+
+  /// 热力图图例-少
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get statsLegendLess;
+
+  /// 热力图图例-多
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get statsLegendMore;
+
+  /// 统计页 tokens 单位
+  ///
+  /// In en, this message translates to:
+  /// **'tokens'**
+  String get statsTokensUnit;
+
+  /// 统计页-消息条数
+  ///
+  /// In en, this message translates to:
+  /// **'{count} messages'**
+  String statsMessageCount(int count);
+
+  /// 统计页-话题个数
+  ///
+  /// In en, this message translates to:
+  /// **'{count} topics'**
+  String statsTopicCount(int count);
+
+  /// 热力图选中某天的详情
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · {count} messages'**
+  String statsHeatmapDayDetail(String date, int count);
+
+  /// 趋势图 tooltip 合计
+  ///
+  /// In en, this message translates to:
+  /// **'Total {value}'**
+  String statsTrendTotal(String value);
+
+  /// 趋势图粒度-按天
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get statsGranularityDay;
+
+  /// 趋势图粒度-按月
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get statsGranularityMonth;
+
+  /// 热力图某天无消息
+  ///
+  /// In en, this message translates to:
+  /// **'No activity'**
+  String get statsNoActivity;
 }
 
 class _AppLocalizationsDelegate

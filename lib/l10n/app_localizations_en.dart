@@ -3643,4 +3643,118 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get morePageLlmLeaderboard => 'LLM Leaderboard';
+
+  @override
+  String get statsRangeAll => 'All';
+
+  @override
+  String get statsRangeLast30 => 'Last 30 days';
+
+  @override
+  String get statsRangeLastMonth => 'Last month';
+
+  @override
+  String get statsRangeLastQuarter => 'Last quarter';
+
+  @override
+  String get statsSectionHeatmap => 'Chat heatmap';
+
+  @override
+  String get statsSectionTrend => 'Usage trend';
+
+  @override
+  String get statsSectionOverview => 'Overview';
+
+  @override
+  String get statsOverviewConversations => 'Conversations';
+
+  @override
+  String get statsOverviewMessages => 'Messages';
+
+  @override
+  String get statsOverviewPromptTokens => 'Input tokens';
+
+  @override
+  String get statsOverviewCompletionTokens => 'Output tokens';
+
+  @override
+  String get statsOverviewCachedTokens => 'Cached tokens';
+
+  @override
+  String get statsOverviewLaunchCount => 'App launches';
+
+  @override
+  String get statsNoData => 'No data';
+
+  @override
+  String get statsModelUsage => 'Model usage';
+
+  @override
+  String get statsAssistantUsage => 'Assistant usage';
+
+  @override
+  String get statsTopicUsage => 'Topic volume';
+
+  @override
+  String get statsColModel => 'Model';
+
+  @override
+  String get statsColMessages => 'Messages';
+
+  @override
+  String get statsColAssistant => 'Assistant';
+
+  @override
+  String get statsColTopicCount => 'Topics';
+
+  @override
+  String get statsColTopic => 'Topic';
+
+  @override
+  String get statsUnknownModel => 'Unknown';
+
+  @override
+  String get statsGlobalAssistant => 'Global';
+
+  @override
+  String get statsUnnamedTopic => '(Untitled topic)';
+
+  @override
+  String get statsLegendLess => 'Less';
+
+  @override
+  String get statsLegendMore => 'More';
+
+  @override
+  String get statsTokensUnit => 'tokens';
+
+  @override
+  String statsMessageCount(int count) {
+    return '$count messages';
+  }
+
+  @override
+  String statsTopicCount(int count) {
+    return '$count topics';
+  }
+
+  @override
+  String statsHeatmapDayDetail(String date, int count) {
+    return '$date · $count messages';
+  }
+
+  @override
+  String statsTrendTotal(String value) {
+    return 'Total $value';
+  }
+
+  @override
+  String get statsGranularityDay => 'Daily';
+
+  @override
+  String get statsGranularityMonth => 'Monthly';
+
+  @override
+  String get statsNoActivity => 'No activity';
+
 }

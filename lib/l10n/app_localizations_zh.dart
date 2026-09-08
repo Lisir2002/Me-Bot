@@ -3527,6 +3527,120 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get morePageLlmLeaderboard => 'LLM排行榜';
+
+  @override
+  String get statsRangeAll => '全部';
+
+  @override
+  String get statsRangeLast30 => '最近30天';
+
+  @override
+  String get statsRangeLastMonth => '上个月';
+
+  @override
+  String get statsRangeLastQuarter => '上个季度';
+
+  @override
+  String get statsSectionHeatmap => '聊天热力图';
+
+  @override
+  String get statsSectionTrend => '用量趋势';
+
+  @override
+  String get statsSectionOverview => '总览';
+
+  @override
+  String get statsOverviewConversations => '总对话数';
+
+  @override
+  String get statsOverviewMessages => '总消息数';
+
+  @override
+  String get statsOverviewPromptTokens => '输入 Tokens';
+
+  @override
+  String get statsOverviewCompletionTokens => '输出 Tokens';
+
+  @override
+  String get statsOverviewCachedTokens => '缓存 Tokens';
+
+  @override
+  String get statsOverviewLaunchCount => '应用启动次数';
+
+  @override
+  String get statsNoData => '暂无数据';
+
+  @override
+  String get statsModelUsage => '模型使用率';
+
+  @override
+  String get statsAssistantUsage => '助手使用率';
+
+  @override
+  String get statsTopicUsage => '话题内容量';
+
+  @override
+  String get statsColModel => '模型';
+
+  @override
+  String get statsColMessages => '消息数';
+
+  @override
+  String get statsColAssistant => '助手';
+
+  @override
+  String get statsColTopicCount => '话题数';
+
+  @override
+  String get statsColTopic => '话题';
+
+  @override
+  String get statsUnknownModel => '未知';
+
+  @override
+  String get statsGlobalAssistant => '全局';
+
+  @override
+  String get statsUnnamedTopic => '（未命名话题）';
+
+  @override
+  String get statsLegendLess => '少';
+
+  @override
+  String get statsLegendMore => '多';
+
+  @override
+  String get statsTokensUnit => 'tokens';
+
+  @override
+  String statsMessageCount(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String statsTopicCount(int count) {
+    return '$count 个话题';
+  }
+
+  @override
+  String statsHeatmapDayDetail(String date, int count) {
+    return '$date · $count 条消息';
+  }
+
+  @override
+  String statsTrendTotal(String value) {
+    return '合计 $value';
+  }
+
+  @override
+  String get statsGranularityDay => '按天';
+
+  @override
+  String get statsGranularityMonth => '按月';
+
+  @override
+  String get statsNoActivity => '无记录';
+
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -6870,6 +6984,120 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get morePageLlmLeaderboard => 'LLM排行榜';
+
+  @override
+  String get statsRangeAll => '全部';
+
+  @override
+  String get statsRangeLast30 => '最近30天';
+
+  @override
+  String get statsRangeLastMonth => '上个月';
+
+  @override
+  String get statsRangeLastQuarter => '上个季度';
+
+  @override
+  String get statsSectionHeatmap => '聊天热力图';
+
+  @override
+  String get statsSectionTrend => '用量趋势';
+
+  @override
+  String get statsSectionOverview => '总览';
+
+  @override
+  String get statsOverviewConversations => '总对话数';
+
+  @override
+  String get statsOverviewMessages => '总消息数';
+
+  @override
+  String get statsOverviewPromptTokens => '输入 Tokens';
+
+  @override
+  String get statsOverviewCompletionTokens => '输出 Tokens';
+
+  @override
+  String get statsOverviewCachedTokens => '缓存 Tokens';
+
+  @override
+  String get statsOverviewLaunchCount => '应用启动次数';
+
+  @override
+  String get statsNoData => '暂无数据';
+
+  @override
+  String get statsModelUsage => '模型使用率';
+
+  @override
+  String get statsAssistantUsage => '助手使用率';
+
+  @override
+  String get statsTopicUsage => '话题内容量';
+
+  @override
+  String get statsColModel => '模型';
+
+  @override
+  String get statsColMessages => '消息数';
+
+  @override
+  String get statsColAssistant => '助手';
+
+  @override
+  String get statsColTopicCount => '话题数';
+
+  @override
+  String get statsColTopic => '话题';
+
+  @override
+  String get statsUnknownModel => '未知';
+
+  @override
+  String get statsGlobalAssistant => '全局';
+
+  @override
+  String get statsUnnamedTopic => '（未命名话题）';
+
+  @override
+  String get statsLegendLess => '少';
+
+  @override
+  String get statsLegendMore => '多';
+
+  @override
+  String get statsTokensUnit => 'tokens';
+
+  @override
+  String statsMessageCount(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String statsTopicCount(int count) {
+    return '$count 个话题';
+  }
+
+  @override
+  String statsHeatmapDayDetail(String date, int count) {
+    return '$date · $count 条消息';
+  }
+
+  @override
+  String statsTrendTotal(String value) {
+    return '合计 $value';
+  }
+
+  @override
+  String get statsGranularityDay => '按天';
+
+  @override
+  String get statsGranularityMonth => '按月';
+
+  @override
+  String get statsNoActivity => '无记录';
+
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -10214,4 +10442,118 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get morePageLlmLeaderboard => 'LLM排行榜';
+
+  @override
+  String get statsRangeAll => '全部';
+
+  @override
+  String get statsRangeLast30 => '最近30天';
+
+  @override
+  String get statsRangeLastMonth => '上个月';
+
+  @override
+  String get statsRangeLastQuarter => '上个季度';
+
+  @override
+  String get statsSectionHeatmap => '聊天热力图';
+
+  @override
+  String get statsSectionTrend => '用量趋势';
+
+  @override
+  String get statsSectionOverview => '总览';
+
+  @override
+  String get statsOverviewConversations => '总对话数';
+
+  @override
+  String get statsOverviewMessages => '总消息数';
+
+  @override
+  String get statsOverviewPromptTokens => '输入 Tokens';
+
+  @override
+  String get statsOverviewCompletionTokens => '输出 Tokens';
+
+  @override
+  String get statsOverviewCachedTokens => '缓存 Tokens';
+
+  @override
+  String get statsOverviewLaunchCount => '应用启动次数';
+
+  @override
+  String get statsNoData => '暂无数据';
+
+  @override
+  String get statsModelUsage => '模型使用率';
+
+  @override
+  String get statsAssistantUsage => '助手使用率';
+
+  @override
+  String get statsTopicUsage => '话题内容量';
+
+  @override
+  String get statsColModel => '模型';
+
+  @override
+  String get statsColMessages => '消息数';
+
+  @override
+  String get statsColAssistant => '助手';
+
+  @override
+  String get statsColTopicCount => '话题数';
+
+  @override
+  String get statsColTopic => '话题';
+
+  @override
+  String get statsUnknownModel => '未知';
+
+  @override
+  String get statsGlobalAssistant => '全局';
+
+  @override
+  String get statsUnnamedTopic => '（未命名话题）';
+
+  @override
+  String get statsLegendLess => '少';
+
+  @override
+  String get statsLegendMore => '多';
+
+  @override
+  String get statsTokensUnit => 'tokens';
+
+  @override
+  String statsMessageCount(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String statsTopicCount(int count) {
+    return '$count 个话题';
+  }
+
+  @override
+  String statsHeatmapDayDetail(String date, int count) {
+    return '$date · $count 条消息';
+  }
+
+  @override
+  String statsTrendTotal(String value) {
+    return '合计 $value';
+  }
+
+  @override
+  String get statsGranularityDay => '按天';
+
+  @override
+  String get statsGranularityMonth => '按月';
+
+  @override
+  String get statsNoActivity => '无记录';
+
 }

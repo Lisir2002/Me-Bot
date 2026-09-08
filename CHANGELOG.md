@@ -7,7 +7,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 ## [Unreleased]
 
-- （合入但未发布的变更记录在此，发版日整体下沉到新版本节）
+### 🔧 For Developers
+- **Added**：AI 协助开发规范体系——`AGENTS.md`（环境现实 / 7 条带事故锚点的铁律 / 行动边界三级 / 发布 SOP / 版本日志三档）、`CLAUDE.md` 桥接、本文件（Keep a Changelog 三档结构）。
+- **Added**：CI android job 接入 `flutter analyze` 观察步骤（`continue-on-error: true`）。
+
+### 🤖 For Agents
+- 首轮 analyze 基线（2026-09-08）：**3074 issues**（~235 warning；585 条 `deprecated_member_use` 集中在 `lib/desktop/`，desktop_settings_page.dart 单文件 244 条）。硬化策略与增量红线见 `AGENTS.md` §5.4。
+- 本文件三档结构本身是规范的一部分：发版时用户档→Release body，开发者档+模型档→本文件，勿混写。
 
 ## [0.0.43] - 2026-09-08
 

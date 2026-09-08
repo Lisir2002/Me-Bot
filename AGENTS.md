@@ -66,8 +66,11 @@
 6. PATCH release body（用户档）；同步写 `CHANGELOG.md`（开发者档 + 模型档）
 7. 资产校验：APK 文件名含正确版本号；与上一版 **sha256 必须不同**（防重复包；字节数可能因 zip 对齐恰好相同）
 
-### 5.4 CI analyze 门禁（渐进接入中）
-当前 android job 已插入 `flutter analyze` 观察步骤（`continue-on-error: true`）。目标路径：收集存量问题清单 → 清理/排除 → 摘掉 `continue-on-error` 变硬门禁。观察期内不得依赖它拦截错误，§1 的自检清单继续执行。
+### 5.4 CI analyze 门禁（分级推进）
+android job 已插入 `flutter analyze` 观察步骤（`continue-on-error: true`）。
+**首轮基线（2026-09-08）：3074 issues**——约 235 warning（unnecessary_cast 63、use_build_context_synchronously 56、unused_local_variable 42 等）+ info 为体；最大单头 585 条 `deprecated_member_use`，集中在 `lib/desktop/`（desktop_settings_page 244 条、chat_api_service 119 条）。
+硬化路径：① 清零 235 个 warning 后，步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）② info 长期逐步消化，不设死线。
+基线归零前：任何变更**不得引入新问题**——改完对照 CI 输出，本次涉及文件不应出现此前没有的条目（AGENTS.md §1 自检清单继续有效）。
 
 ## 6. 索引表（本文件只做索引，不复制内容）
 

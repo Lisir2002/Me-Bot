@@ -13,8 +13,44 @@ import '../logging/logger.dart';
 import '../logging/api_logger.dart';
 import '../logging/log_tags.dart';
 import 'package:minime_core/secrets/fallback.dart';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+import '../../../utils/app_directories.dart';
 
 class ChatApiService {
+  // 助手生图（data:image）落盘到 avatars/，让其作为真实文件归「助手」存储
+  // 分类，而不是只作为 data URL 留在消息 content（数据库）里。这样存储页
+  // 的「助手」分类能统计到生图占用，且图片总览也会包含它（重叠属正常视图）。
+  static Future<String?> _saveGeneratedImageToAvatars(String dataUrl) async {
+    try {
+      final comma = dataUrl.indexOf(',');
+      if (comma < 0) return null;
+      final meta = dataUrl.substring(0, comma);
+      final payload = dataUrl.substring(comma + 1);
+      final bytes = base64Decode(payload);
+      String ext = 'png';
+      final m = RegExp(r'data:image/([a-zA-Z0-9.+-]+)').firstMatch(meta);
+      if (m != null) {
+        final sub = m.group(1)!.toLowerCase();
+        ext = const {
+          'jpeg': 'jpg',
+          'jpg': 'jpg',
+          'png': 'png',
+          'webp': 'webp',
+          'gif': 'gif',
+          'bmp': 'bmp',
+        }[sub] ?? sub;
+      }
+      final dir = await AppDirectories.getAvatarsDirectory();
+      if (!await dir.exists()) await dir.create(recursive: true);
+      final file = File(p.join(dir.path, '${const Uuid().v4()}.$ext'));
+      await file.writeAsBytes(bytes, flush: true);
+      return file.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static String _apiKeyForRequest(ProviderConfig cfg, String modelId) {
     final orig = _effectiveApiKey(cfg).trim();
     if (orig.isNotEmpty) return orig;
@@ -1342,7 +1378,13 @@ class ChatApiService {
                               if (u2 is String) url = u2;
                             }
                             if (url != null && url.isNotEmpty) {
-                              final md = '\n\n![image](' + url + ')';
+                              var display = url;
+                              // 助手生图：data URL 落盘到 avatars/，使其归「助手」分类
+                              if (url.startsWith('data:image')) {
+                                final saved = await _saveGeneratedImageToAvatars(url);
+                                if (saved != null) display = saved;
+                              }
+                              final md = '\n\n![image]($display)';
                               buf.write(md);
                               contentAccum += md;
                             }
@@ -2233,7 +2275,13 @@ class ChatApiService {
                               if (u2 is String) url = u2;
                             }
                             if (url != null && url.isNotEmpty) {
-                              final md = '\n\n![image](' + url + ')';
+                              var display = url;
+                              // 助手生图：data URL 落盘到 avatars/，使其归「助手」分类
+                              if (url.startsWith('data:image')) {
+                                final saved = await _saveGeneratedImageToAvatars(url);
+                                if (saved != null) display = saved;
+                              }
+                              final md = '\n\n![image]($display)';
                               buf.write(md);
                               contentAccum += md;
                             }

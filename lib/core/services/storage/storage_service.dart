@@ -56,7 +56,15 @@ class StorageService {
     results.add(await _scanCache(appData));
     results.add(await _scanOther(appData));
 
-    final total = results.fold(0, (s, c) => s + c.bytes);
+    // 顶层总占用按文件路径去重：图片与助手分类都包含 avatars/ 下的文件，
+    // 直接相加会重复计数，导致总占用虚高。用 path 集合保证每个文件只计入一次。
+    final seenPaths = <String>{};
+    int total = 0;
+    for (final c in results) {
+      for (final e in c.entries) {
+        if (seenPaths.add(e.path)) total += e.bytes;
+      }
+    }
     final cleanable = results
         .where((c) => c.id == 'cache' || c.id == 'logs')
         .fold(0, (s, c) => s + c.bytes);

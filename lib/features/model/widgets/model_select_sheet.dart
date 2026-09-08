@@ -236,6 +236,7 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
   // Async loading state
   bool _isLoading = true;
   Map<String, _ProviderGroup> _groups = {};
+  // ignore: unused_field
   List<_ModelItem> _favItems = [];
   List<String> _orderedKeys = [];
   bool _autoScrolled = false; // ensure we only auto-scroll once per open
@@ -1136,6 +1137,7 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
   final TextEditingController _searchCtrl = TextEditingController();
   bool _loading = true;
   Map<String, _ProviderGroup> _groups = const {};
+  // ignore: unused_field
   List<_ModelItem> _favItems = const [];
   List<String> _orderedKeys = const [];
   // Flattened rows and precise index mapping for jump

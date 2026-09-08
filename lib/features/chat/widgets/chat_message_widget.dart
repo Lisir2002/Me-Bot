@@ -118,6 +118,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   // Local expand state for inline <think> card (defaults to expanded)
   bool? _inlineThinkExpanded;
   bool _inlineThinkManuallyToggled = false;
+  // ignore: unused_field
   bool _inlineThinkWasLoading = false;
   // User message context menu state
   final GlobalKey _userBubbleKey = GlobalKey();
@@ -125,7 +126,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   bool _userMenuActive = false; // for bubble highlight/scale
   // Desktop anchored menus for bottom action buttons
   final GlobalKey _moreBtnKey1 = GlobalKey();
-  final GlobalKey _translateBtnKey1 = GlobalKey();
   final GlobalKey _moreBtnKey2 = GlobalKey();
   final GlobalKey _translateBtnKey2 = GlobalKey();
   late final Ticker _ticker = Ticker((_) {

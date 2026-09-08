@@ -77,7 +77,6 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
   static final NumberFormat _thousand = NumberFormat.decimalPattern();
 
   // 网格几何：色块 14 + 间距 3 = 17
-  static const double _cell = 14;
   static const double _colW = 17;
   static const double _rowH = 17;
   static const double _labelW = 22;

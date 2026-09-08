@@ -323,6 +323,7 @@ class _DeskNavRow extends StatefulWidget {
 
 class _DeskNavRowState extends State<_DeskNavRow> {
   bool _hover = false;
+  // ignore: unused_field
   bool _pressed = false;
   @override
   Widget build(BuildContext context) {
@@ -375,6 +376,7 @@ class _DeskNavRowSvg extends StatefulWidget {
 
 class _DeskNavRowSvgState extends State<_DeskNavRowSvg> {
   bool _hover = false;
+  // ignore: unused_field
   bool _pressed = false;
   @override
   Widget build(BuildContext context) {

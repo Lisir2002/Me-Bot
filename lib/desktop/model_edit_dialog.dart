@@ -55,7 +55,9 @@ class _ModelEditDialogBodyState extends State<_ModelEditDialogBody> with SingleT
   final Set<ModelAbility> _abilities = {};
   final List<_HeaderKV> _headers = [];
   final List<_BodyKV> _bodies = [];
+  // ignore: unused_field
   bool _searchTool = false;
+  // ignore: unused_field
   bool _urlContextTool = false;
 
   @override

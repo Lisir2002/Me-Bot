@@ -74,6 +74,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   bool _showApiKey = false; // toggle visibility
   bool _multiKeyEnabled = false; // single/multi key mode
   // network proxy (per provider)
+  // ignore: unused_field
   bool _proxyEnabled = false;
   final _proxyHostCtrl = TextEditingController();
   final _proxyPortCtrl = TextEditingController(text: '8080');

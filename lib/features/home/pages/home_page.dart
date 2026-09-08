@@ -96,7 +96,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _isDragHovering = false;
   // Inline bottom tools panel removed; using modal bottom sheet instead
   // Animation tuning
-  static const Duration _scrollAnimateDuration = Duration(milliseconds: 300);
   static const Duration _postSwitchScrollDelay = Duration(milliseconds: 220);
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final InteractiveDrawerController _drawerController = InteractiveDrawerController();

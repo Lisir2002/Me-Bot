@@ -24,6 +24,7 @@ class _WebViewPageState extends State<WebViewPage> {
   bool _canGoBack = false;
   bool _canGoForward = false;
   final List<_ConsoleMessage> _console = <_ConsoleMessage>[];
+  // ignore: unused_field
   bool _consoleOpen = false;
 
   @override

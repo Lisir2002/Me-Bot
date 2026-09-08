@@ -10,20 +10,6 @@ class LogRepository {
 
   static final LogRepository instance = LogRepository._();
 
-  /// 查询参数。
-  final ({
-    Set<LogLevel> levels, // 空集合=全等级
-    Set<String> tags, // 空集合=全 Tag
-    DateTime? from, // null=不限
-    DateTime? to, // null=不限
-    String? keyword, // null 或 '' = 不搜
-  }) _noFilter = (
-    levels: const {},
-    tags: const {},
-    from: null,
-    to: null,
-    keyword: null,
-  );
 
   /// 加载所有日志文件、解析、按条件过滤并返回倒序（最新在前）列表。
   /// 传入 [limit] 时只返回前 N 条（UI 分页）。

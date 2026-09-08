@@ -117,6 +117,7 @@ class Logger {
   static Directory? _lazyLogDir;
 
   // ── 常量 ──
+  // ignore: unused_field
   static const _maxPayloadChars = 4000; // 单条日志消息最多保留的字符数
 
   // ── 初始化 ──

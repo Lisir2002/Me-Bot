@@ -36,6 +36,7 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
   // macOS uses webview_flutter; Windows uses webview_windows.
   WebViewController? _flutterCtrl;
   winweb.WebviewController? _winCtrl;
+  // ignore: unused_field
   String? _tempFilePath; // for Windows loadUrl
   bool _ready = false;
   bool _loadedOnce = false;

@@ -23,9 +23,6 @@ import '../../../utils/app_directories.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import '../../../desktop/desktop_context_menu.dart';
 
-// Desktop context menu actions for right-click on the input field
-enum _DesktopTextMenuAction { paste, cut, copy, selectAll }
-
 class ChatInputBarController {
   _ChatInputBarState? _state;
   void _bind(_ChatInputBarState s) => _state = s;
@@ -117,6 +114,7 @@ class ChatInputBar extends StatefulWidget {
 
 class _ChatInputBarState extends State<ChatInputBar> {
   late TextEditingController _controller;
+  // ignore: unused_field
   bool _searchEnabled = false;
   final List<String> _images = <String>[]; // local file paths
   final List<DocumentAttachment> _docs = <DocumentAttachment>[]; // files to upload

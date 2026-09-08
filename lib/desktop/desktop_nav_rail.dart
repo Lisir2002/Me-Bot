@@ -226,6 +226,7 @@ class _ThemeCycleButton extends StatefulWidget {
 }
 
 class _ThemeCycleButtonState extends State<_ThemeCycleButton> {
+  // ignore: unused_field
   bool _hovered = false;
 
   @override

@@ -34,7 +34,7 @@ import 'utils/sandbox_path_resolver.dart';
 import 'shared/widgets/snackbar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:system_fonts/system_fonts.dart';
-import 'dart:io' show HttpOverrides, Platform; // kept for global override usage inside provider
+import 'dart:io' show Platform;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/android_background.dart';
 import 'core/services/notification_service.dart';

@@ -22,7 +22,9 @@ class DesktopBackupPane extends StatefulWidget {
 
 class _DesktopBackupPaneState extends State<DesktopBackupPane> {
   // Remote list state
+  // ignore: unused_field
   List<BackupFileItem> _remote = const [];
+  // ignore: unused_field
   bool _loadingRemote = false;
 
   // Local form controllers

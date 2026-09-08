@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="assets/app_icon.png" alt="Kelivo Icon" width="100" />
-  <h1>Kelivo</h1>
+  <img src="assets/app_icon.png" alt="MiniMe-Core Icon" width="100" />
+  <h1>MiniMe-Core</h1>
 
 A Flutter LLM Chat Client
 
@@ -24,9 +24,9 @@ English | [简体中文](README_ZH_CN.md)
 
 ## 🚀 Download
 
-[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/kelivo/id6752122930)
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/minime-core/id6752122930)
 
-🔗 [Download the latest version](https://github.com/Chevey339/kelivo/releases/latest)
+🔗 [Download the latest version](https://github.com/Lisir2002/Me-Bot/releases/latest)
 
 🔗 [TestFlight](https://testflight.apple.com/join/PZZyRMyY) for beta testing.
 
@@ -59,7 +59,7 @@ Thanks to [siliconflow.cn](https://siliconflow.cn) for providing free models in 
 
 - ✅ Android
 - ✅ iOS
-- ✅ Harmony ([kelivo-ohos](https://github.com/Chevey339/kelivo-ohos))
+- ✅ Harmony ([Me-Bot-ohos](https://github.com/Lisir2002/Me-Bot-ohos))
 - ✅ Windows
 - ✅ macOS
 - ✅ Linux
@@ -76,13 +76,13 @@ Pull Requests and Issues are welcome!
 
 ## ❤️ Acknowledgements
 
-Special thanks to the [RikkaHub](https://github.com/re-ovo/rikkahub) project for the UI design inspiration. Kelivo's interface design is heavily inspired by RikkaHub's beautiful and practical design.
+Special thanks to the [RikkaHub](https://github.com/re-ovo/rikkahub) project for the UI design inspiration. MiniMe-Core's interface design is heavily inspired by RikkaHub's beautiful and practical design.
 
 ## ⭐ Star History
 
 If you like this project, please give it a star ⭐
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Chevey339/kelivo&type=Date)](https://star-history.com/#Chevey339/kelivo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=Lisir2002/Me-Bot&type=Date)](https://star-history.com/#Lisir2002/Me-Bot&Date)
 
 ## 📄 License
 
@@ -90,7 +90,7 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 
 ## 📞 Contact Us
 
-- Issue: [GitHub Issues](https://github.com/Chevey339/kelivo/issues)
+- Issue: [GitHub Issues](https://github.com/Lisir2002/Me-Bot/issues)
 
 ---
 

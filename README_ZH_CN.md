@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="assets/app_icon.png" alt="Kelivo Icon" width="100" />
-  <h1>Kelivo</h1>
+  <img src="assets/app_icon.png" alt="MiniMe-Core Icon" width="100" />
+  <h1>MiniMe-Core</h1>
 
 一个 Flutter LLM 聊天客户端
 
@@ -23,10 +23,10 @@
 
 ## 🚀 下载
 
-[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/kelivo/id6752122930)
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/minime-core/id6752122930)
 
 
-🔗 [下载最新版本](https://github.com/Chevey339/kelivo/releases/latest)
+🔗 [下载最新版本](https://github.com/Lisir2002/Me-Bot/releases/latest)
 
 🔗 [TestFlight](https://testflight.apple.com/join/PZZyRMyY) 参与测试版体验。
 
@@ -59,7 +59,7 @@
 
 - ✅ Android
 - ✅ iOS
-- ✅ Harmony ([kelivo-ohos](https://github.com/Chevey339/kelivo-ohos))
+- ✅ Harmony ([Me-Bot-ohos](https://github.com/Lisir2002/Me-Bot-ohos))
 - ✅ Windows
 - ✅ macOS
 - ✅ Linux
@@ -76,13 +76,13 @@
 
 ## ❤️ 致谢
 
-特别感谢 [RikkaHub](https://github.com/re-ovo/rikkahub) 项目提供的 UI 设计灵感。Kelivo 的界面设计深受 RikkaHub 优美且实用的设计启发。
+特别感谢 [RikkaHub](https://github.com/re-ovo/rikkahub) 项目提供的 UI 设计灵感。MiniMe-Core 的界面设计深受 RikkaHub 优美且实用的设计启发。
 
 ## ⭐ Star History
 
 如果你喜欢这个项目，可以给个Star ⭐
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Chevey339/kelivo&type=Date)](https://star-history.com/#Chevey339/kelivo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=Lisir2002/Me-Bot&type=Date)](https://star-history.com/#Lisir2002/Me-Bot&Date)
 
 ## 📄 许可证
 
@@ -90,7 +90,7 @@
 
 ## 📞 联系我们
 
-- Issue: [GitHub Issues](https://github.com/Chevey339/kelivo/issues)
+- Issue: [GitHub Issues](https://github.com/Lisir2002/Me-Bot/issues)
 
 ---
 

@@ -14,6 +14,18 @@ import '../../../theme/design_tokens.dart';
 import '../widgets/storage_ios_widgets.dart';
 import '../widgets/storage_info_header.dart';
 
+/// 可作为缩略图渲染的图片扩展名（与 StorageService 的图片集合保持一致）。
+const Set<String> _thumbImageExtensions = {
+  '.png', '.jpg', '.jpeg', '.webp', '.gif',
+  '.heic', '.heif', '.bmp', '.tiff', '.tif', '.avif',
+};
+
+/// 按文件自身类型判断是否可渲染缩略图，而非按所属分类一刀切。
+bool _isThumbImage(StorageEntry e) {
+  final lower = e.name.toLowerCase();
+  return _thumbImageExtensions.any(lower.endsWith);
+}
+
 /// 媒体型子页面：缩略图网格 + 来源/排序筛选 + 全选 + 多选删除。
 ///
 /// 已迁移到 AppPage 槽位骨架：
@@ -56,7 +68,11 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
             .toList();
     list = List.of(list);
     if (_largest) {
-      list.sort((a, b) => b.bytes.compareTo(a.bytes));
+      // 按大小排序时，_newest 语义为「降序」：最大优先=true，最小优先=false。
+      // 原实现恒为降序，导致「最小优先」按钮点了没反应。
+      list.sort((a, b) => _newest
+          ? b.bytes.compareTo(a.bytes)
+          : a.bytes.compareTo(b.bytes));
     } else {
       list.sort((a, b) => _newest
           ? (b.modified ?? DateTime(0)).compareTo(a.modified ?? DateTime(0))
@@ -118,7 +134,6 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
     context.watch<StorageProvider>();
     final scan = _scan;
     final items = _filteredFor(scan);
-    final isImage = cfg.id == 'images' || cfg.id == 'avatars';
 
     return AppPage(
       title: cfg.title,
@@ -176,7 +191,11 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
                     final selected = _selected.contains(e.path);
                     return _ThumbTile(
                       entry: e,
-                      isImage: isImage,
+                      // 按文件自身类型判断是否可渲染缩略图。
+                      // 原实现按分类 id 判断（images/avatars 全当图片），
+                      // 导致「助手」分类里的非图片文件（后续接入 agent 工作区
+                      // 会有各类文件）也被当成图片去解码。
+                      isImage: _isThumbImage(e),
                       selected: selected,
                       onTap: () => _toggleSelect(e.path),
                     );

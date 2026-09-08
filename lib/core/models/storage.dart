@@ -42,11 +42,19 @@ class StorageScan {
   final int fileCount;
   final List<StorageEntry> entries;
 
+  /// 去重后的「独占」字节数：同一文件可能同时出现在多个分类视图中
+  /// （例如助手头像既在「图片」总览里、又在「助手」分类里），直接把各分类
+  /// bytes 相加会超过真实总占用、让环形图各段之和超过 100%。
+  /// 本字段表示「按归属优先级去重后、真正算在该分类头上的字节」，
+  /// 环形图与图例必须用它；分类列表展示的 [bytes] 仍是视图总量。
+  final int exclusiveBytes;
+
   const StorageScan({
     required this.id,
     required this.bytes,
     required this.fileCount,
     required this.entries,
+    this.exclusiveBytes = 0,
   });
 }
 

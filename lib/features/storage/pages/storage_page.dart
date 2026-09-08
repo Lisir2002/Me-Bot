@@ -221,7 +221,7 @@ class _UsageCard extends StatelessWidget {
     final sections = <PieChartSectionData>[];
     var acc = 0.0;
     for (final c in categories) {
-      final bytes = provider.scanFor(c.id)?.bytes ?? 0;
+      final bytes = provider.scanFor(c.id)?.exclusiveBytes ?? 0;
       if (bytes <= 0) continue;
       final seg = bytes / (totalBytes <= 0 ? 1 : totalBytes);
       sections.add(PieChartSectionData(
@@ -333,7 +333,7 @@ class _UsageCard extends StatelessWidget {
     final cats = categories.length <= 5 ? categories : categories.sublist(0, 5);
     final rows = <Widget>[];
     for (final c in cats) {
-      final bytes = provider.scanFor(c.id)?.bytes ?? 0;
+      final bytes = provider.scanFor(c.id)?.exclusiveBytes ?? 0;
       if (bytes <= 0) continue;
       rows.add(Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),

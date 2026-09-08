@@ -43,7 +43,10 @@ class ChatApiService {
       }
       final dir = await AppDirectories.getAvatarsDirectory();
       if (!await dir.exists()) await dir.create(recursive: true);
-      final file = File(p.join(dir.path, '${const Uuid().v4()}.$ext'));
+      // 使用 assistant_ 前缀：avatars/ 下的归属是靠文件名前缀判定的
+      // （见 StorageService._sourceOf），加前缀后生图才会被识别为
+      // 助手产物并归入「助手」存储分类；否则会被当成用户头像。
+      final file = File(p.join(dir.path, 'assistant_generated_${const Uuid().v4()}.$ext'));
       await file.writeAsBytes(bytes, flush: true);
       return file.path;
     } catch (_) {

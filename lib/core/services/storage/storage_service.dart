@@ -42,6 +42,22 @@ class StorageService {
         name.endsWith('.lock');
   }
 
+  /// 独占归属优先级：越靠前越优先"认领"文件。
+  ///
+  /// 「图片」是跨目录总览视图（聚合 images/、upload/、avatars/ 的图片），
+  /// 必须排在最后兜底；否则它会先把所有图片认领走，其余分类的独占值全变 0，
+  /// 环形图上只剩「图片」一段。
+  static const List<String> _exclusivePriority = [
+    'chats',
+    'upload',
+    'snapshots',
+    'avatars',
+    'logs',
+    'cache',
+    'other',
+    'images',
+  ];
+
   /// 全量扫描。
   static Future<StorageStats> scanAll() async {
     final appData = await AppDirectories.getAppDataDirectory();
@@ -50,27 +66,71 @@ class StorageService {
     results.add(await _scanAllImages(appData));
     results.add(await _scanSubdir(appData, id: 'upload', subdir: 'upload'));
     results.add(await _scanSubdir(appData, id: 'snapshots', subdir: 'snapshots'));
-    results.add(await _scanSubdir(appData, id: 'avatars', subdir: 'avatars'));
+    // 「助手」= 助手自身产生的文件（助手头像 assistant_*、助手生图），
+    // 用户头像（avatar_* 前缀）不属于助手，不计入本分类。
+    results.add(await _scanSubdir(
+      appData,
+      id: 'avatars',
+      subdir: 'avatars',
+      onlySource: 'assistant',
+    ));
     results.add(await _scanSubdir(appData, id: 'logs', subdir: 'logs'));
     results.add(await _scanChatDb(appData));
     results.add(await _scanCache(appData));
     results.add(await _scanOther(appData));
 
-    // 顶层总占用按文件路径去重：图片与助手分类都包含 avatars/ 下的文件，
-    // 直接相加会重复计数，导致总占用虚高。用 path 集合保证每个文件只计入一次。
-    final seenPaths = <String>{};
-    int total = 0;
-    for (final c in results) {
-      for (final e in c.entries) {
-        if (seenPaths.add(e.path)) total += e.bytes;
+    // 计算每个分类的「独占」字节。
+    // 同一文件可能同时出现在多个分类视图里（如助手头像既在「图片」总览、
+    // 又在「助手」分类），各分类 bytes 相加会超过真实占用。按优先级让
+    // 靠前的分类先认领，保证每个文件路径只被计入一次。
+    final seen = <String>{};
+    final exclusive = <String, int>{};
+    for (final id in _exclusivePriority) {
+      StorageScan? cat;
+      for (final c in results) {
+        if (c.id == id) {
+          cat = c;
+          break;
+        }
       }
+      if (cat == null) continue;
+      var ex = 0;
+      for (final e in cat.entries) {
+        if (seen.add(e.path)) ex += e.bytes;
+      }
+      exclusive[id] = ex;
     }
-    final cleanable = results
+    // 兜底：优先级表未覆盖的分类（防御性，避免漏算）。
+    for (final c in results) {
+      if (exclusive.containsKey(c.id)) continue;
+      var ex = 0;
+      for (final e in c.entries) {
+        if (seen.add(e.path)) ex += e.bytes;
+      }
+      exclusive[c.id] = ex;
+    }
+
+    final withExclusive = results
+        .map(
+          (c) => StorageScan(
+            id: c.id,
+            bytes: c.bytes,
+            fileCount: c.fileCount,
+            entries: c.entries,
+            exclusiveBytes: exclusive[c.id] ?? 0,
+          ),
+        )
+        .toList();
+
+    // 顶层总占用 = 各分类独占值之和（等价于所有去重文件的并集），
+    // 与环形图各段之和严格相等。
+    final total = exclusive.values.fold(0, (s, v) => s + v);
+    final cleanable = withExclusive
         .where((c) => c.id == 'cache' || c.id == 'logs')
         .fold(0, (s, c) => s + c.bytes);
 
     return StorageStats(
-      categories: results,
+      categories: withExclusive,
       totalBytes: total,
       cleanableBytes: cleanable,
     );
@@ -80,6 +140,8 @@ class StorageService {
     Directory appData, {
     required String id,
     required String subdir,
+    // 只收录指定归属方的文件（'user' / 'assistant'），null 表示全部。
+    String? onlySource,
   }) async {
     final dir = Directory('${appData.path}/$subdir');
     if (!await dir.exists()) {
@@ -91,21 +153,41 @@ class StorageService {
     try {
       await for (final ent in dir.list(recursive: true, followLinks: false)) {
         if (ent is File) {
+          final name = _basename(ent.path);
+          final src = _sourceOf(name, subdir);
+          if (onlySource != null && src != onlySource) continue;
           count += 1;
           try {
             final len = ent.lengthSync();
             bytes += len;
             entries.add(StorageEntry(
-              name: _basename(ent.path),
+              name: name,
               path: ent.path,
               bytes: len,
               modified: ent.statSync().modified,
+              source: src,
             ));
           } catch (_) {}
         }
       }
     } catch (_) {}
     return StorageScan(id: id, bytes: bytes, fileCount: count, entries: entries);
+  }
+
+  /// 判定文件归属方：'user'（用户）或 'assistant'（助手）。
+  ///
+  /// avatars/ 下同时存放两类头像，靠写入方约定的文件名前缀区分：
+  /// - `assistant_<id>_<ts>.<ext>` —— assistant_provider 写入，助手头像
+  /// - `avatar_<ts>.<ext>`          —— user_provider 写入，用户头像
+  /// 助手生图落盘同样使用 `assistant_` 前缀（见 ChatApiService），
+  /// 因此可被识别为助手产物。
+  /// 其余目录（upload/、images/ 等）目前只承载用户侧内容。
+  static String _sourceOf(String name, String subdir) {
+    if (subdir == 'avatars') {
+      if (name.toLowerCase().startsWith('assistant_')) return 'assistant';
+      return 'user';
+    }
+    return 'user';
   }
 
   /// 「图片」分类：聚合 images/、upload/、avatars/ 下的所有图片文件，
@@ -133,6 +215,7 @@ class StorageService {
               path: ent.path,
               bytes: len,
               modified: ent.statSync().modified,
+              source: _sourceOf(name, sub),
             ));
           } catch (_) {}
         }

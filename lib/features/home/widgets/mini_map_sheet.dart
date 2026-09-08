@@ -22,7 +22,6 @@ class _MiniMapSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pairs = _buildPairs(messages);
 
     return SafeArea(

@@ -23,7 +23,6 @@ class _DesktopTtsServicesPaneState extends State<DesktopTtsServicesPane> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final tts = context.watch<TtsProvider>();
 
     return Container(
       alignment: Alignment.topCenter,
@@ -353,7 +352,6 @@ class _SystemTtsCardState extends State<_SystemTtsCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
     final tts = context.watch<TtsProvider>();
-    final sp = context.watch<SettingsProvider>();
 
     final baseBg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
     final borderColor = _hover

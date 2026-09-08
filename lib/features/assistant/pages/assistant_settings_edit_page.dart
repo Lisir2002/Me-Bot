@@ -1277,18 +1277,15 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
                     final l10n = AppLocalizations.of(context)!;
                     final settings = context.read<SettingsProvider>();
                     String display = l10n.assistantEditModelUseGlobalDefault;
-                    String brandName = display;
                     if (a.chatModelProvider != null && a.chatModelId != null) {
                       try {
                         final cfg = settings.getProviderConfig(a.chatModelProvider!);
                         final ov = cfg.modelOverrides[a.chatModelId] as Map?;
-                        brandName = cfg.name.isNotEmpty ? cfg.name : a.chatModelProvider!;
                         final mdl = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
                             ? (ov['name'] as String)
                             : a.chatModelId!;
                         display = mdl;
                       } catch (_) {
-                        brandName = a.chatModelProvider ?? '';
                         display = a.chatModelId ?? '';
                       }
                     }
@@ -1554,7 +1551,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
             child: Builder(builder: (context) {
               final theme = Theme.of(context);
               final cs = theme.colorScheme;
-              final isDark = theme.brightness == Brightness.dark;
               final value = context.watch<AssistantProvider>().getById(widget.assistantId)?.temperature ?? 0.6;
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1648,7 +1644,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
             child: Builder(builder: (context) {
               final theme = Theme.of(context);
               final cs = theme.colorScheme;
-              final isDark = theme.brightness == Brightness.dark;
               final value = context.watch<AssistantProvider>().getById(widget.assistantId)?.topP ?? 1.0;
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1742,7 +1737,6 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
             child: Builder(builder: (context) {
               final theme = Theme.of(context);
               final cs = theme.colorScheme;
-              final isDark = theme.brightness == Brightness.dark;
               final value = context.watch<AssistantProvider>().getById(widget.assistantId)?.contextMessageSize ?? 20;
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -2041,7 +2035,6 @@ class _SliderTileNew extends StatelessWidget {
       interval = total / 8;
     }
     if (interval <= 0) interval = 1;
-    final int majorCount = (total / interval).round().clamp(1, 10);
     int minor = 0;
     if (step != null && step > 0) {
       // Ensure minor ticks align with the chosen step size
@@ -2821,25 +2814,6 @@ class _PromptTabState extends State<_PromptTab> {
       );
     }
 
-    final sysVars = const [
-      '{cur_date}',
-      '{cur_time}',
-      '{cur_datetime}',
-      '{model_id}',
-      '{model_name}',
-      '{locale}',
-      '{timezone}',
-      '{system_version}',
-      '{device_info}',
-      '{battery_level}',
-      '{nickname}',
-    ];
-    final tmplVars = const [
-      '{{ role }}',
-      '{{ message }}',
-      '{{ time }}',
-      '{{ date }}',
-    ];
 
     // Helper to render link-like variable chips
     Widget linkWrap(List<String> vars, void Function(String v) onPick) {
@@ -2872,7 +2846,6 @@ class _PromptTabState extends State<_PromptTab> {
     // final ts = zh
     //     ? DateFormat('yyyy年M月d日 a h:mm:ss', 'zh').format(now)
     //     : DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-    final sampleUser = l10n.assistantEditSampleUser;
     final sampleMsg = l10n.assistantEditSampleMessage;
     final sampleReply = l10n.assistantEditSampleReply;
 
@@ -4689,19 +4662,16 @@ class _AssistantModelCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     String display = l10n.assistantEditModelUseGlobalDefault;
-    String brandName = display;
     if (providerKey != null && modelId != null) {
       try {
         final settings = context.read<SettingsProvider>();
         final cfg = settings.getProviderConfig(providerKey!);
         final ov = cfg.modelOverrides[modelId] as Map?;
-        brandName = cfg.name.isNotEmpty ? cfg.name : providerKey!;
         final mdl = (ov != null && (ov['name'] as String?)?.isNotEmpty == true)
             ? (ov['name'] as String)
             : modelId!;
         display = mdl;
       } catch (_) {
-        brandName = providerKey ?? '';
         display = modelId ?? '';
       }
     }

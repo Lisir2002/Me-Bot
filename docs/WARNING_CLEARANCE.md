@@ -102,7 +102,8 @@
 5. **info 不在本轮范围**：2836 条 info（585 条 `deprecated_member_use` 集中在 `lib/desktop/`）属长期项，等 Flutter SDK 升级窗口再处理，不设死线。
 6. **commit 粒度**：一批一 commit，禁止"顺手重构"混进同一 commit（AGENTS.md §3）。
 7. **禁止对 `unused_element_parameter` 用 `dart fix`**：Dart 3.9 把构造函数初始化形参 `this.x`（哪怕 `widget.x` 明明在用）判为未使用，`dart fix` 会直接删掉构造参数 → 残留 `final x;` 无初始化 → 15 个 `final_not_initialized_constructor` 编译错误。这 34 条只走人工。
-8. **不许"顺手美化"自动修复的产物**：`unnecessary_cast` 修复会留下 `(body)[k]` 这类多余括号；批量去括号时 `Overlay.of(context).x` 会被误伤成 `Overlay.ofcontext`——`(...)` 可能是调用参数而非分组。已尝试并撤回，收益（好看）< 风险（编译错）。
+8. **批量删除禁用全局文本匹配**：B3 踩坑——`final settings = context.read<SettingsProvider>();` 在同文件出现 6 处，按文本全局删会误删 5 处在用的。删除必须**行号 + 内容双断言**，删后立即 analyze。语句边界判定须剔除行尾注释（`const maxW = 280.0; // 注释` 以注释结尾，被误判跨语句，吞掉了后面的 `items` 块）。
+9. **不许"顺手美化"自动修复的产物**：`unnecessary_cast` 修复会留下 `(body)[k]` 这类多余括号；批量去括号时 `Overlay.of(context).x` 会被误伤成 `Overlay.ofcontext`——`(...)` 可能是调用参数而非分组。已尝试并撤回，收益（好看）< 风险（编译错）。
 9. **l10n 生成物会被 `flutter pub get` 覆盖**：`lib/l10n/app_localizations*.dart` 由 ARB 重新生成。0.0.43 曾把 `statsHeatmapSummary` 注入到类外（顶层无体声明），CI 因重新生成而侥幸通过，本地不跑 `pub get` 就报 4 个 error。**改 l10n 永远先改 ARB**（AGENTS.md T2）。
 
 ---
@@ -114,9 +115,9 @@
 | B0 环境+基线 | ✅ 完成 | 438 | 438 | 438 | `c203caa` |
 | B1 A 档自动修复（10 条规则） | ✅ 完成 | 438 | 248 | **248** | `78b9c1c` |
 | B2 shown_name + field | ✅ 完成 | 248 | 220 | **220** | `0a3124d` |
-| B3 local_variable | ⬜ 待执行 | 221 | 137 | — | — |
-| B4 element + element_parameter | ⬜ 待执行 | 137 | 43 | — | — |
-| B5 C 档语义 | ⬜ 待执行 | 43 | 0 | — | — |
+| B3 local_variable | ✅ 完成 | 220 | 136 | **136** | 见 git log |
+| B4 element + element_parameter | ⬜ 待执行 | 136 | 42 | — | — |
+| B5 C 档语义 | ⬜ 待执行 | 42 | 0 | — | |
 | B6 门禁硬化 | ⬜ 待执行 | — | 0 | — | — |
 
 ---

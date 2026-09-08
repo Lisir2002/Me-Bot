@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../core/models/quick_phrase.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';
@@ -20,11 +19,9 @@ class QuickPhraseMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     // Calculate menu position anchored to the input bar's global left and bottom inset
     final double menuWidth = 250;

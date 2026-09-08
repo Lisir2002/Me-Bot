@@ -624,7 +624,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
             itemCount: models.length,
             onReorder: (oldIndex, newIndex) async {
               if (newIndex > oldIndex) newIndex -= 1;
-              final id = models[oldIndex];
               final list = List<String>.from(models);
               final item = list.removeAt(oldIndex);
               list.insert(newIndex, item);
@@ -1862,9 +1861,6 @@ class _ConnectionTestDialogState extends State<_ConnectionTestDialog> {
 }
 
 Future<String?> showModelPickerForTest(BuildContext context, String providerKey, String providerDisplayName) async {
-  final cs = Theme.of(context).colorScheme;
-  final settings = context.read<SettingsProvider>();
-  final cfg = settings.getProviderConfig(providerKey, defaultName: providerDisplayName);
   final sel = await showModelSelector(context, limitProviderKey: providerKey);
   return sel?.modelId;
 }

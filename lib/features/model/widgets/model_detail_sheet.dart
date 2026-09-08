@@ -240,7 +240,6 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
 
   List<Widget> _buildBasic(BuildContext context, AppLocalizations l10n) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cs = Theme.of(context).colorScheme;
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

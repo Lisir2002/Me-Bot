@@ -124,6 +124,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final Map<String, GlobalKey> _messageKeys = <String, GlobalKey>{};
   GlobalKey _keyForMessage(String id) => _messageKeys.putIfAbsent(id, () => GlobalKey(debugLabel: 'msg:$id'));
   McpProvider? _mcpProvider;
+  // ignore: unused_field
   Set<String> _connectedMcpIds = <String>{};
   bool _showJumpToBottom = false;
   bool _isUserScrolling = false;
@@ -867,7 +868,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         },
     );
 
-    final cs = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: _sidebarAnimDuration,
       curve: _sidebarAnimCurve,
@@ -995,7 +995,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final prov = _mcpProvider;
     if (prov == null) return;
     final now = prov.connectedServers.map((s) => s.id).toSet();
-    final added = now.difference(_connectedMcpIds);
     _connectedMcpIds = now;
     // Assistant-level MCP selection is managed in Assistant settings; no per-conversation merge.
   }
@@ -1262,7 +1261,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     // Flush any ongoing generation progress for the current conversation
     try { await _flushCurrentConversationProgress(); } catch (_) {}
     final ap = context.read<AssistantProvider>();
-    final settings = context.read<SettingsProvider>();
     final assistantId = ap.currentAssistantId;
     // Don't change global default model - just use assistant's model if set
     final a = ap.currentAssistant;
@@ -4591,7 +4589,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             final showSetting = context.watch<SettingsProvider>().showMessageNavButtons;
             // Hide nav button in brand-new chats with no messages
             if (!showSetting || _messages.isEmpty) return const SizedBox.shrink();
-            final cs = Theme.of(context).colorScheme;
             final isDark = Theme.of(context).brightness == Brightness.dark;
             final bottomOffset = _inputBarHeight + 12;
             return Align(
@@ -4817,9 +4814,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               titleSpacing: 2,
               title: Builder(builder: (context) {
                 final isDark = Theme.of(context).brightness == Brightness.dark;
-                final bool isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                    defaultTargetPlatform == TargetPlatform.windows ||
-                    defaultTargetPlatform == TargetPlatform.linux;
                 // Desktop: title and model chip in a single row; Tablet can keep same for consistency
                 final String? brandAsset = (modelDisplay != null
                         ? (BrandAssets.assetForName(modelDisplay))
@@ -5668,7 +5662,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 Builder(builder: (context) {
                   final showSetting = context.watch<SettingsProvider>().showMessageNavButtons;
                   if (!showSetting || _messages.isEmpty) return const SizedBox.shrink();
-                  final cs = Theme.of(context).colorScheme;
                   final isDark = Theme.of(context).brightness == Brightness.dark;
                   final bottomOffset = _inputBarHeight + 12;
                   return Align(
@@ -5809,7 +5802,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           final sp = context.watch<SettingsProvider>();
           final topicsOnRight = sp.desktopTopicPosition == DesktopTopicPosition.right;
           if (!isDesktop || !topicsOnRight) return const SizedBox.shrink();
-          final double w = _rightSidebarWidth;
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [

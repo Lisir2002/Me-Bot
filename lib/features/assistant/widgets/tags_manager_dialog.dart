@@ -12,7 +12,6 @@ Future<void> showAssistantTagsManagerDialog(BuildContext context, {required Stri
     barrierLabel: 'tags-manager',
     barrierColor: Colors.black.withOpacity(0.15),
     pageBuilder: (ctx, _, __) {
-      final l10n = AppLocalizations.of(ctx)!;
       // Use a full-screen tap area to allow closing by tapping outside the dialog.
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -144,7 +143,6 @@ class _TagsManagerBodyState extends State<_TagsManagerBody> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final cs = Theme.of(context).colorScheme;
     final tp = context.watch<TagProvider>();
     final tags = tp.tags;
 

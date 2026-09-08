@@ -605,8 +605,6 @@ class _HeatmapGridPainter extends CustomPainter {
 
   void _drawRing(Canvas canvas, _ActiveDay? cell, double width, Color color) {
     if (cell == null) return;
-    final rect = Rect.fromLTWH(
-        cell.col * _colW, cell.row * _rowH, _cell, _cell);
     canvas.drawRRect(
       _cellRect(cell.col, cell.row, weeks.length - 1).inflate(width),
       Paint()

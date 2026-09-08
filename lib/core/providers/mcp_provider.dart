@@ -1254,24 +1254,18 @@ class McpProvider extends ChangeNotifier {
     StackTrace? stack,
   }) {
     try {
-      final type = error.runtimeType.toString();
       // debugPrint('[MCP/Error/$phase] id=$serverId${toolName != null ? ' tool='+toolName : ''} type=$type msg=$error');
       // Best-effort to extract structured fields from common error types
-      final dyn = error as dynamic;
       try {
-        final code = dyn.code;
         // if (code != null) debugPrint('[MCP/Error/$phase] code=$code');
       } catch (_) {}
       try {
-        final status = dyn.status;
         // if (status != null) debugPrint('[MCP/Error/$phase] status=$status');
       } catch (_) {}
       try {
-        final reason = dyn.reason;
         // if (reason != null) debugPrint('[MCP/Error/$phase] reason=$reason');
       } catch (_) {}
       try {
-        final inner = dyn.cause ?? dyn.inner ?? dyn.original;
         // if (inner != null) debugPrint('[MCP/Error/$phase] cause=$inner');
       } catch (_) {}
       // if (stack != null) debugPrint(stack.toString());

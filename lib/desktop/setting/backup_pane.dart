@@ -126,10 +126,8 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
     final busy = context.watch<BackupProvider>().busy;
-    final message = context.watch<BackupProvider>().message;
 
     return Container(
       alignment: Alignment.topCenter,

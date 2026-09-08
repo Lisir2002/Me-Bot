@@ -16,7 +16,6 @@ import '../shared/widgets/snackbar.dart';
 import '../utils/sandbox_path_resolver.dart';
 
 Future<void> showUserProfileDialog(BuildContext context) async {
-  final l10n = AppLocalizations.of(context)!;
   await showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,

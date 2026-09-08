@@ -137,7 +137,6 @@ class Logger {
     // 先构造但不注册，确保都 init 成功了再一次性挂上去（原子性）
     late final FileAppender fileApp;
     late final MemoryAppender memoryApp;
-    final snapshot = <LogAppender>[];
 
     try {
       fileApp = FileAppender(

@@ -124,7 +124,6 @@ class _LanguageSelectSheetState extends State<_LanguageSelectSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final maxHeight = MediaQuery.of(context).size.height * 0.8;
     return SafeArea(

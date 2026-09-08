@@ -1841,7 +1841,6 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = danger ? Colors.red.shade600 : cs.onSurface;
     final ic = danger ? Colors.red.shade600 : cs.onSurface.withOpacity(0.9);
     // iOS-style press effect: no ripple. Use transparent base and a subtle
@@ -2094,7 +2093,6 @@ class _ToolCallItem extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = cs.primaryContainer.withOpacity(isDark ? 0.25 : 0.30);
-    final fg = cs.onPrimaryContainer;
 
     return IosCardPress(
       borderRadius: BorderRadius.circular(16),
@@ -2533,7 +2531,6 @@ class _ReasoningSectionState extends State<_ReasoningSection> with SingleTickerP
 
     // Android-like surface style
     final bg = cs.primaryContainer.withOpacity(isDark ? 0.25 : 0.30);
-    final fg = cs.onPrimaryContainer;
 
     final curve = const Cubic(0.2, 0.8, 0.2, 1);
 

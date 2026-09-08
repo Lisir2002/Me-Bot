@@ -220,8 +220,6 @@ class _ModelEditDialogBodyState extends State<_ModelEditDialogBody> with SingleT
   }
 
   List<Widget> _buildBasic(BuildContext context, AppLocalizations l10n) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cs = Theme.of(context).colorScheme;
     return [
       _label(context, l10n.modelDetailSheetModelIdLabel),
       const SizedBox(height: 6),
@@ -273,8 +271,6 @@ class _ModelEditDialogBodyState extends State<_ModelEditDialogBody> with SingleT
   }
 
   List<Widget> _buildAdvanced(BuildContext context, AppLocalizations l10n) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cs = Theme.of(context).colorScheme;
     return [
       Text(l10n.modelDetailSheetCustomHeadersTitle, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),

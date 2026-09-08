@@ -389,7 +389,6 @@ class _LanguageDropdownState extends State<_LanguageDropdown> {
     final triggerWidth = triggerSize.width;
 
     _entry = OverlayEntry(builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
       final usePure = Provider.of<SettingsProvider>(ctx, listen: false).usePureBackground;
       final bgColor = usePure
@@ -579,7 +578,6 @@ class _LangDropdownOverlayState extends State<_LangDropdownOverlay> with SingleT
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final borderColor = cs.outlineVariant.withOpacity(0.12);

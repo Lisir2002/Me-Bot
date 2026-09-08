@@ -12,7 +12,6 @@ import '../../../core/providers/settings_provider.dart';
 
 Future<void> showMcpJsonEditSheet(BuildContext context) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,

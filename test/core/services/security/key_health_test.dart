@@ -82,5 +82,26 @@ void main() {
       );
       expect(await KeyHealthService(svc).scan(), isEmpty);
     });
+
+    test('markRotated 更新轮换时间 → needsRotation 翻转为 false', () async {
+      final svc = buildService(FakeBackend());
+      await svc.writeCredential(
+        CredentialKeys.provider('stale'),
+        ProviderCredentials(apiKey: 'sk-x').toRecord('stale'), // 从未轮换
+      );
+      final health = KeyHealthService(svc);
+      expect((await health.scan()).first.needsRotation, isTrue);
+
+      expect(await health.markRotated('stale'), isTrue);
+      final after = await health.scan();
+      expect(after.first.needsRotation, isFalse);
+      expect(after.first.daysSinceRotation, 0);
+      expect(after.first.lastRotatedAt, isNotNull);
+    });
+
+    test('markRotated：provider 不存在 → 返回 false 且不抛异常', () async {
+      final svc = buildService(FakeBackend());
+      expect(await KeyHealthService(svc).markRotated('ghost'), isFalse);
+    });
   });
 }

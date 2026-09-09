@@ -3911,4 +3911,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lockedByPolicy => 'Blocked by policy';
+
+  @override
+  String get addCommand => 'Add command';
+
+  @override
+  String get addHost => 'Add site';
+
+  @override
+  String get appLockAuthFailed => 'Verification failed. Setting unchanged.';
+
+  @override
+  String get appLockGrace => 'Unlock grace period';
+
+  @override
+  String get appLockGraceDesc =>
+      'Skip re-verification within this window after a successful unlock. 0 means verify every time.';
+
+  @override
+  String appLockGraceMinutes(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get appLockGraceOff => 'Off (verify every time)';
+
+  @override
+  String get appLockLockNow => 'Lock now';
+
+  @override
+  String get appLockVerifyToEnable => 'Verify to change app lock';
+
+  @override
+  String get auditActionClearAudit => 'Cleared audit log';
+
+  @override
+  String get auditActionCopy => 'Copied key';
+
+  @override
+  String get auditActionEnterPassphrase => 'Entered backup passphrase';
+
+  @override
+  String get auditActionExport => 'Exported backup';
+
+  @override
+  String get auditActionFix => 'Auto-fixed';
+
+  @override
+  String get auditActionMarkRotated => 'Marked key as rotated';
+
+  @override
+  String get auditActionMigrate => 'Migrated credentials';
+
+  @override
+  String get auditActionView => 'Viewed key';
+
+  @override
+  String get auditClear => 'Clear';
+
+  @override
+  String get auditClearConfirm =>
+      'All security events stored on this device will be deleted. This cannot be undone. Continue?';
+
+  @override
+  String get auditEmpty =>
+      'Nothing yet. Viewing, copying or exporting keys and auto-fixes will be listed here.';
+
+  @override
+  String get auditFailed => 'failed';
+
+  @override
+  String get auditTrail => 'Recent security events';
+
+  @override
+  String get auditTrailDesc => 'Stored on this device only — never uploaded.';
+
+  @override
+  String get checkupAutoFixConfirmTitle => 'Auto-fix these issues?';
+
+  @override
+  String checkupAutoFixConfirmBody(int count) {
+    return 'Will fix $count issue(s): delete stale plaintext leftovers, orphan credentials and similar data.';
+  }
+
+  @override
+  String get commandHint => 'e.g. npx, uvx or python';
+
+  @override
+  String get fixHintLabel => 'How to fix: ';
+
+  @override
+  String get goRotate =>
+      'Tap a row to open the provider and replace the key. Already replaced? Tap the check icon to mark it.';
+
+  @override
+  String get hostHint => 'e.g. example.com';
+
+  @override
+  String get invalidCommand => 'Invalid command name';
+
+  @override
+  String get invalidHost => 'Invalid host name';
+
+  @override
+  String get mcpServersEmpty => 'No MCP servers yet.';
+
+  @override
+  String get mcpServersPolicy => 'MCP servers';
+
+  @override
+  String get restoreDefaultCmds => 'Restore defaults';
+
+  @override
+  String get rotateAction => 'Mark as rotated';
+
+  @override
+  String get rotateMarked => 'Marked as rotated';
+
+  @override
+  String get webviewHostsEmpty => 'No extra allowed sites.';
 }

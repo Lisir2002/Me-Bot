@@ -1770,5 +1770,56 @@
   "webviewAllowlist": "Web URL allowlist",
   "allowHttp": "Allow http URLs",
   "webviewHosts": "Exception sites",
-  "lockedByPolicy": "Blocked by policy"
+  "lockedByPolicy": "Blocked by policy",
+  "addCommand": "Add command",
+  "addHost": "Add site",
+  "appLockAuthFailed": "Verification failed. Setting unchanged.",
+  "appLockGrace": "Unlock grace period",
+  "appLockGraceDesc": "Skip re-verification within this window after a successful unlock. 0 means verify every time.",
+  "appLockGraceMinutes": "{n} min",
+  "@appLockGraceMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "appLockGraceOff": "Off (verify every time)",
+  "appLockLockNow": "Lock now",
+  "appLockVerifyToEnable": "Verify to change app lock",
+  "auditActionClearAudit": "Cleared audit log",
+  "auditActionCopy": "Copied key",
+  "auditActionEnterPassphrase": "Entered backup passphrase",
+  "auditActionExport": "Exported backup",
+  "auditActionFix": "Auto-fixed",
+  "auditActionMarkRotated": "Marked key as rotated",
+  "auditActionMigrate": "Migrated credentials",
+  "auditActionView": "Viewed key",
+  "auditClear": "Clear",
+  "auditClearConfirm": "All security events stored on this device will be deleted. This cannot be undone. Continue?",
+  "auditEmpty": "Nothing yet. Viewing, copying or exporting keys and auto-fixes will be listed here.",
+  "auditFailed": "failed",
+  "auditTrail": "Recent security events",
+  "auditTrailDesc": "Stored on this device only — never uploaded.",
+  "checkupAutoFixConfirmTitle": "Auto-fix these issues?",
+  "checkupAutoFixConfirmBody": "Will fix {count} issue(s): delete stale plaintext leftovers, orphan credentials and similar data.",
+  "@checkupAutoFixConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commandHint": "e.g. npx, uvx or python",
+  "fixHintLabel": "How to fix: ",
+  "goRotate": "Tap a row to open the provider and replace the key. Already replaced? Tap the check icon to mark it.",
+  "hostHint": "e.g. example.com",
+  "invalidCommand": "Invalid command name",
+  "invalidHost": "Invalid host name",
+  "mcpServersEmpty": "No MCP servers yet.",
+  "mcpServersPolicy": "MCP servers",
+  "restoreDefaultCmds": "Restore defaults",
+  "rotateAction": "Mark as rotated",
+  "rotateMarked": "Marked as rotated",
+  "webviewHostsEmpty": "No extra allowed sites."
 }

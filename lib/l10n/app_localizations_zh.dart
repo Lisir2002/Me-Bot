@@ -3788,6 +3788,121 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lockedByPolicy => '已被策略拦截';
+
+  @override
+  String get addCommand => '添加命令';
+
+  @override
+  String get addHost => '添加站点';
+
+  @override
+  String get appLockAuthFailed => '验证未通过，设置未更改';
+
+  @override
+  String get appLockGrace => '解锁宽限期';
+
+  @override
+  String get appLockGraceDesc => '认证成功后，该时段内免重复验证；0 表示每次都要验证。';
+
+  @override
+  String appLockGraceMinutes(int n) {
+    return '$n 分钟';
+  }
+
+  @override
+  String get appLockGraceOff => '关闭（每次都验证）';
+
+  @override
+  String get appLockLockNow => '立即锁定';
+
+  @override
+  String get appLockVerifyToEnable => '验证身份以更改隐私门禁';
+
+  @override
+  String get auditActionClearAudit => '清空了审计记录';
+
+  @override
+  String get auditActionCopy => '复制了密钥';
+
+  @override
+  String get auditActionEnterPassphrase => '输入了备份口令';
+
+  @override
+  String get auditActionExport => '导出了备份';
+
+  @override
+  String get auditActionFix => '自动修复';
+
+  @override
+  String get auditActionMarkRotated => '标记密钥已轮换';
+
+  @override
+  String get auditActionMigrate => '迁移了凭证';
+
+  @override
+  String get auditActionView => '查看了密钥';
+
+  @override
+  String get auditClear => '清空';
+
+  @override
+  String get auditClearConfirm => '将删除本机保存的全部安全事件记录，且无法恢复。确定继续？';
+
+  @override
+  String get auditEmpty => '暂无记录。查看/复制/导出密钥与自动修复等操作会显示在这里。';
+
+  @override
+  String get auditFailed => '失败';
+
+  @override
+  String get auditTrail => '最近安全事件';
+
+  @override
+  String get auditTrailDesc => '仅保存在本机，不会上传。';
+
+  @override
+  String get checkupAutoFixConfirmTitle => '自动修复这些问题？';
+
+  @override
+  String checkupAutoFixConfirmBody(int count) {
+    return '将修复 $count 个问题：删除旧明文残留、无主凭证等数据。';
+  }
+
+  @override
+  String get commandHint => '例如 npx、uvx 或 python';
+
+  @override
+  String get fixHintLabel => '修复提示：';
+
+  @override
+  String get goRotate => '点击条目可前往服务商页更换 Key；若已更换，点右侧对勾标记。';
+
+  @override
+  String get hostHint => '例如 example.com';
+
+  @override
+  String get invalidCommand => '命令名不合法';
+
+  @override
+  String get invalidHost => '域名格式不正确';
+
+  @override
+  String get mcpServersEmpty => '暂无 MCP 服务器。';
+
+  @override
+  String get mcpServersPolicy => 'MCP 服务器开关';
+
+  @override
+  String get restoreDefaultCmds => '恢复默认';
+
+  @override
+  String get rotateAction => '标记已轮换';
+
+  @override
+  String get rotateMarked => '已标记为已轮换';
+
+  @override
+  String get webviewHostsEmpty => '暂无额外放行的站点。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -7392,6 +7507,121 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get lockedByPolicy => '已被策略拦截';
+
+  @override
+  String get addCommand => '添加命令';
+
+  @override
+  String get addHost => '添加站点';
+
+  @override
+  String get appLockAuthFailed => '验证未通过，设置未更改';
+
+  @override
+  String get appLockGrace => '解锁宽限期';
+
+  @override
+  String get appLockGraceDesc => '认证成功后，该时段内免重复验证；0 表示每次都要验证。';
+
+  @override
+  String appLockGraceMinutes(int n) {
+    return '$n 分钟';
+  }
+
+  @override
+  String get appLockGraceOff => '关闭（每次都验证）';
+
+  @override
+  String get appLockLockNow => '立即锁定';
+
+  @override
+  String get appLockVerifyToEnable => '验证身份以更改隐私门禁';
+
+  @override
+  String get auditActionClearAudit => '清空了审计记录';
+
+  @override
+  String get auditActionCopy => '复制了密钥';
+
+  @override
+  String get auditActionEnterPassphrase => '输入了备份口令';
+
+  @override
+  String get auditActionExport => '导出了备份';
+
+  @override
+  String get auditActionFix => '自动修复';
+
+  @override
+  String get auditActionMarkRotated => '标记密钥已轮换';
+
+  @override
+  String get auditActionMigrate => '迁移了凭证';
+
+  @override
+  String get auditActionView => '查看了密钥';
+
+  @override
+  String get auditClear => '清空';
+
+  @override
+  String get auditClearConfirm => '将删除本机保存的全部安全事件记录，且无法恢复。确定继续？';
+
+  @override
+  String get auditEmpty => '暂无记录。查看/复制/导出密钥与自动修复等操作会显示在这里。';
+
+  @override
+  String get auditFailed => '失败';
+
+  @override
+  String get auditTrail => '最近安全事件';
+
+  @override
+  String get auditTrailDesc => '仅保存在本机，不会上传。';
+
+  @override
+  String get checkupAutoFixConfirmTitle => '自动修复这些问题？';
+
+  @override
+  String checkupAutoFixConfirmBody(int count) {
+    return '将修复 $count 个问题：删除旧明文残留、无主凭证等数据。';
+  }
+
+  @override
+  String get commandHint => '例如 npx、uvx 或 python';
+
+  @override
+  String get fixHintLabel => '修复提示：';
+
+  @override
+  String get goRotate => '点击条目可前往服务商页更换 Key；若已更换，点右侧对勾标记。';
+
+  @override
+  String get hostHint => '例如 example.com';
+
+  @override
+  String get invalidCommand => '命令名不合法';
+
+  @override
+  String get invalidHost => '域名格式不正确';
+
+  @override
+  String get mcpServersEmpty => '暂无 MCP 服务器。';
+
+  @override
+  String get mcpServersPolicy => 'MCP 服务器开关';
+
+  @override
+  String get restoreDefaultCmds => '恢复默认';
+
+  @override
+  String get rotateAction => '标记已轮换';
+
+  @override
+  String get rotateMarked => '已标记为已轮换';
+
+  @override
+  String get webviewHostsEmpty => '暂无额外放行的站点。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -10997,4 +11227,119 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get lockedByPolicy => '已被政策攔截';
+
+  @override
+  String get addCommand => '新增指令';
+
+  @override
+  String get addHost => '新增站台';
+
+  @override
+  String get appLockAuthFailed => '驗證未通過，設定未變更';
+
+  @override
+  String get appLockGrace => '解鎖寬限期';
+
+  @override
+  String get appLockGraceDesc => '驗證成功後，該時段內免重複驗證；0 表示每次都要驗證。';
+
+  @override
+  String appLockGraceMinutes(int n) {
+    return '$n 分鐘';
+  }
+
+  @override
+  String get appLockGraceOff => '關閉（每次都驗證）';
+
+  @override
+  String get appLockLockNow => '立即鎖定';
+
+  @override
+  String get appLockVerifyToEnable => '驗證身分以變更隱私門禁';
+
+  @override
+  String get auditActionClearAudit => '清空了稽核紀錄';
+
+  @override
+  String get auditActionCopy => '複製了金鑰';
+
+  @override
+  String get auditActionEnterPassphrase => '輸入了備份通關密語';
+
+  @override
+  String get auditActionExport => '匯出了備份';
+
+  @override
+  String get auditActionFix => '自動修復';
+
+  @override
+  String get auditActionMarkRotated => '標記金鑰已輪換';
+
+  @override
+  String get auditActionMigrate => '遷移了憑證';
+
+  @override
+  String get auditActionView => '查看了金鑰';
+
+  @override
+  String get auditClear => '清空';
+
+  @override
+  String get auditClearConfirm => '將刪除本機儲存的全部安全事件紀錄，且無法復原。確定繼續？';
+
+  @override
+  String get auditEmpty => '暫無紀錄。查看/複製/匯出金鑰與自動修復等操作會顯示在這裡。';
+
+  @override
+  String get auditFailed => '失敗';
+
+  @override
+  String get auditTrail => '最近安全事件';
+
+  @override
+  String get auditTrailDesc => '僅儲存在本機，不會上傳。';
+
+  @override
+  String get checkupAutoFixConfirmTitle => '自動修復這些問題？';
+
+  @override
+  String checkupAutoFixConfirmBody(int count) {
+    return '將修復 $count 個問題：刪除舊明文殘留、無主憑證等資料。';
+  }
+
+  @override
+  String get commandHint => '例如 npx、uvx 或 python';
+
+  @override
+  String get fixHintLabel => '修復提示：';
+
+  @override
+  String get goRotate => '點擊項目可前往服務商頁更換 Key；若已更換，點右側勾勾標記。';
+
+  @override
+  String get hostHint => '例如 example.com';
+
+  @override
+  String get invalidCommand => '指令名稱不合法';
+
+  @override
+  String get invalidHost => '網域格式不正確';
+
+  @override
+  String get mcpServersEmpty => '暫無 MCP 伺服器。';
+
+  @override
+  String get mcpServersPolicy => 'MCP 伺服器開關';
+
+  @override
+  String get restoreDefaultCmds => '還原預設';
+
+  @override
+  String get rotateAction => '標記已輪換';
+
+  @override
+  String get rotateMarked => '已標記為已輪換';
+
+  @override
+  String get webviewHostsEmpty => '暫無額外放行的站台。';
 }

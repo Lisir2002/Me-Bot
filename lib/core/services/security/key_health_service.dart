@@ -103,6 +103,18 @@ class KeyHealthService {
         rotationThresholdDays;
   }
 
+  /// 手动标记某 provider 的凭证为「已轮换」（用户在面板确认轮换完成后点击）。
+  ///
+  /// 不触碰任何明文值：读记录 → 更新 meta.lastRotatedAt → 写回。
+  /// 返回是否成功（provider 无凭证记录时为 false）。
+  Future<bool> markRotated(String providerId) async {
+    final key = CredentialKeys.provider(providerId);
+    final record = await _secure.readCredential(key);
+    if (record == null) return false;
+    await _secure.writeCredential(key, record.markRotated());
+    return true;
+  }
+
   /// 需要轮换提醒的 provider 数量（面板顶栏轻提示用）。
   Future<int> countNeedsRotation() async =>
       (await scan()).where((i) => i.needsRotation).length;

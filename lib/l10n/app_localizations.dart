@@ -7384,6 +7384,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Blocked by policy'**
   String get lockedByPolicy;
+
+  /// No description provided for @addCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Add command'**
+  String get addCommand;
+
+  /// No description provided for @addHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Add site'**
+  String get addHost;
+
+  /// No description provided for @appLockAuthFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed. Setting unchanged.'**
+  String get appLockAuthFailed;
+
+  /// No description provided for @appLockGrace.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock grace period'**
+  String get appLockGrace;
+
+  /// No description provided for @appLockGraceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip re-verification within this window after a successful unlock. 0 means verify every time.'**
+  String get appLockGraceDesc;
+
+  /// No description provided for @appLockGraceMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} min'**
+  String appLockGraceMinutes(int n);
+
+  /// No description provided for @appLockGraceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off (verify every time)'**
+  String get appLockGraceOff;
+
+  /// No description provided for @appLockLockNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock now'**
+  String get appLockLockNow;
+
+  /// No description provided for @appLockVerifyToEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify to change app lock'**
+  String get appLockVerifyToEnable;
+
+  /// No description provided for @auditActionClearAudit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared audit log'**
+  String get auditActionClearAudit;
+
+  /// No description provided for @auditActionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied key'**
+  String get auditActionCopy;
+
+  /// No description provided for @auditActionEnterPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered backup passphrase'**
+  String get auditActionEnterPassphrase;
+
+  /// No description provided for @auditActionExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported backup'**
+  String get auditActionExport;
+
+  /// No description provided for @auditActionFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fixed'**
+  String get auditActionFix;
+
+  /// No description provided for @auditActionMarkRotated.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked key as rotated'**
+  String get auditActionMarkRotated;
+
+  /// No description provided for @auditActionMigrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Migrated credentials'**
+  String get auditActionMigrate;
+
+  /// No description provided for @auditActionView.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewed key'**
+  String get auditActionView;
+
+  /// No description provided for @auditClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get auditClear;
+
+  /// No description provided for @auditClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'All security events stored on this device will be deleted. This cannot be undone. Continue?'**
+  String get auditClearConfirm;
+
+  /// No description provided for @auditEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet. Viewing, copying or exporting keys and auto-fixes will be listed here.'**
+  String get auditEmpty;
+
+  /// No description provided for @auditFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'failed'**
+  String get auditFailed;
+
+  /// No description provided for @auditTrail.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent security events'**
+  String get auditTrail;
+
+  /// No description provided for @auditTrailDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored on this device only — never uploaded.'**
+  String get auditTrailDesc;
+
+  /// No description provided for @checkupAutoFixConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fix these issues?'**
+  String get checkupAutoFixConfirmTitle;
+
+  /// No description provided for @checkupAutoFixConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Will fix {count} issue(s): delete stale plaintext leftovers, orphan credentials and similar data.'**
+  String checkupAutoFixConfirmBody(int count);
+
+  /// No description provided for @commandHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. npx, uvx or python'**
+  String get commandHint;
+
+  /// No description provided for @fixHintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How to fix: '**
+  String get fixHintLabel;
+
+  /// No description provided for @goRotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a row to open the provider and replace the key. Already replaced? Tap the check icon to mark it.'**
+  String get goRotate;
+
+  /// No description provided for @hostHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. example.com'**
+  String get hostHint;
+
+  /// No description provided for @invalidCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid command name'**
+  String get invalidCommand;
+
+  /// No description provided for @invalidHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid host name'**
+  String get invalidHost;
+
+  /// No description provided for @mcpServersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No MCP servers yet.'**
+  String get mcpServersEmpty;
+
+  /// No description provided for @mcpServersPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP servers'**
+  String get mcpServersPolicy;
+
+  /// No description provided for @restoreDefaultCmds.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore defaults'**
+  String get restoreDefaultCmds;
+
+  /// No description provided for @rotateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as rotated'**
+  String get rotateAction;
+
+  /// No description provided for @rotateMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as rotated'**
+  String get rotateMarked;
+
+  /// No description provided for @webviewHostsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No extra allowed sites.'**
+  String get webviewHostsEmpty;
 }
 
 class _AppLocalizationsDelegate

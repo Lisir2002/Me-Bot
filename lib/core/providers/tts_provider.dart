@@ -32,6 +32,9 @@ class TtsProvider extends ChangeNotifier {
   bool _usingNetwork = false;
   bool get usingNetwork => _usingNetwork;
   FutureOr<bool> Function()? _cancelFlag;
+  /// 当前网络合成请求的取消 token（§9a 修复：此前局部 cancelled 从未置 true，取消链路失效）。
+  /// 每个请求独立 token，stop/flush/dispose 置 true 后不影响后续新请求。
+  _TtsCancelToken? _networkToken;
 
   // Settings
   double _speechRate = 0.5; // 0.0 - 1.0 (Android)
@@ -377,6 +380,8 @@ class TtsProvider extends ChangeNotifier {
     _currentChunkIndex = 0;
     _isSpeaking = false;
     _isPaused = false;
+    // 取消进行中的网络合成请求（每请求独立 token，不影响后续新请求）
+    _networkToken?.cancelled = true;
     if (_speakingCompleter != null && !_speakingCompleter!.isCompleted) {
       _speakingCompleter!.complete();
     }
@@ -491,6 +496,7 @@ class TtsProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _networkToken?.cancelled = true; // 让进行中的网络合成尽快退出
     _tts.stop();
     try { _player.dispose(); } catch (_) {}
     super.dispose();
@@ -511,16 +517,18 @@ class TtsProvider extends ChangeNotifier {
     notifyListeners();
 
     final localCancel = Completer<void>();
-    var cancelled = false;
-    _cancelFlag = () async => cancelled;
+    final token = _TtsCancelToken();
+    _networkToken = token;
+    _cancelFlag = () async => token.cancelled;
 
     Future<void> doFetch() async {
       try {
         final res = await NetworkTtsService.synthesize(options: service, text: content, cancelled: _cancelFlag);
-        if (cancelled) return; // ignore: dead_code
+        if (token.cancelled) return;
         await _playAudioBytes(res.bytes, mime: res.mime);
       } catch (e) {
-        _error = e.toString();
+        // 主动取消（synthesize 内部抛 _Cancelled）不算错误，不污染 _error
+        if (!token.cancelled) _error = e.toString();
       } finally {
         if (!localCancel.isCompleted) localCancel.complete();
       }
@@ -604,4 +612,9 @@ class TtsProvider extends ChangeNotifier {
       return null;
     }
   }
+}
+
+/// 网络 TTS 请求的取消令牌：每请求独立实例，避免跨请求竞态（§9a 修复）。
+class _TtsCancelToken {
+  bool cancelled = false;
 }

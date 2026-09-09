@@ -21,12 +21,6 @@ class DesktopBackupPane extends StatefulWidget {
 }
 
 class _DesktopBackupPaneState extends State<DesktopBackupPane> {
-  // Remote list state
-  // ignore: unused_field
-  List<BackupFileItem> _remote = const [];
-  // ignore: unused_field
-  bool _loadingRemote = false;
-
   // Local form controllers
   late TextEditingController _url;
   late TextEditingController _username;
@@ -45,8 +39,6 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
     _path = TextEditingController(text: cfg.path);
     _includeChats = cfg.includeChats;
     _includeFiles = cfg.includeFiles;
-    // Prefetch remote list with saved config
-    _reloadRemote();
   }
 
   @override
@@ -56,18 +48,6 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
     _password.dispose();
     _path.dispose();
     super.dispose();
-  }
-
-  Future<void> _reloadRemote() async {
-    setState(() => _loadingRemote = true);
-    try {
-      final items = await context.read<BackupProvider>().listRemote();
-      if (mounted) setState(() => _remote = items);
-    } catch (_) {
-      if (mounted) setState(() => _remote = const []);
-    } finally {
-      if (mounted) setState(() => _loadingRemote = false);
-    }
   }
 
   WebDavConfig _buildConfigFromForm() {
@@ -457,6 +437,7 @@ class _RemoteBackupsDialog extends StatefulWidget {
 class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
   List<BackupFileItem> _items = const [];
   bool _loading = true;
+  String? _errorMsg;
   final ScrollController _controller = ScrollController();
 
   @override
@@ -472,7 +453,7 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() { _loading = true; _errorMsg = null; });
     try {
       final list = await context.read<BackupProvider>().listRemote();
       // Sort by newest first (desc by lastModified), mimic mobile behavior
@@ -485,8 +466,9 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
         return -1;
       });
       if (mounted) setState(() { _items = list; });
-    } catch (_) {
-      if (mounted) setState(() { _items = const []; });
+    } catch (e) {
+      // 失败时透出错误详情，避免与"暂无备份"混淆（远程列表不展示的可感知 bug）
+      if (mounted) setState(() { _items = const []; _errorMsg = e.toString(); });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -535,7 +517,19 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
                 child: _loading
                     ? const Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)))
                     : _items.isEmpty
-                        ? Center(child: Text(l10n.backupPageNoBackups, style: TextStyle(color: cs.onSurface.withOpacity(0.7))))
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                _errorMsg ?? l10n.backupPageNoBackups,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: _errorMsg != null ? 13 : 14,
+                                  color: _errorMsg != null ? cs.error : cs.onSurface.withOpacity(0.7),
+                                ),
+                              ),
+                            ),
+                          )
                         : Scrollbar(
                             controller: _controller,
                             child: ListView.separated(

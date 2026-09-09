@@ -36,8 +36,8 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
   // macOS uses webview_flutter; Windows uses webview_windows.
   WebViewController? _flutterCtrl;
   winweb.WebviewController? _winCtrl;
-  // ignore: unused_field
-  String? _tempFilePath; // for Windows loadUrl
+  // Windows loadUrl 用的临时 HTML 文件路径；主题切换会写多份，dispose 时统一清理
+  final List<String> _tempFiles = <String>[];
   bool _ready = false;
   bool _loadedOnce = false;
   bool? _lastDark;
@@ -119,7 +119,7 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
     final html = _wrapWithTheme(widget.html, isDark: isDark);
     if (Platform.isWindows) {
       final path = await _writeTempHtml(html);
-      _tempFilePath = path;
+      _tempFiles.add(path);
       await _winCtrl?.loadUrl(Uri.file(path).toString());
     } else {
       await _flutterCtrl?.loadHtmlString(html);
@@ -216,9 +216,14 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
   @override
   void dispose() {
     try { _msgSub?.cancel(); } catch (_) {}
-    try {
-      _winCtrl?.dispose();
-    } catch (_) {}
+    try { _winCtrl?.dispose(); } catch (_) {}
+    // 清理本次预览写入的临时 HTML 文件，避免临时目录泄漏
+    for (final path in _tempFiles) {
+      try {
+        final f = io.File(path);
+        if (f.existsSync()) f.deleteSync();
+      } catch (_) {}
+    }
     super.dispose();
   }
 }

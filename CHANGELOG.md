@@ -7,6 +7,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 ## [Unreleased]
 
+（暂无）
+
+## [0.0.44] - 2026-09-09
+
+### 📣 For Users
+- **语音朗读的"停止"真的能停了**：此前用网络语音朗读长文本时，点停止/新对话无法真正中断请求，音频会继续播放到结束；现在立刻停止。
+- **电脑版备份更可靠**：点"恢复"打开的远程备份列表，若 WebDAV 连接或认证出错，现在会显示具体失败原因（红色提示），不再误显示为"暂无备份"让你以为备份丢了。
+- **更省心**：修复 HTML 预览在 Windows 上残留临时文件的问题，长期使用不再积累垃圾文件。
+- 质量底盘：全项目 438 个静态分析警告清零，CI 升级为硬门禁（任何新警告/错误都会直接挡下构建），后续版本稳定性更有保障。
+
 ### 🔧 For Developers
 - **Added**：AI 协助开发规范体系——`AGENTS.md`（环境现实 / 7 条带事故锚点的铁律 / 行动边界三级 / 发布 SOP / 版本日志三档）、`CLAUDE.md` 桥接、本文件（Keep a Changelog 三档结构）。
 - **Changed**：CI android job 的 `flutter analyze` 由观察步骤升级为**硬门禁**（B6）：`--no-fatal-infos` + 去掉 `continue-on-error`，warning/error 直接阻塞构建；输出过滤 info 明细防截断，退出码经 `${PIPESTATUS[0]}` 传递（旧管道写法 `| grep … || true` 会吞掉失败码）。

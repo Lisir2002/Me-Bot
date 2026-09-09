@@ -43,6 +43,9 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/backup/cherry_importer.dart';
 import '../../../core/services/backup/backup_encryptor.dart';
 import '../../../core/services/backup/credential_bridge.dart';
+import '../../../core/services/security/app_lock_gate.dart';
+import '../../../core/services/security/app_lock_service.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
 import '../../../utils/app_directories.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -220,7 +223,14 @@ class _BackupPageState extends State<BackupPage> {
   /// 输入备份口令。
   /// [confirm]=true 要求输入两次并校验一致与最短长度（导出加密用）；
   /// [confirm]=false 仅单次输入（导入解密用）。取消返回 null。
-  Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) {
+  Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) async {
+    // PR-6：输入 JWE 口令属敏感动作，先过隐私门禁（门禁未开启时直接放行）。
+    final lock = AppLockService.instance ?? await AppLockService.load();
+    if (!await lock.ensureUnlocked(LockAction.enterPassphrase, context: context)) {
+      CredentialAuditLogger.record('enterPassphrase', 'backup:jwe', ok: false);
+      return null;
+    }
+    if (!context.mounted) return null;
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final confirmController = TextEditingController();

@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/services/logging/logger.dart';
+import '../../core/services/logging/log_tags.dart';
+import '../../core/services/security/url_policy.dart';
+import '../../core/services/security/policy_provider.dart';
 
 class WebViewPage extends StatefulWidget {
   const WebViewPage({super.key, this.url, this.contentBase64});
@@ -52,6 +56,20 @@ class _WebViewPageState extends State<WebViewPage> {
               message: 'Web error ${err.errorCode}: ${err.description}',
               source: _currentUrl,
             );
+          },
+          // PR-8：WebView URL 白名单（默认仅放行 https，拦截 file/javascript/data）。
+          onNavigationRequest: (request) async {
+            final uri = Uri.tryParse(request.url);
+            if (uri == null) return NavigationDecision.navigate;
+            final policy =
+                LocalPolicyProvider.instance ?? await LocalPolicyProvider.load();
+            final res = UrlGuard(policy).check(uri);
+            if (res.denied) {
+              Logger.w(LogTags.policy,
+                  'WebView blocked: ${request.url} (${res.reason})');
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
           },
         ),
       );

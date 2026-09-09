@@ -38,6 +38,7 @@ import 'setting/quick_phrases_pane.dart';
 import 'setting/backup_pane.dart';
 import 'setting/network_proxy_pane.dart';
 import 'setting/about_pane.dart';
+import '../../features/security/pages/security_page.dart';
 import '../features/settings/pages/usage_stats_page.dart';
 import 'package:system_fonts/system_fonts.dart';
 import 'package:flutter/gestures.dart';
@@ -67,6 +68,7 @@ enum _SettingsMenuItem {
   tts,
   networkProxy,
   backup,
+  security,
   about,
 }
 
@@ -151,6 +153,8 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                           return const DesktopNetworkProxyPane(key: ValueKey('networkProxy'));
                         case _SettingsMenuItem.backup:
                           return const DesktopBackupPane(key: ValueKey('backup'));
+                        case _SettingsMenuItem.security:
+                          return const SecurityPage(key: ValueKey('security'));
                         case _SettingsMenuItem.quickPhrases:
                           return const DesktopQuickPhrasesPane(key: ValueKey('quickPhrases'));
                         case _SettingsMenuItem.tts:
@@ -197,6 +201,7 @@ class _SettingsMenu extends StatelessWidget {
       (_SettingsMenuItem.tts, lucide.Lucide.Volume2, l10n.settingsPageTts),
       (_SettingsMenuItem.networkProxy, lucide.Lucide.EthernetPort, l10n.settingsPageNetworkProxy),
       (_SettingsMenuItem.backup, lucide.Lucide.Database, l10n.settingsPageBackup),
+      (_SettingsMenuItem.security, Icons.shield_outlined, l10n.securitySection),
       (_SettingsMenuItem.about, lucide.Lucide.BadgeInfo, l10n.settingsPageAbout),
     ];
     final cs = Theme.of(context).colorScheme;

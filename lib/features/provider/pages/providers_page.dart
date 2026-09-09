@@ -23,6 +23,10 @@ import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
 import '../../../shared/widgets/ios_checkbox.dart';
 import '../../../theme/design_tokens.dart';
+import '../../../core/services/security/app_lock_gate.dart';
+import '../../../core/services/security/app_lock_service.dart';
+import '../../../core/services/security/clipboard_guard.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
 
 // ──────────────────────────────────────────────────────────────
 // 迁移到 AppPage 骨架（批次 3 收官页，1123 行 → ~950 行）
@@ -801,8 +805,21 @@ Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) asyn
                     child: IosTileButton(
                       icon: Lucide.Copy,
                       label: l10n.providersPageExportCopyButton,
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: text));
+                      onTap: () async {
+                        // PR-5/PR-6：导出内容含 apiKey（base64），复制前过隐私门禁，
+                        // 复制后由 ClipboardGuard 60s 自动清除，并留审计。
+                        final lock = AppLockService.instance ??
+                            await AppLockService.load();
+                        if (!await lock.ensureUnlocked(LockAction.copyCredential,
+                            context: context)) {
+                          CredentialAuditLogger.record(
+                              'copy', 'provider:export', ok: false);
+                          return;
+                        }
+                        await ClipboardGuard.instance.guard(text);
+                        CredentialAuditLogger.record(
+                            'copy', 'provider:export(${keys.length})');
+                        if (!context.mounted) return;
                         showAppSnackBar(context, message: l10n.providersPageExportCopiedSnackbar, type: NotificationType.success);
                       },
                     ),

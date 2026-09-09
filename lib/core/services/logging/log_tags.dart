@@ -55,7 +55,10 @@ class LogTags {
   static const String desktop = 'Desktop';
   static const String window = 'Window';
 
-  // ── Auth ──
+  // ── Auth / Security ──
   static const String auth = 'Auth';
   static const String token = 'Token';
+  static const String security = 'Security'; // 安全体检 / 凭证审计（PR-5）
+  static const String lock = 'Lock'; // 隐私门禁（PR-6）
+  static const String policy = 'Policy'; // 白名单策略（PR-8）
 }

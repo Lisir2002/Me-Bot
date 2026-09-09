@@ -31,6 +31,29 @@ class CredentialKeys {
   /// 因此新增服务商无需再改这里。
   static String service(String serviceId) => '${prefix}service_$serviceId';
 
+  // ------------------------------------------------------------------ 解析
+
+  /// 若 [key] 形如 `credential_provider_<id>` 则返回 `<id>`，否则 null。
+  /// 用于体检 / 孤儿扫描时反向解析存储 key。
+  static String? tryParseProviderId(String key) {
+    const p = '${prefix}provider_';
+    if (key.startsWith(p)) {
+      final id = key.substring(p.length);
+      return id.isEmpty ? null : id;
+    }
+    return null;
+  }
+
+  /// 若 [key] 形如 `credential_service_<id>` 则返回 `<id>`，否则 null。
+  static String? tryParseServiceId(String key) {
+    const p = '${prefix}service_';
+    if (key.startsWith(p)) {
+      final id = key.substring(p.length);
+      return id.isEmpty ? null : id;
+    }
+    return null;
+  }
+
   // ------------------------------------------------------------------ 旧明文 key
 
   // 以下常量仅作为迁移的「读取源」使用。迁移完成后这些 key

@@ -211,7 +211,8 @@ class SettingsProvider extends ChangeNotifier {
       }
       return;
     }
-    await secure.writeCredential(storageKey, creds.toRecord(key));
+    // PR-7：保存凭证即视为一次轮换，记录 lastRotatedAt（密钥健康面板据此算「距上次轮换」）。
+    await secure.writeCredential(storageKey, creds.toRecord(key).markRotated());
   }
 
   /// 删除 provider 时同步清理其凭证。
@@ -227,6 +228,26 @@ class SettingsProvider extends ChangeNotifier {
       // 清理失败也不能阻止 provider 删除本身；残留条目由 PR-5 孤儿扫描兜底。
     }
   }
+
+  /// PR-7：记录某 provider 凭证被实际使用（更新 lastUsedAt，供密钥健康面板展示）。
+  /// 带内存去抖（60s），避免高频请求反复写安全存储；失败静默。
+  final Map<String, int> _lastTouch = <String, int>{};
+  Future<void> touchProviderCredential(String providerId) async {
+    final secure = _secure;
+    if (secure == null) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if ((_lastTouch[providerId] ?? 0) + 60000 > now) return;
+    _lastTouch[providerId] = now;
+    try {
+      await secure.touchCredential(CredentialKeys.provider(providerId));
+    } catch (_) {
+      // 健康度是锦上添花，写失败不影响请求
+    }
+  }
+
+  /// PR-7：chat_api_service 真正 consume 某 provider 的 key 时回调本函数，
+  /// 由 [touchProviderCredential] 去抖后更新「最近使用」。设为 null 可关闭。
+  static void Function(String providerId)? onCredentialUsed;
 
   /// 持久化全部 provider 配置：凭证字段剥离后才落 SharedPreferences。
   Future<void> _persistProviderConfigs(SharedPreferences prefs) async {
@@ -320,6 +341,10 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   SettingsProvider() {
+    // PR-7：把 chat 路径的「凭证被使用」回调接到本实例（去抖在方法内）。
+    onCredentialUsed = (id) {
+      unawaited(touchProviderCredential(id));
+    };
     _load();
   }
 

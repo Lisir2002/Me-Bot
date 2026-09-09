@@ -6,6 +6,8 @@ import 'package:mcp_client/mcp_client.dart' as mcp;
 import '../services/mcp/minime_fetch/minime_fetch_server.dart';
 import '../services/logging/logger.dart';
 import '../services/logging/log_tags.dart';
+import '../services/security/mcp_command_policy.dart';
+import '../services/security/policy_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -689,7 +691,7 @@ class McpProvider extends ChangeNotifier {
       }
 
       final mergedHeaders = <String, String>{...server.headers};
-      final transportConfig = () {
+      final transportConfig = await (() async {
         if (server.transport == McpTransportType.sse) {
           return mcp.TransportConfig.sse(
             serverUrl: server.url,
@@ -709,6 +711,16 @@ class McpProvider extends ChangeNotifier {
           if (cmd == null || cmd.isEmpty) {
             throw StateError('STDIO command is empty');
           }
+          // PR-8：stdio 命令白名单拦截（在交给 mcp_client 内部 spawn 之前）。
+          // 策略未启用时 McpCommandGuard 自动放行，不阻断既有用法。
+          final policy =
+              LocalPolicyProvider.instance ?? await LocalPolicyProvider.load();
+          final verdict = McpCommandGuard(policy).check(cmd, serverId: id);
+          if (verdict.denied) {
+            Logger.w(LogTags.policy,
+                'MCP stdio blocked: server=$id reason=${verdict.reason}');
+            throw StateError('MCP stdio command blocked by policy: ${verdict.reason}');
+          }
           return mcp.TransportConfig.stdio(
             command: cmd,
             arguments: server.args,
@@ -716,7 +728,7 @@ class McpProvider extends ChangeNotifier {
             environment: server.env.isEmpty ? null : server.env,
           );
         }
-      }();
+      })();
 
       // debugPrint('[MCP/Connect] creating client (enableDebugLogging=true) ...');
       final clientResult = await mcp.McpClient.createAndConnect(

@@ -10,6 +10,10 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
+import '../../../core/services/security/app_lock_gate.dart';
+import '../../../core/services/security/app_lock_service.dart';
+import '../../../core/services/security/clipboard_guard.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
 
 String encodeProviderConfig(ProviderConfig cfg) {
   String type;
@@ -120,8 +124,20 @@ Future<void> showShareProviderSheet(BuildContext context, String providerKey) as
                       child: IosTileButton(
                         icon: Lucide.Copy,
                         label: l10n.shareProviderSheetCopyButton,
-                        onTap: () {
-                          Clipboard.setData(ClipboardData(text: code));
+                        onTap: () async {
+                          // PR-5/PR-6：code 内含 apiKey，复制前过门禁、复制后 60s 自动清除。
+                          final lock = AppLockService.instance ??
+                              await AppLockService.load();
+                          if (!await lock.ensureUnlocked(
+                              LockAction.copyCredential,
+                              context: context)) {
+                            CredentialAuditLogger.record(
+                                'copy', 'provider:share', ok: false);
+                            return;
+                          }
+                          await ClipboardGuard.instance.guard(code);
+                          CredentialAuditLogger.record('copy', 'provider:share');
+                          if (!context.mounted) return;
                           showAppSnackBar(
                             context,
                             message: l10n.shareProviderSheetCopiedMessage,

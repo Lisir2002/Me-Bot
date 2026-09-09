@@ -14,7 +14,7 @@
 | 现实 | 规则 |
 |---|---|
 | 本地 SDK 两套：`/opt/flutter335` = **Flutter 3.35.7 / Dart 3.9.2**（与 CI `FLUTTER_VERSION` 对齐，可用）；`/opt/flutter` = 旧版 2.17（**禁用**） | **analyze 走本地**：`export PATH=/opt/flutter335/bin:$PATH PUB_HOSTED_URL=https://pub.flutter-io.cn`，全量约 48s，实测与 CI 逐条一致；**build / 产物仍只走 CI** |
-| 沙箱网络受限（直连 GitHub 时好时坏） | 一切 GitHub 网络操作先读《沙箱受限网络访问GitHub实战经验.md》（hosts/DoH、Git Data API、CI 日志两步法） |
+| 沙箱网络受限（直连 GitHub 时好时坏） | 一切 GitHub 网络操作先读《沙箱受限网络访问GitHub实战经验.md》（hosts/DoH、Git Data API、CI 日志两步法）。**补充实测（2026-09-09）**：① git push 抖动用 DoH 测 `github.com` 候选 IP（140.82.114.3 实测通）写 `/etc/hosts` 即恢复（挂载文件用 python 直写，sed -i 会 Device busy，同步 `~/.user_hosts` 防重启丢失）；② `objects.githubusercontent.com`（185.199.x.133）整段被阻断，Release 资产下载走 `https://gh-proxy.com/<原URL>` 镜像 |
 | CI 无硬性 analyze 门禁（渐进接入中，见 §5.4） | push 前自检：括号/引号平衡、新 API 存在性 grep、脚本产物 NUL 扫描 |
 
 ## 2. 硬性铁律（每条带事故锚点；拿不准就停下来问用户）

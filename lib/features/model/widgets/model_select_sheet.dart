@@ -9,7 +9,7 @@ import '../../../icons/lucide_adapter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'model_detail_sheet.dart';
 import '../../provider/pages/provider_detail_page.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../desktop/desktop_home_page.dart' show DesktopHomePage;
@@ -491,7 +491,7 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return SafeArea(
       top: false,
@@ -612,7 +612,7 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
   }
 
   Widget _buildContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final query = _search.text.trim();
     // Build flattened rows and index maps for precise positioning
     _rows.clear();
@@ -741,7 +741,7 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
   }
 
   Widget _modelTile(BuildContext context, _ModelItem m, {bool showProviderLabel = false}) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final settings = context.read<SettingsProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1039,7 +1039,7 @@ class _BrandAvatar extends StatelessWidget {
 
 Widget _modelTagWrap(BuildContext context, ModelInfo m) {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final isDark = Theme.of(context).brightness == Brightness.dark;
   List<Widget> chips = [];
   // type tag
@@ -1209,7 +1209,7 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
   }
 
   void _rebuildRows() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.read<SettingsProvider>();
     final query = _searchCtrl.text.trim();
     _rows.clear();
@@ -1287,7 +1287,7 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     final dialog = Center(
       child: ConstrainedBox(
@@ -1463,7 +1463,7 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
   Widget _desktopModelTile(BuildContext context, _ModelItem m, {bool showProviderLabel = false}) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final bg = m.selected ? (isDark ? cs.primary.withOpacity(0.12) : cs.primary.withOpacity(0.08)) : cs.surface;
 
     return Padding(
@@ -1579,7 +1579,7 @@ class _DesktopModelSelectDialogBodyState extends State<_DesktopModelSelectDialog
           const Spacer(),
           if (providerKey != null)
             Tooltip(
-              message: AppLocalizations.of(context)!.settingsPageTitle,
+              message: context.l10n.settingsPageTitle,
               child: IosIconButton(
                 icon: Lucide.Settings2,
                 size: 16,

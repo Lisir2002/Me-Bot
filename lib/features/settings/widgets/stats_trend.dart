@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
 import '../../../theme/design_tokens.dart';
 import 'stats_card.dart';
-import 'stats_l10n.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/build_context_l10n.dart';
 
 // ─────────────────────────────────────────────────────────────
 // 用量趋势（堆叠柱）
@@ -94,7 +95,7 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
 
   String _modelLabel(String m) {
     if (m == StatsSnapshot.unknownModelKey) {
-      return StatsL10n.of(context).unknownModel;
+      return context.l10n.statsUnknownModel;
     }
     if (m.length <= 20) return m;
     return '${m.substring(0, 19)}…';
@@ -132,7 +133,7 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final trend = _trend;
 
     final visible = _visible;
@@ -140,14 +141,14 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
         (visible.isEmpty && trend.models.isNotEmpty);
 
     return StatsSectionCard(
-      title: t.sectionTrend,
+      title: t.statsSectionTrend,
       trailing: trend.isEmpty
           ? null
           : _GranularityChip(
-              text: trend.daily ? t.granularityDay : t.granularityMonth,
+              text: trend.daily ? t.statsGranularityDay : t.statsGranularityMonth,
             ),
       child: empty
-          ? StatsEmptyHint(text: t.noData)
+          ? StatsEmptyHint(text: t.statsNoData)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -179,7 +180,7 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
   }
 
   Widget _buildChart(BuildContext context, List<String> visible) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final trend = _trend;
 
@@ -241,7 +242,7 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
               final total = b.totalFor(visible);
               return BarTooltipItem(
                 '${_bucketLabel(b.date, i)}\n'
-                '${t.trendTotal('${formatCompactNumber(total)} ${t.tokensUnit}')}',
+                '${t.statsTrendTotal('${formatCompactNumber(total)} ${t.statsTokensUnit}')}',
                 TextStyle(
                   color: cs.onInverseSurface,
                   fontSize: 11,
@@ -337,7 +338,7 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
     );
   }
 
-  Widget _buildLegend(BuildContext context, StatsL10n t) {
+  Widget _buildLegend(BuildContext context, AppLocalizations t) {
     final cs = Theme.of(context).colorScheme;
     return Wrap(
       spacing: 10,

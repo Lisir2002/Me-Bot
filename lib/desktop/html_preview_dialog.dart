@@ -5,7 +5,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_windows/webview_windows.dart' as winweb;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io;
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../icons/lucide_adapter.dart';
 import '../shared/widgets/snackbar.dart';
 import '../shared/widgets/ios_tactile.dart';
@@ -13,7 +13,7 @@ import 'dart:convert';
 
 Future<void> showHtmlPreviewDesktopDialog(BuildContext context, {required String html}) async {
   if (Platform.isLinux) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     showAppSnackBar(context, message: l10n.htmlPreviewNotSupportedOnLinux, type: NotificationType.warning);
     return;
   }
@@ -140,7 +140,7 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     // Keep content updated with theme changes
     WidgetsBinding.instance.addPostFrameCallback((_) { _loadWithTheme(); });
@@ -230,7 +230,7 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
 
 extension _ConsoleDialogExt on _HtmlPreviewDialogState {
   void _openConsoleDialog() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -276,7 +276,7 @@ class _ConsoleDialog extends StatelessWidget {
                         icon: Lucide.X,
                         size: 18,
                         minSize: 34,
-                        semanticLabel: AppLocalizations.of(context)!.mcpPageClose,
+                        semanticLabel: context.l10n.mcpPageClose,
                         onTap: () => Navigator.of(context).maybePop(),
                       ),
                     ],

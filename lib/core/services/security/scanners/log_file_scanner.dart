@@ -23,7 +23,7 @@ class LogFileScanner extends CheckupScanner {
   CheckupSeverity get severity => CheckupSeverity.warn;
 
   @override
-  Future<List<CheckupFinding>> scan() async {
+  Future<List<CheckupFinding>> scan(CheckupStrings strings) async {
     final files = await _logFiles;
     var suspectLines = 0;
     var hitFiles = 0;
@@ -42,9 +42,8 @@ class LogFileScanner extends CheckupScanner {
       CheckupFinding(
         id: '$id:leak',
         scannerId: id,
-        title: '日志中疑似出现明文 Key',
-        detail: '在 $hitFiles 个日志文件中发现约 $suspectLines 处疑似明文 Key，'
-            '请检查是否有组件绕过脱敏直接打印凭证',
+        title: strings.logLeakTitle(),
+        detail: strings.logLeakDetail(hitFiles, suspectLines),
         severity: CheckupSeverity.warn,
         autoFixable: false,
       )

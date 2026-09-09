@@ -9,7 +9,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -77,13 +77,13 @@ class _UsageStatsPageState extends State<UsageStatsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return AppPage<StatsData>(
-      title: l10n?.settingsPageStats ?? '统计',
+      title: l10n.settingsPageStats,
       actions: [
         Tooltip(
-          message: l10n?.storageRefresh ?? '刷新',
+          message: l10n.storageRefresh,
           child: IosIconButton(
             haptics: true,
             icon: Lucide.RefreshCw,
@@ -133,7 +133,7 @@ class _DesktopStatsPaneState extends State<DesktopStatsPane> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = context.l10n;
     return FutureBuilder<StatsData>(
       future: _future,
       builder: (context, snapshot) {
@@ -151,7 +151,7 @@ class _DesktopStatsPaneState extends State<DesktopStatsPane> {
               children: [
                 Expanded(
                   child: Text(
-                    l10n?.settingsPageStats ?? '统计',
+                    l10n.settingsPageStats,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -161,7 +161,7 @@ class _DesktopStatsPaneState extends State<DesktopStatsPane> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  tooltip: l10n?.storageRefresh ?? '刷新',
+                  tooltip: l10n.storageRefresh,
                   onPressed: _reload,
                 ),
               ],

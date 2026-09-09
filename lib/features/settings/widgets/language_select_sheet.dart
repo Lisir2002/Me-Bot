@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';
 import '../../../desktop/desktop_context_menu.dart';
@@ -82,7 +83,7 @@ Future<LanguageOption?> showLanguageSelector(BuildContext context) async {
   }
 
   // Desktop anchored menu
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   LanguageOption? selected;
   final items = [
     ...supportedLanguages.map((lang) => DesktopContextMenuItem(
@@ -122,7 +123,7 @@ class _LanguageSelectSheetState extends State<_LanguageSelectSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     final maxHeight = MediaQuery.of(context).size.height * 0.8;
@@ -201,7 +202,7 @@ class _LanguageSelectSheetState extends State<_LanguageSelectSheet> {
   }
 
   Widget _languageOption(BuildContext context, LanguageOption lang) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     return Padding(

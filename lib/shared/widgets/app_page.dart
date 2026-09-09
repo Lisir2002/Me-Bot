@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/design_tokens.dart';
+import '../../l10n/build_context_l10n.dart';
 import 'app_states.dart';
 import 'ios_tactile.dart';
 
@@ -356,7 +357,7 @@ class _StatesScopeState<T> extends State<_StatesScope<T>> {
             hint: cfg.emptyHint,
             action: cfg.onRetry == null
                 ? null
-                : FilledButton.tonal(onPressed: cfg.onRetry, child: const Text('重试')),
+                : FilledButton.tonal(onPressed: cfg.onRetry, child: Text(context.l10n.commonRetry)),
           );
         }
         return cfg.buildData(context, data as T);

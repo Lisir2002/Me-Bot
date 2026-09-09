@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/models/chat_message.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../theme/design_tokens.dart';
 
@@ -38,7 +38,7 @@ class _MessageEditPageState extends State<MessageEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return AppPage(
       title: l10n.messageEditPageTitle,

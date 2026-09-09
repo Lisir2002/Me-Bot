@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../shared/widgets/snackbar.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../core/providers/settings_provider.dart';
 
 Future<void> showMcpJsonEditSheet(BuildContext context) async {
@@ -46,7 +46,7 @@ class _McpJsonEditSheetState extends State<_McpJsonEditSheet> {
   }
 
   Future<void> _save() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     try {
       // Quick JSON check before provider import for immediate feedback
       jsonDecode(_controller.text);
@@ -120,12 +120,12 @@ class _McpJsonEditSheetState extends State<_McpJsonEditSheet> {
                     tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                   ),
                   const Spacer(),
-                  Text(AppLocalizations.of(context)!.mcpJsonEditTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  Text(context.l10n.mcpJsonEditTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   const Spacer(),
                   IconButton(
                     onPressed: _save,
                     icon: Icon(Lucide.Check, size: 20, color: cs.primary),
-                    tooltip: AppLocalizations.of(context)!.mcpServerEditSheetSave,
+                    tooltip: context.l10n.mcpServerEditSheetSave,
                   ),
                 ],
               ),

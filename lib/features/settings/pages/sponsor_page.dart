@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -79,7 +79,7 @@ class _SponsorPageState extends State<SponsorPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final wechatQrUrl = isDark
         ? 'https://c.img.dasctf.com/LightPicture/2025/10/ee10ae78acbd01f3.png'

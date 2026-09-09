@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -51,7 +51,7 @@ class McpToolDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final server = mcp.getById(serverId);
     final tool = server == null ? null : _findTool(server.tools);
@@ -85,7 +85,7 @@ class McpToolDetailPage extends StatelessWidget {
 
   Widget _buildActionsTab(BuildContext context, McpToolConfig tool) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     Widget _sectionTitle(String t) => Padding(
           padding: const EdgeInsets.only(top: 20, bottom: 10),
@@ -204,7 +204,7 @@ class McpToolDetailPage extends StatelessWidget {
 
   Widget _buildHistoryTab(BuildContext context, McpToolConfig tool) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final history = context
         .watch<McpProvider>()
         .toolCallHistory(serverId)

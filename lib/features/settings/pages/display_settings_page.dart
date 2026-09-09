@@ -9,7 +9,7 @@ import 'package:syncfusion_flutter_core/theme.dart';
 import '../../../core/providers/settings_provider.dart';
 import 'theme_settings_page.dart';
 import '../../../theme/palettes.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import 'package:file_picker/file_picker.dart';
 import 'google_fonts_picker_page.dart';
 import '../../../shared/widgets/app_page.dart';
@@ -32,7 +32,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     context.watch<SettingsProvider>();
 
     String _paletteName() {
@@ -256,7 +256,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   }
 
   Future<void> _showMobileFontSourceSheet(BuildContext context, {required _FontTarget target}) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final choice = await showAppSheet<String>(
       context: context,
       isScrollControlled: false,
@@ -301,7 +301,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   }
 
   Future<void> _showChatMessageBackgroundSheet(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final choice = await showAppSheet<String>(
       context: context,
       isScrollControlled: false,
@@ -328,7 +328,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   }
 
   Future<void> _showAndroidBackgroundChatSheet(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final choice = await showAppSheet<String>(
       context: context,
       isScrollControlled: false,
@@ -347,8 +347,8 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
         await sp.setAndroidBackgroundChatMode(AndroidBackgroundChatMode.onNotify);
         try {
           await AndroidBackgroundManager.ensureInitialized(
-            notificationTitle: AppLocalizations.of(context)!.androidBackgroundNotificationTitle,
-            notificationText: AppLocalizations.of(context)!.androidBackgroundNotificationText,
+            notificationTitle: context.l10n.androidBackgroundNotificationTitle,
+            notificationText: context.l10n.androidBackgroundNotificationText,
           );
           await AndroidBackgroundManager.setEnabled(true);
           await NotificationService.ensureInitialized();
@@ -359,8 +359,8 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
         await sp.setAndroidBackgroundChatMode(AndroidBackgroundChatMode.on);
         try {
           await AndroidBackgroundManager.ensureInitialized(
-            notificationTitle: AppLocalizations.of(context)!.androidBackgroundNotificationTitle,
-            notificationText: AppLocalizations.of(context)!.androidBackgroundNotificationText,
+            notificationTitle: context.l10n.androidBackgroundNotificationTitle,
+            notificationText: context.l10n.androidBackgroundNotificationText,
           );
           await AndroidBackgroundManager.setEnabled(true);
           // Prepare notification channel as well to avoid FGS notification issues on some ROMs
@@ -374,7 +374,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   }
 
   Future<void> _showLanguageSheet(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final choice = await showAppSheet<String>(
       context: context,
       isScrollControlled: false,
@@ -405,7 +405,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   }
 
   Future<void> _showChatFontSizeSheet(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showAppSheet<void>(
       context: context,
       isScrollControlled: false,
@@ -469,7 +469,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
   }
 
   Future<void> _showAutoScrollIdleSheet(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showAppSheet<void>(
       context: context,
       isScrollControlled: false,
@@ -701,7 +701,7 @@ class ChatItemDisplaySettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return AppPage(
       title: l10n.displaySettingsPageChatItemDisplayTitle,
@@ -742,7 +742,7 @@ class RenderingSettingsPage extends StatelessWidget {
   const RenderingSettingsPage({super.key});
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme; final l10n = AppLocalizations.of(context)!; final sp = context.watch<SettingsProvider>();
+    final cs = Theme.of(context).colorScheme; final l10n = context.l10n; final sp = context.watch<SettingsProvider>();
     return AppPage(
       title: l10n.displaySettingsPageRenderingSettingsTitle,
       leading: Tooltip(
@@ -778,7 +778,7 @@ class BehaviorStartupSettingsPage extends StatelessWidget {
   const BehaviorStartupSettingsPage({super.key});
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme; final l10n = AppLocalizations.of(context)!; final sp = context.watch<SettingsProvider>();
+    final cs = Theme.of(context).colorScheme; final l10n = context.l10n; final sp = context.watch<SettingsProvider>();
     return AppPage(
       title: l10n.displaySettingsPageBehaviorStartupTitle,
       leading: Tooltip(
@@ -816,7 +816,7 @@ class HapticsSettingsPage extends StatelessWidget {
   const HapticsSettingsPage({super.key});
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme; final l10n = AppLocalizations.of(context)!; final sp = context.watch<SettingsProvider>();
+    final cs = Theme.of(context).colorScheme; final l10n = context.l10n; final sp = context.watch<SettingsProvider>();
     return AppPage(
       title: l10n.displaySettingsPageHapticsSettingsTitle,
       leading: Tooltip(

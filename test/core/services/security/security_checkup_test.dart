@@ -30,7 +30,7 @@ void main() {
         _FakeScanner('s1', [CheckupFinding(id: 's1:a', scannerId: 's1', title: 't', detail: 'd', severity: CheckupSeverity.warn)]),
         _FakeScanner('s2', [CheckupFinding(id: 's2:a', scannerId: 's2', title: 't', detail: 'd', severity: CheckupSeverity.danger)]),
       ]);
-      final report = await svc.run();
+      final report = await svc.run(_FakeStrings());
       expect(report.findings.length, 2);
       expect(report.overallSeverity, CheckupSeverity.danger);
       expect(report.dangerCount, 1);
@@ -42,14 +42,14 @@ void main() {
         _FakeScanner('boom', const [], throwsOnScan: true),
         _FakeScanner('ok', [CheckupFinding(id: 'ok:a', scannerId: 'ok', title: 't', detail: 'd', severity: CheckupSeverity.safe)]),
       ]);
-      final report = await svc.run();
+      final report = await svc.run(_FakeStrings());
       expect(report.findings.any((f) => f.id == 'boom:error'), isTrue);
     });
 
     test('fix 仅修复 autoFixable 项', () async {
       final fixable = _FixableScanner();
       final svc = SecurityCheckupService([fixable]);
-      final report = await svc.run();
+      final report = await svc.run(_FakeStrings());
       final fixed = await svc.fix(report.fixable);
       expect(fixed, 1);
       expect(fixable.fixed, isTrue);
@@ -64,7 +64,7 @@ void main() {
       });
       final prefs = await SharedPreferences.getInstance();
       final scanner = LegacyPrefsScanner(prefs);
-      final findings = await scanner.scan();
+      final findings = await scanner.scan(_FakeStrings());
       final danger = findings.where((f) => f.severity == CheckupSeverity.danger);
       expect(danger.length, 1);
       expect(danger.first.autoFixable, isTrue);
@@ -76,7 +76,7 @@ void main() {
     test('无残留 → 无发现', () async {
       SharedPreferences.setMockInitialValues({'unrelated': 'value'});
       final scanner = LegacyPrefsScanner(await SharedPreferences.getInstance());
-      expect(await scanner.scan(), isEmpty);
+      expect(await scanner.scan(_FakeStrings()), isEmpty);
     });
   });
 
@@ -91,7 +91,7 @@ void main() {
         knownProviderIds: {'alive'},
         knownServiceIds: const {},
       );
-      final findings = await scanner.scan();
+      final findings = await scanner.scan(_FakeStrings());
       expect(findings.length, 1);
       expect(findings.first.autoFixable, isTrue);
 
@@ -113,7 +113,7 @@ void main() {
         ..writeAsStringSync('{"format":"kelivo-backup","version":2,"crypto":null,"payload":{}}');
 
       final scanner = BackupFileScanner(Future.value([plain, envelope]));
-      final findings = await scanner.scan();
+      final findings = await scanner.scan(_FakeStrings());
       expect(findings.length, 1);
       expect(findings.first.severity, CheckupSeverity.warn);
       expect(findings.first.autoFixable, isFalse);
@@ -121,7 +121,7 @@ void main() {
 
     test('文件不存在 / 损坏 → 安全跳过', () async {
       final scanner = BackupFileScanner(Future.value([File('${tmp.path}/nope.json')]));
-      expect(await scanner.scan(), isEmpty);
+      expect(await scanner.scan(_FakeStrings()), isEmpty);
     });
   });
 
@@ -136,12 +136,44 @@ void main() {
       final f = File('${tmp.path}/app.log')
         ..writeAsStringSync('normal line\nsomething $sample end\nother');
       final scanner = LogFileScanner(Future.value([f]));
-      final findings = await scanner.scan();
+      final findings = await scanner.scan(_FakeStrings());
       expect(findings.length, 1);
       expect(findings.first.severity, CheckupSeverity.warn);
       expect(findings.first.autoFixable, isFalse);
     });
   });
+}
+
+class _FakeStrings implements CheckupStrings {
+  // 断言只依赖 id/severity 流转，文案值任意。
+  @override
+  String scannerErrorTitle(String scannerTitle) => 'err:$scannerTitle';
+  @override
+  String scannerErrorDetail() => 'd';
+  @override
+  String backupPlaintextTitle(int count) => 't:$count';
+  @override
+  String backupPlaintextDetail(List<String> files) => 'd:${files.length}';
+  @override
+  String legacyKeysTitle() => 't';
+  @override
+  String legacyKeysDetail(int count, List<String> keys) => 'd:$count';
+  @override
+  String legacyKeysFixHint() => 'h';
+  @override
+  String legacyPlaintextTitle() => 't';
+  @override
+  String legacyPlaintextDetail(int suspectCount) => 'd:$suspectCount';
+  @override
+  String logLeakTitle() => 't';
+  @override
+  String logLeakDetail(int files, int lines) => 'd:$files/$lines';
+  @override
+  String orphanTitle(int count) => 't:$count';
+  @override
+  String orphanDetail() => 'd';
+  @override
+  String orphanFixHint() => 'h';
 }
 
 class _FakeScanner extends CheckupScanner {
@@ -156,7 +188,7 @@ class _FakeScanner extends CheckupScanner {
   @override
   CheckupSeverity get severity => CheckupSeverity.warn;
   @override
-  Future<List<CheckupFinding>> scan() async {
+  Future<List<CheckupFinding>> scan(CheckupStrings strings) async {
     if (throwsOnScan) throw StateError('boom');
     return _findings;
   }
@@ -172,7 +204,7 @@ class _FixableScanner extends CheckupScanner {
   @override
   CheckupSeverity get severity => CheckupSeverity.warn;
   @override
-  Future<List<CheckupFinding>> scan() async => [
+  Future<List<CheckupFinding>> scan(CheckupStrings strings) async => [
         CheckupFinding(
           id: '$id:a',
           scannerId: id,

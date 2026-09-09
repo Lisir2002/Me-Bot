@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/mcp_provider.dart';
 import '../../shared/widgets/snackbar.dart';
 import 'mcp_edit_dialog.dart' show showDesktopMcpEditDialog;
@@ -14,7 +14,7 @@ class DesktopMcpPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final servers = mcp.servers;
 
@@ -164,7 +164,7 @@ class _ServerCardState extends State<_ServerCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     final baseBg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
     final borderColor = _hover
@@ -215,10 +215,10 @@ class _ServerCardState extends State<_ServerCard> {
         transportText = 'HTTP';
         break;
       case McpTransportType.stdio:
-        transportText = AppLocalizations.of(context)!.mcpTransportTagStdio;
+        transportText = context.l10n.mcpTransportTagStdio;
         break;
       case McpTransportType.inmemory:
-        transportText = AppLocalizations.of(context)!.mcpTransportTagInmemory;
+        transportText = context.l10n.mcpTransportTagInmemory;
         break;
     }
 
@@ -294,7 +294,7 @@ class _ServerCardState extends State<_ServerCard> {
                       children: [
                         tag(statusText, color: statusColor),
                         tag(transportText),
-                        tag(AppLocalizations.of(context)!
+                        tag(context.l10n
                             .mcpPageToolsCount(widget.toolsEnabled, widget.toolsTotal)),
                         if (!widget.enabled)
                           tag(l10n.mcpPageStatusDisabled, color: cs.onSurface.withOpacity(0.7)),
@@ -375,7 +375,7 @@ class _SmallIconBtnState extends State<_SmallIconBtn> {
 
 Future<void> _showErrorDetails(BuildContext context, {required String name, String? message}) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   await showDialog<void>(
     context: context,
     barrierDismissible: true,
@@ -448,7 +448,7 @@ Future<void> _showErrorDetails(BuildContext context, {required String name, Stri
 }
 
 Future<bool?> _confirmDelete(BuildContext context) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final cs = Theme.of(context).colorScheme;
   return showDialog<bool>(
     context: context,

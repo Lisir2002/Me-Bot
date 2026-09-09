@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/providers/settings_provider.dart';
 import '../core/providers/model_provider.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../icons/lucide_adapter.dart' as lucide;
 import '../utils/brand_assets.dart';
 import 'package:characters/characters.dart';
@@ -105,7 +105,7 @@ class _ModelFetchDialogBodyState extends State<_ModelFetchDialogBody> {
   }
 
   String _groupFor(BuildContext context, ModelInfo m) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final id = m.id.toLowerCase();
     if (m.type == ModelType.embedding || id.contains('embedding') || id.contains('embed')) {
       return l10n.providerDetailPageEmbeddingsGroupTitle;
@@ -133,7 +133,7 @@ class _ModelFetchDialogBodyState extends State<_ModelFetchDialogBody> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settingsWatch = context.watch<SettingsProvider>();
 
     // Compute header filtered list and selection state for toggle icon
@@ -380,7 +380,7 @@ class _ModelFetchDialogBodyState extends State<_ModelFetchDialogBody> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          tooltip: allAdded ? AppLocalizations.of(context)!.providerDetailPageRemoveGroupTooltip : AppLocalizations.of(context)!.providerDetailPageAddGroupTooltip,
+                          tooltip: allAdded ? context.l10n.providerDetailPageRemoveGroupTooltip : context.l10n.providerDetailPageAddGroupTooltip,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(minWidth: 40, minHeight: 36),
                           icon: Icon(allAdded ? lucide.Lucide.Minus : lucide.Lucide.Plus, size: 18, color: cs.onSurface.withOpacity(0.75)),

@@ -7,7 +7,7 @@ import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
@@ -43,7 +43,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
 
   Future<void> _clearLogs() async {
     try {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -73,7 +73,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
       Logger.e('StorageLog', 'clear logs failed', e, s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清理日志失败: $e')),
+          SnackBar(content: Text(context.l10n.clearLogsFailed(e.toString()))),
         );
       }
     }
@@ -81,7 +81,7 @@ class _StorageLogPageState extends State<StorageLogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
     context.watch<StorageProvider>();

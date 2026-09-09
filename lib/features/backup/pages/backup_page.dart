@@ -28,7 +28,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -93,7 +93,7 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<bool?> _confirmCherryImport(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isZh = locale.languageCode.startsWith('zh');
@@ -141,7 +141,7 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<RestoreMode?> _chooseImportModeDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
 
@@ -183,7 +183,7 @@ class _BackupPageState extends State<BackupPage> {
 
   /// 选择导出策略：脱敏（不含密钥）/ 加密（含密钥，需口令）。
   Future<BackupCredentialPolicy?> _chooseExportPolicyDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
     return showDialog<BackupCredentialPolicy>(
@@ -231,7 +231,7 @@ class _BackupPageState extends State<BackupPage> {
       return null;
     }
     if (!context.mounted) return null;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final confirmController = TextEditingController();
     var obscured = true;
@@ -310,7 +310,7 @@ class _BackupPageState extends State<BackupPage> {
       return true;
     } on BackupCryptoError catch (e) {
       if (!context.mounted) return false;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       if (e.kind == BackupCryptoErrorKind.needPassphrase) {
         final pass = await _promptPassphrase(context, confirm: false);
         if (pass == null) return false;
@@ -334,7 +334,7 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<T> _runWithExportingOverlay<T>(BuildContext context, Future<T> Function() task) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -393,7 +393,7 @@ class _BackupPageState extends State<BackupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
 
@@ -751,7 +751,7 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<void> _doImportLocal(BuildContext context, BackupProvider vm) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['zip']);
     final path = result?.files.single.path;
     if (path == null) return;
@@ -910,7 +910,7 @@ class _SnapshotNavRowState extends State<_SnapshotNavRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return AppNavRow(
       icon: Lucide.Box,
       label: l10n.storageManageSnapshots,
@@ -997,7 +997,7 @@ class _RemoteListSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     // ⚠️ 这里的 safeArea 由外层 showAppSheet 提供，不要再套一层（否则底部重复留白）。
     return DraggableScrollableSheet(
@@ -1171,7 +1171,7 @@ class _WebDavSettingsSheetState extends State<_WebDavSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     return AppSheet(

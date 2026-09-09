@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../theme/design_tokens.dart';
 
@@ -47,7 +47,7 @@ class _GoogleFontsPickerPageState extends State<GoogleFontsPickerPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // 只算一次，供 itemCount 与 itemBuilder 复用
     final filtered = _filtered(_allFonts);
 
@@ -85,6 +85,8 @@ class _GoogleFontsPickerPageState extends State<GoogleFontsPickerPage> {
                 final fam = filtered[i];
                 return ListTile(
                   title: Text(fam),
+                  // 字形预览样张：任何语言下展示相同样张，非可翻译文案
+                  // ignore: hardcoded_ui_string
                   trailing: Text('Aa字', style: GoogleFonts.getFont(fam, fontSize: 18)),
                   onTap: () => Navigator.of(context).pop(fam),
                 );

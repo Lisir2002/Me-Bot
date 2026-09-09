@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
@@ -88,7 +88,7 @@ class McpServerDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final server = mcp.getById(serverId);
 
@@ -147,7 +147,7 @@ class McpServerDetailPage extends StatelessWidget {
 
   Widget _buildOverviewTab(BuildContext context, McpServerConfig server) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final st = mcp.statusFor(serverId);
     final err = mcp.errorFor(serverId);
@@ -262,7 +262,7 @@ class McpServerDetailPage extends StatelessWidget {
 
   Widget _buildToolsTab(BuildContext context, McpServerConfig server) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 空态 → 统一 AppEmpty

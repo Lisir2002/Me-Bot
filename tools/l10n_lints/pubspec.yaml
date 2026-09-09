@@ -1,0 +1,13 @@
+name: l10n_lints
+description: Me-Bot 自定义 l10n lint 规则（硬编码 UI 文案实时拦截 / 防语言切换失效缓存）。
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  analyzer: ">=6.4.0 <8.0.0"
+  custom_lint_builder: ^0.6.4
+  source_span: ^1.10.0
+  args: ^2.5.0

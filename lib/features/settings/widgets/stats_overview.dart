@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/stats/stats_aggregator.dart';
 import 'stats_card.dart';
-import 'stats_l10n.dart';
+import '../../../../l10n/build_context_l10n.dart';
 
 // ─────────────────────────────────────────────────────────────
 // 总览
@@ -19,20 +19,20 @@ class StatsOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     final items = <(String, String)>[
-      (t.overviewConversations, '${snapshot.conversationCount}'),
-      (t.overviewMessages, formatCompactNumber(snapshot.messageCount)),
-      (t.overviewPromptTokens, formatCompactNumber(snapshot.promptTokens)),
-      (t.overviewCompletionTokens, formatCompactNumber(snapshot.completionTokens)),
-      (t.overviewCachedTokens, formatCompactNumber(snapshot.cachedTokens)),
-      (t.overviewLaunchCount, '${snapshot.launchCount}'),
+      (t.statsOverviewConversations, '${snapshot.conversationCount}'),
+      (t.statsOverviewMessages, formatCompactNumber(snapshot.messageCount)),
+      (t.statsOverviewPromptTokens, formatCompactNumber(snapshot.promptTokens)),
+      (t.statsOverviewCompletionTokens, formatCompactNumber(snapshot.completionTokens)),
+      (t.statsOverviewCachedTokens, formatCompactNumber(snapshot.cachedTokens)),
+      (t.statsOverviewLaunchCount, '${snapshot.launchCount}'),
     ];
 
     return StatsSectionCard(
-      title: t.sectionOverview,
+      title: t.statsSectionOverview,
       child: GridView.count(
         crossAxisCount: 3,
         shrinkWrap: true,

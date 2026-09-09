@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/favicon.dart';
 import '../../../theme/design_tokens.dart';
@@ -22,7 +22,7 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
   Widget title(String text) => Padding(
         padding: const EdgeInsets.symmetric(vertical: AppGap.md),

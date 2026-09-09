@@ -9,6 +9,7 @@ import '../widgets/add_provider_sheet.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -75,7 +76,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     // Base, fixed providers (recompute each build so dynamic additions reflect immediately)
     final base = _providers(l10n: l10n);
@@ -292,7 +293,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
 
   Future<void> _onDeleteSelected() async {
     if (_selected.isEmpty) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // Skip built-in providers (default ones)
     final builtInKeys = {for (final p in _providers(l10n: l10n)) p.keyName};
     final keysToDelete = _selected.where((k) => !builtInKeys.contains(k)).toList(growable: false);
@@ -455,7 +456,7 @@ class _ProviderRow extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     final cfg = settings.getProviderConfig(provider.keyName, defaultName: provider.name);
     final enabled = cfg.enabled;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     final statusBg = enabled ? Colors.green.withOpacity(0.12) : Colors.orange.withOpacity(0.15);
     final statusFg = enabled ? Colors.green : Colors.orange;
@@ -586,7 +587,7 @@ class _SelectionBar extends StatelessWidget {
   final VoidCallback onSelectAll;
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return AnimatedSlide(
       offset: visible ? Offset.zero : const Offset(0, 1),
@@ -712,7 +713,7 @@ class _GlassCircleButtonState extends State<_GlassCircleButton> {
 Future<void> _showMultiExportSheet(BuildContext context, List<String> keys) async {
   final cs = Theme.of(context).colorScheme;
   final settings = context.read<SettingsProvider>();
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final entries = [
     for (final k in keys)
       () {

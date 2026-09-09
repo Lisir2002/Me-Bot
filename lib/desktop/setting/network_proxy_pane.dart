@@ -7,7 +7,7 @@ import 'package:socks5_proxy/socks_client.dart' as socks;
 import 'package:provider/provider.dart';
 import '../../shared/widgets/ios_switch.dart';
 
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/settings_provider.dart';
 
 class DesktopNetworkProxyPane extends StatefulWidget {
@@ -69,7 +69,7 @@ class _DesktopNetworkProxyPaneState extends State<DesktopNetworkProxyPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Container(
       alignment: Alignment.topCenter,
       child: Padding(
@@ -223,7 +223,7 @@ class _DesktopNetworkProxyPaneState extends State<DesktopNetworkProxyPane> {
   }
 
   Future<void> _onTest() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final url = _testUrlCtl.text.trim();
     if (url.isEmpty) {
       setState(() { _testOk = false; _testError = l10n.networkProxyNoUrl; });
@@ -426,7 +426,7 @@ class _ProxyTypeDropdownState extends State<_ProxyTypeDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseBorder = cs.outlineVariant.withOpacity(0.18);
@@ -499,7 +499,7 @@ class _ProxyTypeOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final items = [
       ('http', l10n.networkProxyTypeHttp),
       ('https', l10n.networkProxyTypeHttps),

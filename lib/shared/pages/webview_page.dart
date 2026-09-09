@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/services/logging/logger.dart';
 import '../../core/services/logging/log_tags.dart';
 import '../../core/services/security/url_policy.dart';
@@ -80,7 +80,7 @@ class _WebViewPageState extends State<WebViewPage> {
   Future<void> _initialLoad() async {
     if (defaultTargetPlatform == TargetPlatform.linux) {
       // Keep parity with existing Linux limitation: no WebView support
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.htmlPreviewNotSupportedOnLinux)));
       Navigator.of(context).maybePop();
@@ -140,7 +140,7 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final bool contentMode = (widget.contentBase64 != null && (widget.contentBase64!.isNotEmpty)) && ((widget.url == null) || widget.url!.isEmpty);
     return WillPopScope(
       onWillPop: () async {
@@ -235,7 +235,7 @@ class _ConsoleSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return SafeArea(
       child: Padding(

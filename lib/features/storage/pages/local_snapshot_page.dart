@@ -11,6 +11,7 @@ import '../../../core/services/backup/data_sync.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -196,7 +197,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     }
   }
 
-  AppLocalizations l10nOf() => AppLocalizations.of(context)!;
+  AppLocalizations l10nOf() => context.l10n;
 
   Future<RestoreMode?> _chooseMode() {
     final l10n = l10nOf();
@@ -684,7 +685,7 @@ class _SnapshotTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final time = snap.name.contains('backup_')
         ? _fmtTime(snap.modified)

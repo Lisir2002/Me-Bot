@@ -24,7 +24,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:animations/animations.dart';
@@ -225,7 +225,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   }
 
   void _showChatMenu(BuildContext context, ChatItem chat, {Offset? anchor}) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final chatService = context.read<ChatService>();
     final isPinned = chatService.getConversation(chat.id)?.isPinned ?? false;
     final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
@@ -426,7 +426,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 
   Future<void> _renameChat(BuildContext context, ChatItem chat) async {
     final controller = TextEditingController(text: chat.title);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -525,7 +525,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     final today = DateTime(now.year, now.month, now.day);
     final aDay = DateTime(date.year, date.month, date.day);
     final diff = today.difference(aDay).inDays;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     if (diff == 0) return l10n.sideDrawerDateToday;
     if (diff == 1) return l10n.sideDrawerDateYesterday;
     final sameYear = now.year == date.year;
@@ -704,7 +704,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                         transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
                         child: Row(
                           key: ValueKey<String>((() {
-                            final l10n = AppLocalizations.of(context)!;
+                            final l10n = context.l10n;
                             String hint;
                             if (_useTabs) {
                               hint = ((_tabController?.index ?? 0) == 0)
@@ -723,7 +723,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                               controller: _searchController,
                               decoration: InputDecoration(
                                 hintText: (() {
-                                  final l10n = AppLocalizations.of(context)!;
+                                  final l10n = context.l10n;
                                   if (_useTabs) {
                                     return ((_tabController?.index ?? 0) == 0)
                                         ? l10n.sideDrawerSearchAssistantsHint
@@ -794,7 +794,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                           child: TextField(
                             controller: _searchController,
                             decoration: InputDecoration(
-                              hintText: AppLocalizations.of(context)!.sideDrawerSearchHint,
+                              hintText: context.l10n.sideDrawerSearchHint,
                               filled: true,
                               fillColor: isDark ? Colors.white10 : Colors.grey.shade200.withOpacity(0.80),
                               isDense: true,
@@ -1196,7 +1196,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
 extension on _SideDrawerState {
   Future<void> _showAssistantItemMenuDesktop(Assistant a, Offset globalPosition) async {
     if (!_isDesktop) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tp = context.read<TagProvider>();
     final hasTag = tp.tagOfAssistant(a.id) != null;
     await showDesktopContextMenuAt(
@@ -1255,7 +1255,7 @@ extension on _SideDrawerState {
 
   Future<void> _showAssistantItemMenuMobile(Assistant a) async {
     if (_isDesktop) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tp = context.read<TagProvider>();
     final hasTag = tp.tagOfAssistant(a.id) != null;
     await showModalBottomSheet(
@@ -1335,7 +1335,7 @@ extension on _SideDrawerState {
   }
 
   Future<void> _editAvatar(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1414,7 +1414,7 @@ extension on _SideDrawerState {
   }
 
   Future<String?> _pickEmoji(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // Provide input to allow any emoji via system emoji keyboard,
     // plus a large set of quick picks for convenience.
     final controller = TextEditingController();
@@ -1548,7 +1548,7 @@ extension on _SideDrawerState {
   }
 
   Future<void> _inputAvatarUrl(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -1615,7 +1615,7 @@ extension on _SideDrawerState {
   }
 
   Future<void> _inputQQAvatar(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -1777,7 +1777,7 @@ extension on _SideDrawerState {
     } on PlatformException {
       // Gracefully degrade when plugin channel isn't available or permission denied.
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.sideDrawerGalleryOpenError,
@@ -1787,7 +1787,7 @@ extension on _SideDrawerState {
       return;
     } catch (_) {
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.sideDrawerGeneralImageError,
@@ -1798,7 +1798,7 @@ extension on _SideDrawerState {
     }
   }
   Future<void> _editUserName(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final initial = widget.userName;
     final controller = TextEditingController(text: initial);
     const maxLen = 24;
@@ -2038,7 +2038,7 @@ extension on _SideDrawerState {
         if (url == null || url.isEmpty) return const SizedBox.shrink();
         final ver = info.version;
         final build = info.build;
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         final title = build != null
             ? l10n.sideDrawerUpdateTitleWithBuild(ver, build)
             : l10n.sideDrawerUpdateTitle(ver);
@@ -2116,7 +2116,7 @@ extension on _SideDrawerState {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 6, 0, 6),
                 child: Text(
-                  AppLocalizations.of(context)!.sideDrawerPinnedLabel,
+                  context.l10n.sideDrawerPinnedLabel,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.primary),
                 ).animate().fadeIn(duration: 180.ms).moveY(begin: 4, end: 0, duration: 220.ms, curve: Curves.easeOutCubic),
               ),
@@ -2384,7 +2384,7 @@ class _DesktopSidebarTabsState extends State<_DesktopSidebarTabs> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;

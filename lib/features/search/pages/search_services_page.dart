@@ -34,7 +34,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/search/search_service.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_section.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -107,7 +107,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
 
   void _deleteService(int index) {
     if (_services.length <= 1) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.searchServicesPageAtLeastOneServiceRequired,
@@ -173,7 +173,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return AppPage(
       title: l10n.searchServicesPageTitle,
@@ -234,7 +234,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     final cs = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
     final common = settings.searchCommonOptions;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     Widget stepper({required int value, required VoidCallback onMinus, required VoidCallback onPlus, String? unit}) {
       return Row(
@@ -326,7 +326,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
     final cs = Theme.of(context).colorScheme;
     final name = SearchService.getService(s).name;
     // Connection/testing status for capsule
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final testing = _testing[s.id] == true;
     final conn = context.watch<SettingsProvider>().searchConnection[s.id];
     String statusText;
@@ -404,7 +404,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
   }
 
   Future<void> _showServiceActions(BuildContext context, int index) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // 无把手、行满宽的操作表 → 不套 AppSheet 组件（经验 #19），
     // 只用 showAppSheet 收敛圆角/背景/SafeArea。
     // ⚠️ 原弹层 isScrollControlled 是默认 false，必须显式传（经验 #20）。
@@ -521,7 +521,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
@@ -591,7 +591,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   }
 
   Widget _buildServiceTypeList() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final services = [
       {'type': 'bing_local', 'name': l10n.searchServiceNameBingLocal},
       {'type': 'tavily', 'name': l10n.searchServiceNameTavily},
@@ -631,7 +631,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   }
 
   String _getServiceName(String type) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     switch (type) {
       case 'bing_local': return l10n.searchServiceNameBingLocal;
       case 'tavily': return l10n.searchServiceNameTavily;
@@ -650,7 +650,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   }
 
   Widget _buildFormView() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return SingleChildScrollView(
       key: const ValueKey('form_view'),
@@ -691,7 +691,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
   }
 
   List<Widget> _buildFieldsForType(String type) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -950,7 +950,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final searchService = SearchService.getService(widget.service);
     final cs = Theme.of(context).colorScheme;
     // ⚠️ SafeArea 与键盘避让由外层 showAppSheet 提供，这里只保留四周留白
@@ -1011,7 +1011,7 @@ class _EditServiceSheetState extends State<_EditServiceSheet> {
   }
 
   List<Widget> _buildFields() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final service = widget.service;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;

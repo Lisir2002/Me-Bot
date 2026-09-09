@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../core/services/haptics.dart';
-import '../../l10n/app_localizations.dart';
-
+import '../../l10n/build_context_l10n.dart';
 /// 工具调用审批弹窗。
 /// 返回 true 表示用户允许执行该工具，false 表示拒绝。
 Future<bool> showToolApprovalDialog(
@@ -47,7 +46,7 @@ class _ToolApprovalDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
-
+import '../../../l10n/build_context_l10n.dart';
 Future<String?> showMiniMapSheet(BuildContext context, List<ChatMessage> messages) async {
   return await showModalBottomSheet<String>(
     context: context,
@@ -55,7 +54,7 @@ class _MiniMapSheet extends StatelessWidget {
                     Icon(Lucide.Map, size: 18, color: cs.primary),
                     const SizedBox(width: 8),
                     Text(
-                      AppLocalizations.of(context)!.miniMapTitle,
+                      context.l10n.miniMapTitle,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ],

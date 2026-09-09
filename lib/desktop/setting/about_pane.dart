@@ -6,8 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
-
+import '../../l10n/build_context_l10n.dart';
 class DesktopAboutPane extends StatefulWidget {
   const DesktopAboutPane({super.key});
 
@@ -73,7 +72,7 @@ class _DesktopAboutPaneState extends State<DesktopAboutPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return Container(
       alignment: Alignment.topCenter,
@@ -425,7 +424,7 @@ class _DeskNavRowSvgState extends State<_DeskNavRowSvg> {
 
 Future<void> _showSponsorDesktopDialog(BuildContext context) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final isDark = Theme.of(context).brightness == Brightness.dark;
   const afdianUrl = 'https://afdian.com/a/minime-core';
   final wechatQrUrl = isDark ? 'https://c.img.dasctf.com/LightPicture/2025/10/ee10ae78acbd01f3.png' : 'https://c.img.dasctf.com/LightPicture/2025/10/6ba60ac0f2f8e2b4.png';

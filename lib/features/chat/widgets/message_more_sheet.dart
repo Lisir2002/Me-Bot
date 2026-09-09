@@ -7,7 +7,7 @@ import 'select_copy_sheet.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../desktop/desktop_context_menu.dart';
 import '../../../desktop/menu_anchor.dart';
 import '../../../desktop/select_copy_dialog.dart';
@@ -37,7 +37,7 @@ Future<MessageMoreAction?> showMessageMoreSheet(BuildContext context, ChatMessag
   }
 
   // Desktop: show anchored glass menu near the clicked button
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   MessageMoreAction? selected;
   await showDesktopContextMenuAt(
     context,
@@ -154,7 +154,7 @@ class _MessageMoreSheetState extends State<_MessageMoreSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     // Footer metadata (time/model) removed per iOS-style spec

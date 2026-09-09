@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/tag_provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../icons/lucide_adapter.dart';
 
 Future<void> showAssistantTagsManagerDialog(BuildContext context, {required String assistantId}) async {
@@ -68,7 +68,7 @@ class _TagsManagerBody extends StatefulWidget {
 
 class _TagsManagerBodyState extends State<_TagsManagerBody> {
   Future<void> _createTag(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final TextEditingController c = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -96,7 +96,7 @@ class _TagsManagerBodyState extends State<_TagsManagerBody> {
   }
 
   Future<void> _renameTag(BuildContext context, String tagId, String oldName) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final TextEditingController c = TextEditingController(text: oldName);
     final ok = await showDialog<bool>(
       context: context,
@@ -123,7 +123,7 @@ class _TagsManagerBodyState extends State<_TagsManagerBody> {
   }
 
   Future<void> _deleteTag(BuildContext context, String tagId) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -142,7 +142,7 @@ class _TagsManagerBodyState extends State<_TagsManagerBody> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tp = context.watch<TagProvider>();
     final tags = tp.tags;
 

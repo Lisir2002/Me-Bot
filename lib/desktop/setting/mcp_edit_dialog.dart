@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/mcp_provider.dart';
 import '../../shared/widgets/snackbar.dart';
 import '../../shared/widgets/ios_switch.dart';
@@ -87,7 +87,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
   }
 
   Future<void> _save() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.read<McpProvider>();
     // Built-in server: only allow toggling enabled, no other changes
     if (isEdit && _transport == McpTransportType.inmemory) {
@@ -100,12 +100,12 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
     final headers = <String, String>{ for (final h in _headers) if (h.key.text.trim().isNotEmpty) h.key.text.trim(): h.value.text.trim() };
     if (_transport == McpTransportType.stdio) {
       if (!_isDesktopPlatform()) {
-        showAppSnackBar(context, message: AppLocalizations.of(context)!.mcpServerEditSheetStdioOnlyDesktop, type: NotificationType.warning);
+        showAppSnackBar(context, message: context.l10n.mcpServerEditSheetStdioOnlyDesktop, type: NotificationType.warning);
         return;
       }
       final cmd = _cmdCtrl.text.trim();
       if (cmd.isEmpty) {
-        showAppSnackBar(context, message: AppLocalizations.of(context)!.mcpServerEditSheetStdioCommandRequired, type: NotificationType.warning);
+        showAppSnackBar(context, message: context.l10n.mcpServerEditSheetStdioCommandRequired, type: NotificationType.warning);
         return;
       }
       final args = _parseArgs(_argsCtrl.text.trim());
@@ -154,7 +154,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
   }
 
   Widget _headerBar() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return SizedBox(
       height: 52,
       child: Padding(
@@ -195,7 +195,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
   Widget _basicForm() {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isBuiltin = isEdit && _transport == McpTransportType.inmemory;
     return ListView(
       children: [
@@ -372,7 +372,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
 
   Widget _toolsTab() {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final server = context.watch<McpProvider>().getById(widget.serverId!);
     final tools = server?.tools ?? const <McpToolConfig>[];
     if (tools.isEmpty) {
@@ -482,7 +482,7 @@ class _DesktopMcpEditDialogState extends State<_DesktopMcpEditDialog> with Singl
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

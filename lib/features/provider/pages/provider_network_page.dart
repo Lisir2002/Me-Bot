@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/providers/settings_provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../theme/design_tokens.dart';
@@ -58,7 +58,7 @@ class _ProviderNetworkPageState extends State<ProviderNetworkPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return AppPage(
       title: l10n.providerDetailPageNetworkTab,
       // AppPagePadding.content = LTRB(16, 12, 16, 16)，与原 ListView padding 完全一致

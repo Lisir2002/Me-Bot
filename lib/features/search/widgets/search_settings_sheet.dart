@@ -6,7 +6,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../pages/search_services_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -35,7 +35,7 @@ class _SearchSettingsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
     final ap = context.watch<AssistantProvider>();
     final a = ap.currentAssistant;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import 'package:provider/provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
@@ -27,7 +27,7 @@ class _AssistantMcpSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final mcp = context.watch<McpProvider>();
     final ap = context.watch<AssistantProvider>();

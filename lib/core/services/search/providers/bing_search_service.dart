@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as parser;
-import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/build_context_l10n.dart';
 import 'package:http/http.dart' as http;
 import '../search_service.dart';
 
@@ -10,7 +10,7 @@ class BingSearchService extends SearchService<BingLocalOptions> {
   
   @override
   Widget description(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Text(l10n.searchProviderBingLocalDescription, style: const TextStyle(fontSize: 12));
   }
   

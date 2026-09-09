@@ -25,7 +25,7 @@ import '../../../core/providers/tts_provider.dart';
 import '../../../shared/widgets/markdown_with_highlight.dart';
 import '../../../shared/widgets/snackbar.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -341,7 +341,7 @@ bool _userMenuActive = false;
     if (mounted) setState(() => _userMenuActive = true);
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     showGeneralDialog<void>(
       context: context,
@@ -551,7 +551,7 @@ bool _userMenuActive = false;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final userProvider = context.watch<UserProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
     final parsed = _parseUserContent(widget.message.content);
     final showUserActions = settings.showUserMessageActions;
@@ -886,7 +886,7 @@ bool _userMenuActive = false;
   }
 
   void _showUserContextMenuAt(Offset globalPosition) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // Haptic feedback
     try { Haptics.light(); } catch (_) {}
     await showDesktopContextMenuAt(
@@ -1025,7 +1025,7 @@ bool _userMenuActive = false;
 
   Widget _buildAssistantMessage() {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
 
     // Extract vendor inline <think>...</think> content (if present)
@@ -1517,7 +1517,7 @@ bool _userMenuActive = false;
 
   // Try resolve citation id -> url from the latest search_web tool results of this assistant message
   void _handleCitationTap(String id) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final items = _latestSearchItems();
     final match = items.cast<Map<String, dynamic>?>().firstWhere(
       (e) => (e?['id']?.toString() ?? '') == id,
@@ -1578,7 +1578,7 @@ bool _userMenuActive = false;
 
   void _showCitationsSheet(List<Map<String, dynamic>> items) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final bool isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux;
@@ -2066,7 +2066,7 @@ class _ToolCallItem extends StatelessWidget {
 
 
   String _titleFor(BuildContext context, String name, Map<String, dynamic> args, {required bool isResult}) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     switch (name) {
       case 'create_memory':
         return l10n.chatMessageWidgetCreateMemory;
@@ -2135,7 +2135,7 @@ class _ToolCallItem extends StatelessWidget {
 
   void _showDetail(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final argsPretty = const JsonEncoder.withIndent('  ').convert(part.arguments);
     final resultText = (part.content ?? '').isNotEmpty ? part.content! : l10n.chatMessageWidgetNoResultYet;
 
@@ -2359,7 +2359,7 @@ class _SourcesSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final label = l10n.chatMessageWidgetCitationsCount(count);
     return IosCardPress(
       borderRadius: BorderRadius.circular(12),
@@ -2467,7 +2467,7 @@ class _ReasoningSectionState extends State<_ReasoningSection> with SingleTickerP
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
     final loading = widget.loading;
 

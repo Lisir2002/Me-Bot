@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
 import '../../../core/services/security/app_lock_gate.dart';
@@ -56,7 +56,7 @@ Future<void> showShareProviderSheet(BuildContext context, String providerKey) as
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (ctx) {
-      final l10n = AppLocalizations.of(ctx)!;
+      final l10n = ctx.l10n;
       Rect shareAnchorRect(BuildContext bctx) {
         try {
           final ro = bctx.findRenderObject();

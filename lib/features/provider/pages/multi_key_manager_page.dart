@@ -5,7 +5,7 @@ import '../../../core/models/api_keys.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/card_surface.dart';
@@ -67,7 +67,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
     final cfg = settings.getProviderConfig(widget.providerKey, defaultName: widget.providerDisplayName);
     final apiKeys = List<ApiKeyConfig>.from(cfg.apiKeys ?? const <ApiKeyConfig>[]);
@@ -145,7 +145,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
   }
 
   String _strategyLabel(BuildContext context, LoadBalanceStrategy s) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     switch (s) {
       case LoadBalanceStrategy.priority:
         return l10n.multiKeyPageStrategyPriority;
@@ -174,7 +174,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
               children: [
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(ctx)!.multiKeyPageStrategyTitle,
+                    ctx.l10n.multiKeyPageStrategyTitle,
                     style: TextStyle(fontSize: 15, color: c),
                   ),
                 ),
@@ -196,7 +196,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
 
   Widget _keysList(BuildContext context, List<ApiKeyConfig> keys) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     if (keys.isEmpty) {
       return _sectionCard(children: [
         Padding(
@@ -298,7 +298,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
             icon: Lucide.Pencil,
             color: cs.primary,
             size: 22,
-            semanticLabel: AppLocalizations.of(context)!.multiKeyPageEdit,
+            semanticLabel: context.l10n.multiKeyPageEdit,
             onTap: () async {
               await _editKey(k);
             },
@@ -309,7 +309,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
             icon: Lucide.Trash2,
             color: cs.error,
             size: 22,
-            semanticLabel: AppLocalizations.of(context)!.multiKeyPageDelete,
+            semanticLabel: context.l10n.multiKeyPageDelete,
             onTap: () async {
               await _deleteKey(k);
             },
@@ -381,9 +381,9 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     if (!mounted) return;
     showAppSnackBar(
       context,
-      message: AppLocalizations.of(context)!.multiKeyPageDeleteSnackbarDeletedOne,
+      message: context.l10n.multiKeyPageDeleteSnackbarDeletedOne,
       type: NotificationType.info,
-      actionLabel: AppLocalizations.of(context)!.multiKeyPageUndo,
+      actionLabel: context.l10n.multiKeyPageUndo,
       onAction: () async {
         // Re-insert if user taps undo
         final latest = settings.getProviderConfig(widget.providerKey, defaultName: widget.providerDisplayName);
@@ -394,7 +394,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
         if (!mounted) return;
         showAppSnackBar(
           context,
-          message: AppLocalizations.of(context)!.multiKeyPageUndoRestored,
+          message: context.l10n.multiKeyPageUndoRestored,
           type: NotificationType.success,
           duration: const Duration(seconds: 2),
         );
@@ -411,14 +411,14 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     final list = List<ApiKeyConfig>.from(cfg.apiKeys ?? const <ApiKeyConfig>[]);
     final duplicate = list.any((e) => e.id != k.id && e.key.trim() == updated.key.trim());
     if (duplicate) {
-      showAppSnackBar(context, message: AppLocalizations.of(context)!.multiKeyPageDuplicateKeyWarning, type: NotificationType.warning);
+      showAppSnackBar(context, message: context.l10n.multiKeyPageDuplicateKeyWarning, type: NotificationType.warning);
       return;
     }
     await _updateKey(updated);
   }
 
   Future<void> _onAddKeys() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final added = await _showAddKeysSheet();
     if (added == null) return;
     final settings = context.read<SettingsProvider>();
@@ -459,7 +459,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     if (_detectModelId == null) {
       if (models.isEmpty) {
         if (!mounted) return;
-        showAppSnackBar(context, message: AppLocalizations.of(context)!.multiKeyPagePleaseAddModel, type: NotificationType.warning);
+        showAppSnackBar(context, message: context.l10n.multiKeyPagePleaseAddModel, type: NotificationType.warning);
         return;
       }
       _detectModelId = models.first;
@@ -487,7 +487,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     if (errorKeys.isEmpty) {
       return;
     }
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final ok = await showDialog<bool>(
       context: context,
@@ -515,7 +515,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     if (!mounted) return;
     showAppSnackBar(
       context,
-      message: AppLocalizations.of(context)!.multiKeyPageDeletedErrorsSnackbar(errorKeys.length),
+      message: context.l10n.multiKeyPageDeletedErrorsSnackbar(errorKeys.length),
       type: NotificationType.success,
     );
   }
@@ -577,7 +577,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
   }
 
   Future<List<String>?> _showAddKeysSheet() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final inputCtrl = TextEditingController();
     return showAppSheet<List<String>?>(
       context: context,
@@ -615,7 +615,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
   }
 
   Future<ApiKeyConfig?> _showEditKeySheet(ApiKeyConfig k) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final aliasCtrl = TextEditingController(text: k.name ?? '');
     final keyCtrl = TextEditingController(text: k.key);
     final priCtrl = TextEditingController(text: k.priority.toString());
@@ -747,7 +747,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     final models = cfg.models;
     if (_detectModelId == null) {
       if (models.isEmpty) {
-        showAppSnackBar(context, message: AppLocalizations.of(context)!.multiKeyPagePleaseAddModel, type: NotificationType.warning);
+        showAppSnackBar(context, message: context.l10n.multiKeyPagePleaseAddModel, type: NotificationType.warning);
         return;
       }
       _detectModelId = models.first;

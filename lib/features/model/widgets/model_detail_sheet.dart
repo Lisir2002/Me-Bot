@@ -5,6 +5,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -152,7 +153,7 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.8,
@@ -480,7 +481,7 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
     String id = _idCtrl.text.trim();
     // Basic validation
     if (id.isEmpty || id.length < 2 || id.contains(' ')) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.modelDetailSheetInvalidIdError,
@@ -490,7 +491,7 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
     }
     // Prevent duplicate IDs in models list (except self when unchanged)
     if (old.models.contains(id) && id != prevId) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.modelDetailSheetModelIdExistsError,
@@ -727,7 +728,7 @@ class _HeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
@@ -781,7 +782,7 @@ class _BodyRow extends StatelessWidget {
   final VoidCallback onDelete;
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
     return Padding(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/design_tokens.dart';
+import '../../l10n/build_context_l10n.dart';
 
 // ──────────────────────────────────────────────────────────────
 // 三态占位组件：AppLoading / AppError / AppEmpty
@@ -82,7 +83,7 @@ class AppError extends StatelessWidget {
               FilledButton.tonalIcon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('重试'),
+                label: Text(context.l10n.commonRetry),
               ),
             ],
           ],

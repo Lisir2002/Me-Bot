@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:characters/characters.dart';
 import '../shared/widgets/emoji_text.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../core/providers/user_provider.dart';
 import '../core/providers/settings_provider.dart';
 import 'user_profile_dialog.dart';
@@ -30,7 +30,7 @@ class DesktopNavRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isMac = Platform.isMacOS;
     final double topGap = isMac ? 36.0 : 8.0;
     final isChatActive = activeIndex == 0;
@@ -234,7 +234,7 @@ class _ThemeCycleButtonState extends State<_ThemeCycleButton> {
     final sp = context.watch<SettingsProvider>();
     final cs = Theme.of(context).colorScheme;
     final icon = _iconFor(sp.themeMode);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Tooltip(
       message: l10n.desktopNavThemeToggleTooltip,
       waitDuration: const Duration(milliseconds: 300),

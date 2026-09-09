@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -96,7 +96,6 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('zh'),
-    Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans'),
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
@@ -3393,7 +3392,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Test · {name}'**
-  String mcpToolTestTitle(Object name);
+  String mcpToolTestTitle(String name);
 
   /// No description provided for @mcpToolTestArgsLabel.
   ///
@@ -3441,7 +3440,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Schema · {name}'**
-  String mcpToolSchemaTitle(Object name);
+  String mcpToolSchemaTitle(String name);
 
   /// No description provided for @mcpToolSchemaEnabled.
   ///
@@ -7109,12 +7108,6 @@ abstract class AppLocalizations {
   /// **'No messages on {date}'**
   String statsHeatmapNoActivity(String date);
 
-  /// 热力图某天无消息
-  ///
-  /// In en, this message translates to:
-  /// **'No activity'**
-  String get statsNoActivity;
-
   /// No description provided for @backupEncryptPolicy.
   ///
   /// In en, this message translates to:
@@ -7606,6 +7599,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No extra allowed sites.'**
   String get webviewHostsEmpty;
+
+  /// No description provided for @checkupScannerErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{scannerTitle}: scan error'**
+  String checkupScannerErrorTitle(String scannerTitle);
+
+  /// No description provided for @checkupScannerErrorDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'This check failed and was skipped; other checks are unaffected.'**
+  String get checkupScannerErrorDetail;
+
+  /// No description provided for @checkupBackupPlaintextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} plaintext backup(s) found'**
+  String checkupBackupPlaintextTitle(int count);
+
+  /// No description provided for @checkupBackupPlaintextDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'These backups are plaintext and may contain credentials: {files}. Delete the old plaintext backups and switch to encrypted or sanitized export.'**
+  String checkupBackupPlaintextDetail(String files);
+
+  /// No description provided for @checkupLegacyKeysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncleaned legacy plaintext credential keys found'**
+  String get checkupLegacyKeysTitle;
+
+  /// No description provided for @checkupLegacyKeysDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} legacy key(s) still exist in local config: {keys} (should be empty)'**
+  String checkupLegacyKeysDetail(int count, String keys);
+
+  /// No description provided for @checkupLegacyKeysFixHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Run orphan cleanup again'**
+  String get checkupLegacyKeysFixHint;
+
+  /// No description provided for @checkupLegacyPlaintextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspicious plaintext keys in local config'**
+  String get checkupLegacyPlaintextTitle;
+
+  /// No description provided for @checkupLegacyPlaintextDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspicious plaintext key patterns found in {count} config entries; verify they are not migration leftovers.'**
+  String checkupLegacyPlaintextDetail(int count);
+
+  /// No description provided for @checkupLogLeakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible plaintext keys in logs'**
+  String get checkupLogLeakTitle;
+
+  /// No description provided for @checkupLogLeakDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Found about {lines} suspected plaintext key occurrences in {fileCount} log file(s); check whether any component prints credentials without sanitization.'**
+  String checkupLogLeakDetail(int fileCount, int lines);
+
+  /// No description provided for @checkupOrphanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} orphan credential(s) found'**
+  String checkupOrphanTitle(int count);
+
+  /// No description provided for @checkupOrphanDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'These credentials have no matching config entries and linger in secure storage; consider cleaning them up.'**
+  String get checkupOrphanDetail;
+
+  /// No description provided for @checkupOrphanFixHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete orphan credentials'**
+  String get checkupOrphanFixHint;
+
+  /// No description provided for @tensdaqTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'A revolutionary bidding-based AI MaaS platform — pricing driven by market supply and demand; say goodbye to costly fixed pricing.'**
+  String get tensdaqTagline;
+
+  /// No description provided for @partnerSiteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Website:'**
+  String get partnerSiteLabel;
+
+  /// No description provided for @siliconflowFreeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Free SiliconFlow models are built in — no API key needed. For more powerful models, apply for your own API key and configure it here.'**
+  String get siliconflowFreeHint;
+
+  /// No description provided for @translateClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get translateClear;
+
+  /// No description provided for @translateCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get translateCopy;
+
+  /// No description provided for @translateStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get translateStop;
+
+  /// No description provided for @translateRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get translateRun;
+
+  /// No description provided for @clearAvatarCacheFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear avatar cache: {error}'**
+  String clearAvatarCacheFailed(String error);
+
+  /// No description provided for @clearCacheFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear cache: {error}'**
+  String clearCacheFailed(String error);
+
+  /// No description provided for @clearLogsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear logs: {error}'**
+  String clearLogsFailed(String error);
+
+  /// No description provided for @deleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete failed: {error}'**
+  String deleteFailed(String error);
+
+  /// No description provided for @operationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation failed: {error}'**
+  String operationFailed(String error);
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
 }
 
 class _AppLocalizationsDelegate
@@ -7631,8 +7786,6 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
     case 'zh':
       {
         switch (locale.scriptCode) {
-          case 'Hans':
-            return AppLocalizationsZhHans();
           case 'Hant':
             return AppLocalizationsZhHant();
         }

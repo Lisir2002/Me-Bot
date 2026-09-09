@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 // import 'dart:async';
 import 'l10n/app_localizations.dart';
+import 'l10n/build_context_l10n.dart';
 import 'features/home/pages/home_page.dart';
 import 'desktop/desktop_home_page.dart';
 import 'package:flutter/services.dart';
@@ -232,8 +233,8 @@ class MyApp extends StatelessWidget {
                         final already = await AndroidBackgroundManager.isEnabled();
                         if (!already) {
                           await AndroidBackgroundManager.ensureInitialized(
-                            notificationTitle: AppLocalizations.of(context)!.androidBackgroundNotificationTitle,
-                            notificationText: AppLocalizations.of(context)!.androidBackgroundNotificationText,
+                            notificationTitle: context.l10n.androidBackgroundNotificationTitle,
+                            notificationText: context.l10n.androidBackgroundNotificationText,
                           );
                           await AndroidBackgroundManager.setEnabled(true);
                         }
@@ -338,8 +339,8 @@ class MyApp extends StatelessWidget {
                   _didEnsureAssistants = true;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     try { ctx.read<AssistantProvider>().ensureDefaults(ctx); } catch (_) {}
-                    try { ctx.read<ChatService>().setDefaultConversationTitle(AppLocalizations.of(ctx)!.chatServiceDefaultConversationTitle); } catch (_) {}
-                    try { ctx.read<UserProvider>().setDefaultNameIfUnset(AppLocalizations.of(ctx)!.userProviderDefaultUserName); } catch (_) {}
+                    try { ctx.read<ChatService>().setDefaultConversationTitle(ctx.l10n.chatServiceDefaultConversationTitle); } catch (_) {}
+                    try { ctx.read<UserProvider>().setDefaultNameIfUnset(ctx.l10n.userProviderDefaultUserName); } catch (_) {}
                   });
                 }
                 return AnnotatedRegion<SystemUiOverlayStyle>(

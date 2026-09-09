@@ -26,7 +26,7 @@ class BackupFileScanner extends CheckupScanner {
   CheckupSeverity get severity => CheckupSeverity.warn;
 
   @override
-  Future<List<CheckupFinding>> scan() async {
+  Future<List<CheckupFinding>> scan(CheckupStrings strings) async {
     final files = await _backupFiles;
     final plaintext = <String>[];
 
@@ -43,9 +43,8 @@ class BackupFileScanner extends CheckupScanner {
       CheckupFinding(
         id: '$id:plaintext',
         scannerId: id,
-        title: '发现 ${plaintext.length} 个明文备份',
-        detail: '以下备份为明文格式、可能含凭证：${plaintext.join('、')}。'
-            '建议删除旧明文备份，改用加密或脱敏导出',
+        title: strings.backupPlaintextTitle(plaintext.length),
+        detail: strings.backupPlaintextDetail(plaintext),
         severity: CheckupSeverity.warn,
         autoFixable: false,
       )

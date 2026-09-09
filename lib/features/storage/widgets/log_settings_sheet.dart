@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import 'storage_ios_widgets.dart';
 
 /// 日志设置底部弹窗：保存响应输出 / 省略大载荷 / 自动删除 / 日志大小上限。
@@ -97,7 +98,7 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final themeDark = Theme.of(context).brightness == Brightness.dark;
     final bg = themeDark ? Colors.white10 : Colors.white.withOpacity(0.96);

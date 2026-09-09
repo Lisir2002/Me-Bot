@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../icons/lucide_adapter.dart' as lucide;
 import '../../core/providers/mcp_provider.dart';
 import '../../shared/widgets/snackbar.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/settings_provider.dart';
 
 Future<void> showDesktopMcpJsonEditDialog(BuildContext context) async {
@@ -51,7 +51,7 @@ class _DesktopMcpJsonEditDialogState extends State<_DesktopMcpJsonEditDialog> {
       jsonDecode(_controller.text);
     } catch (e) {
       setState(() => _error = e.toString());
-      showAppSnackBar(context, message: AppLocalizations.of(context)!.mcpJsonEditParseFailed, type: NotificationType.warning);
+      showAppSnackBar(context, message: context.l10n.mcpJsonEditParseFailed, type: NotificationType.warning);
       return;
     }
 
@@ -59,7 +59,7 @@ class _DesktopMcpJsonEditDialogState extends State<_DesktopMcpJsonEditDialog> {
       await context.read<McpProvider>().replaceAllFromJson(_controller.text);
       if (!mounted) return;
       Navigator.of(context).maybePop();
-      showAppSnackBar(context, message: AppLocalizations.of(context)!.mcpJsonEditSavedApplied);
+      showAppSnackBar(context, message: context.l10n.mcpJsonEditSavedApplied);
     } catch (e) {
       setState(() => _error = e.toString());
       if (!mounted) return;
@@ -101,7 +101,7 @@ class _DesktopMcpJsonEditDialogState extends State<_DesktopMcpJsonEditDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
-                    Text(AppLocalizations.of(context)!.mcpJsonEditTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    Text(context.l10n.mcpJsonEditTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     const Spacer(),
                     _SmallIconBtn(
                       icon: lucide.Lucide.X,
@@ -151,7 +151,7 @@ class _DesktopMcpJsonEditDialogState extends State<_DesktopMcpJsonEditDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _TextBtn(label: AppLocalizations.of(context)!.mcpServerEditSheetCancel, onTap: () => Navigator.of(context).maybePop()),
+                  _TextBtn(label: context.l10n.mcpServerEditSheetCancel, onTap: () => Navigator.of(context).maybePop()),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _save,
@@ -161,7 +161,7 @@ class _DesktopMcpJsonEditDialogState extends State<_DesktopMcpJsonEditDialog> {
                       foregroundColor: cs.onPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(AppLocalizations.of(context)!.mcpServerEditSheetSave),
+                    child: Text(context.l10n.mcpServerEditSheetSave),
                   ),
                 ],
               ),

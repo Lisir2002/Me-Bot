@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../icons/lucide_adapter.dart' as lucide;
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
@@ -100,7 +101,7 @@ class _TranslatePageState extends State<TranslatePage> {
   }
 
   Future<void> _translate() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final txt = _src.text.trim();
     if (txt.isEmpty) return;
     final pk = _providerKey;
@@ -186,7 +187,7 @@ class _TranslatePageState extends State<TranslatePage> {
   Future<void> _copyResult() async {
     await Clipboard.setData(ClipboardData(text: _dst.text));
     if (!mounted) return;
-    showAppSnackBar(context, message: AppLocalizations.of(context)!.chatMessageWidgetCopiedToClipboard, type: NotificationType.success);
+    showAppSnackBar(context, message: context.l10n.chatMessageWidgetCopiedToClipboard, type: NotificationType.success);
   }
 
   Future<void> _clearAll() async {
@@ -196,7 +197,7 @@ class _TranslatePageState extends State<TranslatePage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final asset = (_modelId != null) ? BrandAssets.assetForName(_modelId!) : null;

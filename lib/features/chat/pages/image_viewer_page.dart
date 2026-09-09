@@ -15,8 +15,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../shared/widgets/snackbar.dart';
-import '../../../l10n/app_localizations.dart';
-
+import '../../../l10n/build_context_l10n.dart';
 class ImageViewerPage extends StatefulWidget {
   const ImageViewerPage({super.key, required this.images, this.initialIndex = 0});
 
@@ -176,7 +175,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
     }
     if (_saving) return;
     setState(() => _saving = true);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     try {
       final src = widget.images[_index];
       Uint8List? bytes;
@@ -262,7 +261,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
   }
 
   Future<void> _shareCurrent() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     try {
       // iPad requires a non-zero popover source rect within overlay coordinates
       Rect anchor;
@@ -647,7 +646,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
   Future<void> _saveCurrentDesktop() async {
     if (_saving) return;
     setState(() => _saving = true);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     try {
       final src = widget.images[_index];
       Uint8List? bytes;

@@ -7,8 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../core/providers/settings_provider.dart';
 import '../icons/lucide_adapter.dart';
-import '../l10n/app_localizations.dart';
-
+import '../l10n/build_context_l10n.dart';
 Future<void> showDesktopReasoningBudgetPopover(
   BuildContext context, {
   required GlobalKey anchorKey,
@@ -187,7 +186,7 @@ class _ReasoningContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     final selected = _bucket(sp.thinkingBudget);
 

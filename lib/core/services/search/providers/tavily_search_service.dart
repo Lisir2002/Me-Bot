@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/build_context_l10n.dart';
 import '../search_service.dart';
 
 class TavilySearchService extends SearchService<TavilyOptions> {
@@ -10,7 +10,7 @@ class TavilySearchService extends SearchService<TavilyOptions> {
   
   @override
   Widget description(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Text(l10n.searchProviderTavilyDescription, style: const TextStyle(fontSize: 12));
   }
   

@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import '../shared/widgets/ios_switch.dart';
 
 import '../l10n/app_localizations.dart';
+
+import '../l10n/build_context_l10n.dart';
 import '../icons/lucide_adapter.dart' as lucide;
 import '../core/providers/settings_provider.dart';
 
@@ -225,7 +227,7 @@ class _AddProviderDialogBodyState extends State<_AddProviderDialogBody> with Sin
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 580, maxWidth: 700, maxHeight: 640),

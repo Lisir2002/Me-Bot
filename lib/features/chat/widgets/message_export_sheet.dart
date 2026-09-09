@@ -33,7 +33,7 @@ import '../../../shared/widgets/mermaid_exporter.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/ios_switch.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../utils/avatar_cache.dart';
 import 'chat_message_widget.dart' show ToolUIPart;
@@ -77,7 +77,7 @@ String? _modelDisplayName(BuildContext context, ChatMessage msg) {
 
 
 String _getRoleName(BuildContext context, ChatMessage msg) {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   if (msg.role == 'user') {
     final userProvider = context.read<UserProvider>();
     return userProvider.name;
@@ -171,7 +171,7 @@ Future<File?> _renderAndSaveMessageImage(
 }) async {
   final cs = Theme.of(context).colorScheme;
   final settings = context.read<SettingsProvider>();
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   // Pre-render mermaid diagrams to images for export
   try {
     final codes = extractMermaidCodes(message.content);
@@ -214,7 +214,7 @@ Future<File?> _renderAndSaveChatImage(
 }) async {
   final cs = Theme.of(context).colorScheme;
   final settings = context.read<SettingsProvider>();
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   // Pre-render all mermaid diagrams found in selected messages
   try {
     final codes = messages
@@ -558,7 +558,7 @@ class _ExportDialogState extends State<_ExportDialog> {
   bool _expandThinkingContent = false;
 
   String _formatTime(BuildContext context, DateTime time) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final fmt = DateFormat(l10n.messageExportSheetDateTimeWithSecondsPattern);
     return fmt.format(time);
   }
@@ -572,7 +572,7 @@ class _ExportDialogState extends State<_ExportDialog> {
       final msg = widget.message;
       final service = pctx.read<ChatService>();
       final convo = service.getConversation(msg.conversationId);
-      final l10n = AppLocalizations.of(pctx)!;
+      final l10n = pctx.l10n;
       final title = ((convo?.title ?? '').trim().isNotEmpty) ? (convo?.title ?? '') : l10n.messageExportSheetDefaultTitle;
       final time = _formatTime(pctx, msg.timestamp);
 
@@ -611,7 +611,7 @@ class _ExportDialogState extends State<_ExportDialog> {
       final filename = 'chat-export-${DateTime.now().millisecondsSinceEpoch}.md';
       // Desktop save
       final String? savePath = await FilePicker.platform.saveFile(
-        dialogTitle: AppLocalizations.of(pctx)!.backupPageExportToFile,
+        dialogTitle: pctx.l10n.backupPageExportToFile,
         fileName: filename,
         type: FileType.custom,
         allowedExtensions: const ['md'],
@@ -619,7 +619,7 @@ class _ExportDialogState extends State<_ExportDialog> {
       if (savePath != null) {
         await File(savePath).parent.create(recursive: true);
         await File(savePath).writeAsString(buf.toString());
-        final l10n = AppLocalizations.of(pctx)!;
+        final l10n = pctx.l10n;
         showAppSnackBar(
           pctx,
           message: l10n.messageExportSheetExportedAs(p.basename(savePath)),
@@ -628,7 +628,7 @@ class _ExportDialogState extends State<_ExportDialog> {
       }
     } catch (e) {
       final pctx = widget.parentContext;
-      final l10n = AppLocalizations.of(pctx)!;
+      final l10n = pctx.l10n;
       showAppSnackBar(
         pctx,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -655,7 +655,7 @@ class _ExportDialogState extends State<_ExportDialog> {
       await showImagePreviewSheet(widget.parentContext, file: file!);
       return;
     } catch (e) {
-      final l10n = AppLocalizations.of(widget.parentContext)!;
+      final l10n = widget.parentContext.l10n;
       showAppSnackBar(
         widget.parentContext,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -667,7 +667,7 @@ class _ExportDialogState extends State<_ExportDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 420, maxWidth: 640, maxHeight: 640),
       child: ClipRRect(
@@ -798,7 +798,7 @@ class _BatchExportDialogState extends State<_BatchExportDialog> {
   bool _expandThinkingContent = false;
 
   String _formatTime(BuildContext context, DateTime time) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final fmt = DateFormat(l10n.messageExportSheetDateTimeWithSecondsPattern);
     return fmt.format(time);
   }
@@ -810,7 +810,7 @@ class _BatchExportDialogState extends State<_BatchExportDialog> {
     try {
       final pctx = widget.parentContext;
       final conv = widget.conversation;
-      final l10n = AppLocalizations.of(pctx)!;
+      final l10n = pctx.l10n;
       final title = (conv.title.trim().isNotEmpty) ? conv.title : l10n.messageExportSheetDefaultTitle;
       final buf = StringBuffer();
       buf.writeln('# $title');
@@ -849,7 +849,7 @@ class _BatchExportDialogState extends State<_BatchExportDialog> {
 
       final filename = 'chat-export-${DateTime.now().millisecondsSinceEpoch}.md';
       final String? savePath = await FilePicker.platform.saveFile(
-        dialogTitle: AppLocalizations.of(pctx)!.backupPageExportToFile,
+        dialogTitle: pctx.l10n.backupPageExportToFile,
         fileName: filename,
         type: FileType.custom,
         allowedExtensions: const ['md'],
@@ -875,7 +875,7 @@ class _BatchExportDialogState extends State<_BatchExportDialog> {
       );
     } catch (e) {
       final pctx = widget.parentContext;
-      final l10n = AppLocalizations.of(pctx)!;
+      final l10n = pctx.l10n;
       showAppSnackBar(
         pctx,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -903,7 +903,7 @@ class _BatchExportDialogState extends State<_BatchExportDialog> {
       await showImagePreviewSheet(widget.parentContext, file: file!);
       return;
     } catch (e) {
-      final l10n = AppLocalizations.of(widget.parentContext)!;
+      final l10n = widget.parentContext.l10n;
       showAppSnackBar(
         widget.parentContext,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -915,7 +915,7 @@ class _BatchExportDialogState extends State<_BatchExportDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 480, maxWidth: 720, maxHeight: 460),
       child: ClipRRect(
@@ -1061,7 +1061,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
   }
 
   String _formatTime(BuildContext context, DateTime time) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final fmt = DateFormat(l10n.messageExportSheetDateTimeWithSecondsPattern);
     return fmt.format(time);
   }
@@ -1075,7 +1075,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
     setState(() => _exporting = true);
     try {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         showAppSnackBar(
           context,
           message: l10n.messageExportSheetExporting,
@@ -1084,7 +1084,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
       }
       final ctx = context;
       final conv = widget.conversation;
-      final l10n = AppLocalizations.of(ctx)!;
+      final l10n = ctx.l10n;
       final title = (conv.title.trim().isNotEmpty) ? conv.title : l10n.messageExportSheetDefaultTitle;
       final buf = StringBuffer();
       buf.writeln('# $title');
@@ -1125,7 +1125,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
 
       if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
         // Desktop: choose save location
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         final String? savePath = await FilePicker.platform.saveFile(
           dialogTitle: l10n.backupPageExportToFile,
           fileName: filename,
@@ -1165,7 +1165,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
           sharePositionOrigin: _shareAnchorRect(context),
         );
         if (mounted) {
-          final l10n = AppLocalizations.of(context)!;
+          final l10n = context.l10n;
           showAppSnackBar(
             context,
             message: l10n.messageExportSheetExportedAs(filename),
@@ -1175,7 +1175,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         showAppSnackBar(
           context,
           message: l10n.messageExportSheetExportFailed('$e'),
@@ -1207,7 +1207,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
       await showImagePreviewSheet(widget.parentContext, file: file!);
       return; // do not fall through to setState after pop
     } catch (e) {
-      final l10n = AppLocalizations.of(widget.parentContext)!;
+      final l10n = widget.parentContext.l10n;
       showAppSnackBar(
         widget.parentContext,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -1221,7 +1221,7 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return DraggableScrollableSheet(
       controller: _ctrl,
       expand: false,
@@ -1344,7 +1344,7 @@ class _ExportSheetState extends State<_ExportSheet> {
   }
 
   String _formatTime(BuildContext context, DateTime time) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final fmt = DateFormat(l10n.messageExportSheetDateTimeWithSecondsPattern);
     return fmt.format(time);
   }
@@ -1357,7 +1357,7 @@ class _ExportSheetState extends State<_ExportSheet> {
       final msg = widget.message;
       final service = ctx.read<ChatService>();
       final convo = service.getConversation(msg.conversationId);
-      final l10n = AppLocalizations.of(ctx)!;
+      final l10n = ctx.l10n;
       final title = ((convo?.title ?? '').trim().isNotEmpty) ? (convo?.title ?? '') : l10n.messageExportSheetDefaultTitle;
       final time = _formatTime(ctx, msg.timestamp);
 
@@ -1400,7 +1400,7 @@ class _ExportSheetState extends State<_ExportSheet> {
       if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
         // Desktop: choose save location
         final String? savePath = await FilePicker.platform.saveFile(
-          dialogTitle: AppLocalizations.of(context)!.backupPageExportToFile,
+          dialogTitle: context.l10n.backupPageExportToFile,
           fileName: filename,
           type: FileType.custom,
           allowedExtensions: const ['md'],
@@ -1409,7 +1409,7 @@ class _ExportSheetState extends State<_ExportSheet> {
           await File(savePath).parent.create(recursive: true);
           await File(savePath).writeAsString(buf.toString());
           if (mounted) {
-            final l10n = AppLocalizations.of(context)!;
+            final l10n = context.l10n;
             showAppSnackBar(
               context,
               message: l10n.messageExportSheetExportedAs(p.basename(savePath)),
@@ -1428,7 +1428,7 @@ class _ExportSheetState extends State<_ExportSheet> {
           sharePositionOrigin: _shareAnchorRect(context),
         );
         if (mounted) {
-          final l10n = AppLocalizations.of(context)!;
+          final l10n = context.l10n;
           showAppSnackBar(
             context,
             message: l10n.messageExportSheetExportedAs(filename),
@@ -1438,7 +1438,7 @@ class _ExportSheetState extends State<_ExportSheet> {
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         showAppSnackBar(
           context,
           message: l10n.messageExportSheetExportFailed('$e'),
@@ -1468,7 +1468,7 @@ class _ExportSheetState extends State<_ExportSheet> {
       await showImagePreviewSheet(widget.parentContext, file: file!);
       return;
     } catch (e) {
-      final l10n = AppLocalizations.of(widget.parentContext)!;
+      final l10n = widget.parentContext.l10n;
       showAppSnackBar(
         widget.parentContext,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -1482,7 +1482,7 @@ class _ExportSheetState extends State<_ExportSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return DraggableScrollableSheet(
       controller: _ctrl,
       expand: false,
@@ -2078,7 +2078,7 @@ class _AssistantHeader extends StatelessWidget {
       if (useAssist && (assistant?.name.trim().isNotEmpty ?? false)) {
         return assistant!.name.trim();
       }
-      return _modelDisplayName(context, message) ?? AppLocalizations.of(context)!.messageExportSheetAssistant;
+      return _modelDisplayName(context, message) ?? context.l10n.messageExportSheetAssistant;
     }();
 
     final Widget leading = useAssist
@@ -2203,7 +2203,7 @@ class _ExportDisclaimer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final text = AppLocalizations.of(context)!.exportDisclaimerAiGenerated;
+    final text = context.l10n.exportDisclaimerAiGenerated;
     return Center(
       child: Padding(
         padding: const EdgeInsets.only(top: 4, bottom: 6),
@@ -2219,7 +2219,7 @@ class _ExportDisclaimer extends StatelessWidget {
 
 Future<void> _runWithExportingOverlay(BuildContext context, Future<void> Function() task) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   // Show overlay first
   showDialog<void>(
     context: context,
@@ -2355,7 +2355,7 @@ class _ExportThinkingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = cs.primaryContainer.withOpacity(isDark ? 0.25 : 0.30);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cleanedText = _sanitizeThinkingText(thinkingText);
 
     return Container(
@@ -2452,7 +2452,7 @@ class _ExportToolCard extends StatelessWidget {
   }
 
   String _titleFor(BuildContext context, String name, Map<String, dynamic> args) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     switch (name) {
       case 'create_memory':
         return l10n.chatMessageWidgetCreateMemory;

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../widgets/storage_categories.dart';
@@ -61,7 +61,7 @@ class _StoragePageState extends State<StoragePage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final provider = context.watch<StorageProvider>();
     final categories = buildStorageCategories(l10n);
@@ -144,7 +144,7 @@ class _StorageBodyState extends State<_StorageBody>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final provider = context.watch<StorageProvider>();
     final stats = provider.stats;
@@ -209,7 +209,7 @@ class _UsageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final cardBg = theme.brightness == Brightness.dark

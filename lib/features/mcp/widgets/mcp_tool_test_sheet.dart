@@ -6,7 +6,7 @@ import 'package:mcp_client/mcp_client.dart' as mcp;
 
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
 
 /// 工具试调面板：输入参数 → 直接调用 MCP 工具 → 预览返回结果。
@@ -94,7 +94,7 @@ class _McpToolTestPanelState extends State<McpToolTestPanel> {
       }
       args = decoded;
     } catch (e) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       if (mounted) {
         setState(() {
           _showResult = true;
@@ -152,7 +152,7 @@ class _McpToolTestPanelState extends State<McpToolTestPanel> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tool = _findTool();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

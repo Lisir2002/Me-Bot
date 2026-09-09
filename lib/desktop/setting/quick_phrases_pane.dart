@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/models/quick_phrase.dart';
 import '../../core/providers/quick_phrase_provider.dart';
 
@@ -28,7 +28,7 @@ class _DesktopQuickPhrasesPaneState extends State<DesktopQuickPhrasesPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final phrases = context.watch<QuickPhraseProvider>().globalPhrases;
 
     return Container(
@@ -122,7 +122,7 @@ class _DesktopQuickPhrasesPaneState extends State<DesktopQuickPhrasesPane> {
   }
 
   Future<void> _showAddEditDialog(BuildContext context, {QuickPhrase? phrase}) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final result = await showDialog<Map<String, String>?>(
       context: context,
       builder: (ctx) => _QuickPhraseEditDialog(
@@ -253,7 +253,7 @@ class _QuickPhraseEditDialogState extends State<_QuickPhraseEditDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Dialog(
       backgroundColor: cs.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

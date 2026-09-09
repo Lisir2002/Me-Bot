@@ -30,12 +30,14 @@ class SecurityCheckupService {
 
   /// 执行全部扫描器，聚合为一份报告。
   ///
+  /// [strings] 为用户可见文案的 l10n 注入入口（展示层传 `L10nCheckupStrings`，
+  /// 测试传 Fake）。
   /// 单扫描器抛异常不会拖垮整体：异常被记作一条 warn 发现，并记日志。
-  Future<CheckupReport> run() async {
+  Future<CheckupReport> run(CheckupStrings strings) async {
     final findings = <CheckupFinding>[];
     for (final scanner in _scanners) {
       try {
-        final r = await scanner.scan();
+        final r = await scanner.scan(strings);
         if (r.isNotEmpty) findings.addAll(r);
       } catch (e, s) {
         Logger.w(LogTags.security,
@@ -43,8 +45,8 @@ class SecurityCheckupService {
         findings.add(CheckupFinding(
           id: '${scanner.id}:error',
           scannerId: scanner.id,
-          title: '${scanner.title}扫描异常',
-          detail: '该扫描器执行出错，已跳过（不影响其它项）',
+          title: strings.scannerErrorTitle(scanner.title),
+          detail: strings.scannerErrorDetail(),
           severity: CheckupSeverity.warn,
           autoFixable: false,
         ));

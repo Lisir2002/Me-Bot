@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/services/learning_mode_store.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 
 class BottomToolsSheet extends StatelessWidget {
@@ -17,7 +17,7 @@ class BottomToolsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final bg = Theme.of(context).colorScheme.surface;
 
     Widget roundedAction({required IconData icon, required String label, VoidCallback? onTap}) {
@@ -162,7 +162,7 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -198,7 +198,7 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
   }
 
   Future<void> _showLearningPromptSheet(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final prompt = await LearningModeStore.getPrompt();
     final controller = TextEditingController(text: prompt);

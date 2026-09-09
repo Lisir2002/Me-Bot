@@ -9,8 +9,7 @@ import '../core/providers/settings_provider.dart';
 import '../core/providers/assistant_provider.dart';
 import '../core/services/search/search_service.dart';
 import '../utils/brand_assets.dart';
-import '../l10n/app_localizations.dart';
-
+import '../l10n/build_context_l10n.dart';
 /// Show a desktop-only floating popover for search provider selection.
 /// It appears above the chat input bar with blurred background, top rounded corners,
 /// slightly narrower than the input width, and slides down to dismiss.
@@ -267,7 +266,7 @@ class _SearchContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final sp = context.watch<SettingsProvider>();
     final ap = context.watch<AssistantProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final services = sp.searchServices;
     final selected = sp.searchServiceSelected

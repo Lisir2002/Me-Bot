@@ -58,3 +58,8 @@ internationalization.md
 /macos/Podfile.lock
 /desiredFileName.txt
 /lib/secrets/fallback.dart
+
+# l10n gen 产物不入库（CI 与本地构建前自动生成，见 tools/sync_l10n.sh）
+lib/l10n/app_localizations.dart
+lib/l10n/app_localizations_en.dart
+lib/l10n/app_localizations_zh.dart

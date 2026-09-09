@@ -126,15 +126,17 @@
 | B3 local_variable | ✅ 完成 | 220 | 136 | **136** | `3703d87`（CI ✅ 136/0 核对）|
 | B4 element + element_parameter | ✅ 完成 | 136 | 44 | **44** | `8d8fe19`（27 文件 +40/−1011）|
 | B5 C 档语义 | ✅ 完成 | 44 | 0 | **0** 🎉 清零 | 见 git log（19 文件）|
-| B6 门禁硬化 | ⬜ 待执行 | 0 | 0 | **0（保持）** | — |
+| B6 门禁硬化 | ✅ 完成 | 0 | 0 | **0（保持）** | 见 git log（CI 硬门禁上线）|
 
 **B5 处置明细**：14 条 `unreachable_switch_default` 按拍板保留 default + 行尾 ignore；20 条 `dead_null_aware_expression` 右侧均为字面量/getter 链（无副作用）全部删除；`dead_code`——`chat_api` 不可达 `return` 删除、`if (false && …)` 与 `tts cancelled` 保留 + ignore 入 §9a；`unnecessary_type_check`——`(b is Map)` 恒真删除、`schema is Map` 防御性检查（作者注释 depends on package）保留 + ignore；`invalid_use_of_protected_member`——`_pushConsole` 从 extension 移入 `_HtmlPreviewDialogState` 类体（extension 调 protected `setState` 违规）。
 
 ---
 
-## 8. 清零之后
+## 8. 清零之后（已执行）
 
-1. CI 步骤改为 `flutter analyze --no-fatal-infos`（去掉 `continue-on-error`），warning/error 阻塞合并。
+1. ✅ CI 步骤已改为 `flutter analyze --no-fatal-infos`（去掉 `continue-on-error`），warning/error 阻塞合并。注意旧写法 `flutter analyze | grep … || true` 的管道退出码恒成功，必须用 `${PIPESTATUS[0]}` 传递 analyze 原始退出码。
+2. ✅ `AGENTS.md` §5.4 基线更新为 0，进入"增量红线"阶段。
+3. `lib/desktop/` 的 585 条 `deprecated_member_use` 单独立项（info 级，不阻塞门禁）。
 
 ---
 

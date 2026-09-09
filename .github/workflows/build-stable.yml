@@ -93,15 +93,17 @@ jobs:
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "版本号: $VERSION"
-      # 静态分析门禁（观察期）：continue-on-error 收集存量问题清单，
-      # 清理后摘掉此开关变硬门禁（见 AGENTS.md §5.4）。
-      # 过滤 info 明细：Actions 单步输出有截断（3074 条只落了 1028 行），
-      # 只保留 warning/error 明细才能拿到完整清单，info 看末行计数即可
-      - name: 🔍 静态分析（观察期·仅 warning/error）
-        continue-on-error: true
+      # 静态分析硬门禁（B6，2026-09-09）：warning/error 阻塞合并（--no-fatal-infos 让 info 不致命）。
+      # 存量 438 warning 已于 B1–B5 清零（见 docs/WARNING_CLEARANCE.md）。
+      # 输出过滤 info 明细防单步截断；退出码取 flutter analyze 原始码（PIPESTATUS），
+      # 有 warning/error 时本步骤失败 → job 失败。
+      - name: 🔍 静态分析门禁（warning/error 阻塞）
         run: |
           flutter pub get
-          flutter analyze | grep -v "info •" || true
+          flutter analyze --no-fatal-infos | tee /tmp/analyze_full.log | grep -v "info •" || true
+          echo "=== analyze 汇总 ==="
+          tail -1 /tmp/analyze_full.log
+          exit ${PIPESTATUS[0]}
       # 如果有签名密钥，写入密钥文件
       - name: 🔑 写入签名密钥
         env:

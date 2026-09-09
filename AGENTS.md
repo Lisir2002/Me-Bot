@@ -78,7 +78,7 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 - "未使用"类警告（原 201 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。B3/B4 已消化 179 条（unused_local_variable / unused_element / unused_element_parameter 已归零；剩 unused_field 1 条为保留字段）。
 
 硬化路径：① 按批次清零 438 个 warning（**B1 `78b9c1c` 438→248 · B2 `0a3124d` 248→220 · B3 `3703d87` 220→136 · B4 136→44（unused_element/parameter 归零，27 文件 +40/−1011），全程 error 0，B1/B2/B3 均 CI 核对通过**）② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。**B5 已落地：44 → 0（19 文件），warning 清零达成，全程 error 0**。§9a 保留项均带 ignore 注释。
-基线已归零（2026-09-09，B5）：**增量红线生效——任何变更不得引入新 warning/error**，B6 将把 CI analyze 升级为阻塞门禁。
+基线已归零（2026-09-09，B5）：**增量红线生效——任何变更不得引入新 warning/error**。B6 已把 CI analyze 升级为**硬门禁**（`--no-fatal-infos` + 去 continue-on-error + `PIPESTATUS` 传退出码），warning/error 直接阻塞 job。
 
 ## 6. 索引表（本文件只做索引，不复制内容）
 

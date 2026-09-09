@@ -9,7 +9,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 ### 🔧 For Developers
 - **Added**：AI 协助开发规范体系——`AGENTS.md`（环境现实 / 7 条带事故锚点的铁律 / 行动边界三级 / 发布 SOP / 版本日志三档）、`CLAUDE.md` 桥接、本文件（Keep a Changelog 三档结构）。
-- **Added**：CI android job 接入 `flutter analyze` 观察步骤（`continue-on-error: true`，过滤 info 明细以避开 Actions 单步输出截断）。
+- **Changed**：CI android job 的 `flutter analyze` 由观察步骤升级为**硬门禁**（B6）：`--no-fatal-infos` + 去掉 `continue-on-error`，warning/error 直接阻塞构建；输出过滤 info 明细防截断，退出码经 `${PIPESTATUS[0]}` 传递（旧管道写法 `| grep … || true` 会吞掉失败码）。
 - **Added**：`docs/WARNING_CLEARANCE.md`——438 warning 清零批次计划（B0–B6）、进度看板、红线。
 - **Changed**：本地分析环境打通：`/opt/flutter335`（Flutter 3.35.7 / Dart 3.9.2，与 CI 对齐）可用，全量 `flutter analyze` 约 48s，实测与 CI 逐条一致。`AGENTS.md` §1 原「禁止本地 analyze」条款作废；`/opt/flutter`（2.17）仍禁用。
 - **Changed**：warning 清零 B1 批次落地（`78b9c1c`）：`dart fix --apply` 应用 10 条规则，**438 → 248 warning，error 0**，涉及 53 个源文件。

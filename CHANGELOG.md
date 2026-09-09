@@ -7,7 +7,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 ## [Unreleased]
 
-（暂无）
+### 🤖 For Agents
+- **Fixed**：本地副本页（`features/storage/pages/local_snapshot_page.dart`）两个设置项写死/错值修复：
+  - **备份频率**：原 `detailText` 写死 `snapshotFrequencyAuto`（"自动"），改为可点击选择的四档（手动/每天/每周/自动，复用既有的 `snapshotFreq*` 文案），持久化到 `backup_freq`，默认 `auto` 保持原显示。注：当前应用无后台调度器，该值记录用户意图偏好而非自动执行。
+  - **占用上限**：原 `detailText: '$_keepCount GB'` 是把"保留份数"误当 GB 显示的 bug，改为真实档位（不限制/1/2/5/10 GB，新增 `snapshotSizeUnlimited` 文案），持久化到 `backup_size_limit_gb`，默认 `不限制`（旧"3GB"从未真正裁剪）；并在 `_enforceRetention` 中新增按字节上限裁剪最旧非固定副本的逻辑。
+- **Changed**（l10n）：`app_en/zh/zh_Hans/zh_Hant.arb` 新增 `snapshotSizeUnlimited`（不限制 / Unlimited）。
 
 ## [0.0.44] - 2026-09-09
 

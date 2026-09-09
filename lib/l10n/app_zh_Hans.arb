@@ -1112,6 +1112,7 @@
   "snapshotKeepLastWeek": "保留一份上周的",
   "snapshotKeepLastMonth": "保留一份上个月的",
   "snapshotSizeLimit": "占用上限",
+  "snapshotSizeUnlimited": "不限制",
   "snapshotNotifyDone": "备份完成时提示",
   "snapshotLastBackup": "上次备份：{time}",
   "@snapshotLastBackup": { "placeholders": { "time": { "type": "String" } } },

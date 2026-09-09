@@ -3500,6 +3500,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get snapshotSizeLimit => 'Size limit';
 
   @override
+  String get snapshotSizeUnlimited => 'Unlimited';
+
+  @override
   String get snapshotNotifyDone => 'Notify when backup completes';
 
   @override

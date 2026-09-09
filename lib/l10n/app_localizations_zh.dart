@@ -3385,6 +3385,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get snapshotSizeLimit => '占用上限';
 
   @override
+  String get snapshotSizeUnlimited => '不限制';
+
+  @override
   String get snapshotNotifyDone => '备份完成时提示';
 
   @override
@@ -6900,6 +6903,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get snapshotSizeLimit => '占用上限';
 
   @override
+  String get snapshotSizeUnlimited => '不限制';
+
+  @override
   String get snapshotNotifyDone => '备份完成时提示';
 
   @override
@@ -10365,6 +10371,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get snapshotSizeLimit => '佔用上限';
+
+  @override
+  String get snapshotSizeUnlimited => '不限制';
 
   @override
   String get snapshotNotifyDone => '備份完成時提示';

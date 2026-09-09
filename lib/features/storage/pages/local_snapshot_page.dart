@@ -64,6 +64,11 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
   bool _keepLastWeek = true;
   bool _keepLastMonth = true;
   bool _notifyDone = true;
+  // 备份频率：0=手动 1=每天 2=每周 3=自动（默认自动，与原写死显示一致）。
+  // 注：当前应用无后台调度器，此值记录用户意图偏好，非自动执行。
+  int _freq = 3;
+  // 占用上限（GB）：0=不限制。旧实现误把“保留份数”当 GB 显示，此处改为真实档位。
+  int _sizeLimitGb = 0;
 
   DataSync get _sync => DataSync(chatService: context.read<ChatService>());
 
@@ -82,6 +87,8 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
       _keepLastWeek = prefs.getBool('backup_keep_last_week') ?? true;
       _keepLastMonth = prefs.getBool('backup_keep_last_month') ?? true;
       _notifyDone = prefs.getBool('backup_notify_done') ?? true;
+      _freq = prefs.getInt('backup_freq') ?? 3;
+      _sizeLimitGb = prefs.getInt('backup_size_limit_gb') ?? 0;
     });
     await _refresh();
   }
@@ -162,12 +169,30 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     await for (final ent in dir.list(followLinks: false)) {
       if (ent is File && ent.path.toLowerCase().endsWith('.zip')) zips.add(ent);
     }
+    // 1) 按保留份数清理最旧副本
     zips.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
     while (zips.length > _keepCount) {
       final oldest = zips.removeAt(0);
       try {
         await oldest.delete();
       } catch (_) {}
+    }
+    // 2) 按占用上限清理（固定副本永不被删）
+    if (_sizeLimitGb > 0) {
+      final pinned = (await SharedPreferences.getInstance())
+          .getStringList('backup_pinned_snapshots') ?? const <String>[];
+      final limitBytes = _sizeLimitGb * 1024 * 1024 * 1024;
+      var total = zips.fold<int>(0, (s, f) => s + f.statSync().size);
+      final trimmable = zips.where((f) => !pinned.contains(f.path)).toList()
+        ..sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
+      for (final f in trimmable) {
+        if (total <= limitBytes) break;
+        try {
+          final sz = f.statSync().size;
+          await f.delete();
+          total -= sz;
+        } catch (_) {}
+      }
     }
   }
 
@@ -357,7 +382,8 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
               StorageNavRow(
                 icon: Lucide.CalendarClock,
                 label: l10n.snapshotFrequency,
-                detailText: l10n.snapshotFrequencyAuto,
+                detailText: _freqLabel(l10n),
+                onTap: () => _pickFrequency(l10n),
               ),
               const StorageDivider(),
               StorageNavRow(
@@ -390,7 +416,8 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
               StorageNavRow(
                 icon: Lucide.HardDriveDownload,
                 label: l10n.snapshotSizeLimit,
-                detailText: '$_keepCount GB',
+                detailText: _sizeLimitLabel(l10n),
+                onTap: () => _pickSizeLimit(l10n),
               ),
               const StorageDivider(),
               StorageSwitchRow(
@@ -492,6 +519,82 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     if (v == null || !mounted) return;
     setState(() => _keepCount = v);
     await prefs.setInt('backup_keep_count', v);
+    await _enforceRetention(await _snapDir());
+  }
+
+  String _freqLabel(AppLocalizations l10n) {
+    switch (_freq) {
+      case 0:
+        return l10n.snapshotFreqManual;
+      case 1:
+        return l10n.snapshotFreqDaily;
+      case 2:
+        return l10n.snapshotFreqWeekly;
+      case 3:
+        return l10n.snapshotFreqAuto;
+      default:
+        return l10n.snapshotFreqAuto;
+    }
+  }
+
+  String _sizeLimitLabel(AppLocalizations l10n) {
+    if (_sizeLimitGb <= 0) return l10n.snapshotSizeUnlimited;
+    return '$_sizeLimitGb GB';
+  }
+
+  Future<void> _pickFrequency(AppLocalizations l10n) async {
+    final tiers = <(int, String)>[
+      (0, l10n.snapshotFreqManual),
+      (1, l10n.snapshotFreqDaily),
+      (2, l10n.snapshotFreqWeekly),
+      (3, l10n.snapshotFreqAuto),
+    ];
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final v = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.snapshotFrequency),
+        children: [
+          for (final (id, label) in tiers)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(id),
+              child: Text('$label${id == _freq ? ' ✓' : ''}'),
+            ),
+        ],
+      ),
+    );
+    if (v == null || !mounted) return;
+    setState(() => _freq = v);
+    await prefs.setInt('backup_freq', v);
+  }
+
+  Future<void> _pickSizeLimit(AppLocalizations l10n) async {
+    final tiers = <(int, String)>[
+      (0, l10n.snapshotSizeUnlimited),
+      (1, '1 GB'),
+      (2, '2 GB'),
+      (5, '5 GB'),
+      (10, '10 GB'),
+    ];
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final v = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.snapshotSizeLimit),
+        children: [
+          for (final (gb, label) in tiers)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(gb),
+              child: Text('$label${gb == _sizeLimitGb ? ' ✓' : ''}'),
+            ),
+        ],
+      ),
+    );
+    if (v == null || !mounted) return;
+    setState(() => _sizeLimitGb = v);
+    await prefs.setInt('backup_size_limit_gb', v);
     await _enforceRetention(await _snapDir());
   }
 }

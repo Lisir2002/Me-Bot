@@ -6623,6 +6623,12 @@ abstract class AppLocalizations {
   /// **'Size limit'**
   String get snapshotSizeLimit;
 
+  /// No description provided for @snapshotSizeUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get snapshotSizeUnlimited;
+
   /// No description provided for @snapshotNotifyDone.
   ///
   /// In en, this message translates to:

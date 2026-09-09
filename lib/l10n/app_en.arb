@@ -1411,6 +1411,7 @@
   "snapshotKeepLastWeek": "Keep one from last week",
   "snapshotKeepLastMonth": "Keep one from last month",
   "snapshotSizeLimit": "Size limit",
+  "snapshotSizeUnlimited": "Unlimited",
   "snapshotNotifyDone": "Notify when backup completes",
   "snapshotLastBackup": "Last backup: {time}",
   "@snapshotLastBackup": {

@@ -11,6 +11,7 @@ import '../services/tts/network_tts.dart';
 import '../models/api_keys.dart';
 import '../models/backup.dart';
 import '../models/provider_credentials.dart';
+import '../models/service_credentials.dart';
 import '../services/haptics.dart';
 import '../services/secure_storage/credential_keys.dart';
 import '../services/secure_storage/secure_storage_bootstrap.dart';
@@ -241,6 +242,58 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setString(_providerConfigsKey, jsonEncode(map));
   }
 
+  /// 写入「扁平服务配置」（搜索 / TTS）前：凭证进安全存储，返回剥离后的列表。
+  Future<List<dynamic>> _stripServiceCredentials(
+    List<Map<String, dynamic>> items,
+  ) async {
+    final secure = _secure;
+    if (secure == null) return items;
+    final out = <dynamic>[];
+    for (final json in items) {
+      final id = json['id']?.toString();
+      final secrets = ServiceCredentials.extract(json);
+      if (id != null && id.isNotEmpty) {
+        final storageKey = CredentialKeys.service(id);
+        if (secrets.isNotEmpty) {
+          await secure.writeCredential(
+            storageKey,
+            ServiceCredentials.toRecord(id, secrets),
+          );
+        } else if (await secure.contains(storageKey)) {
+          // 凭证被用户清空 → 连条目一起删掉，不留孤儿
+          await secure.delete(storageKey);
+        }
+      }
+      out.add(ServiceCredentials.strip(json));
+    }
+    return out;
+  }
+
+  /// 读取「扁平服务配置」后：把安全存储里的凭证回填进内存态。
+  Future<List<dynamic>> _hydrateServiceCredentials(List<dynamic> items) async {
+    final secure = _secure;
+    if (secure == null) return items;
+    final out = <dynamic>[];
+    for (final item in items) {
+      if (item is! Map) {
+        out.add(item);
+        continue;
+      }
+      final json = Map<String, dynamic>.from(item);
+      final id = json['id']?.toString();
+      if (id != null && id.isNotEmpty) {
+        final record = await secure.readCredential(CredentialKeys.service(id));
+        final secrets = ServiceCredentials.fromRecord(record);
+        if (secrets.isNotEmpty) {
+          out.add(ServiceCredentials.merge(json, secrets));
+          continue;
+        }
+      }
+      out.add(json);
+    }
+    return out;
+  }
+
   /// 启动期把安全存储里的凭证回填进内存态配置（磁盘上已无明文可填）。
   Future<void> _hydrateProviderCredentials() async {
     final secure = _secure;
@@ -286,6 +339,8 @@ class SettingsProvider extends ChangeNotifier {
     }
     _themePaletteId = prefs.getString(_themePaletteKey) ?? 'default';
     _useDynamicColor = prefs.getBool(_useDynamicColorKey) ?? true;
+    // 安全存储句柄：整个 _load 共用。未初始化时为 null，走旧明文兼容路径。
+    final secure = _secure;
     final cfgStr = prefs.getString(_providerConfigsKey);
     if (cfgStr != null && cfgStr.isNotEmpty) {
       try {
@@ -441,7 +496,8 @@ class SettingsProvider extends ChangeNotifier {
     if (searchServicesStr != null && searchServicesStr.isNotEmpty) {
       try {
         final list = jsonDecode(searchServicesStr) as List;
-        _searchServices = list.map((e) => SearchServiceOptions.fromJson(e as Map<String, dynamic>)).toList();
+        final hydrated = await _hydrateServiceCredentials(list);
+        _searchServices = hydrated.map((e) => SearchServiceOptions.fromJson(e as Map<String, dynamic>)).toList();
       } catch (_) {}
     }
     final searchCommonStr = prefs.getString(_searchCommonKey);
@@ -459,7 +515,6 @@ class SettingsProvider extends ChangeNotifier {
     _globalProxyHost = prefs.getString(_globalProxyHostKey) ?? '';
     _globalProxyPort = prefs.getString(_globalProxyPortKey) ?? '8080';
     // 凭证优先读安全存储；读不到再回退旧明文 key（未迁移的兼容路径）。
-    final secure = _secure;
     if (secure != null) {
       _globalProxyUsername =
           (await secure.read(CredentialKeys.globalProxyUsername)) ??
@@ -478,7 +533,7 @@ class SettingsProvider extends ChangeNotifier {
     try {
       final ttsStr = prefs.getString(_ttsServicesKey) ?? '';
       if (ttsStr.isNotEmpty) {
-        final list = jsonDecode(ttsStr) as List;
+        final list = await _hydrateServiceCredentials(jsonDecode(ttsStr) as List);
         _ttsServices = [
           for (final e in list)
             if (e is Map<String, dynamic>) TtsServiceOptions.fromJson(e) else TtsServiceOptions.fromJson(Map<String, dynamic>.from(e as Map))
@@ -606,7 +661,7 @@ class SettingsProvider extends ChangeNotifier {
     _ttsServices = List.unmodifiable(v);
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    final list = v.map((e) => e.toJson()).toList();
+    final list = await _stripServiceCredentials(v.map((e) => e.toJson()).toList());
     await prefs.setString(_ttsServicesKey, jsonEncode(list));
     if (_ttsServiceSelected >= _ttsServices.length) {
       _ttsServiceSelected = _ttsServices.isEmpty ? -1 : 0;
@@ -1568,7 +1623,10 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     }
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_searchServicesKey, jsonEncode(_searchServices.map((e) => e.toJson()).toList()));
+    final stripped = await _stripServiceCredentials(
+      _searchServices.map((e) => e.toJson()).toList(),
+    );
+    await prefs.setString(_searchServicesKey, jsonEncode(stripped));
     await prefs.setInt(_searchSelectedKey, _searchServiceSelected);
   }
 

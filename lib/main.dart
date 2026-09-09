@@ -42,6 +42,7 @@ import 'core/services/secure_storage/secure_storage_bootstrap.dart';
 import 'core/services/migration/migration_context.dart';
 import 'core/services/migration/migration_runner.dart';
 import 'core/services/migration/steps/credential_migration_v1_step.dart';
+import 'core/services/migration/steps/credential_migration_v2_step.dart';
 
 final RouteObserver<ModalRoute<dynamic>> routeObserver = RouteObserver<ModalRoute<dynamic>>();
 bool _didCheckUpdates = false; // one-time update check flag
@@ -103,7 +104,9 @@ Future<void> _runMigrations() async {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
-    final runner = MigrationRunner()..register(CredentialMigrationV1Step());
+    final runner = MigrationRunner()
+      ..register(CredentialMigrationV1Step())
+      ..register(CredentialMigrationV2Step());
     final report = await runner.run(
       MigrationContext(
         prefs: prefs,

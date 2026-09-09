@@ -14,7 +14,9 @@ import '../../models/backup.dart';
 import '../../models/chat_message.dart';
 import '../../models/conversation.dart';
 import '../chat/chat_service.dart';
+import '../secure_storage/secure_storage_bootstrap.dart';
 import '../../../utils/app_directories.dart';
+import 'credential_bridge.dart';
 
 class DataSync {
   final ChatService chatService;
@@ -309,10 +311,19 @@ class DataSync {
     return await AppDirectories.getAvatarsDirectory();
   }
 
-  Future<String> _exportSettingsJson() async {
+  /// 导出 SharedPreferences 快照。
+  ///
+  /// 默认按 [BackupCredentialPolicy.redacted] 处理：凭证不进备份文件（拍板②）。
+  /// PR-4 的加密备份会在用户显式选择「包含密钥」时传入 [BackupCredentialPolicy.include]。
+  Future<String> _exportSettingsJson({
+    BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
+  }) async {
     final prefs = await SharedPreferencesAsync.instance;
     final map = await prefs.snapshot();
-    return jsonEncode(map);
+    if (!SecureStorage.isInitialized) return jsonEncode(map);
+    final bridge = BackupCredentialBridge(SecureStorage.instance);
+    final prepared = await bridge.prepareForExport(map, policy: policy);
+    return jsonEncode(prepared);
   }
 
   Future<String> _exportChatsJson() async {
@@ -369,7 +380,13 @@ class DataSync {
     if (await settingsFile.exists()) {
       try {
         final txt = await settingsFile.readAsString();
-        final map = jsonDecode(txt) as Map<String, dynamic>;
+        final decoded = jsonDecode(txt) as Map<String, dynamic>;
+        // 先把备份里的凭证抽走写进安全存储，剩下的才是能安全写回 prefs 的内容
+        // （老备份含明文，不抽就会把明文带回磁盘）
+        final map = SecureStorage.isInitialized
+            ? await BackupCredentialBridge(SecureStorage.instance)
+                .absorbOnRestore(decoded)
+            : decoded;
         final prefs = await SharedPreferencesAsync.instance;
         if (mode == RestoreMode.overwrite) {
           // For overwrite mode, restore all settings

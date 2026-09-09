@@ -10,7 +10,11 @@ import '../services/search/search_service.dart';
 import '../services/tts/network_tts.dart';
 import '../models/api_keys.dart';
 import '../models/backup.dart';
+import '../models/provider_credentials.dart';
 import '../services/haptics.dart';
+import '../services/secure_storage/credential_keys.dart';
+import '../services/secure_storage/secure_storage_bootstrap.dart';
+import '../services/secure_storage/secure_storage_service.dart';
 
 // Desktop: topic list position
 enum DesktopTopicPosition { left, right }
@@ -185,6 +189,83 @@ class SettingsProvider extends ChangeNotifier {
   String get globalProxyUsername => _globalProxyUsername;
   String get globalProxyPassword => _globalProxyPassword;
 
+  // ------------------------------------------------- 凭证：安全存储读写（PR-2）
+
+  /// 安全存储句柄。未初始化时返回 null —— 此时退回旧的明文行为，
+  /// 宁可保留旧风险，也绝不静默丢凭证。
+  SecureStorageService? get _secure =>
+      SecureStorage.isInitialized ? SecureStorage.instance : null;
+
+  /// 把一个 provider 的凭证写入安全存储；凭证为空则清理对应条目。
+  Future<void> _persistProviderCredentials(
+    SecureStorageService secure,
+    String key,
+    ProviderConfig config,
+  ) async {
+    final creds = ProviderCredentials.fromConfigJson(config.toJson());
+    final storageKey = CredentialKeys.provider(key);
+    if (creds.isEmpty) {
+      if (await secure.contains(storageKey)) {
+        await secure.delete(storageKey);
+      }
+      return;
+    }
+    await secure.writeCredential(storageKey, creds.toRecord(key));
+  }
+
+  /// 删除 provider 时同步清理其凭证。
+  Future<void> _deleteProviderCredentials(String key) async {
+    final secure = _secure;
+    if (secure == null) return;
+    final storageKey = CredentialKeys.provider(key);
+    try {
+      if (await secure.contains(storageKey)) {
+        await secure.delete(storageKey);
+      }
+    } catch (_) {
+      // 清理失败也不能阻止 provider 删除本身；残留条目由 PR-5 孤儿扫描兜底。
+    }
+  }
+
+  /// 持久化全部 provider 配置：凭证字段剥离后才落 SharedPreferences。
+  Future<void> _persistProviderConfigs(SharedPreferences prefs) async {
+    if (_secure == null) {
+      // 安全存储不可用：维持旧行为，凭证随配置落明文。
+      final map = _providerConfigs.map((k, v) => MapEntry(k, v.toJson()));
+      await prefs.setString(_providerConfigsKey, jsonEncode(map));
+      return;
+    }
+    final map = _providerConfigs.map(
+      (k, v) => MapEntry(k, ProviderCredentials.stripCredentials(v.toJson())),
+    );
+    await prefs.setString(_providerConfigsKey, jsonEncode(map));
+  }
+
+  /// 启动期把安全存储里的凭证回填进内存态配置（磁盘上已无明文可填）。
+  Future<void> _hydrateProviderCredentials() async {
+    final secure = _secure;
+    if (secure == null) return;
+    final merged = <String, ProviderConfig>{};
+    for (final entry in _providerConfigs.entries) {
+      try {
+        final record =
+            await secure.readCredential(CredentialKeys.provider(entry.key));
+        if (record == null) continue;
+        final creds = ProviderCredentials.fromRecord(record);
+        merged[entry.key] =
+            ProviderConfig.fromJson(creds.mergeInto(entry.value.toJson()));
+      } catch (_) {
+        // 单条失败不拖垮其它 provider
+      }
+    }
+    if (merged.isNotEmpty) {
+      _providerConfigs = <String, ProviderConfig>{
+        ..._providerConfigs,
+        ...merged,
+      };
+    }
+  }
+
   SettingsProvider() {
     _load();
   }
@@ -212,6 +293,8 @@ class SettingsProvider extends ChangeNotifier {
         _providerConfigs = raw.map((k, v) => MapEntry(k, ProviderConfig.fromJson(v as Map<String, dynamic>)));
       } catch (_) {}
     }
+    // 磁盘上的配置已不含凭证，需从安全存储回填到内存态。
+    await _hydrateProviderCredentials();
     // load pinned models
     final pinned = prefs.getStringList(_pinnedModelsKey) ?? const <String>[];
     _pinnedModels
@@ -375,8 +458,21 @@ class SettingsProvider extends ChangeNotifier {
     _globalProxyType = prefs.getString(_globalProxyTypeKey) ?? 'http';
     _globalProxyHost = prefs.getString(_globalProxyHostKey) ?? '';
     _globalProxyPort = prefs.getString(_globalProxyPortKey) ?? '8080';
-    _globalProxyUsername = prefs.getString(_globalProxyUsernameKey) ?? '';
-    _globalProxyPassword = prefs.getString(_globalProxyPasswordKey) ?? '';
+    // 凭证优先读安全存储；读不到再回退旧明文 key（未迁移的兼容路径）。
+    final secure = _secure;
+    if (secure != null) {
+      _globalProxyUsername =
+          (await secure.read(CredentialKeys.globalProxyUsername)) ??
+              prefs.getString(_globalProxyUsernameKey) ??
+              '';
+      _globalProxyPassword =
+          (await secure.read(CredentialKeys.globalProxyPassword)) ??
+              prefs.getString(_globalProxyPasswordKey) ??
+              '';
+    } else {
+      _globalProxyUsername = prefs.getString(_globalProxyUsernameKey) ?? '';
+      _globalProxyPassword = prefs.getString(_globalProxyPasswordKey) ?? '';
+    }
 
     // load network TTS services
     try {
@@ -402,6 +498,12 @@ class SettingsProvider extends ChangeNotifier {
     final webdavStr = prefs.getString(_webDavConfigKey);
     if (webdavStr != null && webdavStr.isNotEmpty) {
       try { _webDavConfig = WebDavConfig.fromJson(jsonDecode(webdavStr) as Map<String, dynamic>); } catch (_) {}
+    }
+    if (secure != null) {
+      final pwd = await secure.read(CredentialKeys.webDavPassword);
+      if (pwd != null && pwd.isNotEmpty && pwd != _webDavConfig.password) {
+        _webDavConfig = _webDavConfig.copyWith(password: pwd);
+      }
     }
     if (_providerConfigs.isEmpty) {
       // Seed a couple of sensible defaults on first launch, but do not recreate
@@ -451,6 +553,11 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setGlobalProxyUsername(String v) async {
     _globalProxyUsername = v;
     notifyListeners();
+    final secure = _secure;
+    if (secure != null) {
+      await secure.write(CredentialKeys.globalProxyUsername, v);
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_globalProxyUsernameKey, _globalProxyUsername);
   }
@@ -458,6 +565,11 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setGlobalProxyPassword(String v) async {
     _globalProxyPassword = v;
     notifyListeners();
+    final secure = _secure;
+    if (secure != null) {
+      await secure.write(CredentialKeys.globalProxyPassword, v);
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_globalProxyPasswordKey, _globalProxyPassword);
   }
@@ -791,6 +903,14 @@ class SettingsProvider extends ChangeNotifier {
     _webDavConfig = cfg;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
+    final secure = _secure;
+    if (secure != null) {
+      // 密码只进安全存储，配置 JSON 里剥掉它再落盘。
+      await secure.write(CredentialKeys.webDavPassword, cfg.password);
+      final json = cfg.toJson()..remove('password');
+      await prefs.setString(_webDavConfigKey, jsonEncode(json));
+      return;
+    }
     await prefs.setString(_webDavConfigKey, jsonEncode(cfg.toJson()));
   }
 
@@ -923,13 +1043,18 @@ class SettingsProvider extends ChangeNotifier {
     _providerConfigs[key] = config;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    final map = _providerConfigs.map((k, v) => MapEntry(k, v.toJson()));
-    await prefs.setString(_providerConfigsKey, jsonEncode(map));
+    await _persistProviderConfigs(prefs);
+    final secure = _secure;
+    if (secure != null) {
+      await _persistProviderCredentials(secure, key, config);
+    }
   }
 
   Future<void> removeProviderConfig(String key) async {
     if (!_providerConfigs.containsKey(key)) return;
     _providerConfigs.remove(key);
+    // 同步清理该 provider 的凭证，避免安全存储里留下孤儿条目
+    await _deleteProviderCredentials(key);
     // Remove from order
     _providersOrder = List<String>.from(_providersOrder.where((k) => k != key));
 
@@ -959,8 +1084,7 @@ class SettingsProvider extends ChangeNotifier {
     }
 
     // Persist updates
-    final map = _providerConfigs.map((k, v) => MapEntry(k, v.toJson()));
-    await prefs.setString(_providerConfigsKey, jsonEncode(map));
+    await _persistProviderConfigs(prefs);
     await prefs.setStringList(_providersOrderKey, _providersOrder);
     notifyListeners();
   }

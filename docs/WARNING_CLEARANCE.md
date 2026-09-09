@@ -151,7 +151,7 @@
 | `lib/features/assistant/pages/assistant_settings_edit_page.dart` | `_McpTab`（165 行） | 助手 MCP 标签页，watch 两个 provider 过滤已连接服务器，未挂入 tab 栏 |
 | `lib/features/assistant/pages/assistant_settings_edit_page.dart` | `_pickLocalAvatar` / `_inputEmojiDialog` | 本地相册选头像 + emoji 输入对话框，完整实现无入口 |
 | `lib/features/chat/widgets/chat_message_widget.dart` | `_userMenuActive` | 用户菜单激活态，注释"for bubble highlight/scale"，只写不读（B4 删除 `_removeUserMenuOverlay` 连锁暴露）|
-| `lib/core/providers/tts_provider.dart` | `cancelled` | **疑似真 bug**：网络 TTS 取消链路残缺——`var cancelled = false` 后从未置 true，`_cancelFlag` 闭包永远返回 false（synthesize 取消轮询永不触发），`if (cancelled) return` 恒 false。需在 stop/dispose 处接线 `cancelled = true` |
+| `lib/core/providers/tts_provider.dart` | `cancelled` | ~~**疑似真 bug**：网络 TTS 取消链路残缺~~ **✅ 已修复（`8a65787`）**：改为每请求独立 `_TtsCancelToken`，stop/dispose 置当前 token；主动取消不再写 `_error`。B5 的行尾 ignore 已随重构移除 |
 | `lib/core/services/api/chat_api_service.dart` | `if (false && …)` L2751 | Response API 的 tool_calls follow-up 流程被手动禁用（`false &&` 短路），整块代码保留。需决策：恢复启用或删除 |
 
 ### 9b. B2 发现：被赋值但从未读取的字段（已加 `// ignore: unused_field` 保留）
@@ -160,7 +160,7 @@
 
 | 文件 | 字段 | 现象 |
 |---|---|---|
-| `lib/desktop/setting/backup_pane.dart` | `_remote` / `_loadingRemote` | 拉取了远程备份列表却从不展示 |
+| `lib/desktop/setting/backup_pane.dart` | `_remote` / `_loadingRemote` | ~~拉取了远程备份列表却从不展示~~ **✅ 已处置（`8a65787`）**：远程列表实际走"恢复"按钮 → `_RemoteBackupsDialog`（功能完整），pane 内预取为旧设计遗留死代码，已删除（2 处 ignore 一并消掉）；弹窗 `_load()` 吞错误改为透出失败详情 |
 | `lib/features/model/widgets/model_select_sheet.dart` | `_favItems`（×2 处） | 收藏列表加载但未渲染 |
 | `lib/features/provider/pages/provider_detail_page.dart` | `_proxyEnabled` | 代理开关状态未绑定 UI |
 | `lib/features/home/widgets/chat_input_bar.dart` | `_searchEnabled` | 搜索开关状态未被消费 |
@@ -169,11 +169,11 @@
 | `lib/shared/pages/webview_page.dart` | `_consoleOpen` | 控制台开合状态未被消费 |
 | `lib/desktop/desktop_nav_rail.dart` | `_hovered` | 悬停态未用于渲染 |
 | `lib/desktop/setting/about_pane.dart` | `_pressed`（×2 处） | 按下态未用于渲染 |
-| `lib/desktop/html_preview_dialog.dart` | `_tempFilePath` | Windows 临时文件路径未释放 |
+| `lib/desktop/html_preview_dialog.dart` | `_tempFilePath` | ~~Windows 临时文件路径未释放~~ **✅ 已修复（`8a65787`）**：改用 `_tempFiles` 列表跟踪全部写入路径（主题切换会写多份），dispose 时存在性检查后逐一删除；ignore 随之消掉 |
 | `lib/core/services/logging/logger.dart` | `_maxPayloadChars` | 日志截断上限定义了但未实现截断 |
 
 **其中两个可能是真 bug，建议优先看**：
-- `backup_pane` 的远程备份：列表拉下来了却不显示，用户会以为功能已完成。
-- `html_preview_dialog` 的 `_tempFilePath`：临时文件写出去没清理，Windows 上可能积累残留文件。
-2. 更新 `AGENTS.md` §5.4：基线数字由 438 改为 0，进入"增量红线"阶段。
-3. `lib/desktop/` 的 585 条 `deprecated_member_use` 单独立项（`deprecated_member_use` 是 info，不阻塞门禁）。
+- ~~`backup_pane` 的远程备份：列表拉下来了却不显示，用户会以为功能已完成。~~ ✅ 已修复（`8a65787`，见 §9b 表）
+- ~~`html_preview_dialog` 的 `_tempFilePath`：临时文件写出去没清理，Windows 上可能积累残留文件。~~ ✅ 已修复（`8a65787`，见 §9b 表）
+
+**修复专项记录（2026-09-09，commit `8a65787`）**：§9a/§9b 中三个用户可感知问题已修复——TTS 网络合成取消链路（每请求 `_TtsCancelToken` + 取消静默）、backup_pane 远程列表死代码与弹窗错误透出、html_preview_dialog 临时文件泄漏。flutter analyze 2589 issues 持平，warning 0 / error 0。

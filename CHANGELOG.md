@@ -16,6 +16,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **Changed**：B2 批次落地（`0a3124d`）：`unused_shown_name` + `unused_field`，248 → 220；B3 批次落地（`3703d87`）：`unused_local_variable` 连锁死代码，220 → 136；B4 批次落地：`unused_element`/`unused_element_parameter` 逐条判读，136 → **44**（27 文件 +40/−1011，净删 971 行）；B5 批次落地：C 档 44 → **0**。**438 → 0 warning 清零达成，全程 error 0**。B1/B2/B3 已过 CI 并逐条核对。
 - **Changed**：`html_preview_dialog.dart` 的 `_pushConsole` 从 `extension on _HtmlPreviewDialogState` 移入 State 类体——extension 中调用 protected `setState` 触发 `invalid_use_of_protected_member`，移入类内是唯一合规修法，行为不变。
 - **Fixed**：0.0.43 遗留——`lib/l10n/app_localizations.dart` 中 `statsHeatmapSummary` / `statsHeatmapNoActivity` 被注入到类外（顶层无体函数声明），本地不跑 `pub get` 重新生成会报 `missing_function_body`；本次由 `flutter pub get` 重新生成到类内正确位置。
+- **Fixed**（§9a 修复专项，`8a65787`）：① **TTS 网络合成取消链路失效**——`tts_provider` 原局部 `cancelled` 标志从未置 true，stop/flush 无法中断进行中的网络请求；改为每请求独立 `_TtsCancelToken`（stop/dispose 置当前 token，新请求不受影响），主动取消抛 `_Cancelled` 不再写入 `_error`。② **桌面备份页远程列表遗留死代码 + 弹窗吞错误**——pane 内 `_remote`/`_loadingRemote`/`_reloadRemote()` 为旧预取设计遗留（每次打开设置页白发一次 WebDAV 请求且无人消费），实际展示走"恢复"按钮 → `_RemoteBackupsDialog`（功能完整），死代码已删；弹窗 `_load()` 原吞掉异常致失败时静默显示"暂无备份"，改为透出错误详情。③ **HTML 预览 Windows 临时文件泄漏**——每次主题切换新写一份临时 HTML 且 dispose 从不清理；改用 `_tempFiles` 跟踪全部写入路径，dispose 时存在性检查后逐一删除。
 
 ### 🤖 For Agents
 - **基线修正**：首轮报的「~235 warning」是 Actions 单步输出截断导致的错数（3074 条只落 1028 行）。准确基线（commit `c203caa`）：**3074 issues = 438 warning + 2836 info + 0 error**。warning 三条大头 `unused_local_variable` 84 / `unnecessary_cast` 73 / `unused_element` 60；最脏文件 `lib/core/services/api/chat_api_service.dart` 89 条。
@@ -30,7 +31,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **坑（B4 实测）**：脚本按括号平衡找块尾时，`{` 必须仅在 `paren==0` 时计为函数体开始——否则命名参数表 `{...}`（如 `void f({int x}) {`）的同行闭合会被误判为块结束，只删声明行留孤儿函数体。实测 6 处中招，已回滚重做。
 - **坑（B4 实测）**：删除大块代码会连锁暴露新警告（B4 删除后新增 `_safeString`、`_TileStatus`、4 条 unused_import、`pressedScale`、`_userMenuActive` 共 8 条）——每批删除后必须重新 analyze，连锁项逐条判读，不能只看批次目标清单。
 - **坑（B5 实测）**：行尾追加 ignore 时若原行已有 `//` 注释，`code; // foo // ignore: bar` 是**单个 comment token**，`ignore:` 段不会被 analyzer 识别——ignore 必须是独立注释段（另起一行或作为行内唯一注释）。
-- **B5 新发现疑似 bug**（§9a）：`tts_provider` 网络 TTS 的 `cancelled` 局部变量从未被置 true，取消链路完全失效；`chat_api_service` Response API follow-up 被 `if (false && …)` 手动禁用。两者均保留 + ignore，待用户决策。
+- **B5 新发现疑似 bug**（§9a）：~~`tts_provider` 网络 TTS 的 `cancelled` 局部变量从未被置 true，取消链路完全失效~~ **已修复（`8a65787`）**——改为每请求独立 `_TtsCancelToken`；`chat_api_service` Response API follow-up 仍被 `if (false && …)` 手动禁用（保留 + ignore），待用户决策。**坑（修复专项）**：共享 bool 标志 + 新请求重置存在跨请求竞态（旧请求的取消检查可能重新读到 false 而"复活"），每请求独立 token 实例才是正确模式；取消类异常要区分"主动取消"与"真失败"，前者不得污染错误状态。
+- **坑（§9a 修复专项）**：bug 报"XX 列表不展示"时先查展示链路是否存在——backup_pane 的远程列表实际由"恢复"按钮 → `_RemoteBackupsDialog` 完整承载，pane 内预取字段只是旧设计遗留的死代码；处置方向是删死代码 + 修弹窗吞错误，而不是往 pane 里新接 UI。
 - 本文件三档结构本身是规范的一部分：发版时用户档→Release body，开发者档+模型档→本文件，勿混写。
 
 ## [0.0.43] - 2026-09-08

@@ -80,6 +80,8 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 硬化路径：① 按批次清零 438 个 warning（**B1 `78b9c1c` 438→248 · B2 `0a3124d` 248→220 · B3 `3703d87` 220→136 · B4 136→44（unused_element/parameter 归零，27 文件 +40/−1011），全程 error 0，B1/B2/B3 均 CI 核对通过**）② CI 步骤改为 `flutter analyze --no-fatal-infos`（error/warning 阻塞，info 继续观察）③ info 长期逐步消化，不设死线。**B5 已落地：44 → 0（19 文件），warning 清零达成，全程 error 0**。§9a 保留项均带 ignore 注释。
 基线已归零（2026-09-09，B5）：**增量红线生效——任何变更不得引入新 warning/error**。B6 已把 CI analyze 升级为**硬门禁**（`--no-fatal-infos` + 去 continue-on-error + `PIPESTATUS` 传退出码），warning/error 直接阻塞 job。
 
+**§9a 修复专项（2026-09-09，`8a65787`）**：三个用户可感知 bug 已修复——① TTS 网络合成取消链路（每请求独立 `_TtsCancelToken`，stop/dispose 置位；主动取消不写 `_error`）；② backup_pane 远程列表预取死代码删除 + 弹窗 `_load()` 吞错误改为透出失败详情（实际展示走"恢复"按钮 → `_RemoteBackupsDialog`，功能本就完整）；③ html_preview_dialog Windows 临时文件泄漏（`_tempFiles` 跟踪全部写入路径，dispose 清理）。analyze 2589 issues 持平、0 warning。§9a 余下保留项（haptics 入口、`_McpTab`、头像、代理对话框、`if (false &&)` follow-up）待用户逐项拍板。
+
 ## 6. 索引表（本文件只做索引，不复制内容）
 
 | 主题 | 去处 |
@@ -87,7 +89,7 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 | 沙箱网络突破：hosts/DoH、CI 日志两步法、Git Data API 推送、fetch 事故守则 | 《沙箱受限网络访问GitHub实战经验.md》 |
 | 版本历史与破坏性变更 | `CHANGELOG.md` |
 | 架构与功能概览 | `README.md` |
-| CI workflow | `.github/workflows/build-stable.yml`（FLUTTER_VERSION 3.35.7，无 analyze 硬门禁） |
+| CI workflow | `.github/workflows/build-stable.yml`（FLUTTER_VERSION 3.35.7，B6 起 analyze 为硬门禁） |
 | **warning 清零批次、进度看板、红线** | `docs/WARNING_CLEARANCE.md` |
 
 ## 7. 本文件的迭代

@@ -10,6 +10,7 @@ import '../../../core/models/assistant.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -33,7 +34,7 @@ class AssistantSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     final assistants = context.watch<AssistantProvider>().assistants;
@@ -129,7 +130,7 @@ class _AssistantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -282,7 +283,7 @@ class _AssistantCard extends StatelessWidget {
 /// 而 `AppSheet` 的 `title` 是左对齐的，套上去会改视觉。
 /// 因此把手（grabber）需要自己画（`AppSheet` 组件才会自动加）。
 Future<String?> _showAddAssistantSheet(BuildContext context) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final controller = TextEditingController();
   final result = await showAppSheet<String>(
     context: context,

@@ -7,7 +7,7 @@ import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
@@ -54,7 +54,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
   /// 清理动作的统一二次确认。原实现里 _clearAvatar / _clearApp 各写了一份
   /// 逐字相同的 AlertDialog，抽出来避免文案/i18n 后续只改一处。
   Future<bool> _confirmClear() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -84,7 +84,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
       Logger.e('StorageCache', 'clear avatar cache failed', e, s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清理头像缓存失败: $e')),
+          SnackBar(content: Text(context.l10n.clearAvatarCacheFailed(e.toString()))),
         );
       }
     }
@@ -99,7 +99,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
       Logger.e('StorageCache', 'clear app cache failed', e, s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清理缓存失败: $e')),
+          SnackBar(content: Text(context.l10n.clearCacheFailed(e.toString()))),
         );
       }
     }
@@ -107,7 +107,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final cfg = widget.config;
     context.watch<StorageProvider>();

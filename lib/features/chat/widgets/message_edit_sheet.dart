@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/chat_message.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';
 
@@ -39,7 +39,7 @@ class _MessageEditSheetState extends State<_MessageEditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Padding(
       // Ensure keyboard-safe bottom inset for the sheet

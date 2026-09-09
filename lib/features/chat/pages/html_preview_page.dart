@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../../../l10n/app_localizations.dart';
-
+import '../../../l10n/build_context_l10n.dart';
 class HtmlPreviewPage extends StatefulWidget {
   const HtmlPreviewPage({super.key, required this.html});
   final String html;
@@ -68,7 +67,7 @@ class _HtmlPreviewPageState extends State<HtmlPreviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.assistantEditPreviewTitle),

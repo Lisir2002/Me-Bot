@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import 'dart:async';
 import 'dart:convert';
 // Replaced flutter_zoom_drawer with a custom InteractiveDrawer
@@ -286,7 +286,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // no-op placeholders removed
 
   Future<void> _showLearningPromptSheet() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final prompt = await LearningModeStore.getPrompt();
     final controller = TextEditingController(text: prompt);
@@ -535,7 +535,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   String _titleForLocale(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return l10n.titleForLocale;
   }
 
@@ -629,7 +629,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   String _clearContextLabel() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final assistant = context.read<AssistantProvider>().currentAssistant;
     final configured = (assistant?.limitContextMessages ?? true) ? (assistant?.contextMessageSize ?? 0) : 0;
     // Use collapsed view for counting
@@ -851,7 +851,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       embeddedWidth: _embeddedSidebarWidth,
       userName: context.watch<UserProvider>().name,
       assistantName: (() {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         final a = context.watch<AssistantProvider>().currentAssistant;
         final n = a?.name.trim();
         return (n == null || n.isEmpty) ? l10n.homePageDefaultAssistant : n;
@@ -1066,7 +1066,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           status = await Permission.camera.request();
         }
         if (!status.isGranted) {
-          final l10n = AppLocalizations.of(context)!;
+          final l10n = context.l10n;
           showAppSnackBar(
             context,
             message: l10n.cameraPermissionDeniedMessage,
@@ -1090,7 +1090,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       }
     } catch (e) {
       try {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = context.l10n;
         showAppSnackBar(
           context,
           message: l10n.cameraPermissionDeniedMessage,
@@ -1245,7 +1245,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.4), width: 2),
                     ),
                     child: Text(
-                      AppLocalizations.of(context)!.homePageDropToUpload,
+                      context.l10n.homePageDropToUpload,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -1355,7 +1355,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final modelId = assistant?.chatModelId ?? settings.currentModelId;
 
     if (providerKey == null || modelId == null) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.homePagePleaseSelectModel,
@@ -2096,8 +2096,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               final sp = context.read<SettingsProvider>();
               if (Platform.isAndroid && !_appInForeground && sp.androidBackgroundChatMode == AndroidBackgroundChatMode.onNotify) {
                 await NotificationService.showChatCompleted(
-                  title: AppLocalizations.of(context)!.notificationChatCompletedTitle,
-                  body: AppLocalizations.of(context)!.notificationChatCompletedBody,
+                  title: context.l10n.notificationChatCompletedTitle,
+                  body: context.l10n.notificationChatCompletedBody,
                 );
               }
             } catch (_) {}
@@ -2208,7 +2208,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         },
         onError: (e) async {
           // Preserve partial content; if empty, write error message into bubble
-          final errText = '${AppLocalizations.of(context)!.generationInterrupted}: $e';
+          final errText = '${context.l10n.generationInterrupted}: $e';
           final displayContent = fullContent.isNotEmpty ? fullContent : errText;
           _logTurn(fullContent, error: '$e');
           await _chatService.updateMessage(
@@ -2270,7 +2270,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           await _conversationStreams.remove(_cidForStream)?.cancel();
           showAppSnackBar(
             context,
-            message: '${AppLocalizations.of(context)!.generationInterrupted}: $e',
+            message: '${context.l10n.generationInterrupted}: $e',
             type: NotificationType.error,
           );
         },
@@ -2284,8 +2284,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               final sp = context.read<SettingsProvider>();
             if (Platform.isAndroid && !_appInForeground && sp.androidBackgroundChatMode == AndroidBackgroundChatMode.onNotify) {
               await NotificationService.showChatCompleted(
-                title: AppLocalizations.of(context)!.notificationChatCompletedTitle,
-                body: AppLocalizations.of(context)!.notificationChatCompletedBody,
+                title: context.l10n.notificationChatCompletedTitle,
+                body: context.l10n.notificationChatCompletedBody,
               );
             }
           } catch (_) {}
@@ -2296,7 +2296,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _conversationStreams[_cidForStream] = _sub;
     } catch (e) {
       // Preserve partial content on outer error as well; if empty, show error text in bubble
-      final errText = '${AppLocalizations.of(context)!.generationInterrupted}: $e';
+      final errText = '${context.l10n.generationInterrupted}: $e';
       final displayContent = fullContent.isNotEmpty ? fullContent : errText;
       _logTurn(fullContent, error: '$e');
       await _chatService.updateMessage(
@@ -2355,7 +2355,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       await _conversationStreams.remove(assistantMessage.conversationId)?.cancel();
       showAppSnackBar(
         context,
-        message: '${AppLocalizations.of(context)!.generationInterrupted}: $e',
+        message: '${context.l10n.generationInterrupted}: $e',
         type: NotificationType.error,
       );
     }
@@ -2461,7 +2461,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final modelId = assistant?.chatModelId ?? settings.currentModelId;
 
     if (providerKey == null || modelId == null) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.homePagePleaseSelectModel,
@@ -3022,8 +3022,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           final sp = context.read<SettingsProvider>();
           if (Platform.isAndroid && !_appInForeground && sp.androidBackgroundChatMode == AndroidBackgroundChatMode.onNotify) {
             await NotificationService.showChatCompleted(
-              title: AppLocalizations.of(context)!.notificationChatCompletedTitle,
-              body: AppLocalizations.of(context)!.notificationChatCompletedBody,
+              title: context.l10n.notificationChatCompletedTitle,
+              body: context.l10n.notificationChatCompletedBody,
             );
           }
         } catch (_) {}
@@ -3050,7 +3050,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     },
     onError: (e) async {
       // When regenerate fails, persist error text into this assistant bubble
-      final errText = '${AppLocalizations.of(context)!.generationInterrupted}: $e';
+      final errText = '${context.l10n.generationInterrupted}: $e';
       final displayContent = fullContent.isNotEmpty ? fullContent : errText;
       await _chatService.updateMessage(
         assistantMessage.id,
@@ -3115,7 +3115,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       await _conversationStreams.remove(_cid)?.cancel();
       showAppSnackBar(
         context,
-        message: '${AppLocalizations.of(context)!.generationInterrupted}: $e',
+        message: '${context.l10n.generationInterrupted}: $e',
         type: NotificationType.error,
       );
     },
@@ -3125,8 +3125,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         final sp = context.read<SettingsProvider>();
         if (Platform.isAndroid && !_appInForeground && sp.androidBackgroundChatMode == AndroidBackgroundChatMode.onNotify) {
           await NotificationService.showChatCompleted(
-            title: AppLocalizations.of(context)!.notificationChatCompletedTitle,
-            body: AppLocalizations.of(context)!.notificationChatCompletedBody,
+            title: context.l10n.notificationChatCompletedTitle,
+            body: context.l10n.notificationChatCompletedBody,
           );
         }
       } catch (_) {}
@@ -3478,7 +3478,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   // Translate message functionality
   Future<void> _translateMessage(ChatMessage message) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // Show language selector
     final language = await showLanguageSelector(context);
     if (language == null) return;
@@ -3653,7 +3653,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       drawer: SideDrawer(
         userName: context.watch<UserProvider>().name,
         assistantName: (() {
-          final l10n = AppLocalizations.of(context)!;
+          final l10n = context.l10n;
           final a = context.watch<AssistantProvider>().currentAssistant;
           final n = a?.name.trim();
           return (n == null || n.isEmpty) ? l10n.homePageDefaultAssistant : n;
@@ -3782,7 +3782,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 await _scrollToMessageId(selectedId);
               }
             },
-            semanticLabel: AppLocalizations.of(context)!.miniMapTooltip,
+            semanticLabel: context.l10n.miniMapTooltip,
             icon: Lucide.Map,
           ),
           // const SizedBox(width: 4),
@@ -3906,7 +3906,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           final chatScale = context.watch<SettingsProvider>().chatFontScale;
                           final assistant = context.watch<AssistantProvider>().currentAssistant;
                           final useAssist = assistant?.useAssistantAvatar == true;
-                          final l10n = AppLocalizations.of(context)!;
+                          final l10n = context.l10n;
                           final showDivider = truncCollapsed >= 0 && index == truncCollapsed;
                           final cs = Theme.of(context).colorScheme;
                           final label = l10n.homePageClearContext;
@@ -4021,7 +4021,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                             if (!hasNetworkTts) {
                                               showAppSnackBar(
                                                 context,
-                                                message: AppLocalizations.of(context)!.desktopTtsPleaseAddProvider,
+                                                message: context.l10n.desktopTtsPleaseAddProvider,
                                                 type: NotificationType.warning,
                                               );
                                               return;
@@ -4061,7 +4061,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     }
                                   } : null,
                                   onDelete: message.role == 'user' ? () async {
-                                    final l10n = AppLocalizations.of(context)!;
+                                    final l10n = context.l10n;
                                     final confirm = await showDialog<bool>(
                                       context: context,
                                       builder: (ctx) => AlertDialog(
@@ -4119,7 +4119,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                 final action = await showMessageMoreSheet(context, message);
                                 if (!mounted) return;
                                 if (action == MessageMoreAction.delete) {
-                                  final l10n = AppLocalizations.of(context)!;
+                                  final l10n = context.l10n;
                                   final confirm = await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
@@ -4530,7 +4530,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         if (_selectedItems.contains(m.id)) selected.add(m);
                       }
                       if (selected.isEmpty) {
-                        final l10n = AppLocalizations.of(context)!;
+                        final l10n = context.l10n;
                         showAppSnackBar(
                           context,
                           message: l10n.homePageSelectMessagesToShare,
@@ -4985,7 +4985,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       final chatScale = context.watch<SettingsProvider>().chatFontScale;
                                       final assistant = context.watch<AssistantProvider>().currentAssistant;
                                       final useAssist = assistant?.useAssistantAvatar == true;
-                                      final l10n = AppLocalizations.of(context)!;
+                                      final l10n = context.l10n;
                                       final showDivider = truncCollapsed >= 0 && index == truncCollapsed;
                                       final cs = Theme.of(context).colorScheme;
                                       final label = l10n.homePageClearContext;
@@ -5100,7 +5100,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                               if (!hasNetworkTts) {
                                                                 showAppSnackBar(
                                                                   context,
-                                                                  message: AppLocalizations.of(context)!.desktopTtsPleaseAddProvider,
+                                                                  message: context.l10n.desktopTtsPleaseAddProvider,
                                                                   type: NotificationType.warning,
                                                                 );
                                                                 return;
@@ -5143,7 +5143,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                         : null,
                                                     onDelete: message.role == 'user'
                                                         ? () async {
-                                                            final l10n = AppLocalizations.of(context)!;
+                                                            final l10n = context.l10n;
                                                             final confirm = await showDialog<bool>(
                                                               context: context,
                                                               builder: (ctx) => AlertDialog(
@@ -5193,7 +5193,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                       final action = await showMessageMoreSheet(context, message);
                                                       if (!mounted) return;
                                                       if (action == MessageMoreAction.delete) {
-                                                        final l10n = AppLocalizations.of(context)!;
+                                                        final l10n = context.l10n;
                                                         final confirm = await showDialog<bool>(
                                                           context: context,
                                                           builder: (ctx) => AlertDialog(
@@ -5604,7 +5604,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               if (_selectedItems.contains(m.id)) selected.add(m);
                             }
                             if (selected.isEmpty) {
-                              final l10n = AppLocalizations.of(context)!;
+                              final l10n = context.l10n;
                               showAppSnackBar(
                                 context,
                                 message: l10n.homePageSelectMessagesToShare,
@@ -5798,7 +5798,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         embeddedWidth: _rightSidebarWidth,
                         userName: context.watch<UserProvider>().name,
                         assistantName: (() {
-                          final l10n = AppLocalizations.of(context)!;
+                          final l10n = context.l10n;
                           final a = context.watch<AssistantProvider>().currentAssistant;
                           final n = a?.name.trim();
                           return (n == null || n.isEmpty) ? l10n.homePageDefaultAssistant : n;
@@ -6009,14 +6009,14 @@ class _SelectionToolbar extends StatelessWidget {
           icon: Lucide.X,
           color: cs.onSurface,
           onTap: onCancel,
-          semanticLabel: AppLocalizations.of(context)!.homePageCancel,
+          semanticLabel: context.l10n.homePageCancel,
         ),
         const SizedBox(width: 14),
         _GlassCircleButtonSmall(
           icon: Lucide.Check,
           color: cs.primary,
           onTap: onConfirm,
-          semanticLabel: AppLocalizations.of(context)!.homePageDone,
+          semanticLabel: context.l10n.homePageDone,
         ),
       ],
     );

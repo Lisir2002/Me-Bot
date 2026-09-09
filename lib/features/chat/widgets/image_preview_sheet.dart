@@ -9,7 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../utils/clipboard_images.dart';
@@ -80,7 +80,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
         Navigator.of(context).maybePop();
       }
     } catch (e) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -93,7 +93,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
     if (_saving) return;
     setState(() => _saving = true);
     try {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       final Uint8List bytes = await widget.file.readAsBytes();
       if (bytes.isEmpty) {
         showAppSnackBar(
@@ -131,7 +131,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
       Navigator.of(context).maybePop();
     } catch (e) {
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.imageViewerPageSaveFailed(e.toString()),
@@ -208,7 +208,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
         ok = await ClipboardImages.setImagePath(widget.file.path);
       } catch (_) {}
     }
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     if (!mounted) return;
     if (ok) {
       showAppSnackBar(
@@ -234,7 +234,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Dialog(
       elevation: 12,
@@ -448,7 +448,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.messageExportSheetExportFailed('$e'),
@@ -461,7 +461,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
     if (_saving) return;
     setState(() => _saving = true);
     try {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       final Uint8List bytes = await widget.file.readAsBytes();
       final name = 'minime-core-${DateTime.now().millisecondsSinceEpoch}';
       final result = await ImageGallerySaverPlus.saveImage(bytes, quality: 100, name: name);
@@ -489,7 +489,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
         );
       }
     } catch (e) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.imagePreviewSheetSaveFailed('$e'),
@@ -503,7 +503,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return DraggableScrollableSheet(
       controller: _ctrl,
       expand: false,

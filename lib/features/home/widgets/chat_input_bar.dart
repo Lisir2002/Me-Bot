@@ -4,7 +4,7 @@ import '../../../theme/design_tokens.dart';
 import '../../../icons/lucide_adapter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import '../../../shared/responsive/breakpoints.dart';
@@ -177,7 +177,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
   }
 
   String _hint(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return l10n.chatInputBarHint;
   }
 
@@ -522,7 +522,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
     const double modelButtonW = 30;  // 28 + padding(1*2)
     const double plusButtonW = 32;
 
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1165,7 +1165,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                                 ];
                                 try {
                                   if (Platform.isIOS) {
-                                    final l10n = AppLocalizations.of(context)!;
+                                    final l10n = context.l10n;
                                     items.add(
                                       ContextMenuButtonItem(
                                         onPressed: () {
@@ -1213,7 +1213,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                           children: [
                             if (widget.showMoreButton) ...[
                               _CompactIconButton(
-                                tooltip: AppLocalizations.of(context)!.chatInputBarMoreTooltip,
+                                tooltip: context.l10n.chatInputBarMoreTooltip,
                                 icon: Lucide.Plus,
                                 active: widget.moreOpen,
                                 onTap: widget.onMore,

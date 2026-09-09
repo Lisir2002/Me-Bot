@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../icons/lucide_adapter.dart' as lucide;
 import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../utils/brand_assets.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/providers/assistant_provider.dart';
@@ -109,7 +110,7 @@ class _DesktopTranslatePageState extends State<DesktopTranslatePage> {
   }
 
   Future<void> _startTranslate() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.read<SettingsProvider>();
 
     final text = _source.text.trim();
@@ -180,7 +181,7 @@ class _DesktopTranslatePageState extends State<DesktopTranslatePage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     final topBar = SizedBox(
       height: 36,
@@ -254,7 +255,7 @@ class _DesktopTranslatePageState extends State<DesktopTranslatePage> {
                               child: _PaneContainer(
                                 overlay: _PaneActionButton(
                                   icon: lucide.Lucide.Eraser,
-                                  label: '清空',
+                                  label: l10n.translateClear,
                                   onTap: () {
                                     _source.clear();
                                     _output.clear();
@@ -280,13 +281,13 @@ class _DesktopTranslatePageState extends State<DesktopTranslatePage> {
                               child: _PaneContainer(
                                 overlay: _PaneActionButton(
                                   icon: lucide.Lucide.Copy,
-                                  label: '复制',
+                                  label: l10n.translateCopy,
                                   onTap: () async {
                                     await Clipboard.setData(ClipboardData(text: _output.text));
                                     if (!mounted) return;
                                     showAppSnackBar(
                                       context,
-                                      message: AppLocalizations.of(context)!.chatMessageWidgetCopiedToClipboard,
+                                      message: context.l10n.chatMessageWidgetCopiedToClipboard,
                                       type: NotificationType.success,
                                     );
                                   },
@@ -426,7 +427,7 @@ class _LanguageDropdownState extends State<_LanguageDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -686,7 +687,7 @@ class _LangOptionTileState extends State<_LangOptionTile> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _localizedLabel(AppLocalizations.of(context)!, widget.option.code),
+                    _localizedLabel(context.l10n, widget.option.code),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.88), fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w400),
@@ -773,7 +774,7 @@ class _TranslateButtonState extends State<_TranslateButton> {
                     children: [
                       SvgPicture.asset('assets/icons/stop.svg', width: 16, height: 16, colorFilter: ColorFilter.mode(fg, BlendMode.srcIn)),
                       const SizedBox(width: 6),
-                      Text('终止', style: TextStyle(color: fg, fontSize: 13.5, fontWeight: FontWeight.w600)),
+                      Text(context.l10n.translateStop, style: TextStyle(color: fg, fontSize: 13.5, fontWeight: FontWeight.w600)),
                     ],
                   )
                 : Row(
@@ -782,7 +783,7 @@ class _TranslateButtonState extends State<_TranslateButton> {
                     children: [
                       Icon(lucide.Lucide.Languages, size: 16, color: fg),
                       const SizedBox(width: 6),
-                      Text('翻译', style: TextStyle(color: fg, fontSize: 13.5, fontWeight: FontWeight.w600)),
+                      Text(context.l10n.translateRun, style: TextStyle(color: fg, fontSize: 13.5, fontWeight: FontWeight.w600)),
                     ],
                   ),
           ),

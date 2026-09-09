@@ -87,6 +87,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
+      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
+        run: flutter gen-l10n
       - name: 📝 获取版本号
         id: version
         run: |
@@ -104,6 +106,12 @@ jobs:
       - name: 🔍 静态分析门禁（warning/error 阻塞）
         run: |
           flutter pub get
+          # l10n 护栏：arb 一致性/元数据/空翻译（error 阻塞）；custom_lint 本期只报告
+          python3 tools/check_l10n.py
+          dart run custom_lint > /tmp/custom_lint.log 2>&1 || true
+          tail -3 /tmp/custom_lint.log || true
+          # gen 产物不入库，analyze 前必须生成
+          flutter gen-l10n
           # 退出码必须紧跟 analyze 取；管道后再取 ${PIPESTATUS[0]} 会被后续
           # echo / tail 覆盖成 0（实测：99 个 error 也照样通过）。
           flutter analyze --no-fatal-infos > /tmp/analyze_full.log 2>&1
@@ -186,6 +194,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
+      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
+        run: flutter gen-l10n
       - name: 📝 获取版本号
         id: version
         run: |
@@ -240,6 +250,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
+      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
+        run: flutter gen-l10n
       - name: 📝 获取版本号
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
@@ -308,6 +320,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
+      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
+        run: flutter gen-l10n
       - name: 🔧 获取依赖
         run: flutter pub get
 
@@ -469,6 +483,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
+      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
+        run: flutter gen-l10n
       - name: 📝 获取版本号
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')

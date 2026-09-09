@@ -1483,11 +1483,6 @@
   },
   "statsHeatmapSummary": "共 {count} 条消息",
   "statsHeatmapNoActivity": "{date} 无聊天记录",
-  "statsNoActivity": "无记录",
-  "@statsNoActivity": {
-    "description": "热力图某天无消息",
-    "type": "String"
-  },
   "backupEncryptPolicy": "备份加密方式",
   "backupExportRedacted": "脱敏导出（不含密钥，推荐）",
   "backupExportEncrypted": "加密导出（含密钥，需口令）",
@@ -1569,5 +1564,122 @@
   "restoreDefaultCmds": "恢复默认",
   "rotateAction": "标记已轮换",
   "rotateMarked": "已标记为已轮换",
-  "webviewHostsEmpty": "暂无额外放行的站点。"
+  "webviewHostsEmpty": "暂无额外放行的站点。",
+  "checkupScannerErrorTitle": "{scannerTitle}扫描异常",
+  "@checkupScannerErrorTitle": {
+    "placeholders": {
+      "scannerTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupScannerErrorDetail": "该扫描器执行出错，已跳过（不影响其它项）",
+  "checkupBackupPlaintextTitle": "发现 {count} 个明文备份",
+  "@checkupBackupPlaintextTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupBackupPlaintextDetail": "以下备份为明文格式、可能含凭证：{files}。建议删除旧明文备份，改用加密或脱敏导出",
+  "@checkupBackupPlaintextDetail": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupLegacyKeysTitle": "发现未清理的旧明文凭证 Key",
+  "checkupLegacyKeysDetail": "{count} 个旧 key 仍存在于本地配置：{keys}（应为空）",
+  "@checkupLegacyKeysDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupLegacyKeysFixHint": "重新执行孤儿清理",
+  "checkupLegacyPlaintextTitle": "本地配置中存在疑似明文 Key",
+  "checkupLegacyPlaintextDetail": "在 {count} 个配置项中发现疑似明文 Key 模式，建议核查是否为迁移遗漏",
+  "@checkupLegacyPlaintextDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupLogLeakTitle": "日志中疑似出现明文 Key",
+  "checkupLogLeakDetail": "在 {fileCount} 个日志文件中发现约 {lines} 处疑似明文 Key，请检查是否有组件绕过脱敏直接打印凭证",
+  "@checkupLogLeakDetail": {
+    "placeholders": {
+      "fileCount": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupOrphanTitle": "发现 {count} 个无主凭证",
+  "@checkupOrphanTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupOrphanDetail": "这些凭证没有对应的配置项，长期留存在安全存储中，建议清理",
+  "checkupOrphanFixHint": "删除无主凭证",
+  "tensdaqTagline": "革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。",
+  "partnerSiteLabel": "官网：",
+  "siliconflowFreeHint": "已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。",
+  "translateClear": "清空",
+  "translateCopy": "复制",
+  "translateStop": "终止",
+  "translateRun": "翻译",
+  "clearAvatarCacheFailed": "清理头像缓存失败: {error}",
+  "@clearAvatarCacheFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearCacheFailed": "清理缓存失败: {error}",
+  "@clearCacheFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearLogsFailed": "清理日志失败: {error}",
+  "@clearLogsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFailed": "删除失败: {error}",
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "operationFailed": "操作失败: {error}",
+  "@operationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonRetry": "重试"
 }

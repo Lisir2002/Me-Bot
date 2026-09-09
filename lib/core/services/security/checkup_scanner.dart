@@ -114,6 +114,39 @@ class CheckupReport {
       );
 }
 
+/// 体检文案契约（l10n 注入边界）。
+///
+/// core 层**禁止**直接依赖 AppLocalizations（保持纯 Dart、可单测）：
+/// 扫描器与引擎只认这个接口，展示层组装时传入基于 `context.l10n` 的实现
+/// （见 features/security/checkup_strings_l10n.dart）。
+/// 新增扫描器若需要新文案：先在此加方法 → 编译错误会同时强制
+/// ①l10n 实现补 arb 键 ②测试 Fake 补实现，不会出现漏译。
+abstract interface class CheckupStrings {
+  // ---- 引擎兜底（scanner 执行异常时） ----
+  String scannerErrorTitle(String scannerTitle);
+  String scannerErrorDetail();
+
+  // ---- BackupFileScanner ----
+  String backupPlaintextTitle(int count);
+  String backupPlaintextDetail(List<String> files);
+
+  // ---- LegacyPrefsScanner ----
+  String legacyKeysTitle();
+  String legacyKeysDetail(int count, List<String> keys);
+  String legacyKeysFixHint();
+  String legacyPlaintextTitle();
+  String legacyPlaintextDetail(int suspectCount);
+
+  // ---- LogFileScanner ----
+  String logLeakTitle();
+  String logLeakDetail(int files, int lines);
+
+  // ---- OrphanCredentialScanner ----
+  String orphanTitle(int count);
+  String orphanDetail();
+  String orphanFixHint();
+}
+
 /// 安全体检扫描器插件契约（预留接口③）。
 ///
 /// 实现要点：
@@ -126,14 +159,16 @@ abstract class CheckupScanner {
   /// 扫描器唯一 id（用于报告归因与去重）。
   String get id;
 
-  /// 扫描器标题（展示用）。
+  /// 扫描器标题（core 内部标识/日志用；UI 展示文案一律走 [CheckupStrings]）。
   String get title;
 
   /// 该扫描器所属类别的基准严重度（用于 UI 图标着色）。
   CheckupSeverity get severity;
 
   /// 执行扫描，返回本扫描器发现的全部问题（可空，引擎会合并）。
-  Future<List<CheckupFinding>> scan();
+  ///
+  /// [strings] 由引擎透传，扫描器只通过它产出用户可见文案。
+  Future<List<CheckupFinding>> scan(CheckupStrings strings);
 
   /// 对单条发现执行一键修复；成功返回 true，不支持/失败返回 false。
   /// 默认不支持（多数扫描器只做检测 + 提示）。

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/tts_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/tts/network_tts.dart';
@@ -22,7 +23,7 @@ class _DesktopTtsServicesPaneState extends State<DesktopTtsServicesPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return Container(
       alignment: Alignment.topCenter,
@@ -89,7 +90,7 @@ class _NetworkTtsList extends StatelessWidget {
     final services = sp.ttsServices;
     if (services.isEmpty) {
       final cs = Theme.of(context).colorScheme;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 40),
         alignment: Alignment.center,
@@ -195,12 +196,12 @@ class _NetworkServiceCardState extends State<_NetworkServiceCard> {
                   _SmallIconBtn(icon: lucide.Lucide.Settings2, onTap: widget.onEdit),
                   const SizedBox(width: 6),
                   Tooltip(
-                    message: AppLocalizations.of(context)!.ttsServicesPageTestVoiceTooltip,
+                    message: context.l10n.ttsServicesPageTestVoiceTooltip,
                     child: _SmallIconBtn(
                       icon: _testing ? lucide.Lucide.Loader : lucide.Lucide.Volume2,
                       onTap: () async {
                         setState(() { _testing = true; _error = null; });
-                        final demo = AppLocalizations.of(context)!.ttsServicesPageTestSpeechText;
+                        final demo = context.l10n.ttsServicesPageTestSpeechText;
                         final err = await context.read<TtsProvider>().testNetworkService(widget.service, demo);
                         if (!mounted) return;
                         setState(() { _testing = false; _error = err; });
@@ -231,7 +232,7 @@ class _ErrorInline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final oneLine = message.replaceAll('\n', ' ');
     return Container(
       decoration: BoxDecoration(
@@ -258,7 +259,7 @@ class _ErrorInline extends StatelessWidget {
 
 void _showErrorDialog(BuildContext context, String message) {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   showDialog<void>(
     context: context,
     builder: (ctx) => Dialog(
@@ -338,7 +339,7 @@ class _SystemTtsCardState extends State<_SystemTtsCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tts = context.watch<TtsProvider>();
 
     final baseBg = isDark ? Colors.white10 : Colors.white.withOpacity(0.96);
@@ -423,7 +424,7 @@ class _SystemTtsCardState extends State<_SystemTtsCard> {
 
   Future<void> _showSettingsDialog(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tts = context.read<TtsProvider>();
     double rate = tts.speechRate;
     double pitch = tts.pitch;
@@ -751,7 +752,7 @@ Future<TtsServiceOptions?> _showEditNetworkDialog(BuildContext context, TtsServi
 
 Future<TtsServiceOptions?> _showNetworkDialog(BuildContext context, TtsServiceOptions? initial) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   NetworkTtsKind kind = initial?.kind ?? NetworkTtsKind.openai;
   final nameCtl = TextEditingController(text: initial?.name ?? '');
   // Common fields

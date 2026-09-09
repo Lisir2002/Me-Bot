@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/search/search_service.dart';
 import '../../utils/brand_assets.dart';
@@ -20,7 +20,7 @@ class _DesktopSearchServicesPaneState extends State<DesktopSearchServicesPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
     final services = settings.searchServices;
     final selected = settings.searchServiceSelected.clamp(0, services.isNotEmpty ? services.length - 1 : 0);
@@ -215,7 +215,7 @@ class _ServiceCardState extends State<_ServiceCard> {
         : cs.outlineVariant.withOpacity(isDark ? 0.12 : 0.08);
 
     // Connection/testing status capsule
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final conn = context.watch<SettingsProvider>().searchConnection[widget.service.id];
     String statusText;
     Color statusBg;
@@ -507,7 +507,7 @@ class _AddServiceDialogState extends State<_AddServiceDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Dialog(
       backgroundColor: cs.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -560,7 +560,7 @@ class _AddServiceDialogState extends State<_AddServiceDialog> {
   }
 
   List<Widget> _buildFields() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     InputDecoration deco(String hint) => _deskInputDecoration(context).copyWith(hintText: hint);
     switch (_selectedType) {
       case 'tavily':
@@ -678,7 +678,7 @@ class _EditServiceDialogState extends State<_EditServiceDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final name = SearchService.getService(widget.service).name;
     return Dialog(
       backgroundColor: cs.surface,
@@ -725,7 +725,7 @@ class _EditServiceDialogState extends State<_EditServiceDialog> {
   }
 
   List<Widget> _buildFields() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final s = widget.service;
     InputDecoration deco(String hint) => _deskInputDecoration(context).copyWith(hintText: hint);
     if (s is TavilyOptions || s is ExaOptions || s is ZhipuOptions || s is LinkUpOptions || s is BraveOptions || s is MetasoOptions || s is JinaOptions || s is OllamaOptions || s is PerplexityOptions || s is BochaOptions) {

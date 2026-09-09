@@ -19,6 +19,8 @@ import '../../../core/services/security/app_lock_service.dart';
 import '../../../core/services/security/credential_audit_logger.dart';
 import '../../../core/services/security/policy_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../checkup_strings_l10n.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../utils/app_directories.dart';
 import '../../provider/pages/provider_detail_page.dart';
 
@@ -116,7 +118,7 @@ class _SecurityPageState extends State<SecurityPage> {
     setState(() => _running = true);
     try {
       final svc = await _buildService();
-      final report = await svc.run();
+      final report = await svc.run(L10nCheckupStrings(context.l10n));
       if (!mounted) return;
       setState(() => _report = report);
     } finally {
@@ -125,7 +127,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   Future<void> _autoFix() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final report = _report;
     if (report == null) return;
     final fixable = report.fixable;
@@ -186,7 +188,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   Future<void> _clearAudit() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -210,7 +212,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   Future<void> _markRotated(KeyHealthInfo info) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     if (!SecureStorage.isInitialized) return;
     final svc = KeyHealthService(SecureStorage.instance);
     final ok = await svc.markRotated(info.providerId);
@@ -244,7 +246,7 @@ class _SecurityPageState extends State<SecurityPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.securitySection)),
@@ -482,7 +484,7 @@ class _SecurityPageState extends State<SecurityPage> {
   /// 开/关门禁都要求**现场验证身份**：
   /// 开启确认是本人在开；关闭防止他人随手关掉门禁让保护形同虚设。
   Future<void> _toggleLock(AppLockService lock, bool v) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ok = await lock.setEnabled(v,
         verify: () => lock.verifyWith(l10n.appLockVerifyToEnable));
     if (!mounted) return;
@@ -494,7 +496,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   Future<void> _pickGrace(AppLockService lock) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final picked = await showModalBottomSheet<int>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -653,7 +655,7 @@ class _SecurityPageState extends State<SecurityPage> {
   static final RegExp _hostRe = RegExp(r'^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$');
 
   Future<void> _addCommand(LocalPolicyProvider policy) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ctrl = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -688,7 +690,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   Future<void> _addHost(LocalPolicyProvider policy) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ctrl = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,

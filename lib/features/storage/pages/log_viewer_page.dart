@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/storage/log_store.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../widgets/log_settings_sheet.dart';
 import '../widgets/storage_ios_widgets.dart';
 
@@ -46,7 +47,7 @@ class _LogViewerPageState extends State<LogViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final tabs = [l10n.storageLogContext, l10n.storageLogNetwork, l10n.storageLogRuntime];
 
@@ -192,7 +193,7 @@ class _TactileLogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final themeDark = Theme.of(context).brightness == Brightness.dark;
     final bg = themeDark ? Colors.white10 : Colors.white.withOpacity(0.96);

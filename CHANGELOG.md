@@ -5,6 +5,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.47] - 2026-09-10
+
+### 📣 For Users
+- **你的 API Key 更安全了**：所有密钥（模型 Key、搜索/TTS 凭证、代理密码、WebDAV 凭证）从明文存储整体迁入系统级安全存储（Android Keystore / iOS&macOS Keychain / Windows DPAPI / Linux libsecret），应用本地不再留存明文。
+- **备份默认不再携带密钥**：导出备份默认脱敏（换机不泄密）；需要带密钥换机时可选「口令加密导出」（AES-256-GCM + 口令派生，无口令打不开）；导入旧版含明文密钥的备份时，密钥自动吸收进安全存储并从备份内容中剥离。
+- **新增「安全中心」**（设置 → 安全）：
+  - **安全体检**：一键扫描旧明文残留、无主凭证、本机备份文件与日志泄露风险，残留项可一键自动修复；
+  - **密钥健康**：展示每个服务商的密钥数量、最近使用与轮换时间，超过 90 天未轮换会标「建议轮换」；
+  - **隐私门禁**（默认关）：开启后查看/复制密钥、输入备份口令前需通过指纹/面容或锁屏密码验证（设备不支持时自动隐藏）；
+  - **白名单策略**（默认关）：开启后限制 MCP 服务器只能执行白名单命令（默认 node/npx/python/python3/uvx/docker/bun），WebView 默认只允许 https 并拦截 `file://`/`javascript:`/`data:`。
+- **复制密钥更放心**：复制出的密钥 60 秒后自动清空剪贴板（期间你复制了别的内容则不会误清）；凭证编辑页在 Android 上禁止截屏/录屏/近期任务缩略图。
+
+### 🔧 For Developers
+- **Added**（M1）：`lib/core/services/secure_storage/`——①`CredentialRecord` 信封（`{type,value,meta{createdAt,lastUsedAt,lastRotatedAt,ext}}`）+ ②`SecureStorageBackend` 平台注册器 + `SecureStorageService`；双写迁移：④`MigrationRunner` 注册表 + `credential_v1`（prefs→secure）/ `credential_v2`（新键位）两步；`BackupCredentialBridge`（导出脱敏/恢复吸收/孤儿清理）；`BackupEncryptor`（JWE `A256GCM` + `PBKDF2-HMAC-SHA256` 310k，备份格式 v2 信封，未知版本/算法显式报错，v1 明文照常导入）。
+- **Added**（M2，PR-5~8）：③`CheckupScanner` 插件化体检引擎 + 首批 4 扫描器（legacy 明文残留/孤儿凭证/备份文件/日志文件）+ `SecretDetector`（六模式 + 高熵兜底，只回传模式名不回传明文）+ `ClipboardGuard`（60s TTL、清除前校验内容未被替换）+ `CredentialAuditLogger`（独立 `LogTags.security` 通道）；⑤`AppLockGate`/`IdentityVerifier`（`local_auth` 首实现，生物识别→系统 PIN 回退，默认关）+ Android `FLAG_SECURE`（自建 MethodChannel `kelivo/screen_security`）；`KeyHealthService`（90 天轮换阈值）；⑤`PolicyProvider`（`LocalPolicyProvider` 首实现）+ `McpCommandGuard`（MCP stdio spawn 前拦截，默认白名单 + 每服务器开关）+ `UrlGuard`（默认仅 https，硬拦 `file`/`javascript`/`data`/`content`）。统一入口 `SecurityPage`，移动端与桌面端共用。
+- **Changed**：`MainActivity` 改继承 `FlutterFragmentActivity`（local_auth 硬性要求，普通 FlutterActivity 会返回 `NOT_FRAGMENT_ACTIVITY`）；`pubspec` 转正 `crypto`、新增 `local_auth ^2.3.0`；SettingsProvider 凭证写路径改 `writeCredential(...toRecord().markRotated())`，请求命中密钥时 `touchProviderCredential`（60s 去抖）。
+- **Migrated**：凭证读取为 secure 优先、prefs 兜底；旧明文 key 保留作回滚兜底（迁移确认后下版本移除）；l10n 四份 arb 共 +45 键（加密 11 + 安全中心 34）。
+- **Verified**：`flutter test` 136/136（存量 95 + 新增 41）；全量 `dart analyze` 0 error / 0 warning；Android CI success（run 34384039313）。
+
+### 🤖 For Agents
+- **行为语义**：`SecureStorage.instance` 未初始化**抛异常**（快速失败，禁止静默降级到明文路径）；`AppLockService`/`LocalPolicyProvider` **默认关**——`ensureUnlocked` 未启用直接放行、策略未启用时两个 Guard 全放行，勿在业务层再包一层开关判断。
+- **坑位预警**：① l10n 源是 `lib/l10n/*.arb`，直接改生成的 dart 会被 `flutter gen-l10n` 覆盖；② 测试里的仿真密钥必须「前缀+主体」分字面量拼接（如 `'sk' '-' + body`），完整形态会被 GitHub secret scanning 的推送保护拦截（实测拦截过一次）；③ `LogContext.zone` 的 `fn` 是必填命名参数，位置传参会报 `named parameter 'fn' is required`；④ mcp_client 在包内部自行 `Process.start`，命令白名单只能拦截在我方 `McpProvider.connect()` 取出 `TransportConfig` 之前；⑤ WebView 拦截只能在 `NavigationDelegate.onNavigationRequest` 同步决策。
+- **备份格式 v2**：`{"format":"kelivo-backup","version":2,"crypto":{alg,kdf,iterations,salt,jwe}}`；`BackupCryptoErrorKind`（needPassphrase/wrongPassphrase/unsupported/corrupt）驱动 UI 重试流。
+
 ## [0.0.45] - 2026-09-09
 
 ### 📣 For Users

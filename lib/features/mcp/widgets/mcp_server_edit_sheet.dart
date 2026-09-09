@@ -5,7 +5,7 @@ import 'dart:math' as math;
 import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
@@ -167,7 +167,7 @@ class _McpServerEditSheetState extends State<_McpServerEditSheet> with SingleTic
   }
 
   Widget _basicForm() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isBuiltin = isEdit && _transport == McpTransportType.inmemory;
     return Column(
@@ -215,7 +215,7 @@ class _McpServerEditSheetState extends State<_McpServerEditSheet> with SingleTic
 
   Widget _headersEditor() {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -273,7 +273,7 @@ class _McpServerEditSheetState extends State<_McpServerEditSheet> with SingleTic
     final name = _nameCtrl.text.trim().isEmpty ? 'MCP' : _nameCtrl.text.trim();
     final url = _urlCtrl.text.trim();
     if (url.isEmpty) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.mcpServerEditSheetUrlRequired,
@@ -297,7 +297,7 @@ class _McpServerEditSheetState extends State<_McpServerEditSheet> with SingleTic
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final server = isEdit ? mcp.getById(widget.serverId!) : null;
 

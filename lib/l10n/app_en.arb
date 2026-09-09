@@ -1721,11 +1721,6 @@
     },
     "type": "String"
   },
-  "statsNoActivity": "No activity",
-  "@statsNoActivity": {
-    "description": "热力图某天无消息",
-    "type": "String"
-  },
   "backupEncryptPolicy": "Backup encryption",
   "backupExportRedacted": "Redacted (no keys, recommended)",
   "backupExportEncrypted": "Encrypted (with keys, needs passphrase)",
@@ -1821,5 +1816,136 @@
   "restoreDefaultCmds": "Restore defaults",
   "rotateAction": "Mark as rotated",
   "rotateMarked": "Marked as rotated",
-  "webviewHostsEmpty": "No extra allowed sites."
+  "webviewHostsEmpty": "No extra allowed sites.",
+  "@mcpToolSchemaTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@mcpToolTestTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupScannerErrorTitle": "{scannerTitle}: scan error",
+  "@checkupScannerErrorTitle": {
+    "placeholders": {
+      "scannerTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupScannerErrorDetail": "This check failed and was skipped; other checks are unaffected.",
+  "checkupBackupPlaintextTitle": "{count} plaintext backup(s) found",
+  "@checkupBackupPlaintextTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupBackupPlaintextDetail": "These backups are plaintext and may contain credentials: {files}. Delete the old plaintext backups and switch to encrypted or sanitized export.",
+  "@checkupBackupPlaintextDetail": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupLegacyKeysTitle": "Uncleaned legacy plaintext credential keys found",
+  "checkupLegacyKeysDetail": "{count} legacy key(s) still exist in local config: {keys} (should be empty)",
+  "@checkupLegacyKeysDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupLegacyKeysFixHint": "Run orphan cleanup again",
+  "checkupLegacyPlaintextTitle": "Suspicious plaintext keys in local config",
+  "checkupLegacyPlaintextDetail": "Suspicious plaintext key patterns found in {count} config entries; verify they are not migration leftovers.",
+  "@checkupLegacyPlaintextDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupLogLeakTitle": "Possible plaintext keys in logs",
+  "checkupLogLeakDetail": "Found about {lines} suspected plaintext key occurrences in {fileCount} log file(s); check whether any component prints credentials without sanitization.",
+  "@checkupLogLeakDetail": {
+    "placeholders": {
+      "fileCount": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupOrphanTitle": "{count} orphan credential(s) found",
+  "@checkupOrphanTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupOrphanDetail": "These credentials have no matching config entries and linger in secure storage; consider cleaning them up.",
+  "checkupOrphanFixHint": "Delete orphan credentials",
+  "tensdaqTagline": "A revolutionary bidding-based AI MaaS platform — pricing driven by market supply and demand; say goodbye to costly fixed pricing.",
+  "partnerSiteLabel": "Website:",
+  "siliconflowFreeHint": "Free SiliconFlow models are built in — no API key needed. For more powerful models, apply for your own API key and configure it here.",
+  "translateClear": "Clear",
+  "translateCopy": "Copy",
+  "translateStop": "Stop",
+  "translateRun": "Translate",
+  "clearAvatarCacheFailed": "Failed to clear avatar cache: {error}",
+  "@clearAvatarCacheFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearCacheFailed": "Failed to clear cache: {error}",
+  "@clearCacheFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearLogsFailed": "Failed to clear logs: {error}",
+  "@clearLogsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFailed": "Delete failed: {error}",
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "operationFailed": "Operation failed: {error}",
+  "@operationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonRetry": "Retry"
 }

@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
 import '../../../theme/design_tokens.dart';
 import 'stats_card.dart';
-import 'stats_l10n.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/build_context_l10n.dart';
 
 // ─────────────────────────────────────────────────────────────
 // 三张用量排行表
@@ -24,16 +25,16 @@ class StatsModelTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final rows = snapshot.modelRows;
 
     return StatsSectionCard(
-      title: t.modelUsage,
+      title: t.statsModelUsage,
       child: rows.isEmpty
-          ? StatsEmptyHint(text: t.noData)
+          ? StatsEmptyHint(text: t.statsNoData)
           : Column(
               children: [
-                StatsTableHeader(left: t.colModel, right: t.colMessages),
+                StatsTableHeader(left: t.statsColModel, right: t.statsColMessages),
                 const SizedBox(height: AppGap.xs),
                 for (final r in rows)
                   Padding(
@@ -41,7 +42,7 @@ class StatsModelTable extends StatelessWidget {
                     child: StatsPillRow(
                       badge: _badge(r, t),
                       name: _name(r, t),
-                      value: t.messageCount(r.value),
+                      value: t.statsMessageCount(r.value),
                     ),
                   ),
               ],
@@ -49,10 +50,10 @@ class StatsModelTable extends StatelessWidget {
     );
   }
 
-  static String _name(UsageRow r, StatsL10n t) =>
-      r.name == StatsSnapshot.unknownModelKey ? t.unknownModel : r.name;
+  static String _name(UsageRow r, AppLocalizations t) =>
+      r.name == StatsSnapshot.unknownModelKey ? t.statsUnknownModel : r.name;
 
-  static String _badge(UsageRow r, StatsL10n t) {
+  static String _badge(UsageRow r, AppLocalizations t) {
     final name = _name(r, t);
     return name.isEmpty ? '?' : name.characters.first.toUpperCase();
   }
@@ -66,16 +67,16 @@ class StatsAssistantTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final rows = snapshot.assistantRows;
 
     return StatsSectionCard(
-      title: t.assistantUsage,
+      title: t.statsAssistantUsage,
       child: rows.isEmpty
-          ? StatsEmptyHint(text: t.noData)
+          ? StatsEmptyHint(text: t.statsNoData)
           : Column(
               children: [
-                StatsTableHeader(left: t.colAssistant, right: t.colTopicCount),
+                StatsTableHeader(left: t.statsColAssistant, right: t.statsColTopicCount),
                 const SizedBox(height: AppGap.xs),
                 for (final r in rows)
                   Padding(
@@ -83,7 +84,7 @@ class StatsAssistantTable extends StatelessWidget {
                     child: StatsPillRow(
                       badge: _badge(r, t),
                       name: _name(r, t),
-                      value: t.topicCount(r.value),
+                      value: t.statsTopicCount(r.value),
                     ),
                   ),
               ],
@@ -91,10 +92,10 @@ class StatsAssistantTable extends StatelessWidget {
     );
   }
 
-  static String _name(UsageRow r, StatsL10n t) =>
-      r.name == StatsSnapshot.globalAssistantKey ? t.globalAssistant : r.name;
+  static String _name(UsageRow r, AppLocalizations t) =>
+      r.name == StatsSnapshot.globalAssistantKey ? t.statsGlobalAssistant : r.name;
 
-  static String _badge(UsageRow r, StatsL10n t) {
+  static String _badge(UsageRow r, AppLocalizations t) {
     final name = _name(r, t);
     return name.isEmpty ? '?' : name.characters.first;
   }
@@ -108,16 +109,16 @@ class StatsTopicTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final rows = snapshot.topicRows;
 
     return StatsSectionCard(
-      title: t.topicUsage,
+      title: t.statsTopicUsage,
       child: rows.isEmpty
-          ? StatsEmptyHint(text: t.noData)
+          ? StatsEmptyHint(text: t.statsNoData)
           : Column(
               children: [
-                StatsTableHeader(left: t.colTopic, right: t.colMessages),
+                StatsTableHeader(left: t.statsColTopic, right: t.statsColMessages),
                 const SizedBox(height: AppGap.xs),
                 for (final r in rows)
                   Padding(
@@ -125,7 +126,7 @@ class StatsTopicTable extends StatelessWidget {
                     child: StatsPillRow(
                       badgeIcon: Icons.chat_bubble_outline,
                       name: _name(r, t),
-                      value: t.messageCount(r.value),
+                      value: t.statsMessageCount(r.value),
                     ),
                   ),
               ],
@@ -133,6 +134,6 @@ class StatsTopicTable extends StatelessWidget {
     );
   }
 
-  static String _name(UsageRow r, StatsL10n t) =>
-      r.name == StatsSnapshot.unnamedTopicKey ? t.unnamedTopic : r.name;
+  static String _name(UsageRow r, AppLocalizations t) =>
+      r.name == StatsSnapshot.unnamedTopicKey ? t.statsUnnamedTopic : r.name;
 }

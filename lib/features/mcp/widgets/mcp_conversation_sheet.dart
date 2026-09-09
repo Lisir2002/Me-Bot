@@ -4,7 +4,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../theme/design_tokens.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_switch.dart';
 
 Future<void> showConversationMcpSheet(BuildContext context, {required String conversationId}) async {
@@ -27,7 +27,7 @@ class _ConversationMcpSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final chat = context.watch<ChatService>();
 

@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:http/io_client.dart';
 import 'package:socks5_proxy/socks_client.dart' as socks;
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/app_page.dart';
@@ -84,7 +84,7 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return AppPage(
       title: l10n.settingsPageNetworkProxy,
@@ -221,7 +221,7 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
   }
 
   Future<void> _onTest() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final url = _testUrlCtl.text.trim();
     if (url.isEmpty) {
       setState(() { _ok = false; _testErr = l10n.networkProxyNoUrl; });
@@ -266,7 +266,7 @@ class _ProxyTypeSheetField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fillColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);

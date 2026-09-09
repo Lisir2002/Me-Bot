@@ -4,7 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../core/providers/mcp_provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -48,7 +48,7 @@ class McpPage extends StatelessWidget {
   Future<void> _showErrorDetails(
       BuildContext context, String serverId, String? message, String name) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     await showAppSheet<void>(
       context: context,
@@ -115,7 +115,7 @@ class McpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return AppPage(
       title: 'MCP',
@@ -170,7 +170,7 @@ class McpPage extends StatelessWidget {
   /// 按 内置(MiniMe) / 第三方 分组构建服务器列表，组间插入小标题。
   List<Widget> _buildServerList(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final servers = mcp.servers.toList();
     if (servers.isEmpty) {
@@ -213,7 +213,7 @@ class McpPage extends StatelessWidget {
 
   Widget _serverCard(BuildContext context, McpServerConfig s) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mcp = context.watch<McpProvider>();
     final st = mcp.statusFor(s.id);
     final err = mcp.errorFor(s.id);

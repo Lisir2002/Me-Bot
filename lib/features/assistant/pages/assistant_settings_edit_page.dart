@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/card_surface.dart';
 import '../../../shared/widgets/snackbar.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
@@ -73,7 +73,7 @@ class _AssistantSettingsEditPageState extends State<AssistantSettingsEditPage>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final provider = context.watch<AssistantProvider>();
     final assistant = provider.getById(widget.assistantId);
@@ -162,7 +162,7 @@ class _MemoryTab extends StatelessWidget {
     int? id,
     String initial = '',
   }) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final controller = TextEditingController(text: initial);
     // Desktop: custom dialog; Mobile: keep bottom sheet
@@ -357,7 +357,7 @@ class _MemoryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ap = context.watch<AssistantProvider>();
@@ -511,7 +511,7 @@ class _CustomRequestTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ap = context.watch<AssistantProvider>();
@@ -801,7 +801,7 @@ class _HeaderRowState extends State<_HeaderRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -916,7 +916,7 @@ class _BodyRowState extends State<_BodyRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1005,7 +1005,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ap = context.watch<AssistantProvider>();
@@ -1254,7 +1254,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
                     final bg = isDark ? Colors.white10 : const Color(0xFFF2F3F5);
                     final overlay = isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05);
                     final pressedBg = Color.alphaBlend(overlay, bg);
-                    final l10n = AppLocalizations.of(context)!;
+                    final l10n = context.l10n;
                     final settings = context.read<SettingsProvider>();
                     String display = l10n.assistantEditModelUseGlobalDefault;
                     if (a.chatModelProvider != null && a.chatModelId != null) {
@@ -1416,7 +1416,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
   }
 
   Future<void> _showAvatarPicker(BuildContext context, Assistant a) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1518,7 +1518,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
 
   Future<void> _showTemperatureSheet(BuildContext context, Assistant a) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showModalBottomSheet(
       context: context,
       backgroundColor: cs.surface,
@@ -1611,7 +1611,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
 
   Future<void> _showTopPSheet(BuildContext context, Assistant a) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showModalBottomSheet(
       context: context,
       backgroundColor: cs.surface,
@@ -1704,7 +1704,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
 
   Future<void> _showContextMessagesSheet(BuildContext context, Assistant a) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showModalBottomSheet(
       context: context,
       backgroundColor: cs.surface,
@@ -1791,7 +1791,7 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
 
   Future<void> _showMaxTokensSheet(BuildContext context, Assistant a) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController(text: a.maxTokens?.toString() ?? '');
     await showModalBottomSheet(
       context: context,
@@ -2143,7 +2143,7 @@ class _ValuePill extends StatelessWidget {
 
 extension _AssistantAvatarActions on _BasicSettingsTabState {
   Future<String?> _pickEmoji(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     String value = '';
     bool validGrapheme(String s) {
@@ -2405,7 +2405,7 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
   }
 
   Future<void> _inputAvatarUrl(BuildContext context, Assistant a) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -2485,7 +2485,7 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
   }
 
   Future<void> _inputQQAvatar(BuildContext context, Assistant a) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -2672,7 +2672,7 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
       }
     } on PlatformException {
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.assistantEditGalleryErrorMessage,
@@ -2682,7 +2682,7 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
       return;
     } catch (_) {
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.assistantEditGeneralErrorMessage,
@@ -2772,7 +2772,7 @@ class _PromptTabState extends State<_PromptTab> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final ap = context.watch<AssistantProvider>();
     final a = ap.getById(widget.assistantId)!;
@@ -3383,7 +3383,7 @@ class _HoverPillButtonState extends State<_HoverPillButton> {
 }
 
 Future<void> _showEditPresetDialog(BuildContext context, Assistant a, PresetMessage m) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final cs = Theme.of(context).colorScheme;
   final controller = TextEditingController(text: m.content);
   final platform = Theme.of(context).platform;
@@ -3568,7 +3568,7 @@ class _McpTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final ap = context.watch<AssistantProvider>();
     final a = ap.getById(assistantId)!;
@@ -3694,7 +3694,7 @@ class _McpTab extends StatelessWidget {
                               ),
                               tag(
                                 s.transport == McpTransportType.inmemory
-                                    ? AppLocalizations.of(context)!.mcpTransportTagInmemory
+                                    ? context.l10n.mcpTransportTagInmemory
                                     : (s.transport == McpTransportType.sse ? 'SSE' : 'HTTP'),
                               ),
                             ],
@@ -3735,7 +3735,7 @@ class _QuickPhraseTab extends StatelessWidget {
     BuildContext context, {
     QuickPhrase? phrase,
   }) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     // Desktop: custom dialog; Mobile: bottom sheet
@@ -3890,7 +3890,7 @@ class _QuickPhraseTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -4193,7 +4193,7 @@ class _QuickPhraseEditSheetState extends State<_QuickPhraseEditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -4995,7 +4995,7 @@ class _DesktopAssistantDialogShellState extends State<_DesktopAssistantDialogShe
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final a = context.watch<AssistantProvider>().getById(widget.assistantId);
-    final name = a?.name ?? AppLocalizations.of(context)!.assistantEditPageTitle;
+    final name = a?.name ?? context.l10n.assistantEditPageTitle;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -5073,7 +5073,7 @@ class _DesktopAssistantMenuState extends State<_DesktopAssistantMenu> {
   int _hover = -1;
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final items = <(_AssistantDesktopMenu, String)>[
@@ -5168,7 +5168,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ap = context.watch<AssistantProvider>();
@@ -5636,7 +5636,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
   }
 
   Future<void> _openAssistantAvatarMenu(BuildContext context, Assistant a) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showDesktopAnchoredMenu(
       context,
       anchorKey: _avatarKey,
@@ -5706,7 +5706,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
   }
 
   Future<void> _inputAvatarUrl(BuildContext context, Assistant a) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
@@ -5745,7 +5745,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
 
 // ignore: unused_element
   Future<String?> _inputEmojiDialog(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final controller = TextEditingController();
     String value = '';
@@ -5788,7 +5788,7 @@ class _DesktopAssistantBasicPaneState extends State<_DesktopAssistantBasicPane> 
   }
 
   Future<void> _inputQQAvatar(BuildContext context, Assistant a) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,

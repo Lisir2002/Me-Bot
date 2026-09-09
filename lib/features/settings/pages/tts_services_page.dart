@@ -8,6 +8,7 @@ import '../../../core/services/haptics.dart';
 import '../../../core/services/tts/network_tts.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -33,7 +34,7 @@ class TtsServicesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return AppPage(
       title: l10n.ttsServicesPageTitle,
@@ -401,7 +402,7 @@ class _NetworkTtsRowMobileState extends State<_NetworkTtsRowMobile> {
                             _testing = true;
                             _error = null;
                           });
-                          final demo = AppLocalizations.of(context)!
+                          final demo = context.l10n
                               .ttsServicesPageTestSpeechText;
                           final err = await context
                               .read<TtsProvider>()
@@ -459,7 +460,7 @@ class _ErrorInlineMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final oneLine = message.replaceAll('\n', ' ');
     return Container(
       decoration: BoxDecoration(
@@ -492,7 +493,7 @@ class _ErrorInlineMobile extends StatelessWidget {
 /// 结构与 `AppSheet`（title / children / footer）一一对应，故整体收敛。
 void _showMobileErrorDetails(BuildContext context, String message) {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   showAppSheet<void>(
     context: context,
     builder: AppSheet(
@@ -526,7 +527,7 @@ Future<TtsServiceOptions?> _showEditNetworkTtsSheet(
 Future<TtsServiceOptions?> _showNetworkTtsSheet(
     BuildContext context, TtsServiceOptions? initial) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   NetworkTtsKind kind = initial?.kind ?? NetworkTtsKind.openai;
   final nameCtl = TextEditingController(text: initial?.name ?? '');
   final apiKeyCtl = TextEditingController(text: (initial is OpenAiTtsOptions)
@@ -773,7 +774,7 @@ Future<TtsServiceOptions?> _showNetworkTtsSheet(
 
 Future<void> _showSystemTtsConfig(BuildContext context) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final tts = context.read<TtsProvider>();
   double rate = tts.speechRate;
   double pitch = tts.pitch;

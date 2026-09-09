@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/providers/tag_provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -26,7 +26,7 @@ class TagsManagerPage extends StatefulWidget {
 
 class _TagsManagerPageState extends State<TagsManagerPage> {
   Future<void> _createTag(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final TextEditingController c = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -57,7 +57,7 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
   }
 
   Future<void> _renameTag(BuildContext context, String tagId, String oldName) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final TextEditingController c = TextEditingController(text: oldName);
     final ok = await showDialog<bool>(
       context: context,
@@ -88,7 +88,7 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
   }
 
   Future<void> _deleteTag(BuildContext context, String tagId) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -111,7 +111,7 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final tp = context.watch<TagProvider>();
     final tags = tp.tags;
 

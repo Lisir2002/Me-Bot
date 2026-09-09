@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
-
+import '../../../l10n/build_context_l10n.dart';
 /// 导出/导入进度卡片：✓ 图标 + 标题 + 线性进度 + 阶段 + 字节进度。
 /// 在导出/导入期间内联展示；`progress < 0` 表示不确定进度（动画条）。
 class BackupProgressCard extends StatelessWidget {
@@ -121,7 +120,7 @@ class ExportingProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: BackupProgressCard(

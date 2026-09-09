@@ -1712,7 +1712,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpToolSchema => 'Schema';
 
   @override
-  String mcpToolTestTitle(Object name) {
+  String mcpToolTestTitle(String name) {
     return '试调 · $name';
   }
 
@@ -1738,7 +1738,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpToolTestFailed => '调用失败';
 
   @override
-  String mcpToolSchemaTitle(Object name) {
+  String mcpToolSchemaTitle(String name) {
     return 'Schema · $name';
   }
 
@@ -3652,9 +3652,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get statsNoActivity => '无记录';
-
-  @override
   String get backupEncryptPolicy => '备份加密方式';
 
   @override
@@ -3903,3725 +3900,112 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get webviewHostsEmpty => '暂无额外放行的站点。';
-}
-
-/// The translations for Chinese, using the Han script (`zh_Hans`).
-class AppLocalizationsZhHans extends AppLocalizationsZh {
-  AppLocalizationsZhHans() : super('zh_Hans');
 
   @override
-  String get helloWorld => '你好，世界！';
-
-  @override
-  String get settingsPageBackButton => '返回';
-
-  @override
-  String get settingsPageTitle => '设置';
-
-  @override
-  String get settingsPageDarkMode => '深色';
-
-  @override
-  String get settingsPageLightMode => '浅色';
-
-  @override
-  String get settingsPageSystemMode => '跟随系统';
-
-  @override
-  String get settingsPageWarningMessage => '部分服务未配置，某些功能可能不可用';
-
-  @override
-  String get settingsPageGeneralSection => '通用设置';
-
-  @override
-  String get settingsPageColorMode => '颜色模式';
-
-  @override
-  String get settingsPageDisplay => '显示设置';
-
-  @override
-  String get settingsPageDisplaySubtitle => '界面主题与字号等外观设置';
-
-  @override
-  String get settingsPageAssistant => '助手';
-
-  @override
-  String get settingsPageAssistantSubtitle => '默认助手与对话风格';
-
-  @override
-  String get settingsPageModelsServicesSection => '模型与服务';
-
-  @override
-  String get settingsPageDefaultModel => '默认模型';
-
-  @override
-  String get settingsPageProviders => '供应商';
-
-  @override
-  String get settingsPageSearch => '搜索服务';
-
-  @override
-  String get settingsPageTts => '语音服务';
-
-  @override
-  String get settingsPageMcp => 'MCP';
-
-  @override
-  String get settingsPageQuickPhrase => '快捷短语';
-
-  @override
-  String get settingsPageDataSection => '数据设置';
-
-  @override
-  String get settingsPageBackup => '数据备份';
-
-  @override
-  String get settingsPageStats => '统计';
-
-  @override
-  String get settingsPageChatStorage => '聊天记录存储';
-
-  @override
-  String get settingsPageCalculating => '统计中…';
-
-  @override
-  String settingsPageFilesCount(int count, String size) {
-    return '共 $count 个文件 · $size';
+  String checkupScannerErrorTitle(String scannerTitle) {
+    return '$scannerTitle扫描异常';
   }
 
   @override
-  String get settingsPageAboutSection => '关于';
+  String get checkupScannerErrorDetail => '该扫描器执行出错，已跳过（不影响其它项）';
 
   @override
-  String get settingsPageAbout => '关于';
-
-  @override
-  String get settingsPageDocs => '使用文档';
-
-  @override
-  String get settingsPageSponsor => '赞助';
-
-  @override
-  String get settingsPageShare => '分享';
-
-  @override
-  String get sponsorPageMethodsSectionTitle => '赞助方式';
-
-  @override
-  String get sponsorPageSponsorsSectionTitle => '赞助用户';
-
-  @override
-  String get sponsorPageEmpty => '暂无赞助者';
-
-  @override
-  String get sponsorPageAfdianTitle => '爱发电';
-
-  @override
-  String get sponsorPageAfdianSubtitle => 'afdian.com/a/minime';
-
-  @override
-  String get sponsorPageWeChatTitle => '微信赞助';
-
-  @override
-  String get sponsorPageWeChatSubtitle => '微信赞助码';
-
-  @override
-  String get languageDisplaySimplifiedChinese => '简体中文';
-
-  @override
-  String get languageDisplayEnglish => 'English';
-
-  @override
-  String get languageDisplayTraditionalChinese => '繁體中文';
-
-  @override
-  String get languageDisplayJapanese => '日本語';
-
-  @override
-  String get languageDisplayKorean => '한국어';
-
-  @override
-  String get languageDisplayFrench => 'Français';
-
-  @override
-  String get languageDisplayGerman => 'Deutsch';
-
-  @override
-  String get languageDisplayItalian => 'Italiano';
-
-  @override
-  String get languageDisplaySpanish => 'Español';
-
-  @override
-  String get languageSelectSheetTitle => '选择翻译语言';
-
-  @override
-  String get languageSelectSheetClearButton => '清空翻译';
-
-  @override
-  String get homePageClearContext => '清空上下文';
-
-  @override
-  String homePageClearContextWithCount(String actual, String configured) {
-    return '清空上下文 ($actual/$configured)';
+  String checkupBackupPlaintextTitle(int count) {
+    return '发现 $count 个明文备份';
   }
 
   @override
-  String get homePageDefaultAssistant => '默认助手';
-
-  @override
-  String get mermaidExportPng => '导出 PNG';
-
-  @override
-  String get mermaidExportFailed => '导出失败';
-
-  @override
-  String get mermaidPreviewOpen => '浏览器预览';
-
-  @override
-  String get mermaidPreviewOpenFailed => '无法打开预览';
-
-  @override
-  String get assistantProviderDefaultAssistantName => '默认助手';
-
-  @override
-  String get assistantProviderSampleAssistantName => '示例助手';
-
-  @override
-  String get assistantProviderNewAssistantName => '新助手';
-
-  @override
-  String assistantProviderSampleAssistantSystemPrompt(
-    String model_name,
-    String cur_datetime,
-    String locale,
-    String timezone,
-    String device_info,
-    String system_version,
-  ) {
-    return '你是$model_name, 一个人工智能助手，乐意为用户提供准确，有益的帮助。现在时间是$cur_datetime，用户设备语言为$locale，时区为$timezone，用户正在使用$device_info，版本$system_version。如果用户没有明确说明，请使用用户设备语言进行回复。';
+  String checkupBackupPlaintextDetail(String files) {
+    return '以下备份为明文格式、可能含凭证：$files。建议删除旧明文备份，改用加密或脱敏导出';
   }
 
   @override
-  String get displaySettingsPageLanguageTitle => '应用语言';
+  String get checkupLegacyKeysTitle => '发现未清理的旧明文凭证 Key';
 
   @override
-  String get displaySettingsPageLanguageSubtitle => '选择界面语言';
-
-  @override
-  String get assistantTagsManageTitle => '管理标签';
-
-  @override
-  String get assistantTagsCreateButton => '创建';
-
-  @override
-  String get assistantTagsCreateDialogTitle => '创建标签';
-
-  @override
-  String get assistantTagsCreateDialogOk => '创建';
-
-  @override
-  String get assistantTagsCreateDialogCancel => '取消';
-
-  @override
-  String get assistantTagsNameHint => '标签名称';
-
-  @override
-  String get assistantTagsRenameButton => '重命名';
-
-  @override
-  String get assistantTagsRenameDialogTitle => '重命名标签';
-
-  @override
-  String get assistantTagsRenameDialogOk => '重命名';
-
-  @override
-  String get assistantTagsDeleteButton => '删除';
-
-  @override
-  String get assistantTagsDeleteConfirmTitle => '删除标签';
-
-  @override
-  String get assistantTagsDeleteConfirmContent => '确定要删除该标签吗？';
-
-  @override
-  String get assistantTagsDeleteConfirmOk => '删除';
-
-  @override
-  String get assistantTagsDeleteConfirmCancel => '取消';
-
-  @override
-  String get assistantTagsContextMenuEditAssistant => '编辑助手';
-
-  @override
-  String get assistantTagsContextMenuManageTags => '管理标签';
-
-  @override
-  String get mcpTransportOptionStdio => 'STDIO';
-
-  @override
-  String get mcpTransportTagStdio => 'STDIO';
-
-  @override
-  String get mcpTransportTagInmemory => '内置';
-
-  @override
-  String get mcpServerEditSheetStdioOnlyDesktop => 'STDIO 仅在桌面端可用';
-
-  @override
-  String get mcpServerEditSheetStdioCommandLabel => '命令';
-
-  @override
-  String get mcpServerEditSheetStdioArgumentsLabel => '参数';
-
-  @override
-  String get mcpServerEditSheetStdioWorkingDirectoryLabel => '工作目录（可选）';
-
-  @override
-  String get mcpServerEditSheetStdioEnvironmentTitle => '环境变量';
-
-  @override
-  String get mcpServerEditSheetStdioEnvNameLabel => '名称';
-
-  @override
-  String get mcpServerEditSheetStdioEnvValueLabel => '值';
-
-  @override
-  String get mcpServerEditSheetStdioAddEnv => '添加环境变量';
-
-  @override
-  String get mcpServerEditSheetStdioCommandRequired => 'STDIO 需要填写命令';
-
-  @override
-  String get assistantTagsContextMenuDeleteAssistant => '删除助手';
-
-  @override
-  String get assistantTagsClearTag => '清除标签';
-
-  @override
-  String get displaySettingsPageLanguageChineseLabel => '简体中文';
-
-  @override
-  String get displaySettingsPageLanguageEnglishLabel => 'English';
-
-  @override
-  String get homePagePleaseSelectModel => '请先选择模型';
-
-  @override
-  String get homePagePleaseSetupTranslateModel => '请先设置翻译模型';
-
-  @override
-  String get homePageTranslating => '翻译中...';
-
-  @override
-  String homePageTranslateFailed(String error) {
-    return '翻译失败: $error';
+  String checkupLegacyKeysDetail(int count, String keys) {
+    return '$count 个旧 key 仍存在于本地配置：$keys（应为空）';
   }
 
   @override
-  String get chatServiceDefaultConversationTitle => '新对话';
+  String get checkupLegacyKeysFixHint => '重新执行孤儿清理';
 
   @override
-  String get userProviderDefaultUserName => '用户';
+  String get checkupLegacyPlaintextTitle => '本地配置中存在疑似明文 Key';
 
   @override
-  String get homePageDeleteMessage => '删除消息';
-
-  @override
-  String get homePageDeleteMessageConfirm => '确定要删除这条消息吗？此操作不可撤销。';
-
-  @override
-  String get homePageCancel => '取消';
-
-  @override
-  String get homePageDelete => '删除';
-
-  @override
-  String get homePageSelectMessagesToShare => '请选择要分享的消息';
-
-  @override
-  String get homePageDone => '完成';
-
-  @override
-  String get homePageDropToUpload => '将文件拖拽到此处上传';
-
-  @override
-  String get assistantEditPageTitle => '助手';
-
-  @override
-  String get assistantEditPageNotFound => '助手不存在';
-
-  @override
-  String get assistantEditPageBasicTab => '基础设置';
-
-  @override
-  String get assistantEditPagePromptsTab => '提示词';
-
-  @override
-  String get assistantEditPageMcpTab => 'MCP';
-
-  @override
-  String get assistantEditPageQuickPhraseTab => '快捷短语';
-
-  @override
-  String get assistantEditPageCustomTab => '自定义请求';
-
-  @override
-  String get assistantEditCustomHeadersTitle => '自定义 Header';
-
-  @override
-  String get assistantEditCustomHeadersAdd => '添加 Header';
-
-  @override
-  String get assistantEditCustomHeadersEmpty => '未添加 Header';
-
-  @override
-  String get assistantEditCustomBodyTitle => '自定义 Body';
-
-  @override
-  String get assistantEditCustomBodyAdd => '添加 Body';
-
-  @override
-  String get assistantEditCustomBodyEmpty => '未添加 Body 项';
-
-  @override
-  String get assistantEditHeaderNameLabel => 'Header 名称';
-
-  @override
-  String get assistantEditHeaderValueLabel => 'Header 值';
-
-  @override
-  String get assistantEditBodyKeyLabel => 'Body Key';
-
-  @override
-  String get assistantEditBodyValueLabel => 'Body 值 (JSON)';
-
-  @override
-  String get assistantEditDeleteTooltip => '删除';
-
-  @override
-  String get assistantEditAssistantNameLabel => '助手名称';
-
-  @override
-  String get assistantEditUseAssistantAvatarTitle => '使用助手头像';
-
-  @override
-  String get assistantEditUseAssistantAvatarSubtitle =>
-      '在聊天中使用助手头像和名字而不是模型头像和名字';
-
-  @override
-  String get assistantEditChatModelTitle => '聊天模型';
-
-  @override
-  String get assistantEditChatModelSubtitle => '为该助手设置默认聊天模型（未设置时使用全局默认）';
-
-  @override
-  String get assistantEditTemperatureDescription => '控制输出的随机性，范围 0–2';
-
-  @override
-  String get assistantEditTopPDescription => '请不要修改此值，除非你知道自己在做什么';
-
-  @override
-  String get assistantEditParameterDisabled => '已关闭（使用服务商默认）';
-
-  @override
-  String get assistantEditParameterDisabled2 => '已关闭（无限制）';
-
-  @override
-  String get assistantEditContextMessagesTitle => '上下文消息数量';
-
-  @override
-  String get assistantEditContextMessagesDescription =>
-      '多少历史消息会被当作上下文发送给模型，超过数量会忽略，只保留最近 N 条';
-
-  @override
-  String get assistantEditStreamOutputTitle => '流式输出';
-
-  @override
-  String get assistantEditStreamOutputDescription => '是否启用消息的流式输出';
-
-  @override
-  String get assistantEditThinkingBudgetTitle => '思考预算';
-
-  @override
-  String get assistantEditConfigureButton => '配置';
-
-  @override
-  String get assistantEditMaxTokensTitle => '最大 Token 数';
-
-  @override
-  String get assistantEditMaxTokensDescription => '留空表示无限制';
-
-  @override
-  String get assistantEditMaxTokensHint => '无限制';
-
-  @override
-  String get assistantEditChatBackgroundTitle => '聊天背景';
-
-  @override
-  String get assistantEditChatBackgroundDescription => '设置助手聊天页面的背景图片';
-
-  @override
-  String get assistantEditChooseImageButton => '选择背景图片';
-
-  @override
-  String get assistantEditClearButton => '清除';
-
-  @override
-  String get desktopNavChatTooltip => '聊天';
-
-  @override
-  String get desktopNavTranslateTooltip => '翻译';
-
-  @override
-  String get desktopNavThemeToggleTooltip => '主题切换';
-
-  @override
-  String get desktopNavSettingsTooltip => '设置';
-
-  @override
-  String get desktopAvatarMenuUseEmoji => '使用表情符号';
-
-  @override
-  String get cameraPermissionDeniedMessage => '未授予相机权限';
-
-  @override
-  String get openSystemSettings => '去设置';
-
-  @override
-  String get desktopAvatarMenuChangeFromImage => '从图片更换…';
-
-  @override
-  String get desktopAvatarMenuReset => '重置头像';
-
-  @override
-  String get assistantEditAvatarChooseImage => '选择图片';
-
-  @override
-  String get assistantEditAvatarChooseEmoji => '选择表情';
-
-  @override
-  String get assistantEditAvatarEnterLink => '输入链接';
-
-  @override
-  String get assistantEditAvatarImportQQ => 'QQ头像';
-
-  @override
-  String get assistantEditAvatarReset => '重置';
-
-  @override
-  String get displaySettingsPageChatMessageBackgroundTitle => '聊天消息背景';
-
-  @override
-  String get displaySettingsPageChatMessageBackgroundDefault => '默认';
-
-  @override
-  String get displaySettingsPageChatMessageBackgroundFrosted => '模糊';
-
-  @override
-  String get displaySettingsPageChatMessageBackgroundSolid => '纯色';
-
-  @override
-  String get displaySettingsPageAndroidBackgroundChatTitle => '后台聊天生成';
-
-  @override
-  String get androidBackgroundStatusOn => '开启';
-
-  @override
-  String get androidBackgroundStatusOff => '关闭';
-
-  @override
-  String get androidBackgroundStatusOther => '开启并通知';
-
-  @override
-  String get androidBackgroundOptionOn => '开启';
-
-  @override
-  String get androidBackgroundOptionOnNotify => '开启并在生成完时通知';
-
-  @override
-  String get androidBackgroundOptionOff => '关闭';
-
-  @override
-  String get notificationChatCompletedTitle => '生成完成';
-
-  @override
-  String get notificationChatCompletedBody => '助手回复已生成';
-
-  @override
-  String get androidBackgroundNotificationTitle => 'MiniMe-Core 正在运行';
-
-  @override
-  String get androidBackgroundNotificationText => '后台保持聊天生成';
-
-  @override
-  String get assistantEditEmojiDialogTitle => '选择表情';
-
-  @override
-  String get assistantEditEmojiDialogHint => '输入或粘贴任意表情';
-
-  @override
-  String get assistantEditEmojiDialogCancel => '取消';
-
-  @override
-  String get assistantEditEmojiDialogSave => '保存';
-
-  @override
-  String get assistantEditImageUrlDialogTitle => '输入图片链接';
-
-  @override
-  String get assistantEditImageUrlDialogHint =>
-      '例如: https://example.com/avatar.png';
-
-  @override
-  String get assistantEditImageUrlDialogCancel => '取消';
-
-  @override
-  String get assistantEditImageUrlDialogSave => '保存';
-
-  @override
-  String get assistantEditQQAvatarDialogTitle => '使用QQ头像';
-
-  @override
-  String get assistantEditQQAvatarDialogHint => '输入QQ号码（5-12位）';
-
-  @override
-  String get assistantEditQQAvatarRandomButton => '随机QQ';
-
-  @override
-  String get assistantEditQQAvatarFailedMessage => '获取随机QQ头像失败，请重试';
-
-  @override
-  String get assistantEditQQAvatarDialogCancel => '取消';
-
-  @override
-  String get assistantEditQQAvatarDialogSave => '保存';
-
-  @override
-  String get assistantEditGalleryErrorMessage => '无法打开相册，试试输入图片链接';
-
-  @override
-  String get assistantEditGeneralErrorMessage => '发生错误，试试输入图片链接';
-
-  @override
-  String get providerDetailPageMultiKeyModeTitle => '多Key模式';
-
-  @override
-  String get providerDetailPageManageKeysButton => '多Key管理';
-
-  @override
-  String get multiKeyPageTitle => '多Key管理';
-
-  @override
-  String get multiKeyPageDetect => '检测';
-
-  @override
-  String get multiKeyPageAdd => '添加';
-
-  @override
-  String get multiKeyPageAddHint => '请输入API Key（多个用逗号或空格分隔）';
-
-  @override
-  String multiKeyPageImportedSnackbar(int n) {
-    return '已导入$n个key';
+  String checkupLegacyPlaintextDetail(int count) {
+    return '在 $count 个配置项中发现疑似明文 Key 模式，建议核查是否为迁移遗漏';
   }
 
   @override
-  String get multiKeyPagePleaseAddModel => '请先添加模型';
+  String get checkupLogLeakTitle => '日志中疑似出现明文 Key';
 
   @override
-  String get multiKeyPageTotal => '总数';
-
-  @override
-  String get multiKeyPageNormal => '正常';
-
-  @override
-  String get multiKeyPageError => '错误';
-
-  @override
-  String get multiKeyPageAccuracy => '正确率';
-
-  @override
-  String get multiKeyPageStrategyTitle => '负载均衡策略';
-
-  @override
-  String get multiKeyPageStrategyRoundRobin => '轮询';
-
-  @override
-  String get multiKeyPageStrategyPriority => '优先级';
-
-  @override
-  String get multiKeyPageStrategyLeastUsed => '最少使用';
-
-  @override
-  String get multiKeyPageStrategyRandom => '随机';
-
-  @override
-  String get multiKeyPageNoKeys => '暂无Key';
-
-  @override
-  String get multiKeyPageStatusActive => '正常';
-
-  @override
-  String get multiKeyPageStatusDisabled => '已关闭';
-
-  @override
-  String get multiKeyPageStatusError => '错误';
-
-  @override
-  String get multiKeyPageStatusRateLimited => '限速';
-
-  @override
-  String get multiKeyPageEditAlias => '编辑别名';
-
-  @override
-  String get multiKeyPageEdit => '编辑';
-
-  @override
-  String get multiKeyPageKey => 'API Key';
-
-  @override
-  String get multiKeyPagePriority => '优先级（1–10）';
-
-  @override
-  String get multiKeyPageDuplicateKeyWarning => '该 Key 已存在';
-
-  @override
-  String get multiKeyPageAlias => '别名';
-
-  @override
-  String get multiKeyPageCancel => '取消';
-
-  @override
-  String get multiKeyPageSave => '保存';
-
-  @override
-  String get multiKeyPageDelete => '删除';
-
-  @override
-  String get assistantEditSystemPromptTitle => '系统提示词';
-
-  @override
-  String get assistantEditSystemPromptHint => '输入系统提示词…';
-
-  @override
-  String get assistantEditAvailableVariables => '可用变量：';
-
-  @override
-  String get assistantEditVariableDate => '日期';
-
-  @override
-  String get assistantEditVariableTime => '时间';
-
-  @override
-  String get assistantEditVariableDatetime => '日期和时间';
-
-  @override
-  String get assistantEditVariableModelId => '模型ID';
-
-  @override
-  String get assistantEditVariableModelName => '模型名称';
-
-  @override
-  String get assistantEditVariableLocale => '语言环境';
-
-  @override
-  String get assistantEditVariableTimezone => '时区';
-
-  @override
-  String get assistantEditVariableSystemVersion => '系统版本';
-
-  @override
-  String get assistantEditVariableDeviceInfo => '设备信息';
-
-  @override
-  String get assistantEditVariableBatteryLevel => '电池电量';
-
-  @override
-  String get assistantEditVariableNickname => '用户昵称';
-
-  @override
-  String get assistantEditMessageTemplateTitle => '聊天内容模板';
-
-  @override
-  String get assistantEditVariableRole => '角色';
-
-  @override
-  String get assistantEditVariableMessage => '内容';
-
-  @override
-  String get assistantEditPreviewTitle => '预览';
-
-  @override
-  String get codeBlockPreviewButton => '预览';
-
-  @override
-  String get htmlPreviewNotSupportedOnLinux => 'Linux 暂不支持 HTML 预览';
-
-  @override
-  String get assistantEditSampleUser => '用户';
-
-  @override
-  String get assistantEditSampleMessage => '你好啊';
-
-  @override
-  String get assistantEditSampleReply => '你好，有什么我可以帮你的吗？';
-
-  @override
-  String get assistantEditMcpNoServersMessage => '暂无已启动的 MCP 服务器';
-
-  @override
-  String get assistantEditMcpConnectedTag => '已连接';
-
-  @override
-  String assistantEditMcpToolsCountTag(String enabled, String total) {
-    return '工具: $enabled/$total';
+  String checkupLogLeakDetail(int fileCount, int lines) {
+    return '在 $fileCount 个日志文件中发现约 $lines 处疑似明文 Key，请检查是否有组件绕过脱敏直接打印凭证';
   }
 
   @override
-  String get assistantEditModelUseGlobalDefault => '使用全局默认';
-
-  @override
-  String get assistantSettingsPageTitle => '助手设置';
-
-  @override
-  String get assistantSettingsDefaultTag => '默认';
-
-  @override
-  String get assistantSettingsDeleteButton => '删除';
-
-  @override
-  String get assistantSettingsEditButton => '编辑';
-
-  @override
-  String get assistantSettingsAddSheetTitle => '助手名称';
-
-  @override
-  String get assistantSettingsAddSheetHint => '输入助手名称';
-
-  @override
-  String get assistantSettingsAddSheetCancel => '取消';
-
-  @override
-  String get assistantSettingsAddSheetSave => '保存';
-
-  @override
-  String get desktopAssistantsListTitle => '助手列表';
-
-  @override
-  String get desktopSidebarTabAssistants => '助手';
-
-  @override
-  String get desktopSidebarTabTopics => '话题';
-
-  @override
-  String get assistantEditTemperatureTitle => '温度';
-
-  @override
-  String get assistantEditTopPTitle => 'Top-p';
-
-  @override
-  String get assistantSettingsDeleteDialogTitle => '删除助手';
-
-  @override
-  String get assistantSettingsDeleteDialogContent => '确定要删除该助手吗？此操作不可撤销。';
-
-  @override
-  String get assistantSettingsDeleteDialogCancel => '取消';
-
-  @override
-  String get assistantSettingsDeleteDialogConfirm => '删除';
-
-  @override
-  String get assistantSettingsAtLeastOneAssistantRequired => '至少需要保留一个助手';
-
-  @override
-  String get mcpAssistantSheetTitle => 'MCP服务器';
-
-  @override
-  String get mcpAssistantSheetSubtitle => '为该助手启用的服务';
-
-  @override
-  String get mcpAssistantSheetSelectAll => '全选';
-
-  @override
-  String get mcpAssistantSheetClearAll => '全不选';
-
-  @override
-  String get backupPageTitle => '备份与恢复';
-
-  @override
-  String get backupPageWebDavTab => 'WebDAV 备份';
-
-  @override
-  String get backupPageImportExportTab => '导入和导出';
-
-  @override
-  String get backupPageWebDavServerUrl => 'WebDAV 服务器地址';
-
-  @override
-  String get backupPageUsername => '用户名';
-
-  @override
-  String get backupPagePassword => '密码';
-
-  @override
-  String get backupPagePath => '路径';
-
-  @override
-  String get backupPageChatsLabel => '聊天记录';
-
-  @override
-  String get backupPageFilesLabel => '文件';
-
-  @override
-  String get backupPageTestDone => '测试完成';
-
-  @override
-  String get backupPageTestConnection => '测试连接';
-
-  @override
-  String get backupPageRestartRequired => '需要重启应用';
-
-  @override
-  String get backupPageRestartContent => '恢复完成，需要重启以完全生效。';
-
-  @override
-  String get backupPageOK => '好的';
-
-  @override
-  String get backupPageCancel => '取消';
-
-  @override
-  String get backupPageSelectImportMode => '选择导入模式';
-
-  @override
-  String get backupPageSelectImportModeDescription => '请选择如何导入备份数据：';
-
-  @override
-  String get backupPageOverwriteMode => '完全覆盖';
-
-  @override
-  String get backupPageOverwriteModeDescription => '清空本地所有数据后恢复';
-
-  @override
-  String get backupPageMergeMode => '智能合并';
-
-  @override
-  String get backupPageMergeModeDescription => '仅添加不存在的数据（智能去重）';
-
-  @override
-  String get backupPageRestore => '恢复';
-
-  @override
-  String get backupPageBackupUploaded => '已上传备份';
-
-  @override
-  String get backupPageBackup => '立即备份';
-
-  @override
-  String get backupPageExporting => '正在导出...';
-
-  @override
-  String get backupPageExportToFile => '导出为文件';
-
-  @override
-  String get backupPageExportToFileSubtitle => '导出APP数据为文件';
-
-  @override
-  String get backupPageImportBackupFile => '备份文件导入';
-
-  @override
-  String get backupPageImportBackupFileSubtitle => '导入本地备份文件';
-
-  @override
-  String get backupPageImportFromOtherApps => '从其他APP导入';
-
-  @override
-  String get backupPageImportFromRikkaHub => '从 RikkaHub 导入';
-
-  @override
-  String get backupPageNotSupportedYet => '暂不支持';
-
-  @override
-  String get backupPageRemoteBackups => '远端备份';
-
-  @override
-  String get backupPageNoBackups => '暂无备份';
-
-  @override
-  String get backupPageRestoreTooltip => '恢复';
-
-  @override
-  String get backupPageDeleteTooltip => '删除';
-
-  @override
-  String get backupPageBackupManagement => '备份管理';
-
-  @override
-  String get backupPageWebDavBackup => 'WebDAV 备份';
-
-  @override
-  String get backupPageWebDavServerSettings => 'WebDAV 服务器设置';
-
-  @override
-  String get backupPageSave => '保存';
-
-  @override
-  String get backupPageBackupNow => '立即备份';
-
-  @override
-  String get backupPageLocalBackup => '本地备份';
-
-  @override
-  String get backupPageImportFromCherryStudio => '从 Cherry Studio 导入';
-
-  @override
-  String get chatHistoryPageTitle => '聊天历史';
-
-  @override
-  String get chatHistoryPageSearchTooltip => '搜索';
-
-  @override
-  String get chatHistoryPageDeleteAllTooltip => '删除全部';
-
-  @override
-  String get chatHistoryPageDeleteAllDialogTitle => '删除全部对话';
-
-  @override
-  String get chatHistoryPageDeleteAllDialogContent => '确定要删除全部对话吗？此操作不可撤销。';
-
-  @override
-  String get chatHistoryPageCancel => '取消';
-
-  @override
-  String get chatHistoryPageDelete => '删除';
-
-  @override
-  String get chatHistoryPageDeletedAllSnackbar => '已删除全部对话';
-
-  @override
-  String get chatHistoryPageSearchHint => '搜索对话';
-
-  @override
-  String get chatHistoryPageNoConversations => '暂无对话';
-
-  @override
-  String get chatHistoryPagePinnedSection => '置顶';
-
-  @override
-  String get chatHistoryPagePin => '置顶';
-
-  @override
-  String get chatHistoryPagePinned => '已置顶';
-
-  @override
-  String get messageEditPageTitle => '编辑消息';
-
-  @override
-  String get messageEditPageSave => '保存';
-
-  @override
-  String get messageEditPageHint => '输入消息内容…';
-
-  @override
-  String get selectCopyPageTitle => '选择复制';
-
-  @override
-  String get selectCopyPageCopyAll => '复制全部';
-
-  @override
-  String get selectCopyPageCopiedAll => '已复制全部';
-
-  @override
-  String get bottomToolsSheetCamera => '拍照';
-
-  @override
-  String get bottomToolsSheetPhotos => '照片';
-
-  @override
-  String get bottomToolsSheetUpload => '上传文件';
-
-  @override
-  String get bottomToolsSheetClearContext => '清空上下文';
-
-  @override
-  String get bottomToolsSheetLearningMode => '学习模式';
-
-  @override
-  String get bottomToolsSheetLearningModeDescription => '帮助你循序渐进地学习知识';
-
-  @override
-  String get bottomToolsSheetConfigurePrompt => '设置提示词';
-
-  @override
-  String get bottomToolsSheetPrompt => '提示词';
-
-  @override
-  String get bottomToolsSheetPromptHint => '输入用于学习模式的提示词';
-
-  @override
-  String get bottomToolsSheetResetDefault => '重置为默认';
-
-  @override
-  String get bottomToolsSheetSave => '保存';
-
-  @override
-  String get messageMoreSheetTitle => '更多操作';
-
-  @override
-  String get messageMoreSheetSelectCopy => '选择复制';
-
-  @override
-  String get messageMoreSheetRenderWebView => '网页视图渲染';
-
-  @override
-  String get messageMoreSheetNotImplemented => '暂未实现';
-
-  @override
-  String get messageMoreSheetEdit => '编辑';
-
-  @override
-  String get messageMoreSheetShare => '分享';
-
-  @override
-  String get messageMoreSheetCreateBranch => '创建分支';
-
-  @override
-  String get messageMoreSheetDelete => '删除';
-
-  @override
-  String get reasoningBudgetSheetOff => '关闭';
-
-  @override
-  String get reasoningBudgetSheetAuto => '自动';
-
-  @override
-  String get reasoningBudgetSheetLight => '轻度推理';
-
-  @override
-  String get reasoningBudgetSheetMedium => '中度推理';
-
-  @override
-  String get reasoningBudgetSheetHeavy => '重度推理';
-
-  @override
-  String get reasoningBudgetSheetTitle => '思维链强度';
-
-  @override
-  String reasoningBudgetSheetCurrentLevel(String level) {
-    return '当前档位：$level';
+  String checkupOrphanTitle(int count) {
+    return '发现 $count 个无主凭证';
   }
 
   @override
-  String get reasoningBudgetSheetOffSubtitle => '关闭推理功能，直接回答';
+  String get checkupOrphanDetail => '这些凭证没有对应的配置项，长期留存在安全存储中，建议清理';
 
   @override
-  String get reasoningBudgetSheetAutoSubtitle => '由模型自动决定推理级别';
+  String get checkupOrphanFixHint => '删除无主凭证';
 
   @override
-  String get reasoningBudgetSheetLightSubtitle => '使用少量推理来回答问题';
+  String get tensdaqTagline => '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。';
 
   @override
-  String get reasoningBudgetSheetMediumSubtitle => '使用较多推理来回答问题';
+  String get partnerSiteLabel => '官网：';
 
   @override
-  String get reasoningBudgetSheetHeavySubtitle => '使用大量推理来回答问题，适合复杂问题';
+  String get siliconflowFreeHint =>
+      '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。';
 
   @override
-  String get reasoningBudgetSheetCustomLabel => '自定义推理预算 (tokens)';
+  String get translateClear => '清空';
 
   @override
-  String get reasoningBudgetSheetCustomHint => '例如：2048 (-1 自动，0 关闭)';
+  String get translateCopy => '复制';
 
   @override
-  String chatMessageWidgetFileNotFound(String fileName) {
-    return '文件不存在: $fileName';
+  String get translateStop => '终止';
+
+  @override
+  String get translateRun => '翻译';
+
+  @override
+  String clearAvatarCacheFailed(String error) {
+    return '清理头像缓存失败: $error';
   }
 
   @override
-  String chatMessageWidgetCannotOpenFile(String message) {
-    return '无法打开文件: $message';
+  String clearCacheFailed(String error) {
+    return '清理缓存失败: $error';
   }
 
   @override
-  String chatMessageWidgetOpenFileError(String error) {
-    return '打开文件失败: $error';
+  String clearLogsFailed(String error) {
+    return '清理日志失败: $error';
   }
 
   @override
-  String get chatMessageWidgetCopiedToClipboard => '已复制到剪贴板';
-
-  @override
-  String get chatMessageWidgetResendTooltip => '重新发送';
-
-  @override
-  String get chatMessageWidgetMoreTooltip => '更多';
-
-  @override
-  String get chatMessageWidgetThinking => '正在思考...';
-
-  @override
-  String get chatMessageWidgetTranslation => '翻译';
-
-  @override
-  String get chatMessageWidgetTranslating => '翻译中...';
-
-  @override
-  String get chatMessageWidgetCitationNotFound => '未找到引用来源';
-
-  @override
-  String chatMessageWidgetCannotOpenUrl(String url) {
-    return '无法打开链接: $url';
+  String deleteFailed(String error) {
+    return '删除失败: $error';
   }
 
   @override
-  String get chatMessageWidgetOpenLinkError => '打开链接失败';
-
-  @override
-  String chatMessageWidgetCitationsTitle(int count) {
-    return '引用（共$count条）';
+  String operationFailed(String error) {
+    return '操作失败: $error';
   }
 
   @override
-  String get chatMessageWidgetRegenerateTooltip => '重新生成';
-
-  @override
-  String get chatMessageWidgetStopTooltip => '停止';
-
-  @override
-  String get chatMessageWidgetSpeakTooltip => '朗读';
-
-  @override
-  String get chatMessageWidgetTranslateTooltip => '翻译';
-
-  @override
-  String get chatMessageWidgetBuiltinSearchHideNote => '隐藏内置搜索工具卡片';
-
-  @override
-  String get chatMessageWidgetDeepThinking => '深度思考';
-
-  @override
-  String get chatMessageWidgetCreateMemory => '创建记忆';
-
-  @override
-  String get chatMessageWidgetEditMemory => '编辑记忆';
-
-  @override
-  String get chatMessageWidgetDeleteMemory => '删除记忆';
-
-  @override
-  String chatMessageWidgetWebSearch(String query) {
-    return '联网检索: $query';
-  }
-
-  @override
-  String get chatMessageWidgetBuiltinSearch => '模型内置搜索';
-
-  @override
-  String chatMessageWidgetToolCall(String name) {
-    return '调用工具: $name';
-  }
-
-  @override
-  String chatMessageWidgetToolResult(String name) {
-    return '调用工具: $name';
-  }
-
-  @override
-  String get chatMessageWidgetNoResultYet => '（暂无结果）';
-
-  @override
-  String get chatMessageWidgetArguments => '参数';
-
-  @override
-  String get chatMessageWidgetResult => '结果';
-
-  @override
-  String chatMessageWidgetCitationsCount(int count) {
-    return '共$count条引用';
-  }
-
-  @override
-  String get messageExportSheetAssistant => '助手';
-
-  @override
-  String get messageExportSheetDefaultTitle => '新对话';
-
-  @override
-  String get messageExportSheetExporting => '正在导出…';
-
-  @override
-  String messageExportSheetExportFailed(String error) {
-    return '导出失败: $error';
-  }
-
-  @override
-  String messageExportSheetExportedAs(String filename) {
-    return '已导出为 $filename';
-  }
-
-  @override
-  String get displaySettingsPageEnableDollarLatexTitle => '启用 \$...\$ 渲染';
-
-  @override
-  String get displaySettingsPageEnableDollarLatexSubtitle =>
-      '将 \$...\$ 之间的内容按行内数学公式渲染';
-
-  @override
-  String get displaySettingsPageEnableMathTitle => '启用数学公式渲染';
-
-  @override
-  String get displaySettingsPageEnableMathSubtitle => '渲染 LaTeX 数学公式（行内与块级）';
-
-  @override
-  String get displaySettingsPageEnableUserMarkdownTitle => '用户消息 Markdown 渲染';
-
-  @override
-  String get displaySettingsPageEnableReasoningMarkdownTitle =>
-      '思维链 Markdown 渲染';
-
-  @override
-  String get messageExportSheetFormatTitle => '导出格式';
-
-  @override
-  String get messageExportSheetMarkdown => 'Markdown';
-
-  @override
-  String get messageExportSheetSingleMarkdownSubtitle => '将该消息导出为 Markdown 文件';
-
-  @override
-  String get messageExportSheetBatchMarkdownSubtitle => '将选中的消息导出为 Markdown 文件';
-
-  @override
-  String get messageExportSheetExportImage => '导出为图片';
-
-  @override
-  String get messageExportSheetSingleExportImageSubtitle => '将该消息渲染为 PNG 图片';
-
-  @override
-  String get messageExportSheetBatchExportImageSubtitle => '将选中的消息渲染为 PNG 图片';
-
-  @override
-  String get messageExportSheetShowThinkingAndToolCards => '显示思考卡片和工具卡片';
-
-  @override
-  String get messageExportSheetShowThinkingContent => '显示思考内容';
-
-  @override
-  String get messageExportSheetDateTimeWithSecondsPattern =>
-      'yyyy年M月d日 HH:mm:ss';
-
-  @override
-  String get exportDisclaimerAiGenerated => '内容由 AI 生成，请仔细甄别';
-
-  @override
-  String get imagePreviewSheetSaveImage => '保存图片';
-
-  @override
-  String get imagePreviewSheetSaveSuccess => '已保存到相册';
-
-  @override
-  String imagePreviewSheetSaveFailed(String error) {
-    return '保存失败: $error';
-  }
-
-  @override
-  String get sideDrawerMenuRename => '重命名';
-
-  @override
-  String get sideDrawerMenuPin => '置顶';
-
-  @override
-  String get sideDrawerMenuUnpin => '取消置顶';
-
-  @override
-  String get sideDrawerMenuRegenerateTitle => '重新生成标题';
-
-  @override
-  String get sideDrawerMenuDelete => '删除';
-
-  @override
-  String sideDrawerDeleteSnackbar(String title) {
-    return '已删除“$title”';
-  }
-
-  @override
-  String get sideDrawerRenameHint => '输入新名称';
-
-  @override
-  String get sideDrawerCancel => '取消';
-
-  @override
-  String get sideDrawerOK => '确定';
-
-  @override
-  String get sideDrawerSave => '保存';
-
-  @override
-  String get sideDrawerGreetingMorning => '早上好 👋';
-
-  @override
-  String get sideDrawerGreetingNoon => '中午好 👋';
-
-  @override
-  String get sideDrawerGreetingAfternoon => '下午好 👋';
-
-  @override
-  String get sideDrawerGreetingEvening => '晚上好 👋';
-
-  @override
-  String get sideDrawerDateToday => '今天';
-
-  @override
-  String get sideDrawerDateYesterday => '昨天';
-
-  @override
-  String get sideDrawerDateShortPattern => 'M月d日';
-
-  @override
-  String get sideDrawerDateFullPattern => 'yyyy年M月d日';
-
-  @override
-  String get sideDrawerSearchHint => '搜索聊天记录';
-
-  @override
-  String get sideDrawerSearchAssistantsHint => '搜索助手';
-
-  @override
-  String sideDrawerUpdateTitle(String version) {
-    return '发现新版本：$version';
-  }
-
-  @override
-  String sideDrawerUpdateTitleWithBuild(String version, int build) {
-    return '发现新版本：$version ($build)';
-  }
-
-  @override
-  String get sideDrawerLinkCopied => '已复制下载链接';
-
-  @override
-  String get sideDrawerPinnedLabel => '置顶';
-
-  @override
-  String get sideDrawerHistory => '聊天历史';
-
-  @override
-  String get sideDrawerSettings => '设置';
-
-  @override
-  String get sideDrawerChooseAssistantTitle => '选择助手';
-
-  @override
-  String get sideDrawerChooseImage => '选择图片';
-
-  @override
-  String get sideDrawerChooseEmoji => '选择表情';
-
-  @override
-  String get sideDrawerEnterLink => '输入链接';
-
-  @override
-  String get sideDrawerImportFromQQ => 'QQ头像';
-
-  @override
-  String get sideDrawerReset => '重置';
-
-  @override
-  String get sideDrawerEmojiDialogTitle => '选择表情';
-
-  @override
-  String get sideDrawerEmojiDialogHint => '输入或粘贴任意表情';
-
-  @override
-  String get sideDrawerImageUrlDialogTitle => '输入图片链接';
-
-  @override
-  String get sideDrawerImageUrlDialogHint =>
-      '例如: https://example.com/avatar.png';
-
-  @override
-  String get sideDrawerQQAvatarDialogTitle => '使用QQ头像';
-
-  @override
-  String get sideDrawerQQAvatarInputHint => '输入QQ号码（5-12位）';
-
-  @override
-  String get sideDrawerQQAvatarFetchFailed => '获取随机QQ头像失败，请重试';
-
-  @override
-  String get sideDrawerRandomQQ => '随机QQ';
-
-  @override
-  String get sideDrawerGalleryOpenError => '无法打开相册，试试输入图片链接';
-
-  @override
-  String get sideDrawerGeneralImageError => '发生错误，试试输入图片链接';
-
-  @override
-  String get sideDrawerSetNicknameTitle => '设置昵称';
-
-  @override
-  String get sideDrawerNicknameLabel => '昵称';
-
-  @override
-  String get sideDrawerNicknameHint => '输入新的昵称';
-
-  @override
-  String get sideDrawerRename => '重命名';
-
-  @override
-  String get chatInputBarHint => '输入消息与AI聊天';
-
-  @override
-  String get chatInputBarSelectModelTooltip => '选择模型';
-
-  @override
-  String get chatInputBarOnlineSearchTooltip => '联网搜索';
-
-  @override
-  String get chatInputBarReasoningStrengthTooltip => '思维链强度';
-
-  @override
-  String get chatInputBarMcpServersTooltip => 'MCP服务器';
-
-  @override
-  String get chatInputBarMoreTooltip => '更多';
-
-  @override
-  String get chatInputBarInsertNewline => '换行';
-
-  @override
-  String get mcpPageBackTooltip => '返回';
-
-  @override
-  String get mcpPageAddMcpTooltip => '添加 MCP';
-
-  @override
-  String get mcpPageNoServers => '暂无 MCP 服务器';
-
-  @override
-  String get mcpPageErrorDialogTitle => '连接错误';
-
-  @override
-  String get mcpPageErrorNoDetails => '未提供错误详情';
-
-  @override
-  String get mcpPageClose => '关闭';
-
-  @override
-  String get mcpPageReconnect => '重新连接';
-
-  @override
-  String get mcpPageStatusConnected => '已连接';
-
-  @override
-  String get mcpPageStatusConnecting => '连接中…';
-
-  @override
-  String get mcpPageStatusDisconnected => '未连接';
-
-  @override
-  String get mcpPageStatusDisabled => '已禁用';
-
-  @override
-  String mcpPageToolsCount(int enabled, int total) {
-    return '工具: $enabled/$total';
-  }
-
-  @override
-  String get mcpPageConnectionFailed => '连接失败';
-
-  @override
-  String get mcpPageDetails => '详情';
-
-  @override
-  String get mcpPageDelete => '删除';
-
-  @override
-  String get mcpPageConfirmDeleteTitle => '确认删除';
-
-  @override
-  String get mcpPageConfirmDeleteContent => '删除后可通过撤销恢复。是否删除？';
-
-  @override
-  String get mcpPageServerDeleted => '已删除服务器';
-
-  @override
-  String get mcpPageUndo => '撤销';
-
-  @override
-  String get mcpPageCancel => '取消';
-
-  @override
-  String get mcpConversationSheetTitle => 'MCP服务器';
-
-  @override
-  String get mcpConversationSheetSubtitle => '选择在此助手中启用的服务';
-
-  @override
-  String get mcpConversationSheetSelectAll => '全选';
-
-  @override
-  String get mcpConversationSheetClearAll => '全不选';
-
-  @override
-  String get mcpConversationSheetNoRunning => '暂无已启动的 MCP 服务器';
-
-  @override
-  String get mcpConversationSheetConnected => '已连接';
-
-  @override
-  String mcpConversationSheetToolsCount(int enabled, int total) {
-    return '工具: $enabled/$total';
-  }
-
-  @override
-  String get mcpServerEditSheetEnabledLabel => '是否启用';
-
-  @override
-  String get mcpServerEditSheetNameLabel => '名称';
-
-  @override
-  String get mcpServerEditSheetTransportLabel => '传输类型';
-
-  @override
-  String get mcpServerEditSheetSseRetryHint => '如果SSE连接失败，请多试几次';
-
-  @override
-  String get mcpServerEditSheetUrlLabel => '服务器地址';
-
-  @override
-  String get mcpServerEditSheetCustomHeadersTitle => '自定义请求头';
-
-  @override
-  String get mcpServerEditSheetHeaderNameLabel => '请求头名称';
-
-  @override
-  String get mcpServerEditSheetHeaderNameHint => '如 Authorization';
-
-  @override
-  String get mcpServerEditSheetHeaderValueLabel => '请求头值';
-
-  @override
-  String get mcpServerEditSheetHeaderValueHint => '如 Bearer xxxxxx';
-
-  @override
-  String get mcpServerEditSheetRemoveHeaderTooltip => '删除';
-
-  @override
-  String get mcpServerEditSheetAddHeader => '添加请求头';
-
-  @override
-  String get mcpServerEditSheetTitleEdit => '编辑 MCP';
-
-  @override
-  String get mcpServerEditSheetTitleAdd => '添加 MCP';
-
-  @override
-  String get mcpServerEditSheetSyncToolsTooltip => '同步工具';
-
-  @override
-  String get mcpServerEditSheetTabBasic => '基础设置';
-
-  @override
-  String get mcpServerEditSheetTabTools => '工具';
-
-  @override
-  String get mcpServerEditSheetNoToolsHint => '暂无工具，点击上方同步';
-
-  @override
-  String get mcpServerEditSheetCancel => '取消';
-
-  @override
-  String get mcpServerEditSheetSave => '保存';
-
-  @override
-  String get mcpServerEditSheetUrlRequired => '请输入服务器地址';
-
-  @override
-  String get defaultModelPageBackTooltip => '返回';
-
-  @override
-  String get defaultModelPageTitle => '默认模型';
-
-  @override
-  String get defaultModelPageChatModelTitle => '聊天模型';
-
-  @override
-  String get defaultModelPageChatModelSubtitle => '全局默认的聊天模型';
-
-  @override
-  String get defaultModelPageTitleModelTitle => '标题总结模型';
-
-  @override
-  String get defaultModelPageTitleModelSubtitle => '用于总结对话标题的模型，推荐使用快速且便宜的模型';
-
-  @override
-  String get defaultModelPageTranslateModelTitle => '翻译模型';
-
-  @override
-  String get defaultModelPageTranslateModelSubtitle =>
-      '用于翻译消息内容的模型，推荐使用快速且准确的模型';
-
-  @override
-  String get defaultModelPagePromptLabel => '提示词';
-
-  @override
-  String get defaultModelPageTitlePromptHint => '输入用于标题总结的提示词模板';
-
-  @override
-  String get defaultModelPageTranslatePromptHint => '输入用于翻译的提示词模板';
-
-  @override
-  String get defaultModelPageResetDefault => '重置为默认';
-
-  @override
-  String get defaultModelPageSave => '保存';
-
-  @override
-  String defaultModelPageTitleVars(String contentVar, String localeVar) {
-    return '变量: 对话内容: $contentVar, 语言: $localeVar';
-  }
-
-  @override
-  String defaultModelPageTranslateVars(String sourceVar, String targetVar) {
-    return '变量：原始文本：$sourceVar，目标语言：$targetVar';
-  }
-
-  @override
-  String get defaultModelPageUseCurrentModel => '使用当前对话模型';
-
-  @override
-  String get translatePagePasteButton => '粘贴';
-
-  @override
-  String get translatePageCopyResult => '复制结果';
-
-  @override
-  String get translatePageClearAll => '清空全部';
-
-  @override
-  String get translatePageInputHint => '输入要翻译的内容…';
-
-  @override
-  String get translatePageOutputHint => '翻译结果会显示在这里…';
-
-  @override
-  String get modelDetailSheetAddModel => '添加模型';
-
-  @override
-  String get modelDetailSheetEditModel => '编辑模型';
-
-  @override
-  String get modelDetailSheetBasicTab => '基本设置';
-
-  @override
-  String get modelDetailSheetAdvancedTab => '高级设置';
-
-  @override
-  String get modelDetailSheetModelIdLabel => '模型 ID';
-
-  @override
-  String get modelDetailSheetModelIdHint => '必填，建议小写字母、数字、连字符';
-
-  @override
-  String modelDetailSheetModelIdDisabledHint(String modelId) {
-    return '$modelId';
-  }
-
-  @override
-  String get modelDetailSheetModelNameLabel => '模型名称';
-
-  @override
-  String get modelDetailSheetModelTypeLabel => '模型类型';
-
-  @override
-  String get modelDetailSheetChatType => '聊天';
-
-  @override
-  String get modelDetailSheetEmbeddingType => '嵌入';
-
-  @override
-  String get modelDetailSheetInputModesLabel => '输入模式';
-
-  @override
-  String get modelDetailSheetOutputModesLabel => '输出模式';
-
-  @override
-  String get modelDetailSheetAbilitiesLabel => '能力';
-
-  @override
-  String get modelDetailSheetTextMode => '文本';
-
-  @override
-  String get modelDetailSheetImageMode => '图片';
-
-  @override
-  String get modelDetailSheetToolsAbility => '工具';
-
-  @override
-  String get modelDetailSheetReasoningAbility => '推理';
-
-  @override
-  String get modelDetailSheetProviderOverrideDescription =>
-      '供应商重写：允许为特定模型自定义供应商设置。（暂未实现）';
-
-  @override
-  String get modelDetailSheetAddProviderOverride => '添加供应商重写';
-
-  @override
-  String get modelDetailSheetCustomHeadersTitle => '自定义 Headers';
-
-  @override
-  String get modelDetailSheetAddHeader => '添加 Header';
-
-  @override
-  String get modelDetailSheetCustomBodyTitle => '自定义 Body';
-
-  @override
-  String get modelFetchInvertTooltip => '反选';
-
-  @override
-  String get modelDetailSheetAddBody => '添加 Body';
-
-  @override
-  String get modelDetailSheetBuiltinToolsDescription =>
-      '内置工具仅支持部分 API（例如 Gemini 官方 API）（暂未实现）。';
-
-  @override
-  String get modelDetailSheetSearchTool => '搜索';
-
-  @override
-  String get modelDetailSheetSearchToolDescription => '启用 Google 搜索集成';
-
-  @override
-  String get modelDetailSheetUrlContextTool => 'URL 上下文';
-
-  @override
-  String get modelDetailSheetUrlContextToolDescription => '启用 URL 内容处理';
-
-  @override
-  String get modelDetailSheetCancelButton => '取消';
-
-  @override
-  String get modelDetailSheetAddButton => '添加';
-
-  @override
-  String get modelDetailSheetConfirmButton => '确认';
-
-  @override
-  String get modelDetailSheetInvalidIdError => '请输入有效的模型 ID（不少于2个字符且不含空格）';
-
-  @override
-  String get modelDetailSheetModelIdExistsError => '模型 ID 已存在';
-
-  @override
-  String get modelDetailSheetHeaderKeyHint => 'Header Key';
-
-  @override
-  String get modelDetailSheetHeaderValueHint => 'Header Value';
-
-  @override
-  String get modelDetailSheetBodyKeyHint => 'Body Key';
-
-  @override
-  String get modelDetailSheetBodyJsonHint => 'Body JSON';
-
-  @override
-  String get modelSelectSheetSearchHint => '搜索模型或服务商';
-
-  @override
-  String get modelSelectSheetFavoritesSection => '收藏';
-
-  @override
-  String get modelSelectSheetFavoriteTooltip => '收藏';
-
-  @override
-  String get modelSelectSheetChatType => '聊天';
-
-  @override
-  String get modelSelectSheetEmbeddingType => '嵌入';
-
-  @override
-  String get providerDetailPageShareTooltip => '分享';
-
-  @override
-  String get providerDetailPageDeleteProviderTooltip => '删除供应商';
-
-  @override
-  String get providerDetailPageDeleteProviderTitle => '删除供应商';
-
-  @override
-  String get providerDetailPageDeleteProviderContent => '确定要删除该供应商吗？此操作不可撤销。';
-
-  @override
-  String get providerDetailPageCancelButton => '取消';
-
-  @override
-  String get providerDetailPageDeleteButton => '删除';
-
-  @override
-  String get providerDetailPageProviderDeletedSnackbar => '已删除供应商';
-
-  @override
-  String get providerDetailPageConfigTab => '配置';
-
-  @override
-  String get providerDetailPageModelsTab => '模型';
-
-  @override
-  String get providerDetailPageNetworkTab => '网络代理';
-
-  @override
-  String get providerDetailPageEnabledTitle => '是否启用';
-
-  @override
-  String get providerDetailPageManageSectionTitle => '管理';
-
-  @override
-  String get providerDetailPageNameLabel => '名称';
-
-  @override
-  String get providerDetailPageApiKeyHint => '留空则使用上层默认';
-
-  @override
-  String get providerDetailPageHideTooltip => '隐藏';
-
-  @override
-  String get providerDetailPageShowTooltip => '显示';
-
-  @override
-  String get providerDetailPageApiPathLabel => 'API 路径';
-
-  @override
-  String get providerDetailPageResponseApiTitle => 'Response API (/responses)';
-
-  @override
-  String get providerDetailPageVertexAiTitle => 'Vertex AI';
-
-  @override
-  String get providerDetailPageLocationLabel => '区域 Location';
-
-  @override
-  String get providerDetailPageProjectIdLabel => '项目 ID';
-
-  @override
-  String get providerDetailPageServiceAccountJsonLabel => '服务账号 JSON（粘贴或导入）';
-
-  @override
-  String get providerDetailPageImportJsonButton => '导入 JSON';
-
-  @override
-  String get providerDetailPageTestButton => '测试';
-
-  @override
-  String get providerDetailPageSaveButton => '保存';
-
-  @override
-  String get providerDetailPageProviderRemovedMessage => '供应商已删除';
-
-  @override
-  String get providerDetailPageNoModelsTitle => '暂无模型';
-
-  @override
-  String get providerDetailPageNoModelsSubtitle => '点击下方按钮添加模型';
-
-  @override
-  String get providerDetailPageDeleteModelButton => '删除';
-
-  @override
-  String get providerDetailPageConfirmDeleteTitle => '确认删除';
-
-  @override
-  String get providerDetailPageConfirmDeleteContent => '删除后可通过撤销恢复。是否删除？';
-
-  @override
-  String get providerDetailPageModelDeletedSnackbar => '已删除模型';
-
-  @override
-  String get providerDetailPageUndoButton => '撤销';
-
-  @override
-  String get providerDetailPageAddNewModelButton => '添加新模型';
-
-  @override
-  String get providerDetailPageFetchModelsButton => '获取';
-
-  @override
-  String get providerDetailPageEnableProxyTitle => '是否启用代理';
-
-  @override
-  String get providerDetailPageHostLabel => '主机地址';
-
-  @override
-  String get providerDetailPagePortLabel => '端口';
-
-  @override
-  String get providerDetailPageUsernameOptionalLabel => '用户名（可选）';
-
-  @override
-  String get providerDetailPagePasswordOptionalLabel => '密码（可选）';
-
-  @override
-  String get providerDetailPageSavedSnackbar => '已保存';
-
-  @override
-  String get providerDetailPageEmbeddingsGroupTitle => '嵌入';
-
-  @override
-  String get providerDetailPageOtherModelsGroupTitle => '其他模型';
-
-  @override
-  String get providerDetailPageRemoveGroupTooltip => '移除本组';
-
-  @override
-  String get providerDetailPageAddGroupTooltip => '添加本组';
-
-  @override
-  String get providerDetailPageFilterHint => '输入模型名称筛选';
-
-  @override
-  String get providerDetailPageDeleteText => '删除';
-
-  @override
-  String get providerDetailPageEditTooltip => '编辑';
-
-  @override
-  String get providerDetailPageTestConnectionTitle => '测试连接';
-
-  @override
-  String get providerDetailPageSelectModelButton => '选择模型';
-
-  @override
-  String get providerDetailPageChangeButton => '更换';
-
-  @override
-  String get providerDetailPageTestingMessage => '正在测试…';
-
-  @override
-  String get providerDetailPageTestSuccessMessage => '测试成功';
-
-  @override
-  String get providersPageTitle => '供应商';
-
-  @override
-  String get providersPageImportTooltip => '导入';
-
-  @override
-  String get providersPageAddTooltip => '新增';
-
-  @override
-  String get providersPageProviderAddedSnackbar => '已添加供应商';
-
-  @override
-  String get providersPageSiliconFlowName => '硅基流动';
-
-  @override
-  String get providersPageAliyunName => '阿里云千问';
-
-  @override
-  String get providersPageZhipuName => '智谱';
-
-  @override
-  String get providersPageByteDanceName => '火山引擎';
-
-  @override
-  String get providersPageEnabledStatus => '启用';
-
-  @override
-  String get providersPageDisabledStatus => '禁用';
-
-  @override
-  String get providersPageModelsCountSuffix => ' models';
-
-  @override
-  String get providersPageModelsCountSingleSuffix => '个模型';
-
-  @override
-  String get addProviderSheetTitle => '添加供应商';
-
-  @override
-  String get addProviderSheetEnabledLabel => '是否启用';
-
-  @override
-  String get addProviderSheetNameLabel => '名称';
-
-  @override
-  String get addProviderSheetApiPathLabel => 'API 路径';
-
-  @override
-  String get addProviderSheetVertexAiLocationLabel => '位置';
-
-  @override
-  String get addProviderSheetVertexAiProjectIdLabel => '项目ID';
-
-  @override
-  String get addProviderSheetVertexAiServiceAccountJsonLabel =>
-      '服务账号 JSON（粘贴或导入）';
-
-  @override
-  String get addProviderSheetImportJsonButton => '导入 JSON';
-
-  @override
-  String get addProviderSheetCancelButton => '取消';
-
-  @override
-  String get addProviderSheetAddButton => '添加';
-
-  @override
-  String get importProviderSheetTitle => '导入供应商';
-
-  @override
-  String get importProviderSheetScanQrTooltip => '扫码导入';
-
-  @override
-  String get importProviderSheetFromGalleryTooltip => '从相册导入';
-
-  @override
-  String importProviderSheetImportSuccessMessage(int count) {
-    return '已导入$count个供应商';
-  }
-
-  @override
-  String importProviderSheetImportFailedMessage(String error) {
-    return '导入失败: $error';
-  }
-
-  @override
-  String get importProviderSheetDescription =>
-      '粘贴分享字符串（可多行，每行一个）或 ChatBox JSON';
-
-  @override
-  String get importProviderSheetInputHint => 'ai-provider:v1:...';
-
-  @override
-  String get importProviderSheetCancelButton => '取消';
-
-  @override
-  String get importProviderSheetImportButton => '导入';
-
-  @override
-  String get shareProviderSheetTitle => '分享供应商配置';
-
-  @override
-  String get shareProviderSheetDescription => '复制下面的分享字符串，或使用二维码分享。';
-
-  @override
-  String get shareProviderSheetCopiedMessage => '已复制';
-
-  @override
-  String get shareProviderSheetCopyButton => '复制';
-
-  @override
-  String get shareProviderSheetShareButton => '分享';
-
-  @override
-  String get providerDetailPageApiBaseUrlLabel => 'API Base URL';
-
-  @override
-  String get providerDetailPageModelsTitle => '模型';
-
-  @override
-  String get providerModelsGetButton => '获取';
-
-  @override
-  String get providerDetailPageCapsVision => '视觉';
-
-  @override
-  String get providerDetailPageCapsImage => '生图';
-
-  @override
-  String get providerDetailPageCapsTool => '工具';
-
-  @override
-  String get providerDetailPageCapsReasoning => '推理';
-
-  @override
-  String get qrScanPageTitle => '扫码导入';
-
-  @override
-  String get qrScanPageInstruction => '将二维码对准取景框';
-
-  @override
-  String get searchServicesPageBackTooltip => '返回';
-
-  @override
-  String get searchServicesPageTitle => '搜索服务';
-
-  @override
-  String get searchServicesPageDone => '完成';
-
-  @override
-  String get searchServicesPageEdit => '编辑';
-
-  @override
-  String get searchServicesPageAddProvider => '添加提供商';
-
-  @override
-  String get searchServicesPageSearchProviders => '搜索提供商';
-
-  @override
-  String get searchServicesPageGeneralOptions => '通用选项';
-
-  @override
-  String get searchServicesPageMaxResults => '最大结果数';
-
-  @override
-  String get searchServicesPageTimeoutSeconds => '超时时间（秒）';
-
-  @override
-  String get searchServicesPageAtLeastOneServiceRequired => '至少需要一个搜索服务';
-
-  @override
-  String get searchServicesPageTestingStatus => '测试中…';
-
-  @override
-  String get searchServicesPageConnectedStatus => '已连接';
-
-  @override
-  String get searchServicesPageFailedStatus => '连接失败';
-
-  @override
-  String get searchServicesPageNotTestedStatus => '未测试';
-
-  @override
-  String get searchServicesPageEditServiceTooltip => '编辑服务';
-
-  @override
-  String get searchServicesPageTestConnectionTooltip => '测试连接';
-
-  @override
-  String get searchServicesPageDeleteServiceTooltip => '删除服务';
-
-  @override
-  String get searchServicesPageConfiguredStatus => '已配置';
-
-  @override
-  String get miniMapTitle => '迷你地图';
-
-  @override
-  String get miniMapTooltip => '迷你地图';
-
-  @override
-  String get searchServicesPageApiKeyRequiredStatus => '需要 API Key';
-
-  @override
-  String get searchServicesPageUrlRequiredStatus => '需要 URL';
-
-  @override
-  String get searchServicesAddDialogTitle => '添加搜索服务';
-
-  @override
-  String get searchServicesAddDialogServiceType => '服务类型';
-
-  @override
-  String get searchServicesAddDialogBingLocal => '本地';
-
-  @override
-  String get searchServicesAddDialogCancel => '取消';
-
-  @override
-  String get searchServicesAddDialogAdd => '添加';
-
-  @override
-  String get searchServicesAddDialogApiKeyRequired => 'API Key 必填';
-
-  @override
-  String get searchServicesAddDialogInstanceUrl => '实例 URL';
-
-  @override
-  String get searchServicesAddDialogUrlRequired => 'URL 必填';
-
-  @override
-  String get searchServicesAddDialogEnginesOptional => '搜索引擎（可选）';
-
-  @override
-  String get searchServicesAddDialogLanguageOptional => '语言（可选）';
-
-  @override
-  String get searchServicesAddDialogUsernameOptional => '用户名（可选）';
-
-  @override
-  String get searchServicesAddDialogPasswordOptional => '密码（可选）';
-
-  @override
-  String get searchServicesEditDialogEdit => '编辑';
-
-  @override
-  String get searchServicesEditDialogCancel => '取消';
-
-  @override
-  String get searchServicesEditDialogSave => '保存';
-
-  @override
-  String get searchServicesEditDialogBingLocalNoConfig => 'Bing 本地搜索不需要配置。';
-
-  @override
-  String get searchServicesEditDialogApiKeyRequired => 'API Key 必填';
-
-  @override
-  String get searchServicesEditDialogInstanceUrl => '实例 URL';
-
-  @override
-  String get searchServicesEditDialogUrlRequired => 'URL 必填';
-
-  @override
-  String get searchServicesEditDialogEnginesOptional => '搜索引擎（可选）';
-
-  @override
-  String get searchServicesEditDialogLanguageOptional => '语言（可选）';
-
-  @override
-  String get searchServicesEditDialogUsernameOptional => '用户名（可选）';
-
-  @override
-  String get searchServicesEditDialogPasswordOptional => '密码（可选）';
-
-  @override
-  String get searchSettingsSheetTitle => '搜索设置';
-
-  @override
-  String get searchSettingsSheetBuiltinSearchTitle => '模型内置搜索';
-
-  @override
-  String get searchSettingsSheetBuiltinSearchDescription => '是否启用模型内置的搜索功能';
-
-  @override
-  String get searchSettingsSheetWebSearchTitle => '网络搜索';
-
-  @override
-  String get searchSettingsSheetWebSearchDescription => '是否启用网页搜索';
-
-  @override
-  String get searchSettingsSheetOpenSearchServicesTooltip => '打开搜索服务设置';
-
-  @override
-  String get searchSettingsSheetNoServicesMessage => '暂无可用服务，请先在\"搜索服务\"中添加';
-
-  @override
-  String get aboutPageEasterEggTitle => '彩蛋已解锁！';
-
-  @override
-  String get aboutPageEasterEggMessage => '\n（好吧现在还没彩蛋）';
-
-  @override
-  String get aboutPageEasterEggButton => '好的';
-
-  @override
-  String get aboutPageAppDescription => '开源 AI 助手';
-
-  @override
-  String get aboutPageNoQQGroup => '暂无QQ群';
-
-  @override
-  String get aboutPageVersion => '版本';
-
-  @override
-  String get aboutPageSystem => '系统';
-
-  @override
-  String get aboutPageWebsite => '官网';
-
-  @override
-  String get aboutPageLicense => '许可证';
-
-  @override
-  String get aboutPageJoinQQGroup => '加入QQ群';
-
-  @override
-  String get aboutPageJoinDiscord => '在 Discord 中加入我们';
-
-  @override
-  String get displaySettingsPageShowUserAvatarTitle => '显示用户头像';
-
-  @override
-  String get displaySettingsPageShowUserAvatarSubtitle => '是否在聊天消息中显示用户头像';
-
-  @override
-  String get displaySettingsPageShowUserNameTimestampTitle => '显示用户名称和时间戳';
-
-  @override
-  String get displaySettingsPageShowUserNameTimestampSubtitle =>
-      '是否在聊天消息中显示用户名称和时间戳';
-
-  @override
-  String get displaySettingsPageShowUserMessageActionsTitle => '显示用户消息操作按钮';
-
-  @override
-  String get displaySettingsPageShowUserMessageActionsSubtitle =>
-      '在用户消息下方显示复制、重发与更多按钮';
-
-  @override
-  String get displaySettingsPageShowModelNameTimestampTitle => '显示模型名称和时间戳';
-
-  @override
-  String get displaySettingsPageShowModelNameTimestampSubtitle =>
-      '是否在聊天消息中显示模型名称和时间戳';
-
-  @override
-  String get displaySettingsPageChatModelIconTitle => '聊天列表模型图标';
-
-  @override
-  String get displaySettingsPageChatModelIconSubtitle => '是否在聊天消息中显示模型图标';
-
-  @override
-  String get displaySettingsPageShowTokenStatsTitle => '显示Token和上下文统计';
-
-  @override
-  String get displaySettingsPageShowTokenStatsSubtitle => '显示 token 用量与消息数量';
-
-  @override
-  String get displaySettingsPageAutoCollapseThinkingTitle => '自动折叠思考';
-
-  @override
-  String get displaySettingsPageAutoCollapseThinkingSubtitle =>
-      '思考完成后自动折叠，保持界面简洁';
-
-  @override
-  String get displaySettingsPageShowChatListDateTitle => '显示对话列表日期';
-
-  @override
-  String get displaySettingsPageShowChatListDateSubtitle => '在左侧对话列表中显示日期分组标签';
-
-  @override
-  String get displaySettingsPageShowUpdatesTitle => '显示更新';
-
-  @override
-  String get displaySettingsPageShowUpdatesSubtitle => '显示应用更新通知';
-
-  @override
-  String get displaySettingsPageMessageNavButtonsTitle => '消息导航按钮';
-
-  @override
-  String get displaySettingsPageMessageNavButtonsSubtitle => '滚动时显示快速跳转按钮';
-
-  @override
-  String get displaySettingsPageHapticsOnSidebarTitle => '侧边栏触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsOnSidebarSubtitle => '打开/关闭侧边栏时启用触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsGlobalTitle => '全局触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsIosSwitchTitle => '开关触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsOnListItemTapTitle => '列表项触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsOnCardTapTitle => '卡片触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsOnGenerateTitle => '消息生成触觉反馈';
-
-  @override
-  String get displaySettingsPageHapticsOnGenerateSubtitle => '生成消息时启用触觉反馈';
-
-  @override
-  String get displaySettingsPageNewChatOnLaunchTitle => '启动时新建对话';
-
-  @override
-  String get displaySettingsPageAutoSwitchTopicsTitle => '自动切换话题';
-
-  @override
-  String get desktopDisplaySettingsTopicPositionTitle => '话题位置';
-
-  @override
-  String get desktopDisplaySettingsTopicPositionLeft => '左侧';
-
-  @override
-  String get desktopDisplaySettingsTopicPositionRight => '右侧';
-
-  @override
-  String get displaySettingsPageNewChatOnLaunchSubtitle => '应用启动时自动创建新对话';
-
-  @override
-  String get displaySettingsPageChatFontSizeTitle => '聊天字体大小';
-
-  @override
-  String get displaySettingsPageAutoScrollIdleTitle => '自动回到底部延迟';
-
-  @override
-  String get displaySettingsPageAutoScrollIdleSubtitle => '用户停止滚动后等待多久再自动回到底部';
-
-  @override
-  String get displaySettingsPageChatFontSampleText => '这是一个示例的聊天文本';
-
-  @override
-  String get displaySettingsPageChatBackgroundMaskTitle => '背景图片遮罩透明度';
-
-  @override
-  String get displaySettingsPageThemeSettingsTitle => '主题设置';
-
-  @override
-  String get displaySettingsPageThemeColorTitle => '主题颜色';
-
-  @override
-  String get desktopSettingsFontsTitle => '字体设置';
-
-  @override
-  String get desktopFontAppLabel => '应用字体';
-
-  @override
-  String get desktopFontCodeLabel => '代码字体';
-
-  @override
-  String get desktopFontFamilySystemDefault => '系统默认';
-
-  @override
-  String get desktopFontFamilyMonospaceDefault => '系统默认';
-
-  @override
-  String get desktopFontFilterHint => '输入以过滤字体…';
-
-  @override
-  String get displaySettingsPageAppFontTitle => '应用字体';
-
-  @override
-  String get displaySettingsPageCodeFontTitle => '代码字体';
-
-  @override
-  String get fontPickerChooseLocalFile => '选择本地文件';
-
-  @override
-  String get fontPickerGetFromGoogleFonts => '从 Google Fonts 获取';
-
-  @override
-  String get fontPickerFilterHint => '输入以过滤字体…';
-
-  @override
-  String get desktopFontLoading => '正在加载字体…';
-
-  @override
-  String get displaySettingsPageFontLocalFileLabel => '本地文件';
-
-  @override
-  String get displaySettingsPageFontResetLabel => '恢复默认';
-
-  @override
-  String get displaySettingsPageOtherSettingsTitle => '其他设置';
-
-  @override
-  String get themeSettingsPageDynamicColorSection => '动态颜色';
-
-  @override
-  String get themeSettingsPageUseDynamicColorTitle => '系统动态配色';
-
-  @override
-  String get themeSettingsPageUseDynamicColorSubtitle => '跟随系统取色（Android 12+）';
-
-  @override
-  String get themeSettingsPageUsePureBackgroundTitle => '纯色背景';
-
-  @override
-  String get themeSettingsPageUsePureBackgroundSubtitle => '仅气泡与强调色随主题变化';
-
-  @override
-  String get themeSettingsPageColorPalettesSection => '配色方案';
-
-  @override
-  String get ttsServicesPageBackButton => '返回';
-
-  @override
-  String get ttsServicesPageTitle => '语音服务';
-
-  @override
-  String get ttsServicesPageAddTooltip => '新增';
-
-  @override
-  String get ttsServicesPageAddNotImplemented => '新增 TTS 服务暂未实现';
-
-  @override
-  String get ttsServicesPageSystemTtsTitle => '系统TTS';
-
-  @override
-  String get ttsServicesPageSystemTtsAvailableSubtitle => '使用系统内置语音合成';
-
-  @override
-  String ttsServicesPageSystemTtsUnavailableSubtitle(String error) {
-    return '不可用：$error';
-  }
-
-  @override
-  String get ttsServicesPageSystemTtsUnavailableNotInitialized => '未初始化';
-
-  @override
-  String get ttsServicesPageTestSpeechText => '你好，这是一次测试语音。';
-
-  @override
-  String get ttsServicesPageConfigureTooltip => '配置';
-
-  @override
-  String get ttsServicesPageTestVoiceTooltip => '测试语音';
-
-  @override
-  String get ttsServicesPageStopTooltip => '停止';
-
-  @override
-  String get ttsServicesPageDeleteTooltip => '删除';
-
-  @override
-  String get ttsServicesPageSystemTtsSettingsTitle => '系统 TTS 设置';
-
-  @override
-  String get ttsServicesPageEngineLabel => '引擎';
-
-  @override
-  String get ttsServicesPageAutoLabel => '自动';
-
-  @override
-  String get ttsServicesPageLanguageLabel => '语言';
-
-  @override
-  String get ttsServicesPageSpeechRateLabel => '语速';
-
-  @override
-  String get ttsServicesPagePitchLabel => '音调';
-
-  @override
-  String get ttsServicesPageSettingsSavedMessage => '设置已保存。';
-
-  @override
-  String get ttsServicesPageDoneButton => '完成';
-
-  @override
-  String get ttsServicesPageNetworkSectionTitle => '网络 TTS';
-
-  @override
-  String get ttsServicesPageNoNetworkServices => '暂无语音服务';
-
-  @override
-  String get ttsServicesDialogAddTitle => '添加语音服务';
-
-  @override
-  String get ttsServicesDialogEditTitle => '编辑语音服务';
-
-  @override
-  String get ttsServicesDialogProviderType => '服务提供方';
-
-  @override
-  String get ttsServicesDialogCancelButton => '取消';
-
-  @override
-  String get ttsServicesDialogAddButton => '添加';
-
-  @override
-  String get ttsServicesDialogSaveButton => '保存';
-
-  @override
-  String get ttsServicesFieldNameLabel => '名称';
-
-  @override
-  String get ttsServicesFieldApiKeyLabel => 'API Key';
-
-  @override
-  String get ttsServicesFieldBaseUrlLabel => 'API 基址';
-
-  @override
-  String get ttsServicesFieldModelLabel => '模型';
-
-  @override
-  String get ttsServicesFieldVoiceLabel => '音色';
-
-  @override
-  String get ttsServicesFieldVoiceIdLabel => '音色 ID';
-
-  @override
-  String get ttsServicesFieldEmotionLabel => '情感';
-
-  @override
-  String get ttsServicesFieldSpeedLabel => '语速';
-
-  @override
-  String get ttsServicesViewDetailsButton => '查看详情';
-
-  @override
-  String get ttsServicesDialogErrorTitle => '错误详情';
-
-  @override
-  String get ttsServicesCloseButton => '关闭';
-
-  @override
-  String imageViewerPageShareFailedOpenFile(String message) {
-    return '无法分享，已尝试打开文件: $message';
-  }
-
-  @override
-  String imageViewerPageShareFailed(String error) {
-    return '分享失败: $error';
-  }
-
-  @override
-  String get imageViewerPageShareButton => '分享图片';
-
-  @override
-  String get imageViewerPageSaveButton => '保存图片';
-
-  @override
-  String get imageViewerPageSaveSuccess => '已保存到相册';
-
-  @override
-  String imageViewerPageSaveFailed(String error) {
-    return '保存失败: $error';
-  }
-
-  @override
-  String get settingsShare => 'MiniMe-Core - 开源AI助手';
-
-  @override
-  String get searchProviderBingLocalDescription =>
-      '使用网络抓取工具获取必应搜索结果。无需 API 密钥，但可能不够稳定。';
-
-  @override
-  String get searchProviderBraveDescription => 'Brave 独立搜索引擎。注重隐私，无跟踪或画像。';
-
-  @override
-  String get searchProviderExaDescription => '具备语义理解的神经搜索引擎。适合研究与查找特定内容。';
-
-  @override
-  String get searchProviderLinkUpDescription =>
-      '提供来源可追溯答案的搜索 API，同时提供搜索结果与 AI 摘要。';
-
-  @override
-  String get searchProviderMetasoDescription => '秘塔中文搜索引擎。面向中文内容优化并提供 AI 能力。';
-
-  @override
-  String get searchProviderSearXNGDescription => '注重隐私的元搜索引擎。需自建实例，无跟踪。';
-
-  @override
-  String get searchProviderTavilyDescription =>
-      '为大型语言模型（LLMs）优化的 AI 搜索 API，提供高质量、相关的搜索结果。';
-
-  @override
-  String get searchProviderZhipuDescription =>
-      '智谱 AI 旗下中文 AI 搜索服务，针对中文内容与查询进行了优化。';
-
-  @override
-  String get searchProviderOllamaDescription =>
-      'Ollama 网络搜索 API。为模型补充最新信息，减少幻觉并提升准确性。';
-
-  @override
-  String get searchProviderJinaDescription => '适合开发者和企业用于 AI 搜索应用。支持多语言与多模态。';
-
-  @override
-  String get searchServiceNameBingLocal => 'Bing（Local）';
-
-  @override
-  String get searchServiceNameTavily => 'Tavily';
-
-  @override
-  String get searchServiceNameExa => 'Exa';
-
-  @override
-  String get searchServiceNameZhipu => '智谱';
-
-  @override
-  String get searchServiceNameSearXNG => 'SearXNG';
-
-  @override
-  String get searchServiceNameLinkUp => 'LinkUp';
-
-  @override
-  String get searchServiceNameBrave => 'Brave';
-
-  @override
-  String get searchServiceNameMetaso => '秘塔';
-
-  @override
-  String get searchServiceNameOllama => 'Ollama';
-
-  @override
-  String get searchServiceNameJina => 'Jina';
-
-  @override
-  String get searchServiceNamePerplexity => 'Perplexity';
-
-  @override
-  String get searchProviderPerplexityDescription =>
-      'Perplexity 搜索 API。提供排序的网页结果，支持区域与域名过滤。';
-
-  @override
-  String get searchServiceNameBocha => '博查';
-
-  @override
-  String get searchProviderBochaDescription =>
-      '博查 AI 全网网页搜索，支持时间范围与摘要，更适合 AI 使用。';
-
-  @override
-  String get generationInterrupted => '生成已中断';
-
-  @override
-  String get titleForLocale => '新对话';
-
-  @override
-  String get quickPhraseBackTooltip => '返回';
-
-  @override
-  String get quickPhraseGlobalTitle => '快捷短语';
-
-  @override
-  String get quickPhraseAssistantTitle => '助手快捷短语';
-
-  @override
-  String get quickPhraseAddTooltip => '添加快捷短语';
-
-  @override
-  String get quickPhraseEmptyMessage => '暂无快捷短语';
-
-  @override
-  String get quickPhraseAddTitle => '添加快捷短语';
-
-  @override
-  String get quickPhraseEditTitle => '编辑快捷短语';
-
-  @override
-  String get quickPhraseTitleLabel => '标题';
-
-  @override
-  String get quickPhraseContentLabel => '内容';
-
-  @override
-  String get quickPhraseCancelButton => '取消';
-
-  @override
-  String get quickPhraseSaveButton => '保存';
-
-  @override
-  String get mcpJsonEditButtonTooltip => '编辑 JSON';
-
-  @override
-  String get mcpJsonEditTitle => '编辑json';
-
-  @override
-  String get mcpJsonEditParseFailed => 'JSON 解析失败';
-
-  @override
-  String get mcpJsonEditSavedApplied => '已保存并应用';
-
-  @override
-  String get quickPhraseEditButton => '编辑';
-
-  @override
-  String get quickPhraseDeleteButton => '删除';
-
-  @override
-  String get quickPhraseMenuTitle => '快捷短语';
-
-  @override
-  String get chatInputBarQuickPhraseTooltip => '快捷短语';
-
-  @override
-  String get assistantEditQuickPhraseDescription => '管理该助手的快捷短语。点击下方按钮添加或编辑短语。';
-
-  @override
-  String get assistantEditManageQuickPhraseButton => '管理快捷短语';
-
-  @override
-  String get assistantEditPageMemoryTab => '记忆';
-
-  @override
-  String get assistantEditMemorySwitchTitle => '记忆';
-
-  @override
-  String get assistantEditMemorySwitchDescription => '允许助手主动存储并在对话间引用用户相关信息';
-
-  @override
-  String get assistantEditRecentChatsSwitchTitle => '参考历史聊天记录';
-
-  @override
-  String get assistantEditRecentChatsSwitchDescription =>
-      '在新对话中引用最近的对话标题以增强上下文';
-
-  @override
-  String get assistantEditManageMemoryTitle => '管理记忆';
-
-  @override
-  String get assistantEditAddMemoryButton => '添加记忆';
-
-  @override
-  String get assistantEditMemoryEmpty => '暂无记忆';
-
-  @override
-  String get assistantEditMemoryDialogTitle => '记忆';
-
-  @override
-  String get assistantEditMemoryDialogHint => '输入记忆内容';
-
-  @override
-  String get assistantEditAddQuickPhraseButton => '添加快捷短语';
-
-  @override
-  String get multiKeyPageDeleteSnackbarDeletedOne => '已删除 1 个 Key';
-
-  @override
-  String get multiKeyPageUndo => '撤回';
-
-  @override
-  String get multiKeyPageUndoRestored => '已撤回删除';
-
-  @override
-  String get multiKeyPageDeleteErrorsTooltip => '删除错误';
-
-  @override
-  String get multiKeyPageDeleteErrorsConfirmTitle => '删除所有错误的 Key？';
-
-  @override
-  String get multiKeyPageDeleteErrorsConfirmContent => '这将移除所有状态为错误的 Key。';
-
-  @override
-  String multiKeyPageDeletedErrorsSnackbar(int n) {
-    return '已删除 $n 个错误 Key';
-  }
-
-  @override
-  String get providerDetailPageProviderTypeTitle => '供应商类型';
-
-  @override
-  String get displaySettingsPageChatItemDisplayTitle => '聊天项显示';
-
-  @override
-  String get displaySettingsPageRenderingSettingsTitle => '渲染设置';
-
-  @override
-  String get displaySettingsPageBehaviorStartupTitle => '行为与启动';
-
-  @override
-  String get displaySettingsPageHapticsSettingsTitle => '触觉反馈';
-
-  @override
-  String get assistantSettingsNoPromptPlaceholder => '暂无提示词';
-
-  @override
-  String get providersPageMultiSelectTooltip => '多选';
-
-  @override
-  String get providersPageDeleteSelectedConfirmContent =>
-      '确定要删除选中的供应商吗？该操作不可撤销。';
-
-  @override
-  String get providersPageDeleteSelectedSnackbar => '已删除选中的供应商';
-
-  @override
-  String providersPageExportSelectedTitle(int count) {
-    return '导出 $count 个供应商';
-  }
-
-  @override
-  String get providersPageExportCopyButton => '复制';
-
-  @override
-  String get providersPageExportShareButton => '分享';
-
-  @override
-  String get providersPageExportCopiedSnackbar => '已复制导出代码';
-
-  @override
-  String get providersPageDeleteAction => '删除';
-
-  @override
-  String get providersPageExportAction => '导出';
-
-  @override
-  String get assistantEditPresetTitle => '预设对话信息';
-
-  @override
-  String get assistantEditPresetAddUser => '添加预设用户信息';
-
-  @override
-  String get assistantEditPresetAddAssistant => '添加预设助手信息';
-
-  @override
-  String get assistantEditPresetInputHintUser => '输入用户消息…';
-
-  @override
-  String get assistantEditPresetInputHintAssistant => '输入助手消息…';
-
-  @override
-  String get assistantEditPresetEmpty => '暂无预设消息';
-
-  @override
-  String get assistantEditPresetEditDialogTitle => '编辑预设消息';
-
-  @override
-  String get assistantEditPresetRoleUser => '用户';
-
-  @override
-  String get assistantEditPresetRoleAssistant => '助手';
-
-  @override
-  String get desktopTtsPleaseAddProvider => '请先在设置中添加语音服务商';
-
-  @override
-  String get settingsPageNetworkProxy => '网络代理';
-
-  @override
-  String get networkProxyEnableLabel => '启动代理';
-
-  @override
-  String get networkProxySettingsHeader => '代理设置';
-
-  @override
-  String get networkProxyType => '代理类型';
-
-  @override
-  String get networkProxyTypeHttp => 'HTTP';
-
-  @override
-  String get networkProxyTypeHttps => 'HTTPS';
-
-  @override
-  String get networkProxyTypeSocks5 => 'SOCKS5';
-
-  @override
-  String get networkProxyServerHost => '服务器地址';
-
-  @override
-  String get networkProxyPort => '端口';
-
-  @override
-  String get networkProxyUsername => '用户名';
-
-  @override
-  String get networkProxyPassword => '密码';
-
-  @override
-  String get networkProxyOptionalHint => '可选';
-
-  @override
-  String get networkProxyTestHeader => '连接测试';
-
-  @override
-  String get networkProxyTestUrlHint => '测试地址';
-
-  @override
-  String get networkProxyTestButton => '测试';
-
-  @override
-  String get networkProxyTesting => '测试中…';
-
-  @override
-  String get networkProxyTestSuccess => '连接成功';
-
-  @override
-  String networkProxyTestFailed(String error) {
-    return '测试失败：$error';
-  }
-
-  @override
-  String get networkProxyNoUrl => '请输入测试地址';
-
-  @override
-  String get networkProxyPriorityNote => '当同时开启全局代理与供应商代理时，将优先使用供应商代理。';
-
-  @override
-  String get desktopShowProviderInModelCapsule => '模型胶囊显示供应商';
-
-  @override
-  String get messageWebViewOpenInBrowser => '在浏览器中打开';
-
-  @override
-  String get messageWebViewConsoleLogs => '控制台日志';
-
-  @override
-  String get messageWebViewNoConsoleMessages => '暂无控制台消息';
-
-  @override
-  String get messageWebViewRefreshTooltip => '刷新';
-
-  @override
-  String get messageWebViewForwardTooltip => '前进';
-
-  @override
-  String get storagePageTitle => '存储空间';
-
-  @override
-  String get storageUsed => '已用空间';
-
-  @override
-  String get storageCleanable => '可清理空间';
-
-  @override
-  String get storageCategoriesHeader => '分类';
-
-  @override
-  String get storageRefresh => '刷新';
-
-  @override
-  String storageItemsCount(int count) {
-    return '$count 个文件';
-  }
-
-  @override
-  String get storageDetailHeader => '明细';
-
-  @override
-  String get storageEmpty => '暂无内容';
-
-  @override
-  String get storageAvatarItem => '头像';
-
-  @override
-  String get storageManageSnapshots => '管理副本';
-
-  @override
-  String get storageSnapshotPathNote => '自动备份的副本保存在 snapshots 目录';
-
-  @override
-  String get storageCautionRisk => '删除可能影响对应功能，请谨慎操作';
-
-  @override
-  String get storageCautionSafe => '可安全清理，不影响聊天记录';
-
-  @override
-  String get storageCautionOther => '情况不明的文件，请谨慎操作';
-
-  @override
-  String get storageCatePic => '图片';
-
-  @override
-  String get storageCateFile => '文件';
-
-  @override
-  String get storageCateChats => '聊天记录';
-
-  @override
-  String get storageCateSnapshots => '本地副本';
-
-  @override
-  String get storageCateAvatars => '助手';
-
-  @override
-  String get storageCateCache => '缓存';
-
-  @override
-  String get storageCateLogs => '日志';
-
-  @override
-  String get storageCateOther => '其他';
-
-  @override
-  String get storageSource => '来源';
-
-  @override
-  String get storageSourceAll => '全部';
-
-  @override
-  String get storageSourceUser => '用户上传';
-
-  @override
-  String get storageSourceAssistant => '助手发出';
-
-  @override
-  String get storageOrder => '排序';
-
-  @override
-  String get storageOrderNewest => '最新';
-
-  @override
-  String get storageOrderOldest => '最旧';
-
-  @override
-  String get storageOrderLargest => '最大';
-
-  @override
-  String get storageOrderSmallest => '最小';
-
-  @override
-  String get storageSelectAll => '全选';
-
-  @override
-  String get storageDelete => '删除';
-
-  @override
-  String storageSelectedItems(int count) {
-    return '已选 $count 项';
-  }
-
-  @override
-  String get storageDeleteConfirmTitle => '删除所选文件？';
-
-  @override
-  String storageDeleteConfirmBody(int count) {
-    return '将永久删除选中的 $count 个文件，确定吗？';
-  }
-
-  @override
-  String get storageCancel => '取消';
-
-  @override
-  String get storageConfirmDeleteBtn => '删除';
-
-  @override
-  String get storageCacheClearAvatar => '清理头像缓存';
-
-  @override
-  String get storageCacheClearApp => '清理缓存';
-
-  @override
-  String get storageCleanableNote => '可安全清理，不影响聊天记录。';
-
-  @override
-  String get storageCacheClearConfirmTitle => '清理缓存？';
-
-  @override
-  String get storageCacheClearConfirmBody => '清理后将释放空间，不影响聊天记录。确定清理吗？';
-
-  @override
-  String get storageLogView => '查看日志';
-
-  @override
-  String get storageLogClear => '清理日志';
-
-  @override
-  String get storageLogContext => '上下文';
-
-  @override
-  String get storageLogNetwork => '请求日志';
-
-  @override
-  String get storageLogRuntime => '应用日志';
-
-  @override
-  String get storageLogCurrent => '当前日志';
-
-  @override
-  String get storageLogEmpty => '暂无日志';
-
-  @override
-  String get storageLogClearConfirmTitle => '清理日志？';
-
-  @override
-  String get storageLogClearConfirmBody => '将删除全部日志文件，确定清理吗？';
-
-  @override
-  String get logSettingsTitle => '日志设置';
-
-  @override
-  String get logSettingsSaveResponse => '保存响应输出';
-
-  @override
-  String get logSettingsOmitLarge => '省略大载荷';
-
-  @override
-  String get logSettingsAutoDelete => '自动删除';
-
-  @override
-  String get logSettingsAutoDeleteNone => '不启用';
-
-  @override
-  String get logSettingsSizeLimit => '日志大小上限';
-
-  @override
-  String logSettingDays(int count) {
-    return '$count 天';
-  }
-
-  @override
-  String logSettingSizeText(int limit) {
-    return '$limit MB';
-  }
-
-  @override
-  String get snapshotTitle => '本地副本';
-
-  @override
-  String get snapshotSettingsHeader => '设置';
-
-  @override
-  String get snapshotKeepLocal => '保留本地副本';
-
-  @override
-  String get snapshotFrequency => '备份频率';
-
-  @override
-  String get snapshotFrequencyAuto => '自动';
-
-  @override
-  String get snapshotKeepCount => '保留份数';
-
-  @override
-  String get snapshotKeepLastWeek => '保留一份上周的';
-
-  @override
-  String get snapshotKeepLastMonth => '保留一份上个月的';
-
-  @override
-  String get snapshotSizeLimit => '占用上限';
-
-  @override
-  String get snapshotSizeUnlimited => '不限制';
-
-  @override
-  String get snapshotNotifyDone => '备份完成时提示';
-
-  @override
-  String snapshotLastBackup(String time) {
-    return '上次备份：$time';
-  }
-
-  @override
-  String get snapshotBackupNow => '立即备份一份';
-
-  @override
-  String snapshotListHeader(int count, String size) {
-    return '本地副本 · $count 份 · $size';
-  }
-
-  @override
-  String get snapshotAutoBadge => '自动备份';
-
-  @override
-  String get snapshotRestore => '恢复';
-
-  @override
-  String get snapshotExport => '导出';
-
-  @override
-  String get snapshotDelete => '删除';
-
-  @override
-  String get snapshotPin => '保留这份';
-
-  @override
-  String get snapshotKeep => '已保留';
-
-  @override
-  String get snapshotSafetyNote => '本地副本用于在异常时恢复数据。请勿手动删除，除非你确定不需要。';
-
-  @override
-  String get snapshotCreatedNow => '刚刚';
-
-  @override
-  String get snapshotFreqManual => '手动';
-
-  @override
-  String get snapshotFreqDaily => '每天';
-
-  @override
-  String get snapshotFreqWeekly => '每周';
-
-  @override
-  String get snapshotFreqAuto => '自动';
-
-  @override
-  String snapshotCopies(int n) {
-    return '$n 份';
-  }
-
-  @override
-  String get backupPageReminderHeader => '备份提醒';
-
-  @override
-  String get backupPageRemindMe => '定期提醒我备份';
-
-  @override
-  String get backupPageLocalCopiesHeader => '本地副本';
-
-  @override
-  String get backupPageKeepLocalCopy => '保留本地副本';
-
-  @override
-  String get backupPageImportFromChatbox => '从 Chatbox 导入';
-
-  @override
-  String backupPageManageCopiesDetail(int count, String size) {
-    return '管理副本 · $count 份 · $size';
-  }
-
-  @override
-  String get backupPhasePacking => '正在打包';
-
-  @override
-  String get backupPhaseExporting => '正在导出';
-
-  @override
-  String get backupPhaseDone => '完成';
-
-  @override
-  String get backupPhaseRestoring => '正在恢复';
-
-  @override
-  String get backupPhaseUploading => '正在上传';
-
-  @override
-  String get morePageLlmLeaderboard => 'LLM排行榜';
-
-  @override
-  String get statsRangeAll => '全部';
-
-  @override
-  String get statsRangeLast30 => '最近30天';
-
-  @override
-  String get statsRangeLastMonth => '上个月';
-
-  @override
-  String get statsRangeLastQuarter => '上个季度';
-
-  @override
-  String get statsSectionHeatmap => '聊天热力图';
-
-  @override
-  String get statsSectionTrend => '用量趋势';
-
-  @override
-  String get statsSectionOverview => '总览';
-
-  @override
-  String get statsOverviewConversations => '总对话数';
-
-  @override
-  String get statsOverviewMessages => '总消息数';
-
-  @override
-  String get statsOverviewPromptTokens => '输入 Tokens';
-
-  @override
-  String get statsOverviewCompletionTokens => '输出 Tokens';
-
-  @override
-  String get statsOverviewCachedTokens => '缓存 Tokens';
-
-  @override
-  String get statsOverviewLaunchCount => '应用启动次数';
-
-  @override
-  String get statsNoData => '暂无数据';
-
-  @override
-  String get statsModelUsage => '模型使用率';
-
-  @override
-  String get statsAssistantUsage => '助手使用率';
-
-  @override
-  String get statsTopicUsage => '话题内容量';
-
-  @override
-  String get statsColModel => '模型';
-
-  @override
-  String get statsColMessages => '消息数';
-
-  @override
-  String get statsColAssistant => '助手';
-
-  @override
-  String get statsColTopicCount => '话题数';
-
-  @override
-  String get statsColTopic => '话题';
-
-  @override
-  String get statsUnknownModel => '未知';
-
-  @override
-  String get statsGlobalAssistant => '全局';
-
-  @override
-  String get statsUnnamedTopic => '（未命名话题）';
-
-  @override
-  String get statsLegendLess => '少';
-
-  @override
-  String get statsLegendMore => '多';
-
-  @override
-  String get statsTokensUnit => 'tokens';
-
-  @override
-  String statsMessageCount(int count) {
-    return '$count 条';
-  }
-
-  @override
-  String statsTopicCount(int count) {
-    return '$count 个话题';
-  }
-
-  @override
-  String statsHeatmapDayDetail(String date, int count) {
-    return '$date · $count 条消息';
-  }
-
-  @override
-  String statsTrendTotal(String value) {
-    return '合计 $value';
-  }
-
-  @override
-  String get statsGranularityDay => '按天';
-
-  @override
-  String get statsGranularityMonth => '按月';
-
-  @override
-  String statsHeatmapSummary(String count) {
-    return '共 $count 条消息';
-  }
-
-  @override
-  String statsHeatmapNoActivity(String date) {
-    return '$date 无聊天记录';
-  }
-
-  @override
-  String get statsNoActivity => '无记录';
-
-  @override
-  String get backupEncryptPolicy => '备份加密方式';
-
-  @override
-  String get backupExportRedacted => '脱敏导出（不含密钥，推荐）';
-
-  @override
-  String get backupExportEncrypted => '加密导出（含密钥，需口令）';
-
-  @override
-  String get backupExportRedactedDesc => '备份文件中不含任何密钥，最安全';
-
-  @override
-  String get backupExportEncryptedDesc => '备份文件包含密钥，由口令加密保护';
-
-  @override
-  String get backupPassphrase => '备份口令';
-
-  @override
-  String get backupPassphraseConfirm => '确认口令';
-
-  @override
-  String get backupPassphraseHint => '至少 8 位，口令遗忘将无法恢复备份';
-
-  @override
-  String get backupPassphraseMismatch => '两次输入的口令不一致';
-
-  @override
-  String get backupPassphraseWrong => '口令错误，无法解密';
-
-  @override
-  String get backupEnterPassphrase => '输入口令以解密此备份';
-
-  @override
-  String get securitySection => '安全';
-
-  @override
-  String get securityCheckup => '安全体检';
-
-  @override
-  String get securityCheckupDesc => '扫描本地残留明文与孤儿凭证';
-
-  @override
-  String get runCheckup => '开始体检';
-
-  @override
-  String get checkupRunning => '体检中…';
-
-  @override
-  String get checkupNoIssue => '未发现问题，本地凭证存储正常';
-
-  @override
-  String get checkupFix => '一键修复';
-
-  @override
-  String get checkupFixSuccess => '修复完成';
-
-  @override
-  String get checkupFixNone => '没有可自动修复的项';
-
-  @override
-  String get severityDanger => '高危';
-
-  @override
-  String get severityWarn => '存疑';
-
-  @override
-  String get severitySafe => '正常';
-
-  @override
-  String get keyHealth => '密钥健康';
-
-  @override
-  String get keyHealthDesc => '密钥数量、最近使用与轮换提醒';
-
-  @override
-  String get keyHealthEmpty => '暂无密钥记录';
-
-  @override
-  String get keyCountLabel => '密钥数量';
-
-  @override
-  String get lastUsed => '最近使用';
-
-  @override
-  String get lastRotated => '上次轮换';
-
-  @override
-  String get never => '从未';
-
-  @override
-  String get suggestRotation => '建议轮换';
-
-  @override
-  String get rotationOk => '轮换正常';
-
-  @override
-  String get appLock => '隐私门禁';
-
-  @override
-  String get appLockDesc => '敏感操作前验证身份';
-
-  @override
-  String get appLockEnable => '启用门禁';
-
-  @override
-  String get appLockUnsupported => '本设备不支持生物识别或 PIN';
-
-  @override
-  String get unlockFailed => '验证未通过，操作已取消';
-
-  @override
-  String get allowlist => '白名单策略';
-
-  @override
-  String get allowlistDesc => 'MCP 命令与网页 URL 白名单';
-
-  @override
-  String get allowlistEnable => '启用白名单拦截';
-
-  @override
-  String get mcpCommandAllowlist => 'MCP 命令白名单';
-
-  @override
-  String get webviewAllowlist => '网页 URL 白名单';
-
-  @override
-  String get allowHttp => '允许 http 网址';
-
-  @override
-  String get webviewHosts => '例外站点';
-
-  @override
-  String get lockedByPolicy => '已被策略拦截';
-
-  @override
-  String get addCommand => '添加命令';
-
-  @override
-  String get addHost => '添加站点';
-
-  @override
-  String get appLockAuthFailed => '验证未通过，设置未更改';
-
-  @override
-  String get appLockGrace => '解锁宽限期';
-
-  @override
-  String get appLockGraceDesc => '认证成功后，该时段内免重复验证；0 表示每次都要验证。';
-
-  @override
-  String appLockGraceMinutes(int n) {
-    return '$n 分钟';
-  }
-
-  @override
-  String get appLockGraceOff => '关闭（每次都验证）';
-
-  @override
-  String get appLockLockNow => '立即锁定';
-
-  @override
-  String get appLockVerifyToEnable => '验证身份以更改隐私门禁';
-
-  @override
-  String get auditActionClearAudit => '清空了审计记录';
-
-  @override
-  String get auditActionCopy => '复制了密钥';
-
-  @override
-  String get auditActionEnterPassphrase => '输入了备份口令';
-
-  @override
-  String get auditActionExport => '导出了备份';
-
-  @override
-  String get auditActionFix => '自动修复';
-
-  @override
-  String get auditActionMarkRotated => '标记密钥已轮换';
-
-  @override
-  String get auditActionMigrate => '迁移了凭证';
-
-  @override
-  String get auditActionView => '查看了密钥';
-
-  @override
-  String get auditClear => '清空';
-
-  @override
-  String get auditClearConfirm => '将删除本机保存的全部安全事件记录，且无法恢复。确定继续？';
-
-  @override
-  String get auditEmpty => '暂无记录。查看/复制/导出密钥与自动修复等操作会显示在这里。';
-
-  @override
-  String get auditFailed => '失败';
-
-  @override
-  String get auditTrail => '最近安全事件';
-
-  @override
-  String get auditTrailDesc => '仅保存在本机，不会上传。';
-
-  @override
-  String get checkupAutoFixConfirmTitle => '自动修复这些问题？';
-
-  @override
-  String checkupAutoFixConfirmBody(int count) {
-    return '将修复 $count 个问题：删除旧明文残留、无主凭证等数据。';
-  }
-
-  @override
-  String get commandHint => '例如 npx、uvx 或 python';
-
-  @override
-  String get fixHintLabel => '修复提示：';
-
-  @override
-  String get goRotate => '点击条目可前往服务商页更换 Key；若已更换，点右侧对勾标记。';
-
-  @override
-  String get hostHint => '例如 example.com';
-
-  @override
-  String get invalidCommand => '命令名不合法';
-
-  @override
-  String get invalidHost => '域名格式不正确';
-
-  @override
-  String get mcpServersEmpty => '暂无 MCP 服务器。';
-
-  @override
-  String get mcpServersPolicy => 'MCP 服务器开关';
-
-  @override
-  String get restoreDefaultCmds => '恢复默认';
-
-  @override
-  String get rotateAction => '标记已轮换';
-
-  @override
-  String get rotateMarked => '已标记为已轮换';
-
-  @override
-  String get webviewHostsEmpty => '暂无额外放行的站点。';
+  String get commonRetry => '重试';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -9258,6 +5642,139 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get mcpServerEditSheetUrlRequired => '請輸入伺服器地址';
+
+  @override
+  String get mcpToolEnableLabel => '啟用';
+
+  @override
+  String get mcpToolRequireApprovalLabel => '呼叫需審批';
+
+  @override
+  String get toolApprovalDialogTitle => '工具呼叫審批';
+
+  @override
+  String get toolApprovalDialogServer => '伺服器';
+
+  @override
+  String get toolApprovalDialogTool => '工具';
+
+  @override
+  String get toolApprovalDialogHint => '模型請求呼叫該工具，請確認引數後選擇是否允許執行。';
+
+  @override
+  String get toolApprovalDialogAllow => '允許';
+
+  @override
+  String get toolApprovalDialogDeny => '拒絕';
+
+  @override
+  String get mcpGroupBuiltin => '內建 (MiniMe)';
+
+  @override
+  String get mcpGroupThirdParty => '第三方伺服器';
+
+  @override
+  String get mcpDetailEditTooltip => '編輯配置';
+
+  @override
+  String get mcpDetailStatusDisconnected => '未連線';
+
+  @override
+  String get mcpDetailIdLabel => 'ID';
+
+  @override
+  String get mcpDetailUrlLabel => '地址';
+
+  @override
+  String get mcpDetailToolsCountLabel => '工具';
+
+  @override
+  String get mcpDetailBuiltinLabel => '型別';
+
+  @override
+  String get mcpDetailBuiltinYes => '內建';
+
+  @override
+  String get mcpDetailEnabledLabel => '狀態';
+
+  @override
+  String get mcpDetailDisabled => '已禁用';
+
+  @override
+  String get mcpDetailToolsSection => '工具';
+
+  @override
+  String get mcpDetailHistorySection => '最近呼叫';
+
+  @override
+  String get mcpDetailNoHistory => '暫無呼叫記錄';
+
+  @override
+  String get mcpToolTestShort => '試調';
+
+  @override
+  String get mcpToolSchema => 'Schema';
+
+  @override
+  String mcpToolTestTitle(String name) {
+    return '試調 · $name';
+  }
+
+  @override
+  String get mcpToolTestArgsLabel => '引數 (JSON)';
+
+  @override
+  String get mcpToolTestArgsHint => '點擊試調將直接呼叫該工具，返回結果會顯示在下方。';
+
+  @override
+  String get mcpToolTestInvalidJson => '引數不是合法的 JSON 物件';
+
+  @override
+  String get mcpToolTestRun => '執行';
+
+  @override
+  String get mcpToolTestRunning => '執行中…';
+
+  @override
+  String get mcpToolTestSuccess => '呼叫成功';
+
+  @override
+  String get mcpToolTestFailed => '呼叫失敗';
+
+  @override
+  String mcpToolSchemaTitle(String name) {
+    return 'Schema · $name';
+  }
+
+  @override
+  String get mcpToolSchemaEnabled => '已啟用';
+
+  @override
+  String get mcpToolSchemaDisabled => '已停用';
+
+  @override
+  String get mcpToolSchemaRequiresApproval => '呼叫需審批';
+
+  @override
+  String get mcpToolSchemaNoApproval => '無需審批';
+
+  @override
+  String get mcpDetailTabOverview => 'MCP 詳情';
+
+  @override
+  String get mcpDetailTabTools => 'MCP 工具';
+
+  @override
+  String get mcpToolDetailTabActions => '工具操作';
+
+  @override
+  String get mcpToolDetailTabHistory => '操作記錄';
+
+  @override
+  String get mcpToolDetailNotFound => '工具不存在或已移除';
+
+  @override
+  String get mcpDetailEnabledLive => '已啟用';
 
   @override
   String get defaultModelPageBackTooltip => '返回';
@@ -10968,6 +7485,55 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get backupPhaseUploading => '正在上傳';
 
   @override
+  String get mobileTabConversations => '對話';
+
+  @override
+  String get mobileTabTerminal => '終端';
+
+  @override
+  String get mobileDrawerGuest => '遊客';
+
+  @override
+  String get mobileDrawerComingSoon => '導航選單開發中';
+
+  @override
+  String get conversationDeleteConfirmTitle => '刪除對話？';
+
+  @override
+  String conversationDeleteConfirmContent(String title) {
+    return '「$title」及其所有訊息將被永久刪除。';
+  }
+
+  @override
+  String get conversationRenameTitle => '重新命名對話';
+
+  @override
+  String get conversationListEmptyHint => '點擊 + 開始新對話';
+
+  @override
+  String get conversationDeletedSnackbar => '對話已刪除';
+
+  @override
+  String get chatPageTitle => '對話';
+
+  @override
+  String get chatEmptyTitle => '開始對話';
+
+  @override
+  String get chatEmptySubtitle => '在下方輸入訊息';
+
+  @override
+  String get chatPleaseSelectModel => '請先選擇一個模型';
+
+  @override
+  String chatGenerationFailed(String error) {
+    return '生成失敗：$error';
+  }
+
+  @override
+  String get terminalComingSoon => '即將推出 — AI agent 命令列';
+
+  @override
   String get morePageLlmLeaderboard => 'LLM排行榜';
 
   @override
@@ -11089,9 +7655,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String statsHeatmapNoActivity(String date) {
     return '$date 無聊天記錄';
   }
-
-  @override
-  String get statsNoActivity => '無記錄';
 
   @override
   String get backupEncryptPolicy => '備份加密方式';
@@ -11342,4 +7905,110 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get webviewHostsEmpty => '暫無額外放行的站台。';
+
+  @override
+  String checkupScannerErrorTitle(String scannerTitle) {
+    return '$scannerTitle掃描異常';
+  }
+
+  @override
+  String get checkupScannerErrorDetail => '該掃描器執行出錯，已跳過（不影響其它項）';
+
+  @override
+  String checkupBackupPlaintextTitle(int count) {
+    return '發現 $count 個明文備份';
+  }
+
+  @override
+  String checkupBackupPlaintextDetail(String files) {
+    return '以下備份為明文格式、可能含憑證：$files。建議刪除舊明文備份，改用加密或脫敏匯出';
+  }
+
+  @override
+  String get checkupLegacyKeysTitle => '發現未清理的舊明文憑證 Key';
+
+  @override
+  String checkupLegacyKeysDetail(int count, String keys) {
+    return '$count 個舊 key 仍存在於本地配置：$keys（應為空）';
+  }
+
+  @override
+  String get checkupLegacyKeysFixHint => '重新執行孤兒清理';
+
+  @override
+  String get checkupLegacyPlaintextTitle => '本地配置中存在疑似明文 Key';
+
+  @override
+  String checkupLegacyPlaintextDetail(int count) {
+    return '在 $count 個配置項中發現疑似明文 Key 模式，建議核查是否為遷移遺漏';
+  }
+
+  @override
+  String get checkupLogLeakTitle => '日誌中疑似出現明文 Key';
+
+  @override
+  String checkupLogLeakDetail(int fileCount, int lines) {
+    return '在 $fileCount 個日誌檔案中發現約 $lines 處疑似明文 Key，請檢查是否有元件繞過脫敏直接列印憑證';
+  }
+
+  @override
+  String checkupOrphanTitle(int count) {
+    return '發現 $count 個無主憑證';
+  }
+
+  @override
+  String get checkupOrphanDetail => '這些憑證沒有對應的配置項，長期留存在安全儲存中，建議清理';
+
+  @override
+  String get checkupOrphanFixHint => '刪除無主憑證';
+
+  @override
+  String get tensdaqTagline => '革命性競價 AI MaaS 平台，價格由市場供需決定，告別高成本固定定價。';
+
+  @override
+  String get partnerSiteLabel => '官網：';
+
+  @override
+  String get siliconflowFreeHint =>
+      '已內建矽基流動的免費模型，無需 API Key。若需更強大的模型，請申請並在此配置你自己的 API Key。';
+
+  @override
+  String get translateClear => '清空';
+
+  @override
+  String get translateCopy => '複製';
+
+  @override
+  String get translateStop => '終止';
+
+  @override
+  String get translateRun => '翻譯';
+
+  @override
+  String clearAvatarCacheFailed(String error) {
+    return '清理頭像快取失敗: $error';
+  }
+
+  @override
+  String clearCacheFailed(String error) {
+    return '清理快取失敗: $error';
+  }
+
+  @override
+  String clearLogsFailed(String error) {
+    return '清理日誌失敗: $error';
+  }
+
+  @override
+  String deleteFailed(String error) {
+    return '刪除失敗: $error';
+  }
+
+  @override
+  String operationFailed(String error) {
+    return '操作失敗: $error';
+  }
+
+  @override
+  String get commonRetry => '重試';
 }

@@ -6,7 +6,8 @@ import 'package:intl/intl.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
 import '../../../theme/design_tokens.dart';
 import 'stats_card.dart';
-import 'stats_l10n.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/build_context_l10n.dart';
 
 // ─────────────────────────────────────────────────────────────
 // 聊天热力图 · 深度重构版
@@ -199,7 +200,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final ml = MaterialLocalizations.of(context);
     final dayCounts = widget.snapshot.messagesByDay;
@@ -215,7 +216,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
       if (window.contains(d.key)) total += d.value;
     }
     final countStr = _thousand.format(total);
-    final template = t.heatmapSummary('@');
+    final template = t.statsHeatmapSummary('@');
     final parts = template.split('@');
 
     // 5 档调色板：0 无消息 / 1~4 递增（跟随主题 primary，深浅色自适应）
@@ -236,7 +237,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
     final active = _hovered ?? _selected;
 
     return StatsSectionCard(
-      title: t.sectionHeatmap,
+      title: t.statsSectionHeatmap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -262,7 +263,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
               ),
             )
           else
-            Text(t.heatmapSummary(countStr),
+            Text(t.statsHeatmapSummary(countStr),
                 style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
           const SizedBox(height: 10),
           // x 轴：月份标签固定在顶部，随网格滚动偏移实时重绘（粘性刻度）
@@ -380,7 +381,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(t.legendLess,
+              Text(t.statsLegendLess,
                   style:
                       TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
               const SizedBox(width: 4),
@@ -400,7 +401,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
                   ),
                 ),
               const SizedBox(width: 4),
-              Text(t.legendMore,
+              Text(t.statsLegendMore,
                   style:
                       TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
             ],
@@ -410,13 +411,13 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
     );
   }
 
-  String _detailText(DateTime day, StatsL10n t) {
+  String _detailText(DateTime day, AppLocalizations t) {
     final count = widget.snapshot.messagesByDay[day] ?? 0;
     final dateStr =
         MaterialLocalizations.of(context).formatMediumDate(day);
     return count > 0
-        ? t.heatmapDayDetail(dateStr, count)
-        : t.heatmapNoActivity(dateStr);
+        ? t.statsHeatmapDayDetail(dateStr, count)
+        : t.statsHeatmapNoActivity(dateStr);
   }
 }
 

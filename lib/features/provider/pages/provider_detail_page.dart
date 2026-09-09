@@ -37,6 +37,7 @@ import '../../model/widgets/model_select_sheet.dart';
 import '../widgets/share_provider_sheet.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/app_page.dart';
@@ -144,7 +145,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     bool _isUserAdded(String key) {
       const fixed = {
         'MiniMeCoreIN', 'OpenAI', 'Gemini', 'SiliconFlow', 'OpenRouter',
@@ -354,13 +355,13 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。',
+                  context.l10n.tensdaqTagline,
                   style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                 ),
                 const SizedBox(height: 6),
                 Text.rich(
                   TextSpan(
-                    text: '官网：',
+                    text: context.l10n.partnerSiteLabel,
                     style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                     children: [
                       TextSpan(
@@ -399,13 +400,13 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。',
+                  context.l10n.siliconflowFreeHint,
                   style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                 ),
                 const SizedBox(height: 6),
                 Text.rich(
                   TextSpan(
-                    text: '官网：',
+                    text: context.l10n.partnerSiteLabel,
                     style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                     children: [
                       TextSpan(
@@ -945,7 +946,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
-              Expanded(child: Text(AppLocalizations.of(context)!.providerDetailPageProviderTypeTitle, style: TextStyle(fontSize: 15, color: c))),
+              Expanded(child: Text(context.l10n.providerDetailPageProviderTypeTitle, style: TextStyle(fontSize: 15, color: c))),
               Text(labelFor(_kind), style: TextStyle(fontSize: 15, color: c)),
               const SizedBox(width: 6),
               Icon(Lucide.ChevronRight, size: 16, color: c),
@@ -1163,7 +1164,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     await showAppSheet<void>(
       context: context,
       builder: StatefulBuilder(builder: (ctx, setLocal) {
-          final l10n = AppLocalizations.of(ctx)!;
+          final l10n = ctx.l10n;
           Future<void> _load() async {
             try {
               if (_restrictToFree) {
@@ -1524,7 +1525,7 @@ class _ModelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return IosTactileRow(
       pressedScale: 0.98,
@@ -1642,7 +1643,7 @@ class _ConnectionTestDialogState extends State<_ConnectionTestDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final title = l10n.providerDetailPageTestConnectionTitle;
     final canTest = _selectedModelId != null && _state != _TestState.loading;
     return Dialog(
@@ -1839,7 +1840,7 @@ Future<String?> showModelPickerForTest(BuildContext context, String providerKey,
 
 Widget _modelTagWrap(BuildContext context, ModelInfo m) {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final isDark = Theme.of(context).brightness == Brightness.dark;
   List<Widget> chips = [];
   // type tag

@@ -35,7 +35,7 @@ class OrphanCredentialScanner extends CheckupScanner {
   CheckupSeverity get severity => CheckupSeverity.warn;
 
   @override
-  Future<List<CheckupFinding>> scan() async {
+  Future<List<CheckupFinding>> scan(CheckupStrings strings) async {
     final all = await _secure.readAll();
     final orphans = <String>[];
 
@@ -57,11 +57,11 @@ class OrphanCredentialScanner extends CheckupScanner {
       CheckupFinding(
         id: '$id:found',
         scannerId: id,
-        title: '发现 ${orphans.length} 个无主凭证',
-        detail: '这些凭证没有对应的配置项，长期留存在安全存储中，建议清理',
+        title: strings.orphanTitle(orphans.length),
+        detail: strings.orphanDetail(),
         severity: CheckupSeverity.warn,
         autoFixable: true,
-        fixHint: '删除无主凭证',
+        fixHint: strings.orphanFixHint(),
       )
     ];
   }

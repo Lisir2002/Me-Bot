@@ -1411,11 +1411,6 @@
   },
   "statsHeatmapSummary": "共 {count} 則訊息",
   "statsHeatmapNoActivity": "{date} 無聊天記錄",
-  "statsNoActivity": "無記錄",
-  "@statsNoActivity": {
-    "description": "热力图某天无消息",
-    "type": "String"
-  },
   "backupEncryptPolicy": "備份加密方式",
   "backupExportRedacted": "脫敏匯出（不含金鑰，推薦）",
   "backupExportEncrypted": "加密匯出（含金鑰，需口令）",
@@ -1497,5 +1492,180 @@
   "restoreDefaultCmds": "還原預設",
   "rotateAction": "標記已輪換",
   "rotateMarked": "已標記為已輪換",
-  "webviewHostsEmpty": "暫無額外放行的站台。"
+  "webviewHostsEmpty": "暫無額外放行的站台。",
+  "chatEmptySubtitle": "在下方輸入訊息",
+  "chatEmptyTitle": "開始對話",
+  "chatGenerationFailed": "生成失敗：{error}",
+  "chatPageTitle": "對話",
+  "chatPleaseSelectModel": "請先選擇一個模型",
+  "conversationDeleteConfirmContent": "「{title}」及其所有訊息將被永久刪除。",
+  "conversationDeleteConfirmTitle": "刪除對話？",
+  "conversationDeletedSnackbar": "對話已刪除",
+  "conversationListEmptyHint": "點擊 + 開始新對話",
+  "conversationRenameTitle": "重新命名對話",
+  "mcpDetailBuiltinLabel": "型別",
+  "mcpDetailBuiltinYes": "內建",
+  "mcpDetailDisabled": "已禁用",
+  "mcpDetailEditTooltip": "編輯配置",
+  "mcpDetailEnabledLabel": "狀態",
+  "mcpDetailEnabledLive": "已啟用",
+  "mcpDetailHistorySection": "最近呼叫",
+  "mcpDetailIdLabel": "ID",
+  "mcpDetailNoHistory": "暫無呼叫記錄",
+  "mcpDetailStatusDisconnected": "未連線",
+  "mcpDetailTabOverview": "MCP 詳情",
+  "mcpDetailTabTools": "MCP 工具",
+  "mcpDetailToolsCountLabel": "工具",
+  "mcpDetailToolsSection": "工具",
+  "mcpDetailUrlLabel": "地址",
+  "mcpGroupBuiltin": "內建 (MiniMe)",
+  "mcpGroupThirdParty": "第三方伺服器",
+  "mcpToolDetailNotFound": "工具不存在或已移除",
+  "mcpToolDetailTabActions": "工具操作",
+  "mcpToolDetailTabHistory": "操作記錄",
+  "mcpToolEnableLabel": "啟用",
+  "mcpToolRequireApprovalLabel": "呼叫需審批",
+  "mcpToolSchema": "Schema",
+  "mcpToolSchemaDisabled": "已停用",
+  "mcpToolSchemaEnabled": "已啟用",
+  "mcpToolSchemaNoApproval": "無需審批",
+  "mcpToolSchemaRequiresApproval": "呼叫需審批",
+  "mcpToolSchemaTitle": "Schema · {name}",
+  "mcpToolTestArgsHint": "點擊試調將直接呼叫該工具，返回結果會顯示在下方。",
+  "mcpToolTestArgsLabel": "引數 (JSON)",
+  "mcpToolTestFailed": "呼叫失敗",
+  "mcpToolTestInvalidJson": "引數不是合法的 JSON 物件",
+  "mcpToolTestRun": "執行",
+  "mcpToolTestRunning": "執行中…",
+  "mcpToolTestShort": "試調",
+  "mcpToolTestSuccess": "呼叫成功",
+  "mcpToolTestTitle": "試調 · {name}",
+  "mobileDrawerComingSoon": "導航選單開發中",
+  "mobileDrawerGuest": "遊客",
+  "mobileTabConversations": "對話",
+  "mobileTabTerminal": "終端",
+  "terminalComingSoon": "即將推出 — AI agent 命令列",
+  "toolApprovalDialogAllow": "允許",
+  "toolApprovalDialogDeny": "拒絕",
+  "toolApprovalDialogHint": "模型請求呼叫該工具，請確認引數後選擇是否允許執行。",
+  "toolApprovalDialogServer": "伺服器",
+  "toolApprovalDialogTitle": "工具呼叫審批",
+  "toolApprovalDialogTool": "工具",
+  "checkupScannerErrorTitle": "{scannerTitle}掃描異常",
+  "@checkupScannerErrorTitle": {
+    "placeholders": {
+      "scannerTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupScannerErrorDetail": "該掃描器執行出錯，已跳過（不影響其它項）",
+  "checkupBackupPlaintextTitle": "發現 {count} 個明文備份",
+  "@checkupBackupPlaintextTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupBackupPlaintextDetail": "以下備份為明文格式、可能含憑證：{files}。建議刪除舊明文備份，改用加密或脫敏匯出",
+  "@checkupBackupPlaintextDetail": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupLegacyKeysTitle": "發現未清理的舊明文憑證 Key",
+  "checkupLegacyKeysDetail": "{count} 個舊 key 仍存在於本地配置：{keys}（應為空）",
+  "@checkupLegacyKeysDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "checkupLegacyKeysFixHint": "重新執行孤兒清理",
+  "checkupLegacyPlaintextTitle": "本地配置中存在疑似明文 Key",
+  "checkupLegacyPlaintextDetail": "在 {count} 個配置項中發現疑似明文 Key 模式，建議核查是否為遷移遺漏",
+  "@checkupLegacyPlaintextDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupLogLeakTitle": "日誌中疑似出現明文 Key",
+  "checkupLogLeakDetail": "在 {fileCount} 個日誌檔案中發現約 {lines} 處疑似明文 Key，請檢查是否有元件繞過脫敏直接列印憑證",
+  "@checkupLogLeakDetail": {
+    "placeholders": {
+      "fileCount": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupOrphanTitle": "發現 {count} 個無主憑證",
+  "@checkupOrphanTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkupOrphanDetail": "這些憑證沒有對應的配置項，長期留存在安全儲存中，建議清理",
+  "checkupOrphanFixHint": "刪除無主憑證",
+  "tensdaqTagline": "革命性競價 AI MaaS 平台，價格由市場供需決定，告別高成本固定定價。",
+  "partnerSiteLabel": "官網：",
+  "siliconflowFreeHint": "已內建矽基流動的免費模型，無需 API Key。若需更強大的模型，請申請並在此配置你自己的 API Key。",
+  "translateClear": "清空",
+  "translateCopy": "複製",
+  "translateStop": "終止",
+  "translateRun": "翻譯",
+  "clearAvatarCacheFailed": "清理頭像快取失敗: {error}",
+  "@clearAvatarCacheFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearCacheFailed": "清理快取失敗: {error}",
+  "@clearCacheFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "clearLogsFailed": "清理日誌失敗: {error}",
+  "@clearLogsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFailed": "刪除失敗: {error}",
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "operationFailed": "操作失敗: {error}",
+  "@operationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonRetry": "重試"
 }

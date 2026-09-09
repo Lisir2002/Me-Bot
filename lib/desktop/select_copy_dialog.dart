@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/models/chat_message.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../icons/lucide_adapter.dart';
 import '../shared/widgets/snackbar.dart';
 import 'package:flutter/services.dart';
@@ -18,7 +18,7 @@ class _SelectCopyDesktopDialog extends StatelessWidget {
   final ChatMessage message;
 
   Future<void> _copyAll(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await Clipboard.setData(ClipboardData(text: message.content));
     if (!context.mounted) return;
     showAppSnackBar(context, message: l10n.selectCopyPageCopiedAll, type: NotificationType.success);
@@ -28,7 +28,7 @@ class _SelectCopyDesktopDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Dialog(
       elevation: 12,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

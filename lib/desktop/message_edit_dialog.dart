@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/models/chat_message.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../icons/lucide_adapter.dart';
 
 Future<String?> showMessageEditDesktopDialog(BuildContext context, {required ChatMessage message}) async {
@@ -38,7 +38,7 @@ class _MessageEditDesktopDialogState extends State<_MessageEditDesktopDialog> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Dialog(
       elevation: 12,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

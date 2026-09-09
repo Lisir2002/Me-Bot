@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/models/chat_message.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../core/services/haptics.dart';
@@ -22,7 +22,7 @@ class _SelectCopySheet extends StatelessWidget {
   final ChatMessage message;
 
   Future<void> _copyAll(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await Clipboard.setData(ClipboardData(text: message.content));
     if (!context.mounted) return;
     showAppSnackBar(context, message: l10n.selectCopyPageCopiedAll, type: NotificationType.success);
@@ -30,7 +30,7 @@ class _SelectCopySheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return DraggableScrollableSheet(
       expand: false,

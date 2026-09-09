@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:minime_core/shared/widgets/app_page.dart';
+import 'package:minime_core/l10n/app_localizations.dart';
 import 'package:minime_core/shared/widgets/app_states.dart';
 
 /// AppPage 槽位引擎的回归基线。
@@ -22,7 +23,12 @@ import 'package:minime_core/shared/widgets/app_states.dart';
 ///   9. ⭐ 回归：reloadKey 变化才重新拉取
 ///  10. ⭐ 回归：reloadKey 为 null 时只加载一次
 void main() {
-  Widget wrap(Widget page) => MaterialApp(home: page);
+  Widget wrap(Widget page) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('zh'),
+      home: page,
+    );
 
   // ────────────────────────────────────────────────────────────
   // 1. 基础骨架

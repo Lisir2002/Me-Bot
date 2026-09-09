@@ -1765,7 +1765,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpToolSchema => 'Schema';
 
   @override
-  String mcpToolTestTitle(Object name) {
+  String mcpToolTestTitle(String name) {
     return 'Test · $name';
   }
 
@@ -1792,7 +1792,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpToolTestFailed => 'Failed';
 
   @override
-  String mcpToolSchemaTitle(Object name) {
+  String mcpToolSchemaTitle(String name) {
     return 'Schema · $name';
   }
 
@@ -3768,9 +3768,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get statsNoActivity => 'No activity';
-
-  @override
   String get backupEncryptPolicy => 'Backup encryption';
 
   @override
@@ -4030,4 +4027,115 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webviewHostsEmpty => 'No extra allowed sites.';
+
+  @override
+  String checkupScannerErrorTitle(String scannerTitle) {
+    return '$scannerTitle: scan error';
+  }
+
+  @override
+  String get checkupScannerErrorDetail =>
+      'This check failed and was skipped; other checks are unaffected.';
+
+  @override
+  String checkupBackupPlaintextTitle(int count) {
+    return '$count plaintext backup(s) found';
+  }
+
+  @override
+  String checkupBackupPlaintextDetail(String files) {
+    return 'These backups are plaintext and may contain credentials: $files. Delete the old plaintext backups and switch to encrypted or sanitized export.';
+  }
+
+  @override
+  String get checkupLegacyKeysTitle =>
+      'Uncleaned legacy plaintext credential keys found';
+
+  @override
+  String checkupLegacyKeysDetail(int count, String keys) {
+    return '$count legacy key(s) still exist in local config: $keys (should be empty)';
+  }
+
+  @override
+  String get checkupLegacyKeysFixHint => 'Run orphan cleanup again';
+
+  @override
+  String get checkupLegacyPlaintextTitle =>
+      'Suspicious plaintext keys in local config';
+
+  @override
+  String checkupLegacyPlaintextDetail(int count) {
+    return 'Suspicious plaintext key patterns found in $count config entries; verify they are not migration leftovers.';
+  }
+
+  @override
+  String get checkupLogLeakTitle => 'Possible plaintext keys in logs';
+
+  @override
+  String checkupLogLeakDetail(int fileCount, int lines) {
+    return 'Found about $lines suspected plaintext key occurrences in $fileCount log file(s); check whether any component prints credentials without sanitization.';
+  }
+
+  @override
+  String checkupOrphanTitle(int count) {
+    return '$count orphan credential(s) found';
+  }
+
+  @override
+  String get checkupOrphanDetail =>
+      'These credentials have no matching config entries and linger in secure storage; consider cleaning them up.';
+
+  @override
+  String get checkupOrphanFixHint => 'Delete orphan credentials';
+
+  @override
+  String get tensdaqTagline =>
+      'A revolutionary bidding-based AI MaaS platform — pricing driven by market supply and demand; say goodbye to costly fixed pricing.';
+
+  @override
+  String get partnerSiteLabel => 'Website:';
+
+  @override
+  String get siliconflowFreeHint =>
+      'Free SiliconFlow models are built in — no API key needed. For more powerful models, apply for your own API key and configure it here.';
+
+  @override
+  String get translateClear => 'Clear';
+
+  @override
+  String get translateCopy => 'Copy';
+
+  @override
+  String get translateStop => 'Stop';
+
+  @override
+  String get translateRun => 'Translate';
+
+  @override
+  String clearAvatarCacheFailed(String error) {
+    return 'Failed to clear avatar cache: $error';
+  }
+
+  @override
+  String clearCacheFailed(String error) {
+    return 'Failed to clear cache: $error';
+  }
+
+  @override
+  String clearLogsFailed(String error) {
+    return 'Failed to clear logs: $error';
+  }
+
+  @override
+  String deleteFailed(String error) {
+    return 'Delete failed: $error';
+  }
+
+  @override
+  String operationFailed(String error) {
+    return 'Operation failed: $error';
+  }
+
+  @override
+  String get commonRetry => 'Retry';
 }

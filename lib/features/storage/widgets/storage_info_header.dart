@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../theme/design_tokens.dart';
 import 'storage_ios_widgets.dart';
 
@@ -39,7 +39,7 @@ class StorageInfoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final caution = noteStyle == StorageInfoNoteStyle.caution;
     return Container(

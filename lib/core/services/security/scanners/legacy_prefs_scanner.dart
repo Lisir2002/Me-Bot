@@ -36,7 +36,7 @@ class LegacyPrefsScanner extends CheckupScanner {
   CheckupSeverity get severity => CheckupSeverity.danger;
 
   @override
-  Future<List<CheckupFinding>> scan() async {
+  Future<List<CheckupFinding>> scan(CheckupStrings strings) async {
     final findings = <CheckupFinding>[];
     final keys = _prefs.getKeys();
 
@@ -49,12 +49,11 @@ class LegacyPrefsScanner extends CheckupScanner {
       findings.add(CheckupFinding(
         id: '$id:legacy_keys',
         scannerId: id,
-        title: '发现未清理的旧明文凭证 Key',
-        detail: '${legacyPresent.length} 个旧 key 仍存在于本地配置：'
-            '${legacyPresent.join('、')}（应为空）',
+        title: strings.legacyKeysTitle(),
+        detail: strings.legacyKeysDetail(legacyPresent.length, legacyPresent),
         severity: CheckupSeverity.danger,
         autoFixable: true,
-        fixHint: '重新执行孤儿清理',
+        fixHint: strings.legacyKeysFixHint(),
       ));
     }
 
@@ -69,8 +68,8 @@ class LegacyPrefsScanner extends CheckupScanner {
       findings.add(CheckupFinding(
         id: '$id:plaintext_values',
         scannerId: id,
-        title: '本地配置中存在疑似明文 Key',
-        detail: '在 $suspectCount 个配置项中发现疑似明文 Key 模式，建议核查是否为迁移遗漏',
+        title: strings.legacyPlaintextTitle(),
+        detail: strings.legacyPlaintextDetail(suspectCount),
         severity: CheckupSeverity.warn,
         autoFixable: false,
       ));

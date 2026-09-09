@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/card_surface.dart';
@@ -30,7 +31,7 @@ class DefaultModelPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     return AppPage(
       title: l10n.defaultModelPageTitle,
@@ -109,7 +110,7 @@ class DefaultModelPage extends StatelessWidget {
   /// 键盘避让与 SafeArea 由 `showAppSheet` 统一处理。
   Future<void> _showPromptSheet(BuildContext context, _PromptKind kind) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.read<SettingsProvider>();
     final controller = TextEditingController(text: kind.read(settings));
 
@@ -227,7 +228,7 @@ class _ModelCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final settings = context.read<SettingsProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     // Check if using fallback (not explicitly set)
     final usingFallback = modelProvider == null || modelId == null;

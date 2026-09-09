@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
-import 'stats_l10n.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/build_context_l10n.dart';
 
 // ─────────────────────────────────────────────────────────────
 // 区间筛选条
@@ -24,16 +25,16 @@ class StatsRangeBar extends StatelessWidget {
     required this.onChanged,
   });
 
-  static String _label(StatsL10n t, StatsRange r) => switch (r) {
-        StatsRange.all => t.rangeAll,
-        StatsRange.last30 => t.rangeLast30,
-        StatsRange.lastMonth => t.rangeLastMonth,
-        StatsRange.lastQuarter => t.rangeLastQuarter,
+  static String _label(AppLocalizations t, StatsRange r) => switch (r) {
+        StatsRange.all => t.statsRangeAll,
+        StatsRange.last30 => t.statsRangeLast30,
+        StatsRange.lastMonth => t.statsRangeLastMonth,
+        StatsRange.lastQuarter => t.statsRangeLastQuarter,
       };
 
   @override
   Widget build(BuildContext context) {
-    final t = StatsL10n.of(context);
+    final t = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
     return SizedBox(

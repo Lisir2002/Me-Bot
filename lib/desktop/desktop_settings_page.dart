@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 
 import '../icons/lucide_adapter.dart' as lucide;
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../theme/palettes.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/providers/model_provider.dart';
@@ -87,7 +87,7 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     const double menuWidth = 250;
     final topBar = SizedBox(
@@ -188,7 +188,7 @@ class _SettingsMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final items = [
       (_SettingsMenuItem.display, lucide.Lucide.Monitor, l10n.settingsPageDisplay),
       (_SettingsMenuItem.stats, lucide.Lucide.Activity, l10n.settingsPageStats),
@@ -345,7 +345,7 @@ class _DesktopAssistantsBody extends StatelessWidget {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          AppLocalizations.of(context)!.desktopAssistantsListTitle,
+                          context.l10n.desktopAssistantsListTitle,
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: cs.onSurface.withOpacity(0.9)),
                         ),
                       ),
@@ -446,7 +446,7 @@ class _AddAssistantButtonState extends State<_AddAssistantButton> {
 }
 
 Future<String?> _showAddAssistantDesktopDialog(BuildContext context) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final cs = Theme.of(context).colorScheme;
   final controller = TextEditingController();
   String? result;
@@ -574,7 +574,7 @@ class _DeleteAssistantIconState extends State<_DeleteAssistantIcon> {
 }
 
 Future<bool?> _confirmDeleteDesktop(BuildContext context) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final cs = Theme.of(context).colorScheme;
   return showGeneralDialog<bool>(
     context: context,
@@ -798,13 +798,13 @@ class _DesktopAssistantCardState extends State<_DesktopAssistantCard> {
                                 border: Border.all(color: cs.primary.withOpacity(0.35)),
                               ),
                               child: Text(
-                                AppLocalizations.of(context)!.assistantSettingsDefaultTag,
+                                context.l10n.assistantSettingsDefaultTag,
                                 style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.w700),
                               ),
                             ),
                           _DeleteAssistantIcon(
                             onConfirm: () async {
-                              final l10n = AppLocalizations.of(context)!;
+                              final l10n = context.l10n;
                               final count = context.read<AssistantProvider>().assistants.length;
                               if (count <= 1) {
                                 showAppSnackBar(
@@ -832,7 +832,7 @@ class _DesktopAssistantCardState extends State<_DesktopAssistantCard> {
                       const SizedBox(height: 6),
                       Text(
                         (widget.item.systemPrompt.trim().isEmpty
-                            ? AppLocalizations.of(context)!.assistantSettingsNoPromptPlaceholder
+                            ? context.l10n.assistantSettingsNoPromptPlaceholder
                             : widget.item.systemPrompt),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -927,7 +927,7 @@ class _DesktopProvidersBodyState extends State<_DesktopProvidersBody> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
 
     // Base providers (same as mobile list)
@@ -1031,7 +1031,7 @@ class _DesktopProvidersBodyState extends State<_DesktopProvidersBody> {
                             onDelete: baseKeys.contains(item.key)
                                 ? null
                                 : () async {
-                                    final l10n = AppLocalizations.of(context)!;
+                                    final l10n = context.l10n;
                                     final ok = await showDialog<bool>(
                                       context: context,
                                       builder: (ctx) => AlertDialog(
@@ -1183,7 +1183,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: _DeskIosButton(label: AppLocalizations.of(context)!.assistantEditEmojiDialogSave, filled: true, dense: true, onTap: () => Navigator.of(ctx).pop(ctrl.text.trim())),
+                  child: _DeskIosButton(label: context.l10n.assistantEditEmojiDialogSave, filled: true, dense: true, onTap: () => Navigator.of(ctx).pop(ctrl.text.trim())),
                 ),
               ],
             ),
@@ -1197,7 +1197,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     final cfg = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName);
     // Keep controllers synced without breaking IME composition
@@ -1270,13 +1270,13 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。',
+                        context.l10n.tensdaqTagline,
                         style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                       ),
                       const SizedBox(height: 6),
                       Text.rich(
                         TextSpan(
-                          text: '官网：',
+                          text: context.l10n.partnerSiteLabel,
                           style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                           children: [
                             TextSpan(
@@ -1316,13 +1316,13 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。',
+                        context.l10n.siliconflowFreeHint,
                         style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                       ),
                       const SizedBox(height: 6),
                       Text.rich(
                         TextSpan(
-                          text: '官网：',
+                          text: context.l10n.partnerSiteLabel,
                           style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                           children: [
                             TextSpan(
@@ -1348,7 +1348,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
 
               // API Key (hidden when Google Vertex)
               if (!(kind == ProviderKind.google && (cfg.vertexAI == true))) ...[
-              _sectionLabel(context, AppLocalizations.of(context)!.multiKeyPageKey, bold: true),
+              _sectionLabel(context, context.l10n.multiKeyPageKey, bold: true),
               const SizedBox(height: 6),
               if (cfg.multiKeyEnabled == true)
                 Row(
@@ -1427,7 +1427,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
 
               // API Base URL or Vertex AI fields
               if (!(kind == ProviderKind.google && (cfg.vertexAI == true))) ...[
-                _sectionLabel(context, AppLocalizations.of(context)!.providerDetailPageApiBaseUrlLabel, bold: true),
+                _sectionLabel(context, context.l10n.providerDetailPageApiBaseUrlLabel, bold: true),
                 const SizedBox(height: 6),
                 Focus(
                   onFocusChange: (has) async {
@@ -1623,7 +1623,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                   Expanded(
                     child: Row(
                       children: [
-                        Text(AppLocalizations.of(context)!.providerDetailPageModelsTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                        Text(context.l10n.providerDetailPageModelsTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                         const SizedBox(width: 8),
                         _GreyCapsule(label: '${models.length}'),
                       ],
@@ -1683,7 +1683,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                 alignment: Alignment.centerLeft,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   _DeskIosButton(
-                    label: AppLocalizations.of(context)!.providerModelsGetButton,
+                    label: context.l10n.providerModelsGetButton,
                     filled: true,
                     dense: true,
                     onTap: () async {
@@ -1740,7 +1740,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
   Future<void> _showProviderSettingsDialog(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
     final sp = context.read<SettingsProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -2001,7 +2001,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Row(
                       children: [
-                        Expanded(child: Text(AppLocalizations.of(ctx)!.providerDetailPageNetworkTab, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
+                        Expanded(child: Text(ctx.l10n.providerDetailPageNetworkTab, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
                         IconButton(
                           icon: const Icon(lucide.Lucide.X, size: 18),
                           color: cs.onSurface,
@@ -2020,7 +2020,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _rowSwitch(ctx, label: AppLocalizations.of(ctx)!.providerDetailPageEnableProxyTitle, value: enabled, onChanged: (v) async {
+                      _rowSwitch(ctx, label: ctx.l10n.providerDetailPageEnableProxyTitle, value: enabled, onChanged: (v) async {
                         setSt(() => enabled = v);
                         final old = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName);
                         await sp.setProviderConfig(widget.providerKey, old.copyWith(proxyEnabled: v));
@@ -2031,7 +2031,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 12),
-                            _sectionLabel(ctx, AppLocalizations.of(ctx)!.providerDetailPageHostLabel),
+                            _sectionLabel(ctx, ctx.l10n.providerDetailPageHostLabel),
                             const SizedBox(height: 6),
                             Focus(
                               onFocusChange: (has) async {
@@ -2044,7 +2044,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                               child: TextField(controller: host, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(ctx).copyWith(hintText: '127.0.0.1'), onChanged: (_) async { final old = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName); await sp.setProviderConfig(widget.providerKey, old.copyWith(proxyHost: host.text.trim())); }),
                             ),
                             const SizedBox(height: 12),
-                            _sectionLabel(ctx, AppLocalizations.of(ctx)!.providerDetailPagePortLabel),
+                            _sectionLabel(ctx, ctx.l10n.providerDetailPagePortLabel),
                             const SizedBox(height: 6),
                             Focus(
                               onFocusChange: (has) async {
@@ -2057,7 +2057,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                               child: TextField(controller: port, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(ctx).copyWith(hintText: '8080'), onChanged: (_) async { final old = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName); await sp.setProviderConfig(widget.providerKey, old.copyWith(proxyPort: port.text.trim())); }),
                             ),
                             const SizedBox(height: 12),
-                            _sectionLabel(ctx, AppLocalizations.of(ctx)!.providerDetailPageUsernameOptionalLabel),
+                            _sectionLabel(ctx, ctx.l10n.providerDetailPageUsernameOptionalLabel),
                             const SizedBox(height: 6),
                             Focus(
                               onFocusChange: (has) async {
@@ -2070,7 +2070,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                               child: TextField(controller: user, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(ctx), onChanged: (_) async { final old = sp.getProviderConfig(widget.providerKey, defaultName: widget.displayName); await sp.setProviderConfig(widget.providerKey, old.copyWith(proxyUsername: user.text.trim())); }),
                             ),
                             const SizedBox(height: 12),
-                            _sectionLabel(ctx, AppLocalizations.of(ctx)!.providerDetailPagePasswordOptionalLabel),
+                            _sectionLabel(ctx, ctx.l10n.providerDetailPagePasswordOptionalLabel),
                             const SizedBox(height: 6),
                             Focus(
                               onFocusChange: (has) async {
@@ -2102,7 +2102,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
   Future<void> _showMultiKeyDialog(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
     final sp = context.read<SettingsProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -2168,7 +2168,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           final models = cfgX.models;
           if (detectModelId == null) {
             if (models.isEmpty) {
-              showAppSnackBar(dctx, message: AppLocalizations.of(dctx)!.multiKeyPagePleaseAddModel, type: NotificationType.warning);
+              showAppSnackBar(dctx, message: dctx.l10n.multiKeyPagePleaseAddModel, type: NotificationType.warning);
               return;
             }
             detectModelId = models.first;
@@ -2186,7 +2186,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           final models = cfgX.models;
           if (detectModelId == null) {
             if (models.isEmpty) {
-              showAppSnackBar(dctx, message: AppLocalizations.of(dctx)!.multiKeyPagePleaseAddModel, type: NotificationType.warning);
+              showAppSnackBar(dctx, message: dctx.l10n.multiKeyPagePleaseAddModel, type: NotificationType.warning);
               return;
             }
             detectModelId = models.first;
@@ -2202,7 +2202,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           final keys = List<ApiKeyConfig>.from(cfgX.apiKeys ?? const <ApiKeyConfig>[]);
           final errorKeys = keys.where((e) => e.status == ApiKeyStatus.error).toList();
           if (errorKeys.isEmpty) return;
-          final l10nX = AppLocalizations.of(dctx)!;
+          final l10nX = dctx.l10n;
           final csX = Theme.of(dctx).colorScheme;
           final ok = await showDialog<bool>(
             context: dctx,
@@ -2224,7 +2224,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
 
         Future<ApiKeyConfig?> _showEditKeyDialog(BuildContext dctx, ApiKeyConfig k) async {
           final cs2 = Theme.of(dctx).colorScheme;
-          final l10n2 = AppLocalizations.of(dctx)!;
+          final l10n2 = dctx.l10n;
           final aliasCtrl = TextEditingController(text: k.name ?? '');
           final keyCtrl = TextEditingController(text: k.key);
           final priCtrl = TextEditingController(text: k.priority.toString());
@@ -2397,7 +2397,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                               if (keyList.isEmpty)
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 14),
-                                  child: Center(child: Text(AppLocalizations.of(context)!.multiKeyPageNoKeys)),
+                                  child: Center(child: Text(context.l10n.multiKeyPageNoKeys)),
                                 )
                               else
                                 for (int i = 0; i < keyList.length; i++)
@@ -2420,7 +2420,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                                       final list = List<ApiKeyConfig>.from(latest.apiKeys ?? const <ApiKeyConfig>[]);
                                       final dup = list.any((e) => e.id != keyList[i].id && e.key.trim() == updated.key.trim());
                                       if (dup) {
-                                        showAppSnackBar(dctx, message: AppLocalizations.of(dctx)!.multiKeyPageDuplicateKeyWarning, type: NotificationType.warning);
+                                        showAppSnackBar(dctx, message: dctx.l10n.multiKeyPageDuplicateKeyWarning, type: NotificationType.warning);
                                         return;
                                       }
                                       final idx = list.indexWhere((e) => e.id == keyList[i].id);
@@ -2508,7 +2508,7 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           }
           (ctx).markNeedsBuild();
         }
-        final l10n = AppLocalizations.of(ctx)!;
+        final l10n = ctx.l10n;
         final canTest = selectedModelId != null && state != _TestState.loading;
         String message;
         Color color;
@@ -2725,8 +2725,8 @@ class _StrategyDropdownState extends State<_StrategyDropdown> {
     final size = rb.size;
     final triggerW = size.width;
     final labelFor = (LoadBalanceStrategy s) => s == LoadBalanceStrategy.roundRobin
-        ? AppLocalizations.of(context)!.multiKeyPageStrategyRoundRobin
-        : AppLocalizations.of(context)!.multiKeyPageStrategyRandom;
+        ? context.l10n.multiKeyPageStrategyRoundRobin
+        : context.l10n.multiKeyPageStrategyRandom;
     final entries = [LoadBalanceStrategy.roundRobin, LoadBalanceStrategy.random];
     _entry = OverlayEntry(builder: (ctx) {
       final cs = Theme.of(ctx).colorScheme;
@@ -2775,8 +2775,8 @@ class _StrategyDropdownState extends State<_StrategyDropdown> {
   @override
   Widget build(BuildContext context) {
     final label = widget.value == LoadBalanceStrategy.roundRobin
-        ? AppLocalizations.of(context)!.multiKeyPageStrategyRoundRobin
-        : AppLocalizations.of(context)!.multiKeyPageStrategyRandom;
+        ? context.l10n.multiKeyPageStrategyRoundRobin
+        : context.l10n.multiKeyPageStrategyRandom;
     return CompositedTransformTarget(
       link: _link,
       child: _HoverDropdownButton(
@@ -2931,9 +2931,9 @@ class _ProviderListRowState extends State<_ProviderListRow> {
         onTap: widget.onTap,
         onSecondaryTapDown: (details) async {
           final items = <DesktopContextMenuItem>[
-            DesktopContextMenuItem(icon: lucide.Lucide.Pencil, label: AppLocalizations.of(context)!.providerDetailPageEditTooltip, onTap: widget.onEdit),
+            DesktopContextMenuItem(icon: lucide.Lucide.Pencil, label: context.l10n.providerDetailPageEditTooltip, onTap: widget.onEdit),
             if (widget.onDelete != null)
-              DesktopContextMenuItem(icon: lucide.Lucide.Trash2, label: AppLocalizations.of(context)!.providerDetailPageDeleteProviderTooltip, danger: true, onTap: () => widget.onDelete?.call()),
+              DesktopContextMenuItem(icon: lucide.Lucide.Trash2, label: context.l10n.providerDetailPageDeleteProviderTooltip, danger: true, onTap: () => widget.onDelete?.call()),
           ];
           await showDesktopContextMenuAt(context, globalPosition: details.globalPosition, items: items);
         },
@@ -2958,7 +2958,7 @@ class _ProviderListRowState extends State<_ProviderListRow> {
                   // No border for left list status
                 ),
                 child: Text(
-                  widget.enabled ? AppLocalizations.of(context)!.providersPageEnabledStatus : AppLocalizations.of(context)!.providersPageDisabledStatus,
+                  widget.enabled ? context.l10n.providersPageEnabledStatus : context.l10n.providersPageDisabledStatus,
                   style: TextStyle(fontSize: 11, color: widget.enabled ? Colors.green : Colors.orange, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -3063,7 +3063,7 @@ class _DesktopKeyRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     String label;
     if ((keyConfig.name ?? '').trim().isNotEmpty) {
       label = keyConfig.name!.trim();
@@ -3351,7 +3351,7 @@ class _DisplaySettingsBody extends StatelessWidget {
   const _DisplaySettingsBody({super.key});
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Container(
       alignment: Alignment.topCenter,
       child: SingleChildScrollView(
@@ -3555,7 +3555,7 @@ class _ColorModeRow extends StatelessWidget {
   const _ColorModeRow();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.settingsPageColorMode,
       trailing: const _ThemeModeSegmented(),
@@ -3575,7 +3575,7 @@ class _ThemeModeSegmentedState extends State<_ThemeModeSegmented> {
   Widget build(BuildContext context) {
     final sp = context.watch<SettingsProvider>();
     final mode = sp.themeMode;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -3655,7 +3655,7 @@ class _ThemeColorRow extends StatelessWidget {
   const _ThemeColorRow();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.displaySettingsPageThemeColorTitle,
       trailing: const _ThemeDots(),
@@ -3730,7 +3730,7 @@ class _ToggleRowPureBackground extends StatelessWidget {
   const _ToggleRowPureBackground();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.themeSettingsPageUsePureBackgroundTitle,
@@ -3744,7 +3744,7 @@ class _ChatMessageBackgroundRow extends StatelessWidget {
   const _ChatMessageBackgroundRow();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.displaySettingsPageChatMessageBackgroundTitle,
       trailing: const _BackgroundStyleDropdown(),
@@ -3757,7 +3757,7 @@ class _TopicPositionRow extends StatelessWidget {
   const _TopicPositionRow();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.desktopDisplaySettingsTopicPositionTitle,
       trailing: const _TopicPositionDropdown(),
@@ -3793,7 +3793,7 @@ class _TopicPositionDropdownState extends State<_TopicPositionDropdown> {
   }
 
   String _labelFor(BuildContext context, DesktopTopicPosition pos) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     switch (pos) {
       case DesktopTopicPosition.right:
         return l10n.desktopDisplaySettingsTopicPositionRight;
@@ -3958,8 +3958,8 @@ class _TopicPositionOverlayState extends State<_TopicPositionOverlay> with Singl
     // Align style with chat message background dropdown: no leading icons,
     // selected item gets a highlighted background.
     final items = <(DesktopTopicPosition, String)>[
-      (DesktopTopicPosition.left, AppLocalizations.of(context)!.desktopDisplaySettingsTopicPositionLeft),
-      (DesktopTopicPosition.right, AppLocalizations.of(context)!.desktopDisplaySettingsTopicPositionRight),
+      (DesktopTopicPosition.left, context.l10n.desktopDisplaySettingsTopicPositionLeft),
+      (DesktopTopicPosition.right, context.l10n.desktopDisplaySettingsTopicPositionRight),
     ];
 
     return FadeTransition(
@@ -4025,7 +4025,7 @@ class _BackgroundStyleDropdownState extends State<_BackgroundStyleDropdown> {
   }
 
   String _labelFor(BuildContext context, ChatMessageBackgroundStyle s) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     switch (s) {
       case ChatMessageBackgroundStyle.frosted:
         return l10n.displaySettingsPageChatMessageBackgroundFrosted;
@@ -4190,9 +4190,9 @@ class _BackgroundStyleOverlayState extends State<_BackgroundStyleOverlay> with S
     final borderColor = cs.outlineVariant.withOpacity(0.12);
 
     final items = <(ChatMessageBackgroundStyle, String)>[
-      (ChatMessageBackgroundStyle.defaultStyle, AppLocalizations.of(context)!.displaySettingsPageChatMessageBackgroundDefault),
-      (ChatMessageBackgroundStyle.frosted, AppLocalizations.of(context)!.displaySettingsPageChatMessageBackgroundFrosted),
-      (ChatMessageBackgroundStyle.solid, AppLocalizations.of(context)!.displaySettingsPageChatMessageBackgroundSolid),
+      (ChatMessageBackgroundStyle.defaultStyle, context.l10n.displaySettingsPageChatMessageBackgroundDefault),
+      (ChatMessageBackgroundStyle.frosted, context.l10n.displaySettingsPageChatMessageBackgroundFrosted),
+      (ChatMessageBackgroundStyle.solid, context.l10n.displaySettingsPageChatMessageBackgroundSolid),
     ];
 
     return FadeTransition(
@@ -4320,10 +4320,10 @@ class _AppLanguageRowState extends State<_AppLanguageRow> {
         // Keep measurement consistent with dropdown item text (14)
         final style = const TextStyle(fontSize: 14);
         final labels = <String>[
-          '🖥️ ${AppLocalizations.of(ctx)!.settingsPageSystemMode}',
-          '🇨🇳 ${AppLocalizations.of(ctx)!.displaySettingsPageLanguageChineseLabel}',
-          '🇨🇳 ${AppLocalizations.of(ctx)!.languageDisplayTraditionalChinese}',
-          '🇺🇸 ${AppLocalizations.of(ctx)!.displaySettingsPageLanguageEnglishLabel}',
+          '🖥️ ${ctx.l10n.settingsPageSystemMode}',
+          '🇨🇳 ${ctx.l10n.displaySettingsPageLanguageChineseLabel}',
+          '🇨🇳 ${ctx.l10n.languageDisplayTraditionalChinese}',
+          '🇺🇸 ${ctx.l10n.displaySettingsPageLanguageEnglishLabel}',
         ];
         double maxText = 0;
         for (final s in labels) {
@@ -4372,7 +4372,7 @@ class _AppLanguageRowState extends State<_AppLanguageRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     String labelFor(Locale l) {
       if (l.languageCode == 'zh') {
@@ -4600,7 +4600,7 @@ class _LanguageDropdownState extends State<_LanguageDropdown> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     final items = <(_LangItem, bool)>[
       (_LangItem(flag: '🖥️', label: l10n.settingsPageSystemMode, tag: 'system'), sp.isFollowingSystemLocale),
@@ -4762,7 +4762,7 @@ class _ChatFontSizeRowState extends State<_ChatFontSizeRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.displaySettingsPageChatFontSizeTitle,
       trailing: Row(
@@ -4860,7 +4860,7 @@ class _DesktopAppFontRow extends StatelessWidget {
   const _DesktopAppFontRow();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     final current = sp.appFontFamily;
     final displayText = (current == null || current.isEmpty)
@@ -4908,7 +4908,7 @@ class _DesktopCodeFontRow extends StatelessWidget {
   const _DesktopCodeFontRow();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     final current = sp.codeFontFamily;
     final displayText = (current == null || current.isEmpty)
@@ -5010,7 +5010,7 @@ Future<String?> _showDesktopFontChooserDialog(
   bool showMonospaceDefault = false,
 }) async {
   final cs = Theme.of(context).colorScheme;
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final ctrl = TextEditingController();
   String? result;
 
@@ -5218,7 +5218,7 @@ class _ToggleRowShowUserAvatar extends StatelessWidget {
   const _ToggleRowShowUserAvatar();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowUserAvatarTitle,
@@ -5232,7 +5232,7 @@ class _ToggleRowShowUserNameTs extends StatelessWidget {
   const _ToggleRowShowUserNameTs();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowUserNameTimestampTitle,
@@ -5246,7 +5246,7 @@ class _ToggleRowShowUserMsgActions extends StatelessWidget {
   const _ToggleRowShowUserMsgActions();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowUserMessageActionsTitle,
@@ -5260,7 +5260,7 @@ class _ToggleRowShowModelIcon extends StatelessWidget {
   const _ToggleRowShowModelIcon();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageChatModelIconTitle,
@@ -5274,7 +5274,7 @@ class _ToggleRowShowModelNameTs extends StatelessWidget {
   const _ToggleRowShowModelNameTs();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowModelNameTimestampTitle,
@@ -5288,7 +5288,7 @@ class _ToggleRowShowTokenStats extends StatelessWidget {
   const _ToggleRowShowTokenStats();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowTokenStatsTitle,
@@ -5302,7 +5302,7 @@ class _ToggleRowShowProviderInCapsule extends StatelessWidget {
   const _ToggleRowShowProviderInCapsule();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.desktopShowProviderInModelCapsule,
@@ -5316,7 +5316,7 @@ class _ToggleRowDollarLatex extends StatelessWidget {
   const _ToggleRowDollarLatex();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageEnableDollarLatexTitle,
@@ -5330,7 +5330,7 @@ class _ToggleRowMathRendering extends StatelessWidget {
   const _ToggleRowMathRendering();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageEnableMathTitle,
@@ -5344,7 +5344,7 @@ class _ToggleRowUserMarkdown extends StatelessWidget {
   const _ToggleRowUserMarkdown();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageEnableUserMarkdownTitle,
@@ -5358,7 +5358,7 @@ class _ToggleRowReasoningMarkdown extends StatelessWidget {
   const _ToggleRowReasoningMarkdown();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageEnableReasoningMarkdownTitle,
@@ -5372,7 +5372,7 @@ class _ToggleRowAutoCollapseThinking extends StatelessWidget {
   const _ToggleRowAutoCollapseThinking();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageAutoCollapseThinkingTitle,
@@ -5386,7 +5386,7 @@ class _ToggleRowShowUpdates extends StatelessWidget {
   const _ToggleRowShowUpdates();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowUpdatesTitle,
@@ -5400,7 +5400,7 @@ class _ToggleRowAutoSwitchTopicsDesktop extends StatelessWidget {
   const _ToggleRowAutoSwitchTopicsDesktop();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageAutoSwitchTopicsTitle,
@@ -5414,7 +5414,7 @@ class _ToggleRowMsgNavButtons extends StatelessWidget {
   const _ToggleRowMsgNavButtons();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageMessageNavButtonsTitle,
@@ -5428,7 +5428,7 @@ class _ToggleRowShowChatListDate extends StatelessWidget {
   const _ToggleRowShowChatListDate();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageShowChatListDateTitle,
@@ -5442,7 +5442,7 @@ class _ToggleRowNewChatOnLaunch extends StatelessWidget {
   const _ToggleRowNewChatOnLaunch();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageNewChatOnLaunchTitle,
@@ -5457,7 +5457,7 @@ class _ToggleRowHapticsGlobal extends StatelessWidget {
   const _ToggleRowHapticsGlobal();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageHapticsGlobalTitle,
@@ -5472,7 +5472,7 @@ class _ToggleRowHapticsSwitch extends StatelessWidget {
   const _ToggleRowHapticsSwitch();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageHapticsIosSwitchTitle,
@@ -5487,7 +5487,7 @@ class _ToggleRowHapticsSidebar extends StatelessWidget {
   const _ToggleRowHapticsSidebar();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageHapticsOnSidebarTitle,
@@ -5502,7 +5502,7 @@ class _ToggleRowHapticsListItem extends StatelessWidget {
   const _ToggleRowHapticsListItem();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageHapticsOnListItemTapTitle,
@@ -5517,7 +5517,7 @@ class _ToggleRowHapticsCardTap extends StatelessWidget {
   const _ToggleRowHapticsCardTap();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageHapticsOnCardTapTitle,
@@ -5532,7 +5532,7 @@ class _ToggleRowHapticsGenerate extends StatelessWidget {
   const _ToggleRowHapticsGenerate();
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.watch<SettingsProvider>();
     return _ToggleRow(
       label: l10n.displaySettingsPageHapticsOnGenerateTitle,
@@ -5597,7 +5597,7 @@ class _AutoScrollDelayRowState extends State<_AutoScrollDelayRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.displaySettingsPageAutoScrollIdleTitle,
       trailing: Row(
@@ -5645,7 +5645,7 @@ class _BackgroundMaskRowState extends State<_BackgroundMaskRow> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return _LabeledRow(
       label: l10n.displaySettingsPageChatBackgroundMaskTitle,
       trailing: Row(

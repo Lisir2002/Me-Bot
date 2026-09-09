@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../features/model/widgets/model_select_sheet.dart';
 import '../../utils/brand_assets.dart';
@@ -14,7 +14,7 @@ class DesktopDefaultModelPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
     return Container(
       alignment: Alignment.topCenter,
@@ -95,7 +95,7 @@ class DesktopDefaultModelPane extends StatelessWidget {
 
   Future<void> _showTitlePromptDialog(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.read<SettingsProvider>();
     final ctrl = TextEditingController(text: sp.titlePrompt);
     await showDialog<void>(
@@ -158,7 +158,7 @@ class DesktopDefaultModelPane extends StatelessWidget {
 
   Future<void> _showTranslatePromptDialog(BuildContext context) async {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final sp = context.read<SettingsProvider>();
     final ctrl = TextEditingController(text: sp.translatePrompt);
     await showDialog<void>(
@@ -254,7 +254,7 @@ class _ModelCardState extends State<_ModelCard> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final settings = context.read<SettingsProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
 
     final usingFallback = widget.modelProvider == null || widget.modelId == null;
     final effectiveProvider = widget.modelProvider ?? widget.fallbackProvider;

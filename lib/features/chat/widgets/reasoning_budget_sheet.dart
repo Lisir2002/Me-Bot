@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../core/services/haptics.dart';
@@ -101,7 +101,7 @@ class _ReasoningBudgetSheetState extends State<_ReasoningBudgetSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return AppSheet(
       children: [
         _tile(Lucide.X, l10n.reasoningBudgetSheetOff, 0),

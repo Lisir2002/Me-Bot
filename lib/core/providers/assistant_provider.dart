@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show BuildContext;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:io';
 import '../../utils/sandbox_path_resolver.dart';
 import '../models/assistant.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../utils/avatar_cache.dart';
 import '../../utils/app_directories.dart';
 
@@ -84,9 +86,9 @@ class AssistantProvider extends ChangeNotifier {
       );
 
   // Ensure localized default assistants exist; call this after localization is ready.
-  Future<void> ensureDefaults(dynamic context) async {
+  Future<void> ensureDefaults(BuildContext context) async {
     if (_assistants.isNotEmpty) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // 1) 默认助手
     _assistants.add(_defaultAssistant(l10n));
     // 2) 示例助手（带提示词模板）
@@ -152,11 +154,11 @@ class AssistantProvider extends ChangeNotifier {
     ];
   }
 
-  Future<String> addAssistant({String? name, dynamic context}) async {
+  Future<String> addAssistant({String? name, BuildContext? context}) async {
     final a = Assistant(
       id: const Uuid().v4(),
       name: (name ?? (context != null
-          ? AppLocalizations.of(context)!.assistantProviderNewAssistantName
+          ? context.l10n.assistantProviderNewAssistantName
           : 'New Assistant')),
       temperature: 0.6,
       topP: 1.0,

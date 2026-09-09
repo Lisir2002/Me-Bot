@@ -6,7 +6,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../scan/pages/qr_scan_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../core/services/haptics.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
@@ -243,7 +243,7 @@ Future<void> showImportProviderSheet(BuildContext context) async {
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (ctx) {
-      final l10n = AppLocalizations.of(ctx)!;
+      final l10n = ctx.l10n;
       return SafeArea(
         top: false,
         child: AnimatedPadding(

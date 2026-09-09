@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../core/providers/user_provider.dart';
 import '../desktop/desktop_context_menu.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/build_context_l10n.dart';
 import '../icons/lucide_adapter.dart' as lucide;
 import '../shared/widgets/emoji_text.dart';
 import '../shared/widgets/emoji_picker_dialog.dart';
@@ -64,7 +64,7 @@ class _UserProfileDialogBodyState extends State<_UserProfileDialogBody> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final up = context.watch<UserProvider>();
 
     Widget avatarWidget;
@@ -214,7 +214,7 @@ class _UserProfileDialogBodyState extends State<_UserProfileDialogBody> {
 
   Future<void> _openAvatarMenu(BuildContext context) async {
     final up = context.read<UserProvider>();
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     await showDesktopAnchoredMenu(
       context,
       anchorKey: _avatarKey,
@@ -282,7 +282,7 @@ class _UserProfileDialogBodyState extends State<_UserProfileDialogBody> {
   }
 
   Future<void> _inputAvatarUrl(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -349,7 +349,7 @@ class _UserProfileDialogBodyState extends State<_UserProfileDialogBody> {
   }
 
   Future<void> _inputQQAvatar(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,

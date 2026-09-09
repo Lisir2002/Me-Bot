@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:characters/characters.dart';
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import 'emoji_text.dart';
 
 /// A reusable emoji picker dialog used by both mobile and desktop.
@@ -10,7 +10,7 @@ Future<String?> showEmojiPickerDialog(
   String? title,
   String? hintText,
 }) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final controller = TextEditingController();
   String value = '';
 

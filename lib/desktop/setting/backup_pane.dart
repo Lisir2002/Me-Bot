@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
-import '../../l10n/app_localizations.dart';
+import '../../l10n/build_context_l10n.dart';
 import '../../core/models/backup.dart';
 import '../../core/providers/backup_provider.dart';
 import '../../core/providers/settings_provider.dart';
@@ -85,7 +85,7 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
   Future<void> _chooseRestoreModeAndRun(
     Future<void> Function(RestoreMode mode, String? passphrase) action,
   ) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final mode = await showDialog<RestoreMode>(
       context: context,
       builder: (ctx) => _RestoreModeDialog(),
@@ -134,7 +134,7 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final busy = context.watch<BackupProvider>().busy;
 
     return Container(
@@ -410,7 +410,7 @@ class _RemoteItemCardState extends State<_RemoteItemCard> {
     final borderColor = _hover
         ? cs.primary.withOpacity(isDark ? 0.35 : 0.45)
         : cs.outlineVariant.withOpacity(isDark ? 0.12 : 0.08);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final dateStr = widget.item.lastModified?.toLocal().toString().split('.').first ?? '';
 
     String prettySize(int size) {
@@ -509,7 +509,7 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
   ) async {
     final mode = await showDialog<RestoreMode>(context: context, builder: (_) => _RestoreModeDialog());
     if (mode == null) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     try {
       await action(mode, null);
@@ -548,7 +548,7 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Dialog(
       backgroundColor: cs.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -658,7 +658,7 @@ class _RestoreModeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     return Dialog(
       backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -851,7 +851,7 @@ InputDecoration _deskInputDecoration(BuildContext context) {
 /// 输入备份口令（桌面端）。[confirm]=true 要求输入两次并校验。
 /// 供 [DesktopBackupPane]（本地导入/导出）与 [_RemoteBackupsDialog]（远程恢复）共用。
 Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final cs = Theme.of(context).colorScheme;
   final controller = TextEditingController();
   final confirmController = TextEditingController();
@@ -910,13 +910,13 @@ void _showError(BuildContext context, String msg) {
     backgroundColor: cs.surface,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     title: Text(msg),
-    actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.backupPageOK))],
+    actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(context.l10n.backupPageOK))],
   ));
 }
 
 /// 选择导出策略与口令（桌面端）。返回 (策略, 口令)；加密档取消口令则返回 (encrypted, null)。
 Future<(BackupCredentialPolicy, String?)> _chooseExportPolicyAndPassphrase(BuildContext context) async {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = context.l10n;
   final cs = Theme.of(context).colorScheme;
   final policy = await showDialog<BackupCredentialPolicy>(context: context, builder: (ctx) => AlertDialog(
     backgroundColor: cs.surface,

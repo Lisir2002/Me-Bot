@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/models/chat_message.dart';
 import '../../../icons/lucide_adapter.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../theme/design_tokens.dart';
@@ -19,7 +19,7 @@ class SelectCopyPage extends StatelessWidget {
   final ChatMessage message;
 
   void _copyAll(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     // Ensure there is a text input connection on iOS before showing system copy UI
     // Here we bypass system menu by writing directly to clipboard and showing a snackbar
     await Clipboard.setData(ClipboardData(text: message.content));
@@ -33,7 +33,7 @@ class SelectCopyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return AppPage(
       title: l10n.selectCopyPageTitle,

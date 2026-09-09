@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/build_context_l10n.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/providers/settings_provider.dart';
@@ -313,7 +314,7 @@ class _StorageTactileIconButtonState extends State<StorageTactileIconButton> {
       debugPrint('[StorageTactileIconButton] onTap failed: $e\n$s');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('操作失败: $e')),
+          SnackBar(content: Text(context.l10n.operationFailed(e.toString()))),
         );
       }
     }
@@ -365,7 +366,7 @@ class _StorageOutlineButtonState extends State<StorageOutlineButton> {
       debugPrint('[StorageOutlineButton] onTap failed: $e\n$s');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('操作失败: $e')),
+          SnackBar(content: Text(context.l10n.operationFailed(e.toString()))),
         );
       }
     }
@@ -432,7 +433,7 @@ class _StorageFilledButtonState extends State<StorageFilledButton> {
       debugPrint('[StorageFilledButton] onTap failed: $e\n$s');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('操作失败: $e')),
+          SnackBar(content: Text(context.l10n.operationFailed(e.toString()))),
         );
       }
     }

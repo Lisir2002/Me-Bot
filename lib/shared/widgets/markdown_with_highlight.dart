@@ -19,7 +19,7 @@ import 'snackbar.dart';
 import 'mermaid_bridge.dart';
 import 'export_capture_scope.dart';
 import 'mermaid_image_cache.dart';
-import 'package:minime_core/l10n/app_localizations.dart';
+import 'package:minime_core/l10n/build_context_l10n.dart';
 import 'package:minime_core/theme/theme_factory.dart' show getPlatformFontFallback;
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -859,7 +859,7 @@ class _CollapsibleCodeBlockState extends State<_CollapsibleCodeBlock> {
                     if (_isHtml(widget.language))
                       InkWell(
                         onTap: () async {
-                          final l10n = AppLocalizations.of(context)!;
+                          final l10n = context.l10n;
                           if (Platform.isAndroid || Platform.isIOS) {
                             // Mobile: navigate to preview page
                             Navigator.of(context).push(PageRouteBuilder(
@@ -899,7 +899,7 @@ class _CollapsibleCodeBlockState extends State<_CollapsibleCodeBlock> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                AppLocalizations.of(context)!.codeBlockPreviewButton,
+                                context.l10n.codeBlockPreviewButton,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: cs.onSurface.withOpacity(0.6),
@@ -917,7 +917,7 @@ class _CollapsibleCodeBlockState extends State<_CollapsibleCodeBlock> {
                         if (mounted) {
                           showAppSnackBar(
                             context,
-                            message: AppLocalizations.of(context)!.chatMessageWidgetCopiedToClipboard,
+                            message: context.l10n.chatMessageWidgetCopiedToClipboard,
                             type: NotificationType.success,
                           );
                         }
@@ -938,7 +938,7 @@ class _CollapsibleCodeBlockState extends State<_CollapsibleCodeBlock> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              AppLocalizations.of(context)!.shareProviderSheetCopyButton,
+                              context.l10n.shareProviderSheetCopyButton,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: cs.onSurface.withOpacity(0.6),
@@ -1239,7 +1239,7 @@ class _MermaidBlockState extends State<_MermaidBlock> {
                           if (mounted) {
                             showAppSnackBar(
                               context,
-                              message: AppLocalizations.of(context)!.chatMessageWidgetCopiedToClipboard,
+                              message: context.l10n.chatMessageWidgetCopiedToClipboard,
                               type: NotificationType.success,
                             );
                           }
@@ -1260,7 +1260,7 @@ class _MermaidBlockState extends State<_MermaidBlock> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                AppLocalizations.of(context)!.shareProviderSheetCopyButton,
+                                context.l10n.shareProviderSheetCopyButton,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: cs.onSurface.withOpacity(0.6),
@@ -1278,7 +1278,7 @@ class _MermaidBlockState extends State<_MermaidBlock> {
                             final ok = await handle.exportPng();
                             if (!mounted) return;
                             if (!ok) {
-                              final l10n = AppLocalizations.of(context)!;
+                              final l10n = context.l10n;
                               showAppSnackBar(
                                 context,
                                 message: l10n.mermaidExportFailed,
@@ -1425,7 +1425,7 @@ class _MermaidBlockState extends State<_MermaidBlock> {
                                     Theme.of(context).brightness == Brightness.dark),
                                 icon: Icon(Lucide.Eye, size: 16),
                                 label:
-                                    Text(AppLocalizations.of(context)!.mermaidPreviewOpen),
+                                    Text(context.l10n.mermaidPreviewOpen),
                               ),
                             ),
                           ],
@@ -1459,7 +1459,7 @@ class _MermaidBlockState extends State<_MermaidBlock> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = context.l10n;
       showAppSnackBar(
         context,
         message: l10n.mermaidPreviewOpenFailed,

@@ -41,6 +41,8 @@ import '../../../core/providers/backup_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/backup/cherry_importer.dart';
+import '../../../core/services/backup/backup_encryptor.dart';
+import '../../../core/services/backup/credential_bridge.dart';
 import '../../../utils/app_directories.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -172,6 +174,153 @@ class _BackupPageState extends State<BackupPage> {
         ],
       ),
     );
+  }
+
+  // ===== PR-4 加密备份相关 UI =====
+
+  /// 选择导出策略：脱敏（不含密钥）/ 加密（含密钥，需口令）。
+  Future<BackupCredentialPolicy?> _chooseExportPolicyDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
+    return showDialog<BackupCredentialPolicy>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.backupEncryptPolicy),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ActionCard(
+              color: cardColor,
+              icon: Lucide.EyeOff,
+              title: l10n.backupExportRedacted,
+              subtitle: l10n.backupExportRedactedDesc,
+              onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.redacted),
+            ),
+            const SizedBox(height: 10),
+            _ActionCard(
+              color: cardColor,
+              icon: Icons.lock,
+              title: l10n.backupExportEncrypted,
+              subtitle: l10n.backupExportEncryptedDesc,
+              onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.encrypted),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.backupPageCancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 输入备份口令。
+  /// [confirm]=true 要求输入两次并校验一致与最短长度（导出加密用）；
+  /// [confirm]=false 仅单次输入（导入解密用）。取消返回 null。
+  Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController();
+    final confirmController = TextEditingController();
+    var obscured = true;
+    final formKey = GlobalKey<FormState>();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx2, setState) => AlertDialog(
+          title: Text(confirm ? l10n.backupPassphrase : l10n.backupEnterPassphrase),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: controller,
+                  obscureText: obscured,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.backupPassphrase,
+                    helperText: l10n.backupPassphraseHint,
+                    helperMaxLines: 2,
+                    suffixIcon: IconButton(
+                      icon: Icon(obscured ? Lucide.Eye : Lucide.EyeOff),
+                      onPressed: () => setState(() => obscured = !obscured),
+                    ),
+                  ),
+                  validator: (v) => (v == null || v.length < BackupEncryptor.minPassphraseLength)
+                      ? l10n.backupPassphraseHint
+                      : null,
+                ),
+                if (confirm) ...[
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: confirmController,
+                    obscureText: obscured,
+                    decoration: InputDecoration(labelText: l10n.backupPassphraseConfirm),
+                    validator: (v) =>
+                        v != controller.text ? l10n.backupPassphraseMismatch : null,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(l10n.backupPageCancel),
+            ),
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() != true) return;
+                Navigator.of(ctx).pop(controller.text);
+              },
+              child: Text(l10n.backupPageSave),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showError(BuildContext context, String msg) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  /// 运行一次导入任务，遇到加密备份缺口令时弹窗索要并重试；口令错误提示后放弃。
+  /// [task] 内部应已包裹导入遮罩（_runWithImportingOverlay）。返回是否成功导入。
+  Future<bool> _restoreEncryptedAware(
+    BuildContext context,
+    Future<void> Function(String? passphrase) task,
+  ) async {
+    try {
+      await task(null);
+      return true;
+    } on BackupCryptoError catch (e) {
+      if (!context.mounted) return false;
+      final l10n = AppLocalizations.of(context)!;
+      if (e.kind == BackupCryptoErrorKind.needPassphrase) {
+        final pass = await _promptPassphrase(context, confirm: false);
+        if (pass == null) return false;
+        try {
+          await task(pass);
+          return true;
+        } on BackupCryptoError catch (e2) {
+          if (!context.mounted) return false;
+          if (e2.kind == BackupCryptoErrorKind.wrongPassphrase) {
+            _showError(context, l10n.backupPassphraseWrong);
+            return false;
+          }
+          rethrow;
+        }
+      } else if (e.kind == BackupCryptoErrorKind.wrongPassphrase) {
+        _showError(context, l10n.backupPassphraseWrong);
+        return false;
+      }
+      rethrow;
+    }
   }
 
   Future<T> _runWithExportingOverlay<T>(BuildContext context, Future<T> Function() task) async {
@@ -431,8 +580,14 @@ class _BackupPageState extends State<BackupPage> {
 
                           if (mode == null) return;
 
-                          await _runWithImportingOverlay(context, () => vm.restoreFromItem(item, mode: mode));
-                          if (!mounted) return;
+                          final ok = await _restoreEncryptedAware(
+                            context,
+                            (p) => _runWithImportingOverlay(
+                              context,
+                              () => vm.restoreFromItem(item, mode: mode, passphrase: p),
+                            ),
+                          );
+                          if (!mounted || !ok) return;
                           await showDialog(
                             context: context,
                             builder: (dctx) => AlertDialog(
@@ -552,7 +707,17 @@ class _BackupPageState extends State<BackupPage> {
   }
 
   Future<void> _doExport(BuildContext context, BackupProvider vm) async {
-    final file = await _runWithExportingOverlay(context, () => vm.exportToFile());
+    final policy = await _chooseExportPolicyDialog(context);
+    if (policy == null) return;
+    String? passphrase;
+    if (policy == BackupCredentialPolicy.encrypted) {
+      passphrase = await _promptPassphrase(context, confirm: true);
+      if (passphrase == null) return;
+    }
+    final file = await _runWithExportingOverlay(
+      context,
+      () => vm.exportToFile(policy: policy, passphrase: passphrase),
+    );
     if (!mounted) return;
 
     // iPad: anchor popover to the overlay's center
@@ -586,8 +751,14 @@ class _BackupPageState extends State<BackupPage> {
 
     if (mode == null) return;
 
-    await _runWithImportingOverlay(context, () => vm.restoreFromLocalFile(File(path), mode: mode));
-    if (!mounted) return;
+    final ok = await _restoreEncryptedAware(
+      context,
+      (p) => _runWithImportingOverlay(
+        context,
+        () => vm.restoreFromLocalFile(File(path), mode: mode, passphrase: p),
+      ),
+    );
+    if (!mounted || !ok) return;
     await showDialog(
       context: context,
       builder: (dctx) => AlertDialog(

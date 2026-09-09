@@ -1725,5 +1725,16 @@
   "@statsNoActivity": {
     "description": "热力图某天无消息",
     "type": "String"
-  }
+  },
+  "backupEncryptPolicy": "Backup encryption",
+  "backupExportRedacted": "Redacted (no keys, recommended)",
+  "backupExportEncrypted": "Encrypted (with keys, needs passphrase)",
+  "backupExportRedactedDesc": "Credentials are removed from the backup file. Safest choice.",
+  "backupExportEncryptedDesc": "Credentials are included and protected by the passphrase.",
+  "backupPassphrase": "Backup passphrase",
+  "backupPassphraseConfirm": "Confirm passphrase",
+  "backupPassphraseHint": "At least 8 characters. If forgotten, the backup cannot be recovered.",
+  "backupPassphraseMismatch": "Passphrases do not match",
+  "backupPassphraseWrong": "Wrong passphrase, cannot decrypt",
+  "backupEnterPassphrase": "Enter passphrase to decrypt this backup"
 }

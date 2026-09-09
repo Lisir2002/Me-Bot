@@ -1487,5 +1487,16 @@
   "@statsNoActivity": {
     "description": "热力图某天无消息",
     "type": "String"
-  }
+  },
+  "backupEncryptPolicy": "备份加密方式",
+  "backupExportRedacted": "脱敏导出（不含密钥，推荐）",
+  "backupExportEncrypted": "加密导出（含密钥，需口令）",
+  "backupExportRedactedDesc": "备份文件中不含任何密钥，最安全",
+  "backupExportEncryptedDesc": "备份文件包含密钥，由口令加密保护",
+  "backupPassphrase": "备份口令",
+  "backupPassphraseConfirm": "确认口令",
+  "backupPassphraseHint": "至少 8 位，口令遗忘将无法恢复备份",
+  "backupPassphraseMismatch": "两次输入的口令不一致",
+  "backupPassphraseWrong": "口令错误，无法解密",
+  "backupEnterPassphrase": "输入口令以解密此备份"
 }

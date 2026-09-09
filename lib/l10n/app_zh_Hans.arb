@@ -137,7 +137,9 @@
   "providersPageExportSelectedTitle": "导出 {count} 个供应商",
   "@providersPageExportSelectedTitle": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "providersPageExportCopyButton": "复制",
@@ -1028,7 +1030,11 @@
   "networkProxyTestSuccess": "连接成功",
   "networkProxyTestFailed": "测试失败：{error}",
   "@networkProxyTestFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "networkProxyNoUrl": "请输入测试地址",
   "networkProxyPriorityNote": "当同时开启全局代理与供应商代理时，将优先使用供应商代理。",
@@ -1044,7 +1050,13 @@
   "storageCategoriesHeader": "分类",
   "storageRefresh": "刷新",
   "storageItemsCount": "{count} 个文件",
-  "@storageItemsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@storageItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDetailHeader": "明细",
   "storageEmpty": "暂无内容",
   "storageAvatarItem": "头像",
@@ -1073,10 +1085,22 @@
   "storageSelectAll": "全选",
   "storageDelete": "删除",
   "storageSelectedItems": "已选 {count} 项",
-  "@storageSelectedItems": { "placeholders": { "count": { "type": "int" } } },
+  "@storageSelectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDeleteConfirmTitle": "删除所选文件？",
   "storageDeleteConfirmBody": "将永久删除选中的 {count} 个文件，确定吗？",
-  "@storageDeleteConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "@storageDeleteConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageCancel": "取消",
   "storageConfirmDeleteBtn": "删除",
   "storageCacheClearAvatar": "清理头像缓存",
@@ -1100,9 +1124,21 @@
   "logSettingsAutoDeleteNone": "不启用",
   "logSettingsSizeLimit": "日志大小上限",
   "logSettingDays": "{count} 天",
-  "@logSettingDays": { "placeholders": { "count": { "type": "int" } } },
+  "@logSettingDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "logSettingSizeText": "{limit} MB",
-  "@logSettingSizeText": { "placeholders": { "limit": { "type": "int" } } },
+  "@logSettingSizeText": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "snapshotTitle": "本地副本",
   "snapshotSettingsHeader": "设置",
   "snapshotKeepLocal": "保留本地副本",
@@ -1115,10 +1151,25 @@
   "snapshotSizeUnlimited": "不限制",
   "snapshotNotifyDone": "备份完成时提示",
   "snapshotLastBackup": "上次备份：{time}",
-  "@snapshotLastBackup": { "placeholders": { "time": { "type": "String" } } },
+  "@snapshotLastBackup": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotBackupNow": "立即备份一份",
   "snapshotListHeader": "本地副本 · {count} 份 · {size}",
-  "@snapshotListHeader": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@snapshotListHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotAutoBadge": "自动备份",
   "snapshotRestore": "恢复",
   "snapshotExport": "导出",
@@ -1132,14 +1183,29 @@
   "snapshotFreqWeekly": "每周",
   "snapshotFreqAuto": "自动",
   "snapshotCopies": "{n} 份",
-  "@snapshotCopies": { "placeholders": { "n": { "type": "int" } } },
+  "@snapshotCopies": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "backupPageReminderHeader": "备份提醒",
   "backupPageRemindMe": "定期提醒我备份",
   "backupPageLocalCopiesHeader": "本地副本",
   "backupPageKeepLocalCopy": "保留本地副本",
   "backupPageImportFromChatbox": "从 Chatbox 导入",
   "backupPageManageCopiesDetail": "管理副本 · {count} 份 · {size}",
-  "@backupPageManageCopiesDetail": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@backupPageManageCopiesDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "backupPhasePacking": "正在打包",
   "backupPhaseExporting": "正在导出",
   "backupPhaseDone": "完成",
@@ -1349,5 +1415,16 @@
   "@statsNoActivity": {
     "description": "热力图某天无消息",
     "type": "String"
-  }
+  },
+  "backupEncryptPolicy": "备份加密方式",
+  "backupExportRedacted": "脱敏导出（不含密钥，推荐）",
+  "backupExportEncrypted": "加密导出（含密钥，需口令）",
+  "backupExportRedactedDesc": "备份文件中不含任何密钥，最安全",
+  "backupExportEncryptedDesc": "备份文件包含密钥，由口令加密保护",
+  "backupPassphrase": "备份口令",
+  "backupPassphraseConfirm": "确认口令",
+  "backupPassphraseHint": "至少 8 位，口令遗忘将无法恢复备份",
+  "backupPassphraseMismatch": "两次输入的口令不一致",
+  "backupPassphraseWrong": "口令错误，无法解密",
+  "backupEnterPassphrase": "输入口令以解密此备份"
 }

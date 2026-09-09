@@ -12,8 +12,12 @@ enum BackupCredentialPolicy {
 
   /// 显式选择「包含密钥」：把安全存储里的凭证注入备份内容。
   ///
-  /// 仅用于加密备份（PR-4 的 JWE）或同账号设备迁移等用户明确知情场景。
+  /// 仅用于同账号设备迁移等用户明确知情场景。
   include,
+
+  /// 加密导出（PR-4 的 JWE）：先把凭证注入快照，再由调用方用
+  /// [BackupEncryptor] 对整个 settings 包加密。口令遗忘不可恢复。
+  encrypted,
 }
 
 /// 备份内容与安全存储之间的凭证桥接。
@@ -44,6 +48,10 @@ class BackupCredentialBridge {
         _redact(out);
         break;
       case BackupCredentialPolicy.include:
+        await _inject(out);
+        break;
+      case BackupCredentialPolicy.encrypted:
+        // 加密档：先把凭证注入快照，整包加密由调用方（data_sync）完成。
         await _inject(out);
         break;
     }

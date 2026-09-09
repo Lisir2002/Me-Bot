@@ -3653,6 +3653,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statsNoActivity => '无记录';
+
+  @override
+  String get backupEncryptPolicy => '备份加密方式';
+
+  @override
+  String get backupExportRedacted => '脱敏导出（不含密钥，推荐）';
+
+  @override
+  String get backupExportEncrypted => '加密导出（含密钥，需口令）';
+
+  @override
+  String get backupExportRedactedDesc => '备份文件中不含任何密钥，最安全';
+
+  @override
+  String get backupExportEncryptedDesc => '备份文件包含密钥，由口令加密保护';
+
+  @override
+  String get backupPassphrase => '备份口令';
+
+  @override
+  String get backupPassphraseConfirm => '确认口令';
+
+  @override
+  String get backupPassphraseHint => '至少 8 位，口令遗忘将无法恢复备份';
+
+  @override
+  String get backupPassphraseMismatch => '两次输入的口令不一致';
+
+  @override
+  String get backupPassphraseWrong => '口令错误，无法解密';
+
+  @override
+  String get backupEnterPassphrase => '输入口令以解密此备份';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -7122,6 +7155,39 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get statsNoActivity => '无记录';
+
+  @override
+  String get backupEncryptPolicy => '备份加密方式';
+
+  @override
+  String get backupExportRedacted => '脱敏导出（不含密钥，推荐）';
+
+  @override
+  String get backupExportEncrypted => '加密导出（含密钥，需口令）';
+
+  @override
+  String get backupExportRedactedDesc => '备份文件中不含任何密钥，最安全';
+
+  @override
+  String get backupExportEncryptedDesc => '备份文件包含密钥，由口令加密保护';
+
+  @override
+  String get backupPassphrase => '备份口令';
+
+  @override
+  String get backupPassphraseConfirm => '确认口令';
+
+  @override
+  String get backupPassphraseHint => '至少 8 位，口令遗忘将无法恢复备份';
+
+  @override
+  String get backupPassphraseMismatch => '两次输入的口令不一致';
+
+  @override
+  String get backupPassphraseWrong => '口令错误，无法解密';
+
+  @override
+  String get backupEnterPassphrase => '输入口令以解密此备份';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -10592,4 +10658,37 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get statsNoActivity => '無記錄';
+
+  @override
+  String get backupEncryptPolicy => '備份加密方式';
+
+  @override
+  String get backupExportRedacted => '脫敏匯出（不含金鑰，推薦）';
+
+  @override
+  String get backupExportEncrypted => '加密匯出（含金鑰，需口令）';
+
+  @override
+  String get backupExportRedactedDesc => '備份檔案中不含任何金鑰，最安全';
+
+  @override
+  String get backupExportEncryptedDesc => '備份檔案包含金鑰，由口令加密保護';
+
+  @override
+  String get backupPassphrase => '備份口令';
+
+  @override
+  String get backupPassphraseConfirm => '確認口令';
+
+  @override
+  String get backupPassphraseHint => '至少 8 位，口令遺忘將無法恢復備份';
+
+  @override
+  String get backupPassphraseMismatch => '兩次輸入的口令不一致';
+
+  @override
+  String get backupPassphraseWrong => '口令錯誤，無法解密';
+
+  @override
+  String get backupEnterPassphrase => '輸入口令以解密此備份';
 }

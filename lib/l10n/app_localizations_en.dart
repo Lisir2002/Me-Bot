@@ -3769,4 +3769,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsNoActivity => 'No activity';
+
+  @override
+  String get backupEncryptPolicy => 'Backup encryption';
+
+  @override
+  String get backupExportRedacted => 'Redacted (no keys, recommended)';
+
+  @override
+  String get backupExportEncrypted => 'Encrypted (with keys, needs passphrase)';
+
+  @override
+  String get backupExportRedactedDesc =>
+      'Credentials are removed from the backup file. Safest choice.';
+
+  @override
+  String get backupExportEncryptedDesc =>
+      'Credentials are included and protected by the passphrase.';
+
+  @override
+  String get backupPassphrase => 'Backup passphrase';
+
+  @override
+  String get backupPassphraseConfirm => 'Confirm passphrase';
+
+  @override
+  String get backupPassphraseHint =>
+      'At least 8 characters. If forgotten, the backup cannot be recovered.';
+
+  @override
+  String get backupPassphraseMismatch => 'Passphrases do not match';
+
+  @override
+  String get backupPassphraseWrong => 'Wrong passphrase, cannot decrypt';
+
+  @override
+  String get backupEnterPassphrase => 'Enter passphrase to decrypt this backup';
 }

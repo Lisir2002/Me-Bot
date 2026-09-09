@@ -7114,6 +7114,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No activity'**
   String get statsNoActivity;
+
+  /// No description provided for @backupEncryptPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup encryption'**
+  String get backupEncryptPolicy;
+
+  /// No description provided for @backupExportRedacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Redacted (no keys, recommended)'**
+  String get backupExportRedacted;
+
+  /// No description provided for @backupExportEncrypted.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted (with keys, needs passphrase)'**
+  String get backupExportEncrypted;
+
+  /// No description provided for @backupExportRedactedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials are removed from the backup file. Safest choice.'**
+  String get backupExportRedactedDesc;
+
+  /// No description provided for @backupExportEncryptedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials are included and protected by the passphrase.'**
+  String get backupExportEncryptedDesc;
+
+  /// No description provided for @backupPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup passphrase'**
+  String get backupPassphrase;
+
+  /// No description provided for @backupPassphraseConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm passphrase'**
+  String get backupPassphraseConfirm;
+
+  /// No description provided for @backupPassphraseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters. If forgotten, the backup cannot be recovered.'**
+  String get backupPassphraseHint;
+
+  /// No description provided for @backupPassphraseMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrases do not match'**
+  String get backupPassphraseMismatch;
+
+  /// No description provided for @backupPassphraseWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong passphrase, cannot decrypt'**
+  String get backupPassphraseWrong;
+
+  /// No description provided for @backupEnterPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter passphrase to decrypt this backup'**
+  String get backupEnterPassphrase;
 }
 
 class _AppLocalizationsDelegate

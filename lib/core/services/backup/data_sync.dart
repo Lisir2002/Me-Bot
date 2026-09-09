@@ -17,6 +17,7 @@ import '../chat/chat_service.dart';
 import '../secure_storage/secure_storage_bootstrap.dart';
 import '../../../utils/app_directories.dart';
 import 'credential_bridge.dart';
+import 'backup_encryptor.dart';
 
 class DataSync {
   final ChatService chatService;
@@ -105,7 +106,11 @@ class DataSync {
     }
   }
 
-  Future<File> prepareBackupFile(WebDavConfig cfg) async {
+  Future<File> prepareBackupFile(
+    WebDavConfig cfg, {
+    BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
+    String? passphrase,
+  }) async {
     final tmp = await getTemporaryDirectory();
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
     final outFile = File(p.join(tmp.path, 'minime-core_backup_$timestamp.zip'));
@@ -115,7 +120,10 @@ class DataSync {
     final archive = Archive();
 
     // settings.json
-    final settingsJson = await _exportSettingsJson();
+    final settingsJson = await _exportSettingsJson(
+      policy: policy,
+      passphrase: passphrase,
+    );
     final settingsBytes = utf8.encode(settingsJson);
     final settingsArchiveFile = ArchiveFile('settings.json', settingsBytes.length, settingsBytes);
     archive.addFile(settingsArchiveFile);
@@ -185,8 +193,16 @@ class DataSync {
     return outFile;
   }
 
-  Future<void> backupToWebDav(WebDavConfig cfg) async {
-    final file = await prepareBackupFile(cfg);
+  Future<void> backupToWebDav(
+    WebDavConfig cfg, {
+    BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
+    String? passphrase,
+  }) async {
+    final file = await prepareBackupFile(
+      cfg,
+      policy: policy,
+      passphrase: passphrase,
+    );
     await _ensureCollection(cfg);
     final target = _fileUri(cfg, p.basename(file.path));
     final bytes = await file.readAsBytes();
@@ -269,7 +285,12 @@ class DataSync {
     return items;
   }
 
-  Future<void> restoreFromWebDav(WebDavConfig cfg, BackupFileItem item, {RestoreMode mode = RestoreMode.overwrite}) async {
+  Future<void> restoreFromWebDav(
+    WebDavConfig cfg,
+    BackupFileItem item, {
+    RestoreMode mode = RestoreMode.overwrite,
+    String? passphrase,
+  }) async {
     final res = await http.get(item.href, headers: _authHeaders(cfg));
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw Exception('Download failed: ${res.statusCode}');
@@ -277,7 +298,7 @@ class DataSync {
     final tmpDir = await getTemporaryDirectory();
     final file = File(p.join(tmpDir.path, item.displayName));
     await file.writeAsBytes(res.bodyBytes);
-    await _restoreFromBackupFile(file, cfg, mode: mode);
+    await _restoreFromBackupFile(file, cfg, mode: mode, passphrase: passphrase);
     try { await file.delete(); } catch (_) {}
   }
 
@@ -290,11 +311,21 @@ class DataSync {
     }
   }
 
-  Future<File> exportToFile(WebDavConfig cfg) => prepareBackupFile(cfg);
+  Future<File> exportToFile(
+    WebDavConfig cfg, {
+    BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
+    String? passphrase,
+  }) =>
+      prepareBackupFile(cfg, policy: policy, passphrase: passphrase);
 
-  Future<void> restoreFromLocalFile(File file, WebDavConfig cfg, {RestoreMode mode = RestoreMode.overwrite}) async {
+  Future<void> restoreFromLocalFile(
+    File file,
+    WebDavConfig cfg, {
+    RestoreMode mode = RestoreMode.overwrite,
+    String? passphrase,
+  }) async {
     if (!await file.exists()) throw Exception('备份文件不存在');
-    await _restoreFromBackupFile(file, cfg, mode: mode);
+    await _restoreFromBackupFile(file, cfg, mode: mode, passphrase: passphrase);
   }
 
   // ===== Internal helpers =====
@@ -317,12 +348,21 @@ class DataSync {
   /// PR-4 的加密备份会在用户显式选择「包含密钥」时传入 [BackupCredentialPolicy.include]。
   Future<String> _exportSettingsJson({
     BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
+    String? passphrase,
   }) async {
     final prefs = await SharedPreferencesAsync.instance;
     final map = await prefs.snapshot();
     if (!SecureStorage.isInitialized) return jsonEncode(map);
     final bridge = BackupCredentialBridge(SecureStorage.instance);
     final prepared = await bridge.prepareForExport(map, policy: policy);
+    // 加密档：先用 BackupEncryptor 对整个 settings 包加密（口令不落盘/不进日志）。
+    if (policy == BackupCredentialPolicy.encrypted) {
+      final envelope = await BackupEncryptor.seal(
+        prepared,
+        passphrase: passphrase ?? '',
+      );
+      return jsonEncode(envelope);
+    }
     return jsonEncode(prepared);
   }
 
@@ -352,7 +392,12 @@ class DataSync {
     return jsonEncode(obj);
   }
 
-  Future<void> _restoreFromBackupFile(File file, WebDavConfig cfg, {RestoreMode mode = RestoreMode.overwrite}) async {
+  Future<void> _restoreFromBackupFile(
+    File file,
+    WebDavConfig cfg, {
+    RestoreMode mode = RestoreMode.overwrite,
+    String? passphrase,
+  }) async {
     // Extract to temp
     final tmp = await getTemporaryDirectory();
     final extractDir = Directory(p.join(tmp.path, 'restore_${DateTime.now().millisecondsSinceEpoch}'));
@@ -381,12 +426,20 @@ class DataSync {
       try {
         final txt = await settingsFile.readAsString();
         final decoded = jsonDecode(txt) as Map<String, dynamic>;
+        // 加密备份（v2 信封）：先解密，产物仍是 settings 快照。
+        // 缺口令时 BackupEncryptor 抛 needPassphrase，由 UI 弹窗索要后重试。
+        final Map<String, dynamic> settings;
+        if (BackupEncryptor.isEnvelope(decoded)) {
+          settings = await BackupEncryptor.open(decoded, passphrase: passphrase);
+        } else {
+          settings = decoded;
+        }
         // 先把备份里的凭证抽走写进安全存储，剩下的才是能安全写回 prefs 的内容
         // （老备份含明文，不抽就会把明文带回磁盘）
         final map = SecureStorage.isInitialized
             ? await BackupCredentialBridge(SecureStorage.instance)
-                .absorbOnRestore(decoded)
-            : decoded;
+                .absorbOnRestore(settings)
+            : settings;
         final prefs = await SharedPreferencesAsync.instance;
         if (mode == RestoreMode.overwrite) {
           // For overwrite mode, restore all settings

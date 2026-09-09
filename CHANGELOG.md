@@ -5,7 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
-## [Unreleased]
+## [0.0.45] - 2026-09-09
+
+### 📣 For Users
+- 本地副本页「备份频率」与「占用上限」改为可选择的档位：频率支持手动/每天/每周/自动；占用上限支持不限制/1/2/5/10 GB，并会按上限自动清理最旧的副本。
 
 ### 🤖 For Agents
 - **Fixed**：本地副本页（`features/storage/pages/local_snapshot_page.dart`）两个设置项写死/错值修复：

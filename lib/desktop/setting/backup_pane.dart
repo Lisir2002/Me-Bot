@@ -11,6 +11,8 @@ import '../../core/providers/backup_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/chat/chat_service.dart';
 import '../../core/services/backup/cherry_importer.dart';
+import '../../core/services/backup/backup_encryptor.dart';
+import '../../core/services/backup/credential_bridge.dart';
 import '../../shared/widgets/ios_switch.dart';
 import '../../shared/widgets/snackbar.dart';
 
@@ -80,14 +82,40 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
     context.read<BackupProvider>().updateConfig(cfg);
   }
 
-  Future<void> _chooseRestoreModeAndRun(Future<void> Function(RestoreMode) action) async {
+  Future<void> _chooseRestoreModeAndRun(
+    Future<void> Function(RestoreMode mode, String? passphrase) action,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final mode = await showDialog<RestoreMode>(
       context: context,
       builder: (ctx) => _RestoreModeDialog(),
     );
     if (mode == null) return;
-    await action(mode);
+    try {
+      await action(mode, null);
+    } on BackupCryptoError catch (e) {
+      if (!mounted) return;
+      if (e.kind == BackupCryptoErrorKind.needPassphrase) {
+        final pass = await _promptPassphrase(context, confirm: false);
+        if (pass == null) return;
+        try {
+          await action(mode, pass);
+        } on BackupCryptoError catch (e2) {
+          if (!mounted) return;
+          if (e2.kind == BackupCryptoErrorKind.wrongPassphrase) {
+            _showError(context, l10n.backupPassphraseWrong);
+            return;
+          }
+          rethrow;
+        }
+      } else if (e.kind == BackupCryptoErrorKind.wrongPassphrase) {
+        _showError(context, l10n.backupPassphraseWrong);
+        return;
+      } else {
+        rethrow;
+      }
+    }
+    if (!mounted) return;
     // Inform restart requirement
     await showDialog(
       context: context,
@@ -299,7 +327,9 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
                   Wrap(spacing: 6, runSpacing: 6, children: [
                     _DeskIosButton(label: l10n.backupPageExportToFile, filled: false, dense: true, onTap: () async {
                       await _saveConfig();
-                      final file = await context.read<BackupProvider>().exportToFile();
+                      final (policy, passphrase) = await _chooseExportPolicyAndPassphrase(context);
+                      if (policy == BackupCredentialPolicy.encrypted && passphrase == null) return;
+                      final file = await context.read<BackupProvider>().exportToFile(policy: policy, passphrase: passphrase);
                       String? savePath = await FilePicker.platform.saveFile(
                         dialogTitle: l10n.backupPageExportToFile,
                         fileName: file.uri.pathSegments.last,
@@ -318,8 +348,8 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
                       final path = result?.files.single.path;
                       if (path == null) return;
                       final f = File(path);
-                      await _chooseRestoreModeAndRun((mode) async {
-                        await context.read<BackupProvider>().restoreFromLocalFile(f, mode: mode);
+                      await _chooseRestoreModeAndRun((mode, pass) async {
+                        await context.read<BackupProvider>().restoreFromLocalFile(f, mode: mode, passphrase: pass);
                       });
                     }),
                     _DeskIosButton(label: l10n.backupPageImportFromCherryStudio, filled: false, dense: true, onTap: () async {
@@ -474,12 +504,38 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
     }
   }
 
-  Future<void> _chooseRestoreModeAndRun(Future<void> Function(RestoreMode) action) async {
+  Future<void> _chooseRestoreModeAndRun(
+    Future<void> Function(RestoreMode mode, String? passphrase) action,
+  ) async {
     final mode = await showDialog<RestoreMode>(context: context, builder: (_) => _RestoreModeDialog());
     if (mode == null) return;
-    await action(mode);
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
+    try {
+      await action(mode, null);
+    } on BackupCryptoError catch (e) {
+      if (!mounted) return;
+      if (e.kind == BackupCryptoErrorKind.needPassphrase) {
+        final pass = await _promptPassphrase(context, confirm: false);
+        if (pass == null) return;
+        try {
+          await action(mode, pass);
+        } on BackupCryptoError catch (e2) {
+          if (!mounted) return;
+          if (e2.kind == BackupCryptoErrorKind.wrongPassphrase) {
+            _showError(context, l10n.backupPassphraseWrong);
+            return;
+          }
+          rethrow;
+        }
+      } else if (e.kind == BackupCryptoErrorKind.wrongPassphrase) {
+        _showError(context, l10n.backupPassphraseWrong);
+        return;
+      } else {
+        rethrow;
+      }
+    }
+    if (!mounted) return;
     await showDialog(context: context, builder: (_) => AlertDialog(
       backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -541,8 +597,8 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
                                 final it = _items[i];
                                 return _RemoteItemCard(
                                   item: it,
-                                  onRestore: () => _chooseRestoreModeAndRun((mode) async {
-                                    await context.read<BackupProvider>().restoreFromItem(it, mode: mode);
+                                  onRestore: () => _chooseRestoreModeAndRun((mode, pass) async {
+                                    await context.read<BackupProvider>().restoreFromItem(it, mode: mode, passphrase: pass);
                                   }),
                                   onDelete: () async {
                                     final next = await context.read<BackupProvider>().deleteAndReload(it);
@@ -790,4 +846,100 @@ InputDecoration _deskInputDecoration(BuildContext context) {
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
   );
+}
+
+/// 输入备份口令（桌面端）。[confirm]=true 要求输入两次并校验。
+/// 供 [DesktopBackupPane]（本地导入/导出）与 [_RemoteBackupsDialog]（远程恢复）共用。
+Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) {
+  final l10n = AppLocalizations.of(context)!;
+  final cs = Theme.of(context).colorScheme;
+  final controller = TextEditingController();
+  final confirmController = TextEditingController();
+  var obscured = true;
+  final formKey = GlobalKey<FormState>();
+  return showDialog<String>(context: context, builder: (ctx) => StatefulBuilder(
+    builder: (ctx2, setState) => AlertDialog(
+      backgroundColor: cs.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(confirm ? l10n.backupPassphrase : l10n.backupEnterPassphrase),
+      content: Form(key: formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextFormField(
+          controller: controller,
+          obscureText: obscured,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: l10n.backupPassphrase,
+            helperText: l10n.backupPassphraseHint,
+            helperMaxLines: 2,
+            suffixIcon: IconButton(
+              icon: Icon(obscured ? Icons.visibility : Icons.visibility_off),
+              onPressed: () => setState(() => obscured = !obscured),
+            ),
+          ),
+          validator: (v) =>
+              (v == null || v.length < BackupEncryptor.minPassphraseLength) ? l10n.backupPassphraseHint : null,
+        ),
+        if (confirm) ...[
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: confirmController,
+            obscureText: obscured,
+            decoration: InputDecoration(labelText: l10n.backupPassphraseConfirm),
+            validator: (v) => v != controller.text ? l10n.backupPassphraseMismatch : null,
+          ),
+        ],
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.backupPageCancel)),
+        TextButton(
+          onPressed: () {
+            if (formKey.currentState?.validate() != true) return;
+            Navigator.of(ctx).pop(controller.text);
+          },
+          child: Text(l10n.backupPageSave),
+        ),
+      ],
+    ),
+  ));
+}
+
+void _showError(BuildContext context, String msg) {
+  if (!context.mounted) return;
+  final cs = Theme.of(context).colorScheme;
+  showDialog(context: context, builder: (_) => AlertDialog(
+    backgroundColor: cs.surface,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    title: Text(msg),
+    actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.backupPageOK))],
+  ));
+}
+
+/// 选择导出策略与口令（桌面端）。返回 (策略, 口令)；加密档取消口令则返回 (encrypted, null)。
+Future<(BackupCredentialPolicy, String?)> _chooseExportPolicyAndPassphrase(BuildContext context) async {
+  final l10n = AppLocalizations.of(context)!;
+  final cs = Theme.of(context).colorScheme;
+  final policy = await showDialog<BackupCredentialPolicy>(context: context, builder: (ctx) => AlertDialog(
+    backgroundColor: cs.surface,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    title: Text(l10n.backupEncryptPolicy),
+    content: Column(mainAxisSize: MainAxisSize.min, children: [
+      ListTile(
+        leading: Icon(Icons.visibility_off),
+        title: Text(l10n.backupExportRedacted),
+        onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.redacted),
+      ),
+      ListTile(
+        leading: Icon(Icons.lock),
+        title: Text(l10n.backupExportEncrypted),
+        onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.encrypted),
+      ),
+    ]),
+    actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.backupPageCancel))],
+  ));
+  if (policy == null) return (BackupCredentialPolicy.redacted, null);
+  String? passphrase;
+  if (policy == BackupCredentialPolicy.encrypted) {
+    passphrase = await _promptPassphrase(context, confirm: true);
+  }
+  return (policy, passphrase);
 }

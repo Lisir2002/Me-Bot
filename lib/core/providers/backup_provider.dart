@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../models/backup.dart';
 import '../services/chat/chat_service.dart';
 import '../services/backup/data_sync.dart';
+import '../services/backup/credential_bridge.dart';
 import '../services/logging/logger.dart';
 import '../services/logging/log_tags.dart';
 
@@ -61,12 +62,16 @@ class BackupProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> restoreFromItem(BackupFileItem item, {RestoreMode mode = RestoreMode.overwrite}) async {
+  Future<void> restoreFromItem(
+    BackupFileItem item, {
+    RestoreMode mode = RestoreMode.overwrite,
+    String? passphrase,
+  }) async {
     Logger.w(LogTags.backup, 'Restore from remote: ${item.displayName} mode=$mode');
     _busy = true; _message = null; notifyListeners();
     final sw = Stopwatch()..start();
     try {
-      await _dataSync.restoreFromWebDav(_cfg, item, mode: mode);
+      await _dataSync.restoreFromWebDav(_cfg, item, mode: mode, passphrase: passphrase);
       _message = 'Restored';
       Logger.i(LogTags.backup, 'Restore done (${sw.elapsedMilliseconds}ms)');
     } catch (e, st) {
@@ -101,21 +106,28 @@ class BackupProvider extends ChangeNotifier {
     }
   }
 
-  Future<File> exportToFile() async {
-    Logger.i(LogTags.backup, 'Export to local file');
+  Future<File> exportToFile({
+    BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
+    String? passphrase,
+  }) async {
+    Logger.i(LogTags.backup, 'Export to local file (policy=$policy)');
     try {
-      return await _dataSync.exportToFile(_cfg);
+      return await _dataSync.exportToFile(_cfg, policy: policy, passphrase: passphrase);
     } catch (e, st) {
       Logger.e(LogTags.backup, 'Export failed', e, st);
       rethrow;
     }
   }
 
-  Future<void> restoreFromLocalFile(File file, {RestoreMode mode = RestoreMode.overwrite}) async {
+  Future<void> restoreFromLocalFile(
+    File file, {
+    RestoreMode mode = RestoreMode.overwrite,
+    String? passphrase,
+  }) async {
     Logger.w(LogTags.backup, 'Restore from local: ${file.path} mode=$mode');
     final sw = Stopwatch()..start();
     try {
-      await _dataSync.restoreFromLocalFile(file, _cfg, mode: mode);
+      await _dataSync.restoreFromLocalFile(file, _cfg, mode: mode, passphrase: passphrase);
       Logger.i(LogTags.backup, 'Local restore done (${sw.elapsedMilliseconds}ms)');
     } catch (e, st) {
       Logger.e(LogTags.backup, 'Local restore failed (${sw.elapsedMilliseconds}ms)', e, st);

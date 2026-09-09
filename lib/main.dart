@@ -38,6 +38,11 @@ import 'dart:io' show Platform;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/android_background.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/secure_storage/secure_storage_bootstrap.dart';
+import 'core/services/migration/migration_context.dart';
+import 'core/services/migration/migration_runner.dart';
+import 'core/services/migration/steps/credential_migration_v1_step.dart';
+import 'core/services/migration/steps/credential_migration_v2_step.dart';
 
 final RouteObserver<ModalRoute<dynamic>> routeObserver = RouteObserver<ModalRoute<dynamic>>();
 bool _didCheckUpdates = false; // one-time update check flag
@@ -55,13 +60,17 @@ Future<void> main() async {
   await Logger.init();
   Logger.i(LogTags.boot, 'App boot complete, ready to run');
 
+  // ── 安全存储 + 数据迁移：必须早于任何 provider 构造 ──
+  await _initSecureStorage();
+  await _runMigrations();
+
   // ── 全局错误处理：所有未捕获异常落盘到 Logger ──
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    Logger.e(LogTags.error, 'FlutterError: \${details.exception}', details.exception, details.stack);
+    Logger.e(LogTags.error, 'FlutterError: ${details.exception}', details.exception, details.stack);
   };
   WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
-    Logger.e(LogTags.error, 'Platform error: \$error', error, stack);
+    Logger.e(LogTags.error, 'Platform error: $error', error, stack);
     return true;
   };
   // Count app launches (feeds the Stats page "app launch" card)
@@ -70,6 +79,54 @@ Future<void> main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   // Start app (no extra guarded zone logging)
 runApp(const MyApp());
+}
+
+/// 初始化安全存储。失败不阻塞启动：后续 provider 会检测到未初始化并退回明文路径。
+Future<void> _initSecureStorage() async {
+  try {
+    await SecureStorage.init(
+      onError: (message, error, stack) =>
+          Logger.w(LogTags.storage, message, error, stack),
+    );
+  } catch (e, s) {
+    Logger.e(LogTags.storage, 'secure storage init failed', e, s);
+  }
+}
+
+/// 执行已注册的迁移步骤。
+///
+/// 整体 try/catch：迁移属于「尽力而为」，任何失败都不得阻塞启动——
+/// 未迁移成功的明文会在下次启动时重试。
+Future<void> _runMigrations() async {
+  try {
+    if (!SecureStorage.isInitialized) {
+      Logger.w(LogTags.storage, 'skip migrations: secure storage unavailable');
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final runner = MigrationRunner()
+      ..register(CredentialMigrationV1Step())
+      ..register(CredentialMigrationV2Step());
+    final report = await runner.run(
+      MigrationContext(
+        prefs: prefs,
+        secureStorage: SecureStorage.instance,
+        log: (level, message, [error, stack]) {
+          switch (level) {
+            case 'e':
+              Logger.e(LogTags.storage, message, error, stack);
+            case 'w':
+              Logger.w(LogTags.storage, message, error, stack);
+            default:
+              Logger.i(LogTags.storage, message);
+          }
+        },
+      ),
+    );
+    Logger.i(LogTags.boot, 'migrations done: $report');
+  } catch (e, s) {
+    Logger.e(LogTags.boot, 'migration runner crashed', e, s);
+  }
 }
 
 /// Increments the persistent app-launch counter used by the Stats page.

@@ -3769,4 +3769,146 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsNoActivity => 'No activity';
+
+  @override
+  String get backupEncryptPolicy => 'Backup encryption';
+
+  @override
+  String get backupExportRedacted => 'Redacted (no keys, recommended)';
+
+  @override
+  String get backupExportEncrypted => 'Encrypted (with keys, needs passphrase)';
+
+  @override
+  String get backupExportRedactedDesc =>
+      'Credentials are removed from the backup file. Safest choice.';
+
+  @override
+  String get backupExportEncryptedDesc =>
+      'Credentials are included and protected by the passphrase.';
+
+  @override
+  String get backupPassphrase => 'Backup passphrase';
+
+  @override
+  String get backupPassphraseConfirm => 'Confirm passphrase';
+
+  @override
+  String get backupPassphraseHint =>
+      'At least 8 characters. If forgotten, the backup cannot be recovered.';
+
+  @override
+  String get backupPassphraseMismatch => 'Passphrases do not match';
+
+  @override
+  String get backupPassphraseWrong => 'Wrong passphrase, cannot decrypt';
+
+  @override
+  String get backupEnterPassphrase => 'Enter passphrase to decrypt this backup';
+
+  @override
+  String get securitySection => 'Security';
+
+  @override
+  String get securityCheckup => 'Security checkup';
+
+  @override
+  String get securityCheckupDesc =>
+      'Scan for leftover plaintext keys and orphaned credentials';
+
+  @override
+  String get runCheckup => 'Run checkup';
+
+  @override
+  String get checkupRunning => 'Scanning...';
+
+  @override
+  String get checkupNoIssue =>
+      'No issues found. Local credential storage looks healthy.';
+
+  @override
+  String get checkupFix => 'Auto-fix';
+
+  @override
+  String get checkupFixSuccess => 'Fix completed.';
+
+  @override
+  String get checkupFixNone => 'Nothing can be auto-fixed.';
+
+  @override
+  String get severityDanger => 'High risk';
+
+  @override
+  String get severityWarn => 'Suspicious';
+
+  @override
+  String get severitySafe => 'OK';
+
+  @override
+  String get keyHealth => 'Key health';
+
+  @override
+  String get keyHealthDesc => 'Key count, last used and rotation reminders';
+
+  @override
+  String get keyHealthEmpty => 'No key records yet.';
+
+  @override
+  String get keyCountLabel => 'Keys';
+
+  @override
+  String get lastUsed => 'Last used';
+
+  @override
+  String get lastRotated => 'Last rotated';
+
+  @override
+  String get never => 'Never';
+
+  @override
+  String get suggestRotation => 'Rotation suggested';
+
+  @override
+  String get rotationOk => 'Rotation OK';
+
+  @override
+  String get appLock => 'Privacy lock';
+
+  @override
+  String get appLockDesc =>
+      'Require identity verification for sensitive actions';
+
+  @override
+  String get appLockEnable => 'Enable lock';
+
+  @override
+  String get appLockUnsupported =>
+      'This device has no biometrics or device PIN';
+
+  @override
+  String get unlockFailed => 'Verification failed. Action cancelled.';
+
+  @override
+  String get allowlist => 'Allowlist policy';
+
+  @override
+  String get allowlistDesc => 'MCP command and web URL allowlists';
+
+  @override
+  String get allowlistEnable => 'Enforce allowlists';
+
+  @override
+  String get mcpCommandAllowlist => 'MCP command allowlist';
+
+  @override
+  String get webviewAllowlist => 'Web URL allowlist';
+
+  @override
+  String get allowHttp => 'Allow http URLs';
+
+  @override
+  String get webviewHosts => 'Exception sites';
+
+  @override
+  String get lockedByPolicy => 'Blocked by policy';
 }

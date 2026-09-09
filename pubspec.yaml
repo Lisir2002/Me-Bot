@@ -49,9 +49,13 @@ dependencies:
   http: ^1.5.0
   socks5_proxy: ^2.1.1
   jose: ^0.3.4
+  # JWE 加密备份：PBKDF2-HMAC-SHA256 派生 KEK（与 jose 配合，见 backup_encryptor.dart）
+  crypto: ^3.0.7
   # 安全存储：Android Keystore/EncryptedSharedPreferences、iOS&macOS Keychain、
   # Windows DPAPI、Linux libsecret。用于存放 API Key / 代理口令 / WebDAV 密码。
   flutter_secure_storage: ^9.2.4
+  # 隐私门禁（PR-6）：生物识别 / 系统 PIN 首个实现（IdentityVerifier）。
+  local_auth: ^2.3.0
   reorderable_grid_view: ^2.2.8
   flutter_slidable: ^3.0.1
   hive: ^2.2.3

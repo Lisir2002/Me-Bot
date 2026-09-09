@@ -17,6 +17,7 @@
 //   _BottomTabs/_BottomTabItem（本页专属 iOS 胶囊分段）
 // ──────────────────────────────────────────────────────────────
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -42,6 +43,10 @@ import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
+import '../../../core/services/security/app_lock_gate.dart';
+import '../../../core/services/security/app_lock_service.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
+import '../../../core/services/security/screen_security.dart';
 import 'multi_key_manager_page.dart';
 import 'provider_network_page.dart';
 import '../../../core/services/haptics.dart';
@@ -104,10 +109,23 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     _proxyUserCtrl.text = _cfg.proxyUsername ?? '';
     _proxyPassCtrl.text = _cfg.proxyPassword ?? '';
     _multiKeyEnabled = _cfg.multiKeyEnabled ?? false;
+    _initCredentialGuard();
+  }
+
+  /// PR-6：本页直接展示 API Key / Service Account，属敏感页面。
+  /// - 进入前过一次隐私门禁（门禁未开启时直接放行）；失败则退回上一页；
+  /// - Android 打开 FLAG_SECURE 防截屏/录屏，离开页面时关闭。
+  Future<void> _initCredentialGuard() async {
+    unawaited(ScreenSecurity.setSecure(true));
+    final lock = AppLockService.instance ?? await AppLockService.load();
+    final ok = await lock.ensureUnlocked(LockAction.viewCredential);
+    CredentialAuditLogger.record('view', 'provider:${widget.keyName}', ok: ok);
+    if (!ok && mounted) Navigator.of(context).maybePop();
   }
 
   @override
   void dispose() {
+    unawaited(ScreenSecurity.setSecure(false));
     _pc.dispose();
     _nameCtrl.dispose();
     _keyCtrl.dispose();

@@ -6,8 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/backup.dart';
 import '../../models/chat_message.dart';
 import '../../models/conversation.dart';
+import '../../models/provider_credentials.dart';
 import '../../providers/settings_provider.dart';
 import '../chat/chat_service.dart';
+import '../secure_storage/credential_keys.dart';
+import '../secure_storage/secure_storage_bootstrap.dart';
 import '../../../utils/app_directories.dart';
 
 class CherryImportResult {
@@ -32,6 +35,40 @@ class CherryImporter {
   static const String _providersKey = 'provider_configs_v1';
   static const String _providersOrderKey = 'providers_order_v1';
   static const String _assistantsKey = 'assistants_v1';
+
+  /// 写入 provider 配置前先把凭证抽进安全存储。
+  ///
+  /// Cherry Studio 导出的配置里 apiKey 是明文的，直接落 SharedPreferences
+  /// 等于把刚搬走的明文又请回来。
+  static Future<void> _persistProvidersSecurely(
+    SharedPreferences prefs,
+    Map<String, dynamic> providers,
+  ) async {
+    if (!SecureStorage.isInitialized) {
+      await prefs.setString(_providersKey, jsonEncode(providers));
+      return;
+    }
+    final secure = SecureStorage.instance;
+    final cleaned = <String, dynamic>{};
+    for (final entry in providers.entries) {
+      final id = entry.key.toString();
+      final value = entry.value;
+      if (value is! Map) {
+        cleaned[id] = value;
+        continue;
+      }
+      final json = Map<String, dynamic>.from(value);
+      final creds = ProviderCredentials.fromConfigJson(json);
+      if (creds.isNotEmpty) {
+        await secure.writeCredential(
+          CredentialKeys.provider(id),
+          creds.toRecord(id),
+        );
+      }
+      cleaned[id] = ProviderCredentials.stripCredentials(json);
+    }
+    await prefs.setString(_providersKey, jsonEncode(cleaned));
+  }
 
   static Future<CherryImportResult> importFromCherryStudio({
     required File file,
@@ -369,7 +406,7 @@ class CherryImporter {
     final prefs = await SharedPreferences.getInstance();
 
     if (mode == RestoreMode.overwrite) {
-      await prefs.setString(_providersKey, jsonEncode(imported));
+      await _persistProvidersSecurely(prefs, imported);
       await prefs.setStringList(_providersOrderKey, imported.keys.toList());
       return imported.length;
     }
@@ -405,7 +442,7 @@ class CherryImporter {
       }
     }
 
-    await prefs.setString(_providersKey, jsonEncode(merged));
+    await _persistProvidersSecurely(prefs, merged);
 
     // Merge providers order: append new ids at end, keep existing order
     final existedOrder = prefs.getStringList(_providersOrderKey) ?? const <String>[];

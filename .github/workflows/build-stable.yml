@@ -95,15 +95,24 @@ jobs:
           echo "版本号: $VERSION"
       # 静态分析硬门禁（B6，2026-09-09）：warning/error 阻塞合并（--no-fatal-infos 让 info 不致命）。
       # 存量 438 warning 已于 B1–B5 清零（见 docs/WARNING_CLEARANCE.md）。
-      # 输出过滤 info 明细防单步截断；退出码取 flutter analyze 原始码（PIPESTATUS），
-      # 有 warning/error 时本步骤失败 → job 失败。
+      # 输出过滤 info 明细防单步截断。
+      #
+      # 2026-09-09 修复：原写法 `analyze | tee log | grep -v "info •" || true` 之后
+      # 又执行了 echo / tail，再取 ${PIPESTATUS[0]} 拿到的已是 tail 的退出码（恒 0），
+      # 门禁形同虚设——PR #1 的 99 个 error（含 4 个 lib 编译错误）全数放行，
+      # 一直到 kernel_snapshot 阶段才炸。现改为 analyze 落文件后立即收 code。
       - name: 🔍 静态分析门禁（warning/error 阻塞）
         run: |
           flutter pub get
-          flutter analyze --no-fatal-infos | tee /tmp/analyze_full.log | grep -v "info •" || true
+          # 退出码必须紧跟 analyze 取；管道后再取 ${PIPESTATUS[0]} 会被后续
+          # echo / tail 覆盖成 0（实测：99 个 error 也照样通过）。
+          flutter analyze --no-fatal-infos > /tmp/analyze_full.log 2>&1
+          code=$?
+          grep -v "info •" /tmp/analyze_full.log || true
           echo "=== analyze 汇总 ==="
           tail -1 /tmp/analyze_full.log
-          exit ${PIPESTATUS[0]}
+          echo "analyze 退出码: $code"
+          exit $code
       # 如果有签名密钥，写入密钥文件
       - name: 🔑 写入签名密钥
         env:

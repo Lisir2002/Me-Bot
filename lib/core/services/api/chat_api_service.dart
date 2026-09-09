@@ -56,7 +56,11 @@ class ChatApiService {
 
   static String _apiKeyForRequest(ProviderConfig cfg, String modelId) {
     final orig = _effectiveApiKey(cfg).trim();
-    if (orig.isNotEmpty) return orig;
+    if (orig.isNotEmpty) {
+      // PR-7：本次请求实际使用了该 provider 的凭证，记录「最近使用」（去抖在接收端）。
+      SettingsProvider.onCredentialUsed?.call(cfg.id);
+      return orig;
+    }
     if ((cfg.id) == 'SiliconFlow') {
       final host = Uri.tryParse(cfg.baseUrl)?.host.toLowerCase() ?? '';
       if (!host.contains('siliconflow')) return orig;
@@ -64,6 +68,7 @@ class ChatApiService {
       final allowed = m == 'thudm/glm-4-9b-0414' || m == 'qwen/qwen3-8b';
       final fallback = siliconflowFallbackKey.trim();
       if (allowed && fallback.isNotEmpty) {
+        SettingsProvider.onCredentialUsed?.call(cfg.id);
         return fallback;
       }
     }

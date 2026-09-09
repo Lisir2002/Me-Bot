@@ -3653,6 +3653,141 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statsNoActivity => '无记录';
+
+  @override
+  String get backupEncryptPolicy => '备份加密方式';
+
+  @override
+  String get backupExportRedacted => '脱敏导出（不含密钥，推荐）';
+
+  @override
+  String get backupExportEncrypted => '加密导出（含密钥，需口令）';
+
+  @override
+  String get backupExportRedactedDesc => '备份文件中不含任何密钥，最安全';
+
+  @override
+  String get backupExportEncryptedDesc => '备份文件包含密钥，由口令加密保护';
+
+  @override
+  String get backupPassphrase => '备份口令';
+
+  @override
+  String get backupPassphraseConfirm => '确认口令';
+
+  @override
+  String get backupPassphraseHint => '至少 8 位，口令遗忘将无法恢复备份';
+
+  @override
+  String get backupPassphraseMismatch => '两次输入的口令不一致';
+
+  @override
+  String get backupPassphraseWrong => '口令错误，无法解密';
+
+  @override
+  String get backupEnterPassphrase => '输入口令以解密此备份';
+
+  @override
+  String get securitySection => '安全';
+
+  @override
+  String get securityCheckup => '安全体检';
+
+  @override
+  String get securityCheckupDesc => '扫描本地残留明文与孤儿凭证';
+
+  @override
+  String get runCheckup => '开始体检';
+
+  @override
+  String get checkupRunning => '体检中…';
+
+  @override
+  String get checkupNoIssue => '未发现问题，本地凭证存储正常';
+
+  @override
+  String get checkupFix => '一键修复';
+
+  @override
+  String get checkupFixSuccess => '修复完成';
+
+  @override
+  String get checkupFixNone => '没有可自动修复的项';
+
+  @override
+  String get severityDanger => '高危';
+
+  @override
+  String get severityWarn => '存疑';
+
+  @override
+  String get severitySafe => '正常';
+
+  @override
+  String get keyHealth => '密钥健康';
+
+  @override
+  String get keyHealthDesc => '密钥数量、最近使用与轮换提醒';
+
+  @override
+  String get keyHealthEmpty => '暂无密钥记录';
+
+  @override
+  String get keyCountLabel => '密钥数量';
+
+  @override
+  String get lastUsed => '最近使用';
+
+  @override
+  String get lastRotated => '上次轮换';
+
+  @override
+  String get never => '从未';
+
+  @override
+  String get suggestRotation => '建议轮换';
+
+  @override
+  String get rotationOk => '轮换正常';
+
+  @override
+  String get appLock => '隐私门禁';
+
+  @override
+  String get appLockDesc => '敏感操作前验证身份';
+
+  @override
+  String get appLockEnable => '启用门禁';
+
+  @override
+  String get appLockUnsupported => '本设备不支持生物识别或 PIN';
+
+  @override
+  String get unlockFailed => '验证未通过，操作已取消';
+
+  @override
+  String get allowlist => '白名单策略';
+
+  @override
+  String get allowlistDesc => 'MCP 命令与网页 URL 白名单';
+
+  @override
+  String get allowlistEnable => '启用白名单拦截';
+
+  @override
+  String get mcpCommandAllowlist => 'MCP 命令白名单';
+
+  @override
+  String get webviewAllowlist => '网页 URL 白名单';
+
+  @override
+  String get allowHttp => '允许 http 网址';
+
+  @override
+  String get webviewHosts => '例外站点';
+
+  @override
+  String get lockedByPolicy => '已被策略拦截';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -7122,6 +7257,141 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get statsNoActivity => '无记录';
+
+  @override
+  String get backupEncryptPolicy => '备份加密方式';
+
+  @override
+  String get backupExportRedacted => '脱敏导出（不含密钥，推荐）';
+
+  @override
+  String get backupExportEncrypted => '加密导出（含密钥，需口令）';
+
+  @override
+  String get backupExportRedactedDesc => '备份文件中不含任何密钥，最安全';
+
+  @override
+  String get backupExportEncryptedDesc => '备份文件包含密钥，由口令加密保护';
+
+  @override
+  String get backupPassphrase => '备份口令';
+
+  @override
+  String get backupPassphraseConfirm => '确认口令';
+
+  @override
+  String get backupPassphraseHint => '至少 8 位，口令遗忘将无法恢复备份';
+
+  @override
+  String get backupPassphraseMismatch => '两次输入的口令不一致';
+
+  @override
+  String get backupPassphraseWrong => '口令错误，无法解密';
+
+  @override
+  String get backupEnterPassphrase => '输入口令以解密此备份';
+
+  @override
+  String get securitySection => '安全';
+
+  @override
+  String get securityCheckup => '安全体检';
+
+  @override
+  String get securityCheckupDesc => '扫描本地残留明文与孤儿凭证';
+
+  @override
+  String get runCheckup => '开始体检';
+
+  @override
+  String get checkupRunning => '体检中…';
+
+  @override
+  String get checkupNoIssue => '未发现问题，本地凭证存储正常';
+
+  @override
+  String get checkupFix => '一键修复';
+
+  @override
+  String get checkupFixSuccess => '修复完成';
+
+  @override
+  String get checkupFixNone => '没有可自动修复的项';
+
+  @override
+  String get severityDanger => '高危';
+
+  @override
+  String get severityWarn => '存疑';
+
+  @override
+  String get severitySafe => '正常';
+
+  @override
+  String get keyHealth => '密钥健康';
+
+  @override
+  String get keyHealthDesc => '密钥数量、最近使用与轮换提醒';
+
+  @override
+  String get keyHealthEmpty => '暂无密钥记录';
+
+  @override
+  String get keyCountLabel => '密钥数量';
+
+  @override
+  String get lastUsed => '最近使用';
+
+  @override
+  String get lastRotated => '上次轮换';
+
+  @override
+  String get never => '从未';
+
+  @override
+  String get suggestRotation => '建议轮换';
+
+  @override
+  String get rotationOk => '轮换正常';
+
+  @override
+  String get appLock => '隐私门禁';
+
+  @override
+  String get appLockDesc => '敏感操作前验证身份';
+
+  @override
+  String get appLockEnable => '启用门禁';
+
+  @override
+  String get appLockUnsupported => '本设备不支持生物识别或 PIN';
+
+  @override
+  String get unlockFailed => '验证未通过，操作已取消';
+
+  @override
+  String get allowlist => '白名单策略';
+
+  @override
+  String get allowlistDesc => 'MCP 命令与网页 URL 白名单';
+
+  @override
+  String get allowlistEnable => '启用白名单拦截';
+
+  @override
+  String get mcpCommandAllowlist => 'MCP 命令白名单';
+
+  @override
+  String get webviewAllowlist => '网页 URL 白名单';
+
+  @override
+  String get allowHttp => '允许 http 网址';
+
+  @override
+  String get webviewHosts => '例外站点';
+
+  @override
+  String get lockedByPolicy => '已被策略拦截';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -10592,4 +10862,139 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get statsNoActivity => '無記錄';
+
+  @override
+  String get backupEncryptPolicy => '備份加密方式';
+
+  @override
+  String get backupExportRedacted => '脫敏匯出（不含金鑰，推薦）';
+
+  @override
+  String get backupExportEncrypted => '加密匯出（含金鑰，需口令）';
+
+  @override
+  String get backupExportRedactedDesc => '備份檔案中不含任何金鑰，最安全';
+
+  @override
+  String get backupExportEncryptedDesc => '備份檔案包含金鑰，由口令加密保護';
+
+  @override
+  String get backupPassphrase => '備份口令';
+
+  @override
+  String get backupPassphraseConfirm => '確認口令';
+
+  @override
+  String get backupPassphraseHint => '至少 8 位，口令遺忘將無法恢復備份';
+
+  @override
+  String get backupPassphraseMismatch => '兩次輸入的口令不一致';
+
+  @override
+  String get backupPassphraseWrong => '口令錯誤，無法解密';
+
+  @override
+  String get backupEnterPassphrase => '輸入口令以解密此備份';
+
+  @override
+  String get securitySection => '安全';
+
+  @override
+  String get securityCheckup => '安全體檢';
+
+  @override
+  String get securityCheckupDesc => '掃描本機殘留明文與孤兒憑證';
+
+  @override
+  String get runCheckup => '開始體檢';
+
+  @override
+  String get checkupRunning => '體檢中…';
+
+  @override
+  String get checkupNoIssue => '未發現問題，本機憑證儲存正常';
+
+  @override
+  String get checkupFix => '一鍵修復';
+
+  @override
+  String get checkupFixSuccess => '修復完成';
+
+  @override
+  String get checkupFixNone => '沒有可自動修復的項目';
+
+  @override
+  String get severityDanger => '高危';
+
+  @override
+  String get severityWarn => '存疑';
+
+  @override
+  String get severitySafe => '正常';
+
+  @override
+  String get keyHealth => '金鑰健康';
+
+  @override
+  String get keyHealthDesc => '金鑰數量、最近使用與輪換提醒';
+
+  @override
+  String get keyHealthEmpty => '暫無金鑰記錄';
+
+  @override
+  String get keyCountLabel => '金鑰數量';
+
+  @override
+  String get lastUsed => '最近使用';
+
+  @override
+  String get lastRotated => '上次輪換';
+
+  @override
+  String get never => '從未';
+
+  @override
+  String get suggestRotation => '建議輪換';
+
+  @override
+  String get rotationOk => '輪換正常';
+
+  @override
+  String get appLock => '隱私門禁';
+
+  @override
+  String get appLockDesc => '敏感操作前驗證身分';
+
+  @override
+  String get appLockEnable => '啟用門禁';
+
+  @override
+  String get appLockUnsupported => '本裝置不支援生物辨識或 PIN';
+
+  @override
+  String get unlockFailed => '驗證未通過，操作已取消';
+
+  @override
+  String get allowlist => '白名單政策';
+
+  @override
+  String get allowlistDesc => 'MCP 命令與網頁 URL 白名單';
+
+  @override
+  String get allowlistEnable => '啟用白名單攔截';
+
+  @override
+  String get mcpCommandAllowlist => 'MCP 命令白名單';
+
+  @override
+  String get webviewAllowlist => '網頁 URL 白名單';
+
+  @override
+  String get allowHttp => '允許 http 網址';
+
+  @override
+  String get webviewHosts => '例外站台';
+
+  @override
+  String get lockedByPolicy => '已被政策攔截';
 }

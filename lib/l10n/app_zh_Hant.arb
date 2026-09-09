@@ -139,7 +139,13 @@
   "providersPageDeleteSelectedConfirmContent": "確定要刪除選中的供應商嗎？此操作不可撤銷。",
   "providersPageDeleteSelectedSnackbar": "已刪除選中的供應商",
   "providersPageExportSelectedTitle": "匯出 {count} 個供應商",
-  "@providersPageExportSelectedTitle": {"placeholders": {"count": {"type": "int"}}},
+  "@providersPageExportSelectedTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "providersPageExportCopyButton": "複製",
   "providersPageExportShareButton": "分享",
   "providersPageExportCopiedSnackbar": "已複製匯出代碼",
@@ -1024,7 +1030,11 @@
   "networkProxyTestSuccess": "連線成功",
   "networkProxyTestFailed": "測試失敗：{error}",
   "@networkProxyTestFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "networkProxyNoUrl": "請輸入測試地址",
   "networkProxyPriorityNote": "同時啟用全域代理與供應商代理時，將優先使用供應商代理。",
@@ -1040,7 +1050,13 @@
   "storageCategoriesHeader": "分類",
   "storageRefresh": "重新整理",
   "storageItemsCount": "{count} 個檔案",
-  "@storageItemsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@storageItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDetailHeader": "明細",
   "storageEmpty": "暫無內容",
   "storageAvatarItem": "頭像",
@@ -1069,10 +1085,22 @@
   "storageSelectAll": "全選",
   "storageDelete": "刪除",
   "storageSelectedItems": "已選 {count} 項",
-  "@storageSelectedItems": { "placeholders": { "count": { "type": "int" } } },
+  "@storageSelectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageDeleteConfirmTitle": "刪除所選檔案？",
   "storageDeleteConfirmBody": "將永久刪除選中的 {count} 個檔案，確定嗎？",
-  "@storageDeleteConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "@storageDeleteConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "storageCancel": "取消",
   "storageConfirmDeleteBtn": "刪除",
   "storageCacheClearAvatar": "清理頭像快取",
@@ -1096,9 +1124,21 @@
   "logSettingsAutoDeleteNone": "不啟用",
   "logSettingsSizeLimit": "日誌大小上限",
   "logSettingDays": "{count} 天",
-  "@logSettingDays": { "placeholders": { "count": { "type": "int" } } },
+  "@logSettingDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "logSettingSizeText": "{limit} MB",
-  "@logSettingSizeText": { "placeholders": { "limit": { "type": "int" } } },
+  "@logSettingSizeText": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "snapshotTitle": "本地副本",
   "snapshotSettingsHeader": "設定",
   "snapshotKeepLocal": "保留本地副本",
@@ -1111,10 +1151,25 @@
   "snapshotSizeUnlimited": "不限制",
   "snapshotNotifyDone": "備份完成時提示",
   "snapshotLastBackup": "上次備份：{time}",
-  "@snapshotLastBackup": { "placeholders": { "time": { "type": "String" } } },
+  "@snapshotLastBackup": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotBackupNow": "立即備份一份",
   "snapshotListHeader": "本地副本 · {count} 份 · {size}",
-  "@snapshotListHeader": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@snapshotListHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "snapshotAutoBadge": "自動備份",
   "snapshotRestore": "回復",
   "snapshotExport": "匯出",
@@ -1128,14 +1183,29 @@
   "snapshotFreqWeekly": "每週",
   "snapshotFreqAuto": "自動",
   "snapshotCopies": "{n} 份",
-  "@snapshotCopies": { "placeholders": { "n": { "type": "int" } } },
+  "@snapshotCopies": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "backupPageReminderHeader": "備份提醒",
   "backupPageRemindMe": "定期提醒我備份",
   "backupPageLocalCopiesHeader": "本地副本",
   "backupPageKeepLocalCopy": "保留本地副本",
   "backupPageImportFromChatbox": "從 Chatbox 匯入",
   "backupPageManageCopiesDetail": "管理副本 · {count} 份 · {size}",
-  "@backupPageManageCopiesDetail": { "placeholders": { "count": { "type": "int" }, "size": { "type": "String" } } },
+  "@backupPageManageCopiesDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "backupPhasePacking": "正在打包",
   "backupPhaseExporting": "正在匯出",
   "backupPhaseDone": "完成",
@@ -1345,5 +1415,50 @@
   "@statsNoActivity": {
     "description": "热力图某天无消息",
     "type": "String"
-  }
+  },
+  "backupEncryptPolicy": "備份加密方式",
+  "backupExportRedacted": "脫敏匯出（不含金鑰，推薦）",
+  "backupExportEncrypted": "加密匯出（含金鑰，需口令）",
+  "backupExportRedactedDesc": "備份檔案中不含任何金鑰，最安全",
+  "backupExportEncryptedDesc": "備份檔案包含金鑰，由口令加密保護",
+  "backupPassphrase": "備份口令",
+  "backupPassphraseConfirm": "確認口令",
+  "backupPassphraseHint": "至少 8 位，口令遺忘將無法恢復備份",
+  "backupPassphraseMismatch": "兩次輸入的口令不一致",
+  "backupPassphraseWrong": "口令錯誤，無法解密",
+  "backupEnterPassphrase": "輸入口令以解密此備份",
+  "securitySection": "安全",
+  "securityCheckup": "安全體檢",
+  "securityCheckupDesc": "掃描本機殘留明文與孤兒憑證",
+  "runCheckup": "開始體檢",
+  "checkupRunning": "體檢中…",
+  "checkupNoIssue": "未發現問題，本機憑證儲存正常",
+  "checkupFix": "一鍵修復",
+  "checkupFixSuccess": "修復完成",
+  "checkupFixNone": "沒有可自動修復的項目",
+  "severityDanger": "高危",
+  "severityWarn": "存疑",
+  "severitySafe": "正常",
+  "keyHealth": "金鑰健康",
+  "keyHealthDesc": "金鑰數量、最近使用與輪換提醒",
+  "keyHealthEmpty": "暫無金鑰記錄",
+  "keyCountLabel": "金鑰數量",
+  "lastUsed": "最近使用",
+  "lastRotated": "上次輪換",
+  "never": "從未",
+  "suggestRotation": "建議輪換",
+  "rotationOk": "輪換正常",
+  "appLock": "隱私門禁",
+  "appLockDesc": "敏感操作前驗證身分",
+  "appLockEnable": "啟用門禁",
+  "appLockUnsupported": "本裝置不支援生物辨識或 PIN",
+  "unlockFailed": "驗證未通過，操作已取消",
+  "allowlist": "白名單政策",
+  "allowlistDesc": "MCP 命令與網頁 URL 白名單",
+  "allowlistEnable": "啟用白名單攔截",
+  "mcpCommandAllowlist": "MCP 命令白名單",
+  "webviewAllowlist": "網頁 URL 白名單",
+  "allowHttp": "允許 http 網址",
+  "webviewHosts": "例外站台",
+  "lockedByPolicy": "已被政策攔截"
 }

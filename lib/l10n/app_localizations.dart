@@ -7114,6 +7114,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No activity'**
   String get statsNoActivity;
+
+  /// No description provided for @backupEncryptPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup encryption'**
+  String get backupEncryptPolicy;
+
+  /// No description provided for @backupExportRedacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Redacted (no keys, recommended)'**
+  String get backupExportRedacted;
+
+  /// No description provided for @backupExportEncrypted.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted (with keys, needs passphrase)'**
+  String get backupExportEncrypted;
+
+  /// No description provided for @backupExportRedactedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials are removed from the backup file. Safest choice.'**
+  String get backupExportRedactedDesc;
+
+  /// No description provided for @backupExportEncryptedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials are included and protected by the passphrase.'**
+  String get backupExportEncryptedDesc;
+
+  /// No description provided for @backupPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup passphrase'**
+  String get backupPassphrase;
+
+  /// No description provided for @backupPassphraseConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm passphrase'**
+  String get backupPassphraseConfirm;
+
+  /// No description provided for @backupPassphraseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters. If forgotten, the backup cannot be recovered.'**
+  String get backupPassphraseHint;
+
+  /// No description provided for @backupPassphraseMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrases do not match'**
+  String get backupPassphraseMismatch;
+
+  /// No description provided for @backupPassphraseWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong passphrase, cannot decrypt'**
+  String get backupPassphraseWrong;
+
+  /// No description provided for @backupEnterPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter passphrase to decrypt this backup'**
+  String get backupEnterPassphrase;
+
+  /// No description provided for @securitySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get securitySection;
+
+  /// No description provided for @securityCheckup.
+  ///
+  /// In en, this message translates to:
+  /// **'Security checkup'**
+  String get securityCheckup;
+
+  /// No description provided for @securityCheckupDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan for leftover plaintext keys and orphaned credentials'**
+  String get securityCheckupDesc;
+
+  /// No description provided for @runCheckup.
+  ///
+  /// In en, this message translates to:
+  /// **'Run checkup'**
+  String get runCheckup;
+
+  /// No description provided for @checkupRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning...'**
+  String get checkupRunning;
+
+  /// No description provided for @checkupNoIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'No issues found. Local credential storage looks healthy.'**
+  String get checkupNoIssue;
+
+  /// No description provided for @checkupFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fix'**
+  String get checkupFix;
+
+  /// No description provided for @checkupFixSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix completed.'**
+  String get checkupFixSuccess;
+
+  /// No description provided for @checkupFixNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing can be auto-fixed.'**
+  String get checkupFixNone;
+
+  /// No description provided for @severityDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'High risk'**
+  String get severityDanger;
+
+  /// No description provided for @severityWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspicious'**
+  String get severityWarn;
+
+  /// No description provided for @severitySafe.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get severitySafe;
+
+  /// No description provided for @keyHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Key health'**
+  String get keyHealth;
+
+  /// No description provided for @keyHealthDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Key count, last used and rotation reminders'**
+  String get keyHealthDesc;
+
+  /// No description provided for @keyHealthEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No key records yet.'**
+  String get keyHealthEmpty;
+
+  /// No description provided for @keyCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys'**
+  String get keyCountLabel;
+
+  /// No description provided for @lastUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last used'**
+  String get lastUsed;
+
+  /// No description provided for @lastRotated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last rotated'**
+  String get lastRotated;
+
+  /// No description provided for @never.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get never;
+
+  /// No description provided for @suggestRotation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation suggested'**
+  String get suggestRotation;
+
+  /// No description provided for @rotationOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation OK'**
+  String get rotationOk;
+
+  /// No description provided for @appLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy lock'**
+  String get appLock;
+
+  /// No description provided for @appLockDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Require identity verification for sensitive actions'**
+  String get appLockDesc;
+
+  /// No description provided for @appLockEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable lock'**
+  String get appLockEnable;
+
+  /// No description provided for @appLockUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no biometrics or device PIN'**
+  String get appLockUnsupported;
+
+  /// No description provided for @unlockFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed. Action cancelled.'**
+  String get unlockFailed;
+
+  /// No description provided for @allowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowlist policy'**
+  String get allowlist;
+
+  /// No description provided for @allowlistDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP command and web URL allowlists'**
+  String get allowlistDesc;
+
+  /// No description provided for @allowlistEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enforce allowlists'**
+  String get allowlistEnable;
+
+  /// No description provided for @mcpCommandAllowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP command allowlist'**
+  String get mcpCommandAllowlist;
+
+  /// No description provided for @webviewAllowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Web URL allowlist'**
+  String get webviewAllowlist;
+
+  /// No description provided for @allowHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow http URLs'**
+  String get allowHttp;
+
+  /// No description provided for @webviewHosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Exception sites'**
+  String get webviewHosts;
+
+  /// No description provided for @lockedByPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked by policy'**
+  String get lockedByPolicy;
 }
 
 class _AppLocalizationsDelegate

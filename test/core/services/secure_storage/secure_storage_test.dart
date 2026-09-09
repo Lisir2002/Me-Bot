@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:minime_core/core/services/secure_storage/credential_record.dart';
 import 'package:minime_core/core/services/secure_storage/secure_storage_backend.dart';
 
-import '../../helpers/fake_secure_backend.dart';
+import '../../../helpers/fake_secure_backend.dart';
 
 void main() {
   group('CredentialRecord（预留接口①）', () {

@@ -6,7 +6,7 @@ import 'package:minime_core/core/services/backup/credential_bridge.dart';
 import 'package:minime_core/core/services/secure_storage/credential_keys.dart';
 import 'package:minime_core/core/services/secure_storage/credential_record.dart';
 
-import '../../helpers/fake_secure_backend.dart';
+import '../../../helpers/fake_secure_backend.dart';
 
 const _providerKey = 'sk-provider-secret';
 const _searchKey = 'sk-search-secret';

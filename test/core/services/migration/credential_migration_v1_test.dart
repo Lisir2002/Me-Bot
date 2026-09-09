@@ -9,7 +9,7 @@ import 'package:minime_core/core/services/migration/migration_runner.dart';
 import 'package:minime_core/core/services/migration/steps/credential_migration_v1_step.dart';
 import 'package:minime_core/core/services/secure_storage/credential_keys.dart';
 
-import '../../helpers/fake_secure_backend.dart';
+import '../../../helpers/fake_secure_backend.dart';
 
 const _secret = 'sk-legacy-plaintext-key';
 const _multi = 'sk-multi-legacy';

@@ -43,6 +43,13 @@ class ProviderCredentials {
       (proxyPassword == null || proxyPassword!.isEmpty) &&
       apiKeys.isEmpty;
 
+  /// [isEmpty] 的反义。
+  ///
+  /// Dart 不会自动为自定义类配对 isEmpty/isNotEmpty（只有 Iterable/Map/String
+  /// 等内置类型才有），调用方按直觉写了 `.isNotEmpty` 会直接编译失败，
+  /// 所以这里显式补齐，避免每个调用点都写 `!x.isEmpty`。
+  bool get isNotEmpty => !isEmpty;
+
   // ------------------------------------------------------------ JSON 抽取 / 回填
 
   /// 从 provider 配置 JSON 中抽取全部凭证字段。
@@ -151,7 +158,8 @@ class ProviderCredentials {
 
   factory ProviderCredentials.fromRecord(CredentialRecord? record) {
     if (record == null) return ProviderCredentials.empty;
-    final ext = record.ext ?? const <String, dynamic>{};
+    // CredentialRecord.ext 是非空字段（默认 const {}），无需 ?? 兜底
+    final ext = record.ext;
     final rawKeys = ext['apiKeys'];
     final multiKeys = <String, String>{};
     if (rawKeys is Map) {

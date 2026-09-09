@@ -10,7 +10,7 @@ import 'package:minime_core/core/services/migration/steps/credential_migration_v
 import 'package:minime_core/core/services/migration/steps/credential_migration_v2_step.dart';
 import 'package:minime_core/core/services/secure_storage/credential_keys.dart';
 
-import '../../helpers/fake_secure_backend.dart';
+import '../../../helpers/fake_secure_backend.dart';
 
 const _searchKey = 'sk-search-legacy';
 const _ttsKey = 'sk-tts-legacy';

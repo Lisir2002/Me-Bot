@@ -79,7 +79,8 @@ class ServiceCredentials {
   /// 从 record 还原凭证字段集合；record 为空返回空 map。
   static Map<String, String> fromRecord(CredentialRecord? record) {
     if (record == null) return const <String, String>{};
-    final ext = record.ext ?? const <String, dynamic>{};
+    // CredentialRecord.ext 是非空字段（默认 const {}），无需 ?? 兜底
+    final ext = record.ext;
     final out = <String, String>{
       for (final e in ext.entries)
         if (e.value is String) e.key: e.value as String,

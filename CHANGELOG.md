@@ -13,7 +13,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **Added**：`docs/WARNING_CLEARANCE.md`——438 warning 清零批次计划（B0–B6）、进度看板、红线。
 - **Changed**：本地分析环境打通：`/opt/flutter335`（Flutter 3.35.7 / Dart 3.9.2，与 CI 对齐）可用，全量 `flutter analyze` 约 48s，实测与 CI 逐条一致。`AGENTS.md` §1 原「禁止本地 analyze」条款作废；`/opt/flutter`（2.17）仍禁用。
 - **Changed**：warning 清零 B1 批次落地（`78b9c1c`）：`dart fix --apply` 应用 10 条规则，**438 → 248 warning，error 0**，涉及 53 个源文件。
-- **Changed**：B2 批次落地（`0a3124d`）：`unused_shown_name` + `unused_field`，248 → 220；B3 批次落地（`3703d87`）：`unused_local_variable` 连锁死代码，220 → 136；B4 批次落地：`unused_element`/`unused_element_parameter` 逐条判读，136 → **44**（27 文件 +40/−1011，净删 971 行），全程 error 0。B1/B2/B3 已过 CI 并逐条核对。
+- **Changed**：B2 批次落地（`0a3124d`）：`unused_shown_name` + `unused_field`，248 → 220；B3 批次落地（`3703d87`）：`unused_local_variable` 连锁死代码，220 → 136；B4 批次落地：`unused_element`/`unused_element_parameter` 逐条判读，136 → **44**（27 文件 +40/−1011，净删 971 行）；B5 批次落地：C 档 44 → **0**。**438 → 0 warning 清零达成，全程 error 0**。B1/B2/B3 已过 CI 并逐条核对。
+- **Changed**：`html_preview_dialog.dart` 的 `_pushConsole` 从 `extension on _HtmlPreviewDialogState` 移入 State 类体——extension 中调用 protected `setState` 触发 `invalid_use_of_protected_member`，移入类内是唯一合规修法，行为不变。
 - **Fixed**：0.0.43 遗留——`lib/l10n/app_localizations.dart` 中 `statsHeatmapSummary` / `statsHeatmapNoActivity` 被注入到类外（顶层无体函数声明），本地不跑 `pub get` 重新生成会报 `missing_function_body`；本次由 `flutter pub get` 重新生成到类内正确位置。
 
 ### 🤖 For Agents
@@ -28,6 +29,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 - **B4 判读判据**（写进 `WARNING_CLEARANCE.md` §5）：① 注释明示保留（`Keep original button for compatibility` / `Keep the old paginated version for reference`）→ ignore；② 完整功能未挂入口（haptics 开关行 ×6、代理设置对话框、MCP tab、头像选取）→ ignore + §9a 清单；③ 构造参数在体内被读取（`size`/`haptics`/`onLongPress` 等）→ ignore；④ 局部 helper / 薄封装 / 重复实现遗留 → 删。
 - **坑（B4 实测）**：脚本按括号平衡找块尾时，`{` 必须仅在 `paren==0` 时计为函数体开始——否则命名参数表 `{...}`（如 `void f({int x}) {`）的同行闭合会被误判为块结束，只删声明行留孤儿函数体。实测 6 处中招，已回滚重做。
 - **坑（B4 实测）**：删除大块代码会连锁暴露新警告（B4 删除后新增 `_safeString`、`_TileStatus`、4 条 unused_import、`pressedScale`、`_userMenuActive` 共 8 条）——每批删除后必须重新 analyze，连锁项逐条判读，不能只看批次目标清单。
+- **坑（B5 实测）**：行尾追加 ignore 时若原行已有 `//` 注释，`code; // foo // ignore: bar` 是**单个 comment token**，`ignore:` 段不会被 analyzer 识别——ignore 必须是独立注释段（另起一行或作为行内唯一注释）。
+- **B5 新发现疑似 bug**（§9a）：`tts_provider` 网络 TTS 的 `cancelled` 局部变量从未被置 true，取消链路完全失效；`chat_api_service` Response API follow-up 被 `if (false && …)` 手动禁用。两者均保留 + ignore，待用户决策。
 - 本文件三档结构本身是规范的一部分：发版时用户档→Release body，开发者档+模型档→本文件，勿混写。
 
 ## [0.0.43] - 2026-09-08

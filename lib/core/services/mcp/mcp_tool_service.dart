@@ -155,7 +155,7 @@ class McpToolService extends ChangeNotifier {
         }
         if (c is mcp.ImageContent) {
           final url = (c.url ?? '').toString();
-          final mime = (c.mimeType ?? '').toString();
+          final mime = c.mimeType.toString();
           buf.writeln('[image:${url.isNotEmpty ? url : mime}]');
           continue;
         }
@@ -247,7 +247,7 @@ class McpToolService extends ChangeNotifier {
           }
           if (c is mcp.ImageContent) {
             final url = (c.url ?? '').toString();
-            final mime = (c.mimeType ?? '').toString();
+            final mime = c.mimeType.toString();
             buf.writeln('[image:${url.isNotEmpty ? url : mime}]');
             continue;
           }

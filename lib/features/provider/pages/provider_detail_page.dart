@@ -914,7 +914,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
         case ProviderKind.claude:
           return 'Claude';
         case ProviderKind.openai:
-        default:
+        default: // ignore: unreachable_switch_default
           return 'OpenAI';
       }
     }

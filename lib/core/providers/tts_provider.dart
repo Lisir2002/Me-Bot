@@ -517,7 +517,7 @@ class TtsProvider extends ChangeNotifier {
     Future<void> doFetch() async {
       try {
         final res = await NetworkTtsService.synthesize(options: service, text: content, cancelled: _cancelFlag);
-        if (cancelled) return;
+        if (cancelled) return; // ignore: dead_code
         await _playAudioBytes(res.bytes, mime: res.mime);
       } catch (e) {
         _error = e.toString();

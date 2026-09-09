@@ -162,7 +162,7 @@ class _DisplaySettingsPageState extends State<DisplaySettingsPage> {
                       case ChatMessageBackgroundStyle.solid:
                         return l10n.displaySettingsPageChatMessageBackgroundSolid;
                       case ChatMessageBackgroundStyle.defaultStyle:
-                      default:
+                      default: // ignore: unreachable_switch_default
                         return l10n.displaySettingsPageChatMessageBackgroundDefault;
                     }
                   }

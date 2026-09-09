@@ -73,7 +73,7 @@
 | **B2** | `unused_shown_name` + `unused_field` | 27 | 脚本 + 逐条确认 | 221 |
 | **B3** | `unused_local_variable` | 84 | **逐条人眼判读**（副作用风险） | 137 |
 | **B4** | `unused_element` + `unused_element_parameter` | 93 | 逐条判读，区分"真废弃 / 预留 API / 误报" | **44** ✅（43 C档 + 1 保留字段）|
-| **B5** | C 档全部 | 43 | 逐条判读 + 少量重构 | 0 |
+| **B5** | C 档全部 | 43 | 逐条判读 + 少量重构 | **0** ✅ 清零达成 |
 | **B6** | 门禁硬化 | — | CI 改 `--no-fatal-infos` | 0 |
 
 **执行顺序原则**：先横扫 A 档（收益最大、风险最低、可逆），再按"文件聚集"纵切 B/C 档——同一文件的问题一次改完，diff 集中易 review，避免同一文件被反复改动。
@@ -124,9 +124,11 @@
 | B1 A 档自动修复（10 条规则） | ✅ 完成 | 438 | 248 | **248** | `78b9c1c` |
 | B2 shown_name + field | ✅ 完成 | 248 | 220 | **220** | `0a3124d` |
 | B3 local_variable | ✅ 完成 | 220 | 136 | **136** | `3703d87`（CI ✅ 136/0 核对）|
-| B4 element + element_parameter | ✅ 完成 | 136 | 44 | **44** | 见 git log（27 文件 +40/−1011）|
-| B5 C 档语义 | ⬜ 待执行 | 44 | 0 | — | |
-| B6 门禁硬化 | ⬜ 待执行 | — | 0 | — | — |
+| B4 element + element_parameter | ✅ 完成 | 136 | 44 | **44** | `8d8fe19`（27 文件 +40/−1011）|
+| B5 C 档语义 | ✅ 完成 | 44 | 0 | **0** 🎉 清零 | 见 git log（19 文件）|
+| B6 门禁硬化 | ⬜ 待执行 | 0 | 0 | **0（保持）** | — |
+
+**B5 处置明细**：14 条 `unreachable_switch_default` 按拍板保留 default + 行尾 ignore；20 条 `dead_null_aware_expression` 右侧均为字面量/getter 链（无副作用）全部删除；`dead_code`——`chat_api` 不可达 `return` 删除、`if (false && …)` 与 `tts cancelled` 保留 + ignore 入 §9a；`unnecessary_type_check`——`(b is Map)` 恒真删除、`schema is Map` 防御性检查（作者注释 depends on package）保留 + ignore；`invalid_use_of_protected_member`——`_pushConsole` 从 extension 移入 `_HtmlPreviewDialogState` 类体（extension 调 protected `setState` 违规）。
 
 ---
 
@@ -147,6 +149,8 @@
 | `lib/features/assistant/pages/assistant_settings_edit_page.dart` | `_McpTab`（165 行） | 助手 MCP 标签页，watch 两个 provider 过滤已连接服务器，未挂入 tab 栏 |
 | `lib/features/assistant/pages/assistant_settings_edit_page.dart` | `_pickLocalAvatar` / `_inputEmojiDialog` | 本地相册选头像 + emoji 输入对话框，完整实现无入口 |
 | `lib/features/chat/widgets/chat_message_widget.dart` | `_userMenuActive` | 用户菜单激活态，注释"for bubble highlight/scale"，只写不读（B4 删除 `_removeUserMenuOverlay` 连锁暴露）|
+| `lib/core/providers/tts_provider.dart` | `cancelled` | **疑似真 bug**：网络 TTS 取消链路残缺——`var cancelled = false` 后从未置 true，`_cancelFlag` 闭包永远返回 false（synthesize 取消轮询永不触发），`if (cancelled) return` 恒 false。需在 stop/dispose 处接线 `cancelled = true` |
+| `lib/core/services/api/chat_api_service.dart` | `if (false && …)` L2751 | Response API 的 tool_calls follow-up 流程被手动禁用（`false &&` 短路），整块代码保留。需决策：恢复启用或删除 |
 
 ### 9b. B2 发现：被赋值但从未读取的字段（已加 `// ignore: unused_field` 保留）
 

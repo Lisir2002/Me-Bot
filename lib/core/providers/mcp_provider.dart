@@ -1071,7 +1071,7 @@ class McpProvider extends ChangeNotifier {
         try {
           final schema = t.inputSchema; // dynamic; depends on package
           // We attempt to read JSON schema-ish fields via toJson if provided
-          final Map<String, dynamic> js = (schema is Map<String, dynamic>)
+          final Map<String, dynamic> js = (schema is Map<String, dynamic>) // ignore: unnecessary_type_check
               ? schema
               : (schema.toString().isNotEmpty)
                   ? (schema as dynamic).toJson?.call() as Map<String, dynamic>? ?? {}

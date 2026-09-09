@@ -41,7 +41,7 @@ class SettingsPage extends StatelessWidget {
         case ThemeMode.light:
           return l10n.settingsPageLightMode;
         case ThemeMode.system:
-        default:
+        default: // ignore: unreachable_switch_default
           return l10n.settingsPageSystemMode;
       }
     }

@@ -22,7 +22,7 @@ String encodeProviderConfig(ProviderConfig cfg) {
       type = 'claude';
       break;
     case ProviderKind.openai:
-    default:
+    default: // ignore: unreachable_switch_default
       type = 'openai-compat';
   }
   final map = <String, dynamic>{

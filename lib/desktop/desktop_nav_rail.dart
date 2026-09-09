@@ -255,7 +255,7 @@ class _ThemeCycleButtonState extends State<_ThemeCycleButton> {
       case ThemeMode.dark:
         return lucide.Lucide.Moon;
       case ThemeMode.system:
-      default:
+      default: // ignore: unreachable_switch_default
         return lucide.Lucide.Monitor;
     }
   }

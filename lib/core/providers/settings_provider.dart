@@ -1828,7 +1828,7 @@ class ProviderConfig {
           keyManagement: const KeyManagementConfig(),
         );
       case ProviderKind.openai:
-      default:
+      default: // ignore: unreachable_switch_default
         // Special-case MiniMe-CoreIN default models and overrides
         if (lowerKey.contains('minime-corein')) {
           return ProviderConfig(

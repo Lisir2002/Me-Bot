@@ -184,7 +184,7 @@ class _ServerCardState extends State<_ServerCard> {
         break;
       case McpStatus.error:
       case McpStatus.idle:
-      default:
+      default: // ignore: unreachable_switch_default
         statusColor = Colors.redAccent;
         statusText = l10n.mcpPageStatusDisconnected;
         break;

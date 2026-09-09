@@ -329,7 +329,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         if (res.type != ResultType.done) {
           showAppSnackBar(
             context,
-            message: l10n.imageViewerPageShareFailedOpenFile(res.message ?? res.type.name),
+            message: l10n.imageViewerPageShareFailedOpenFile(res.message),
             type: NotificationType.error,
           );
         }
@@ -339,7 +339,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         if (res.type != ResultType.done) {
           showAppSnackBar(
             context,
-            message: l10n.imageViewerPageShareFailedOpenFile(res.message ?? res.type.name),
+            message: l10n.imageViewerPageShareFailedOpenFile(res.message),
             type: NotificationType.error,
           );
         }

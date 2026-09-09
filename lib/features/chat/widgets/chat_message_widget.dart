@@ -123,7 +123,9 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   // User message context menu state
   final GlobalKey _userBubbleKey = GlobalKey();
   OverlayEntry? _userMenuOverlay;
-  bool _userMenuActive = false; // for bubble highlight/scale // ignore: unused_field
+// for bubble highlight/scale（§9a：用户菜单激活态待接入）
+// ignore: unused_field
+bool _userMenuActive = false;
   // Desktop anchored menus for bottom action buttons
   final GlobalKey _moreBtnKey1 = GlobalKey();
   final GlobalKey _moreBtnKey2 = GlobalKey();
@@ -744,7 +746,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                               if (res.type != ResultType.done) {
                                 showAppSnackBar(
                                   context,
-                                  message: l10n.chatMessageWidgetCannotOpenFile(res.message ?? res.type.toString()),
+                                  message: l10n.chatMessageWidgetCannotOpenFile(res.message),
                                   type: NotificationType.error,
                                 );
                               }
@@ -970,7 +972,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           child: child,
         );
       case ChatMessageBackgroundStyle.defaultStyle:
-      default:
+      default: // ignore: unreachable_switch_default
         // Default: keep original visual — user has a tinted bubble; assistant is bare
         if (isUser) {
           return Container(

@@ -157,7 +157,7 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                           return const DesktopTtsServicesPane(key: ValueKey('tts'));
                         case _SettingsMenuItem.about:
                           return const DesktopAboutPane(key: ValueKey('about'));
-                        default:
+                        default: // ignore: unreachable_switch_default
                           return _ComingSoonBody(selected: _selected);
                       }
                     }(),
@@ -3793,7 +3793,7 @@ class _TopicPositionDropdownState extends State<_TopicPositionDropdown> {
       case DesktopTopicPosition.right:
         return l10n.desktopDisplaySettingsTopicPositionRight;
       case DesktopTopicPosition.left:
-      default:
+      default: // ignore: unreachable_switch_default
         return l10n.desktopDisplaySettingsTopicPositionLeft;
     }
   }
@@ -4027,7 +4027,7 @@ class _BackgroundStyleDropdownState extends State<_BackgroundStyleDropdown> {
       case ChatMessageBackgroundStyle.solid:
         return l10n.displaySettingsPageChatMessageBackgroundSolid;
       case ChatMessageBackgroundStyle.defaultStyle:
-      default:
+      default: // ignore: unreachable_switch_default
         return l10n.displaySettingsPageChatMessageBackgroundDefault;
     }
   }
@@ -5020,7 +5020,7 @@ Future<String?> _showDesktopFontChooserDialog(
         return list;
       }
       final alt = await Future.value(sf.getFontList());
-      final out = List<String>.from(alt ?? const <String>[]);
+      final out = List<String>.from(alt);
       out.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
       if (out.isNotEmpty) return out;
     } catch (_) {/* ignore and fallback */}
@@ -5066,7 +5066,7 @@ Future<String?> _showDesktopFontChooserDialog(
     );
   });
   final fonts = await _fetchSystemFonts();
-  if (loadingTimer.isActive ?? false) loadingTimer.cancel();
+  if (loadingTimer.isActive) loadingTimer.cancel();
   if (loadingShown) {
     try { Navigator.of(context, rootNavigator: true).pop(); } catch (_) {}
   }

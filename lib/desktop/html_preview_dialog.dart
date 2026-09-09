@@ -128,6 +128,16 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
     if (mounted) setState(() {});
   }
 
+  void _pushConsole({required String level, required String message, String? source, int? line}) {
+    if (!mounted) return;
+    setState(() {
+      _console.add(_ConsoleMessage(level: level, message: message, source: source, line: line));
+      if (_console.length > 128) {
+        _console.removeRange(0, _console.length - 128);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -311,17 +321,4 @@ class _ConsoleMessage {
   final String? source;
   final int? line;
 }
-
-extension on _HtmlPreviewDialogState {
-  void _pushConsole({required String level, required String message, String? source, int? line}) {
-    if (!mounted) return;
-    setState(() {
-      _console.add(_ConsoleMessage(level: level, message: message, source: source, line: line));
-      if (_console.length > 128) {
-        _console.removeRange(0, _console.length - 128);
-      }
-    });
-  }
-}
-
 // (Bottom sheet version removed; desktop uses custom dialog.)

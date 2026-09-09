@@ -477,7 +477,7 @@ class ProviderManager {
       case ProviderKind.claude:
         return ClaudeProvider();
       case ProviderKind.openai:
-      default:
+      default: // ignore: unreachable_switch_default
         return OpenAIProvider();
     }
   }

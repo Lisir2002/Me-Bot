@@ -154,7 +154,7 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
       case LoadBalanceStrategy.random:
         return l10n.multiKeyPageStrategyRandom;
       case LoadBalanceStrategy.roundRobin:
-      default:
+      default: // ignore: unreachable_switch_default
         return l10n.multiKeyPageStrategyRoundRobin;
     }
   }

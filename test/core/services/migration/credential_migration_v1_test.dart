@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:minime_core/core/models/provider_credentials.dart';
 import 'package:minime_core/core/services/migration/migration_context.dart';
 import 'package:minime_core/core/services/migration/migration_runner.dart';
+import 'package:minime_core/core/services/migration/migration_step.dart';
 import 'package:minime_core/core/services/migration/steps/credential_migration_v1_step.dart';
 import 'package:minime_core/core/services/secure_storage/credential_keys.dart';
 
@@ -182,7 +183,7 @@ void main() {
       );
     });
 
-    test('空 preferences 下安全空跑', () async {
+    test('空 preferences 下安全空跑：不写凭证，只落审计锚点', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final prefs = await SharedPreferences.getInstance();
       final backend = FakeBackend();
@@ -192,7 +193,9 @@ void main() {
       );
 
       await CredentialMigrationV1Step().run(ctx);
-      expect(backend.store, isEmpty);
+      // 没有 legacy 明文 → 不得写入任何凭证；
+      // 唯一允许落盘的是「迁移已跑过」审计锚点，PR-5 安全体检用它判断设备状态。
+      expect(backend.store.keys, <String>{CredentialKeys.migrationV1Done});
     });
 
     test('损坏的 JSON 不抛异常', () async {
@@ -213,7 +216,7 @@ void main() {
       );
     });
 
-    test('明文回流（旧备份恢复）会被再次清理', () async {
+    test('明文回流（旧备份恢复）会被清理，但不覆盖安全存储已有值', () async {
       final backend = FakeBackend();
       final ctx = await buildContext(backend);
       final step = CredentialMigrationV1Step();
@@ -234,7 +237,11 @@ void main() {
 
       await runner.run(ctx);
 
-      // 明文被清掉，凭证进了安全存储
+      // 明文被清掉（安全核心），但安全存储保留的是**先迁移进去**的值
+      // —— 迁移层遵循「本地优先」语义，不拿恢复来的明文覆盖已有凭证。
+      // 「恢复的备份凭证应该生效」由恢复路径负责：BackupCredentialBridge
+      // .absorbOnRestore 在 prefs 恢复前就把备份凭证写进安全存储（备份优先），
+      // 迁移层只兜底清理明文，两条路各管一段，不抢语义。
       expect(
         ctx.prefs.getString(CredentialKeys.legacyGlobalProxyPassword),
         isNull,
@@ -245,7 +252,7 @@ void main() {
         await buildService(backend)
             .readCredential(CredentialKeys.provider('OpenAI')),
       );
-      expect(creds.apiKey, 'sk-restored');
+      expect(creds.apiKey, 'sk-legacy-plaintext-key');
     });
   });
 

@@ -100,7 +100,7 @@ class CredentialMigrationV1Step extends MigrationStep {
     final raw = ctx.prefs.getString(CredentialKeys.legacyProviderConfigs);
     if (raw == null || raw.isEmpty) return;
 
-    final dynamic decoded = jsonDecode(raw);
+    final dynamic decoded = _tryDecode(raw);
     if (decoded is! Map) return;
 
     final out = <String, dynamic>{};
@@ -173,7 +173,7 @@ class CredentialMigrationV1Step extends MigrationStep {
     final raw = ctx.prefs.getString(CredentialKeys.legacyWebDavConfig);
     if (raw == null || raw.isEmpty) return;
 
-    final dynamic decoded = jsonDecode(raw);
+    final dynamic decoded = _tryDecode(raw);
     if (decoded is! Map) return;
 
     final json = Map<String, dynamic>.from(decoded);
@@ -199,5 +199,21 @@ class CredentialMigrationV1Step extends MigrationStep {
     await ctx.prefs.remove(CredentialKeys.legacyGlobalProxyPassword);
     // provider_configs_v1 / webdav_config_v1 已在 A 阶段重写为剥离版，
     // 它们仍承载非敏感配置，不能整个删除。
+  }
+
+  // -------------------------------------------------------------------- 工具
+
+  /// 解析 legacy JSON；损坏时返回 null 而不是抛 [FormatException]。
+  ///
+  /// 迁移在启动路径上执行，任何抛出都会打断后续步骤甚至启动流程；
+  /// 而 prefs 里的值可能来自旧版本 / 用户手改 / 半截的备份恢复，
+  /// 格式不合法是**预期内**的输入，不是异常。因此这里一律吞掉，
+  /// 让该字段保持原样（下次启动再试），由上层决定是否告警。
+  static dynamic _tryDecode(String raw) {
+    try {
+      return jsonDecode(raw);
+    } catch (_) {
+      return null;
+    }
   }
 }

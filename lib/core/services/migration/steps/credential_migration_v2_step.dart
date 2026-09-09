@@ -65,7 +65,7 @@ class CredentialMigrationV2Step extends MigrationStep {
     final raw = ctx.prefs.getString(key);
     if (raw == null || raw.isEmpty) return;
 
-    final dynamic decoded = jsonDecode(raw);
+    final dynamic decoded = _tryDecode(raw);
     if (decoded is! List) return;
 
     final cleaned = <dynamic>[];
@@ -100,6 +100,19 @@ class CredentialMigrationV2Step extends MigrationStep {
 
     if (changed) {
       await ctx.prefs.setString(key, jsonEncode(cleaned));
+    }
+  }
+
+  /// 解析 legacy JSON；损坏时返回 null 而不是抛 [FormatException]。
+  ///
+  /// `search_services_v1` / `tts_services_v1` 的内容同样可能来自旧版本或
+  /// 半截的备份恢复，格式不合法是预期内输入；迁移跑在启动路径上，
+  /// 抛出会打断后续步骤，所以吞掉并保持原值，交给下次启动重试。
+  static dynamic _tryDecode(String raw) {
+    try {
+      return jsonDecode(raw);
+    } catch (_) {
+      return null;
     }
   }
 }

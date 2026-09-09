@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:minime_core/core/services/secure_storage/credential_record.dart';
 import 'package:minime_core/core/services/secure_storage/secure_storage_backend.dart';
+import 'package:minime_core/core/services/secure_storage/secure_storage_service.dart';
 
 import '../../../helpers/fake_secure_backend.dart';
 
@@ -124,7 +125,11 @@ void main() {
 
     test('未注册后端时抛 SecureStorageException（快速失败）', () async {
       final service = SecureStorageService(SecureStorageRegistry());
-      expect(
+      // 未注册后端 = 接入方漏调 init()，属编程错误而非运行期可用性问题：
+      // 即使 read 本身 fail-soft 也必须抛，否则会被吞成 null，
+      // 上层误判成「用户没配过凭证」，静默丢数据。
+      // 必须用 expectLater：expect 不等待 Future 完成就断言。
+      await expectLater(
         service.read('any'),
         throwsA(isA<SecureStorageException>()),
       );
@@ -149,7 +154,9 @@ void main() {
         errorSink: errors,
       );
 
-      expect(
+      // await expectLater 保证 write 真正执行完（含 onError 回调），
+      // 否则下面的 errors 断言跑在 Future 完成之前，拿到的是空列表。
+      await expectLater(
         service.write('k', secret),
         throwsA(isA<SecureStorageException>()),
       );

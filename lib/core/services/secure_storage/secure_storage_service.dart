@@ -41,22 +41,22 @@ class SecureStorageService {
   Future<String?> read(String key) => _guard<String?>(
         key,
         'read',
-        () => backend.read(key),
+        (b) => b.read(key),
         failSoft: true,
       );
 
   /// 写入；失败时抛 [SecureStorageException]（凭证必须确认落盘）。
   Future<void> write(String key, String value) =>
-      _guard<void>(key, 'write', () => backend.write(key, value));
+      _guard<void>(key, 'write', (b) => b.write(key, value));
 
   /// 删除；失败时抛 [SecureStorageException]。
   Future<void> delete(String key) =>
-      _guard<void>(key, 'delete', () => backend.delete(key));
+      _guard<void>(key, 'delete', (b) => b.delete(key));
 
   Future<bool> contains(String key) => _guard<bool>(
         key,
         'contains',
-        () => backend.contains(key),
+        (b) => b.contains(key),
         failSoft: true,
         fallback: false,
       );
@@ -65,7 +65,7 @@ class SecureStorageService {
   Future<Map<String, String>> readAll() => _guard<Map<String, String>>(
         '*',
         'readAll',
-        () => backend.readAll(),
+        (b) => b.readAll(),
         failSoft: true,
         fallback: <String, String>{},
       );
@@ -97,12 +97,16 @@ class SecureStorageService {
   Future<T> _guard<T>(
     String key,
     String op,
-    Future<T> Function() action, {
+    Future<T> Function(SecureStorageBackend) action, {
     bool failSoft = false,
     T? fallback,
   }) async {
+    // 后端解析放在 try **之外**：「没注册后端」是接入方漏调 init() 的编程错误，
+    // 不是运行期可用性问题，必须快速失败；否则 failSoft 会把它吞成 null，
+    // 上层拿到 null 会误判成「用户没配过凭证」，静默丢数据。
+    final b = backend;
     try {
-      return await action();
+      return await action(b);
     } catch (e, s) {
       // 只记录操作名与 key，绝不记录 value
       onError?.call(

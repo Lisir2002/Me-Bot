@@ -8,7 +8,7 @@ import 'package:mcp_client/mcp_client.dart' as mcp;
 /// @minime-core/fetch — In-memory MCP server engine and transport (Flutter/Dart)
 ///
 /// Provides a single `fetch` tool that mirrors industry practice (e.g. the
-/// kelivo_fetch tool):
+/// built-in fetch tool in popular MCP servers):
 ///   - GET or POST (with body)
 ///   - Markdown output by default, raw HTML via raw=true
 ///   - max_length truncation + start_index pagination

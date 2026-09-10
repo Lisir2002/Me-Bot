@@ -87,49 +87,18 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
-      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
-        run: flutter gen-l10n
       - name: 📝 获取版本号
         id: version
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "版本号: $VERSION"
-      # 静态分析硬门禁（B6，2026-09-09）：warning/error 阻塞合并（--no-fatal-infos 让 info 不致命）。
-      # 存量 438 warning 已于 B1–B5 清零（见 docs/WARNING_CLEARANCE.md）。
-      # 输出过滤 info 明细防单步截断。
-      #
-      # 2026-09-09 修复：原写法 `analyze | tee log | grep -v "info •" || true` 之后
-      # 又执行了 echo / tail，再取 ${PIPESTATUS[0]} 拿到的已是 tail 的退出码（恒 0），
-      # 门禁形同虚设——PR #1 的 99 个 error（含 4 个 lib 编译错误）全数放行，
-      # 一直到 kernel_snapshot 阶段才炸。现改为 analyze 落文件后立即收 code。
-      - name: 🔍 静态分析门禁（warning/error 阻塞）
-        run: |
-          flutter pub get
-          # l10n 护栏：arb 一致性/元数据/空翻译（error 阻塞）
-          python3 tools/check_l10n.py
-          # custom_lint 设计系统守护（2026-09-10 UI 批次转 fatal）：
-          # error 级规则 no_material_snackbar / no_material_list_tile / no_raw_scaffold 阻塞合并；
-          # --no-fatal-infos --no-fatal-warnings 让存量 warning/info（hardcoded_ui_string 等）继续只报告。
-          dart run custom_lint --no-fatal-infos --no-fatal-warnings > /tmp/custom_lint.log 2>&1
-          lcode=$?
-          tail -5 /tmp/custom_lint.log || true
-          if [ $lcode -ne 0 ]; then
-            echo "=== custom_lint error 级违规（退出码 $lcode），禁止合并 ==="
-            grep -E "• ERROR" /tmp/custom_lint.log || true
-            exit $lcode
-          fi
-          # gen 产物不入库，analyze 前必须生成
-          flutter gen-l10n
-          # 退出码必须紧跟 analyze 取；管道后再取 ${PIPESTATUS[0]} 会被后续
-          # echo / tail 覆盖成 0（实测：99 个 error 也照样通过）。
-          flutter analyze --no-fatal-infos > /tmp/analyze_full.log 2>&1
-          code=$?
-          grep -v "info •" /tmp/analyze_full.log || true
-          echo "=== analyze 汇总 ==="
-          tail -1 /tmp/analyze_full.log
-          echo "analyze 退出码: $code"
-          exit $code
+      # 质量门禁（B6 硬化 + 0.0.51 扩展）：l10n 护栏 → custom_lint → gen-l10n →
+      # analyze（warning/error 阻塞）→ flutter test。任一步非零即阻塞合并。
+      # 历史教训：原管道写法 `analyze | grep || true` 后接 echo 会覆盖 PIPESTATUS，
+      # 导致 99 个 error 被放行；现统一走 composite action，退出码直接传递。
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
       # 如果有签名密钥，写入密钥文件
       - name: 🔑 写入签名密钥
         env:
@@ -203,8 +172,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
-      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
-        run: flutter gen-l10n
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
       - name: 📝 获取版本号
         id: version
         run: |
@@ -259,8 +228,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
-      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
-        run: flutter gen-l10n
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
       - name: 📝 获取版本号
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
@@ -329,11 +298,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
-      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
-        run: flutter gen-l10n
-      - name: 🔧 获取依赖
-        run: flutter pub get
-
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
       - name: 🔍 验证 CMake 版本
         shell: pwsh
         run: |
@@ -401,7 +367,7 @@ jobs:
           $issContent = @"
           #define MyAppName "MiniMeCore"
           #define MyAppVersion "$env:VERSION"
-          #define MyAppPublisher "Psyche"
+          #define MyAppPublisher "MiniMe-Core"
           #define MyAppExeName "minime-core.exe"
           [Setup]
           AppId={{A7B8C9D0-E1F2-4A5B-8C9D-0E1F2A3B4C5D}}
@@ -492,8 +458,8 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
-      - name: 🌐 生成 l10n（产物不入库，构建前必须生成）
-        run: flutter gen-l10n
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
       - name: 📝 获取版本号
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
@@ -538,13 +504,8 @@ jobs:
           Categories=Utility;
           EOF
           
-          # 复制图标（如果存在）
-          if [ -f "linux/minime-core.png" ]; then
-            cp linux/minime-core.png AppDir/minime-core.png
-          else
-            # 创建一个简单的占位图标
-            touch AppDir/minime-core.png
-          fi
+          # 复制应用图标（使用 assets/app_icon.png，不再创建空占位）
+          cp assets/app_icon.png AppDir/minime-core.png
           
           # 构建 AppImage
           ARCH=x86_64 ./appimagetool AppDir MiniMeCore_linux_${VERSION}.AppImage
@@ -559,6 +520,9 @@ jobs:
           # 复制文件
           cp -r build/linux/x64/release/bundle/* deb/opt/minime-core/
           
+          # 安装应用图标到 hicolor
+          cp assets/app_icon.png deb/usr/share/icons/hicolor/256x256/apps/minime-core.png
+          
           # 创建 control 文件
           cat > deb/DEBIAN/control << EOF
           Package: minime-core
@@ -566,7 +530,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: amd64
-          Maintainer: Psyche <your@email.com>
+          Maintainer: MiniMe-Core <https://github.com/Lisir2002/Me-Bot>
           Depends: libgtk-3-0, libstdc++6, libglu1-mesa, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libglib2.0-0, libc6
           Description: MiniMeCore Application
            A Flutter application for Linux
@@ -608,7 +572,7 @@ jobs:
           Version:        ${VERSION_NUMBER}
           Release:        1%{?dist}
           Summary:        MiniMeCore Application
-          License:        MIT
+          License:        AGPL-3.0
           Source0:        %{name}-%{version}.tar.gz
           BuildArch:      x86_64
           Requires:       gtk3, libstdc++(>=6), mesa-libGLU, gstreamer1, gstreamer1-plugins-base, glib2, glibc
@@ -638,7 +602,7 @@ jobs:
           /usr/share/applications/minime-core.desktop
           
           %changelog
-          * $(date "+%a %b %d %Y") Psyche <your@email.com> - ${VERSION_NUMBER}-1
+          * $(date "+%a %b %d %Y") MiniMe-Core <https://github.com/Lisir2002/Me-Bot> - ${VERSION_NUMBER}-1
           - Initial RPM release
           EOF
           

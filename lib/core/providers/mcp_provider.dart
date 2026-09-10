@@ -656,16 +656,11 @@ class McpProvider extends ChangeNotifier {
 
     try {
       // Log connect intent and parameters
-      // debugPrint('[MCP/Connect] id=$id name=${server.name} transport=${server.transport.name}');
-      // debugPrint('[MCP/Connect] url=${server.url}');
       // if (server.headers.isNotEmpty) {
-      //   debugPrint('[MCP/Headers] ${server.headers.length} headers:');
       //   server.headers.forEach((k, v) {
       //     final masked = _maskIfSensitive(k, v);
-      //     debugPrint('  - $k: $masked');
       //   });
       // } else {
-      //   debugPrint('[MCP/Headers] (none)');
       // }
 
       final clientConfig = mcp.McpClient.simpleConfig(
@@ -730,7 +725,6 @@ class McpProvider extends ChangeNotifier {
         }
       })();
 
-      // debugPrint('[MCP/Connect] creating client (enableDebugLogging=true) ...');
       final clientResult = await mcp.McpClient.createAndConnect(
         config: clientConfig,
         transportConfig: transportConfig,
@@ -740,18 +734,14 @@ class McpProvider extends ChangeNotifier {
       _clients[id] = client;
       _status[id] = McpStatus.connected;
       _errors.remove(id);
-      // debugPrint('[MCP/Connected] id=$id (${server.name})');
       notifyListeners();
 
       // Try to refresh tools once connected
-      // debugPrint('[MCP/Tools] refreshing tools for id=$id ...');
       await refreshTools(id);
-      // debugPrint('[MCP/Tools] refresh done for id=$id');
 
       // Start/refresh heartbeat for this connection
       _startHeartbeat(id);
     } catch (e) {
-      // debugPrint('[MCP/Error] connect failed for id=$id (${server.name})');
       // _logMcpException('connect', serverId: id, error: e, stack: st);
       _status[id] = McpStatus.error;
       _errors[id] = e.toString();
@@ -762,11 +752,8 @@ class McpProvider extends ChangeNotifier {
   Future<void> disconnect(String id) async {
     final client = _clients.remove(id);
     try {
-      // debugPrint('[MCP/Disconnect] id=$id ...');
       client?.disconnect();
-      // debugPrint('[MCP/Disconnect] id=$id done');
     } catch (e) {
-      // debugPrint('[MCP/Error] disconnect failed for id=$id');
       // _logMcpException('disconnect', serverId: id, error: e, stack: st);
     }
     _status[id] = McpStatus.idle;
@@ -810,7 +797,6 @@ class McpProvider extends ChangeNotifier {
         // Add a soft timeout to avoid piling up
         await fut.timeout(const Duration(seconds: 6));
       } catch (e) {
-        // debugPrint('[MCP/Heartbeat] liveness check failed id=$id');
         // _logMcpException('heartbeat', serverId: id, error: e, stack: st);
         // Consider connection lost; mark error and try auto-reconnect
         _status[id] = McpStatus.error;
@@ -1065,9 +1051,7 @@ class McpProvider extends ChangeNotifier {
     final client = _clients[id];
     if (client == null) return;
     try {
-      // debugPrint('[MCP/Tools] listTools() ...');
       final tools = await client.listTools();
-      // debugPrint('[MCP/Tools] listTools() returned ${tools.length} tools');
       // Preserve enabled state from existing config
       final idx = _servers.indexWhere((e) => e.id == id);
       if (idx < 0) return;
@@ -1122,7 +1106,6 @@ class McpProvider extends ChangeNotifier {
       await _persist();
       notifyListeners();
     } catch (e) {
-      // debugPrint('[MCP/Tools] listTools() failed for id=$id');
       // _logMcpException('listTools', serverId: id, error: e, stack: st);
       // ignore tool refresh errors; status stays connected
     }
@@ -1220,7 +1203,6 @@ class McpProvider extends ChangeNotifier {
           recordToolCall(serverId, toolName, args, isError: true, error: e.toString());
           return null;
         }
-        // debugPrint('[MCP/Call] retry serverId=$serverId tool=$toolName');
         final start = DateTime.now();
         final normalized = _normalizeArgsForTool(serverId, toolName, args);
         final result = await client.callTool(toolName, normalized);

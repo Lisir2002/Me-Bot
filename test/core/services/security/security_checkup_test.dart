@@ -110,13 +110,20 @@ void main() {
       final plain = File('${tmp.path}/a.json')
         ..writeAsStringSync('{"provider_configs_v1":{"openai":{"apiKey":"sk-plain"}}}');
       final envelope = File('${tmp.path}/b.json')
-        ..writeAsStringSync('{"format":"kelivo-backup","version":2,"crypto":null,"payload":{}}');
+        ..writeAsStringSync('{"format":"minime-core-backup","version":2,"crypto":null,"payload":{}}');
 
       final scanner = BackupFileScanner(Future.value([plain, envelope]));
       final findings = await scanner.scan(_FakeStrings());
       expect(findings.length, 1);
       expect(findings.first.severity, CheckupSeverity.warn);
       expect(findings.first.autoFixable, isFalse);
+    });
+
+    test('旧格式名 kelivo-backup 的 v2 信封也识别为安全（导入兼容）', () async {
+      final legacy = File('${tmp.path}/legacy.json')
+        ..writeAsStringSync('{"format":"kelivo-backup","version":2,"crypto":null,"payload":{}}');
+      final scanner = BackupFileScanner(Future.value([legacy]));
+      expect(await scanner.scan(_FakeStrings()), isEmpty);
     });
 
     test('文件不存在 / 损坏 → 安全跳过', () async {

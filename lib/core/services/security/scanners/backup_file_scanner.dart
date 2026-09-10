@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../backup/backup_encryptor.dart';
 import '../checkup_scanner.dart';
 import '../secret_detector.dart';
 
@@ -54,7 +55,10 @@ class BackupFileScanner extends CheckupScanner {
   static bool _isEnvelope(String content) {
     try {
       final m = jsonDecode(content);
-      return m is Map && m['format'] == 'kelivo-backup' && m['version'] == 2;
+      if (m is! Map) return false;
+      final fmt = m['format'];
+      return (fmt == BackupEncryptor.format || fmt == BackupEncryptor.legacyFormat) &&
+          m['version'] == BackupEncryptor.version;
     } catch (_) {
       return false;
     }

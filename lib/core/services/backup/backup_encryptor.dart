@@ -45,7 +45,7 @@ class BackupCryptoError implements Exception {
 /// v2 信封：
 /// ```json
 /// {
-///   "format": "kelivo-backup",
+///   "format": "minime-core-backup",
 ///   "version": 2,
 ///   "crypto": {
 ///     "alg": "A256GCM",
@@ -59,7 +59,12 @@ class BackupCryptoError implements Exception {
 class BackupEncryptor {
   BackupEncryptor._();
 
-  static const String format = 'kelivo-backup';
+  /// 当前输出格式。0.0.51 起从旧名 `kelivo-backup` 迁移至此。
+  static const String format = 'minime-core-backup';
+
+  /// 旧格式名（0.0.47–0.0.50 使用），仅用于导入兼容，不再用于输出。
+  static const String legacyFormat = 'kelivo-backup';
+
   static const int version = 2;
   static const String contentAlg = 'A256GCM';
   static const String kdf = 'PBKDF2-SHA256';
@@ -69,10 +74,11 @@ class BackupEncryptor {
   /// 口令最短长度（至少 8 位，避免弱口令被暴力破解）。
   static const int minPassphraseLength = 8;
 
-  /// 是否是 v2 加密信封。
+  /// 是否是 v2 加密信封（兼容旧格式名 `kelivo-backup`）。
   static bool isEnvelope(Object? data) {
     if (data is! Map<String, dynamic>) return false;
-    return data['format'] == format &&
+    final fmt = data['format'];
+    return (fmt == format || fmt == legacyFormat) &&
         data['version'] == version &&
         data['crypto'] is Map<String, dynamic>;
   }
@@ -112,7 +118,8 @@ class BackupEncryptor {
     Map<String, dynamic> envelope, {
     String? passphrase,
   }) async {
-    if (envelope['format'] != format) {
+    final fmt = envelope['format'];
+    if (fmt != format && fmt != legacyFormat) {
       throw const BackupCryptoError('不支持的备份格式', BackupCryptoErrorKind.unsupported);
     }
     if (envelope['version'] != version) {

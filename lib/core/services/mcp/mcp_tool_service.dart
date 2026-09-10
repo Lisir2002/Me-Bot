@@ -62,12 +62,10 @@ class McpToolService extends ChangeNotifier {
       ToolApprovalGate? approvalGate,
   }) async {
     final selected = chat.getConversationMcpServers(conversationId).toSet();
-    // debugPrint('[MCP/Call/Select] convo=$conversationId tool=$toolName selectedServers=${selected.join(',')}');
     if (selected.isEmpty) return null;
 
     // Find a server that has this tool enabled
     final connected = mcpProvider.connectedServers.where((s) => selected.contains(s.id)).toList();
-    // debugPrint('[MCP/Call/Select] connectedAndSelected=${connected.map((s)=>s.id).join(',')}');
     for (final s in connected) {
       McpToolConfig? tool;
       for (final t in s.tools) {
@@ -77,7 +75,6 @@ class McpToolService extends ChangeNotifier {
         }
       }
       if (tool != null) {
-        // debugPrint('[MCP/Call/Select] using server=${s.id} name=${s.name} transport=${s.transport.name}');
         final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
         if (!ok) {
           return mcp.CallToolResult(
@@ -202,7 +199,6 @@ class McpToolService extends ChangeNotifier {
     // try servers selected for the assistant
     final a = (assistantId != null) ? assistants.getById(assistantId) : assistants.currentAssistant;
     final selected = (a?.mcpServerIds ?? const <String>[]).toSet();
-    // debugPrint('[MCP/Call/Select] assistant=${assistantId ?? a?.id ?? '(current)'} tool=$toolName selectedServers=${selected.join(',')}');
     if (selected.isEmpty) return '';
     for (final s in mcpProvider.connectedServers.where((s) => selected.contains(s.id))) {
       McpToolConfig? tool;
@@ -213,7 +209,6 @@ class McpToolService extends ChangeNotifier {
         }
       }
       if (tool == null) continue;
-      // debugPrint('[MCP/Call/Select] using server=${s.id} name=${s.name} transport=${s.transport.name}');
       final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
       if (!ok) return _deniedText(s.name, toolName);
       final res = await mcpProvider.callTool(s.id, toolName, arguments);
@@ -274,8 +269,6 @@ class McpToolService extends ChangeNotifier {
           final s = c.toString();
           if (!s.startsWith('Instance of')) buf.writeln(s);
         } catch (e) {
-          // debugPrint('[MCP/Call/TextParseError] server=${s.id} tool=$toolName type=${c.runtimeType} err=$e');
-          // debugPrint(st.toString());
         }
       }
       return buf.toString().trim();

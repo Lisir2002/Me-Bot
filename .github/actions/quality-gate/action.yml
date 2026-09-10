@@ -1,0 +1,54 @@
+name: Quality Gate
+description: |
+  跨平台质量门禁：l10n 护栏 → custom_lint（设计系统 + l10n）→ gen-l10n →
+  flutter analyze（warning/error 阻塞）→ flutter test。
+  任一步骤非零退出即阻塞合并。前置条件：已 checkout、已 install Flutter、
+  已 inject fallback（lib/secrets/fallback.dart 存在）。
+runs:
+  using: composite
+  steps:
+    - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "=== [1/6] flutter pub get ==="
+        flutter pub get
+
+        echo "=== [2/6] l10n 护栏（check_l10n.py）==="
+        if command -v python3 &>/dev/null; then
+          python3 tools/check_l10n.py
+        else
+          python tools/check_l10n.py
+        fi
+
+        echo "=== [3/6] custom_lint（设计系统 + l10n，error 级阻塞）==="
+        set +e
+        dart run custom_lint --no-fatal-infos --no-fatal-warnings > /tmp/custom_lint.log 2>&1
+        lcode=$?
+        set -e
+        tail -20 /tmp/custom_lint.log || true
+        if [ $lcode -ne 0 ]; then
+          echo "::error::custom_lint error 级违规（退出码 $lcode），禁止合并"
+          grep -E "• ERROR" /tmp/custom_lint.log || true
+          exit $lcode
+        fi
+
+        echo "=== [4/6] flutter gen-l10n ==="
+        flutter gen-l10n
+
+        echo "=== [5/6] flutter analyze（warning/error 阻塞，info 仅报告）==="
+        set +e
+        flutter analyze --no-fatal-infos > /tmp/analyze_full.log 2>&1
+        code=$?
+        set -e
+        grep -v "info •" /tmp/analyze_full.log || true
+        echo "--- analyze 汇总 ---"
+        tail -1 /tmp/analyze_full.log || true
+        if [ $code -ne 0 ]; then
+          echo "::error::flutter analyze 失败（退出码 $code），存在 warning/error"
+          exit $code
+        fi
+
+        echo "=== [6/6] flutter test ==="
+        flutter test

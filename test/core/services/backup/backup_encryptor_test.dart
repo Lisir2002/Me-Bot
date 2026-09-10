@@ -96,4 +96,14 @@ void main() {
     final out = await BackupEncryptor.open(env, passphrase: '12345678');
     expect(out, equals(settings));
   });
+
+  test('旧格式名 kelivo-backup 的信封可被 isEnvelope 识别并解密（导入兼容）', () async {
+    final env = await BackupEncryptor.seal(settings, passphrase: pass);
+    // 模拟 0.0.47–0.0.50 产出的旧格式信封
+    final legacyEnv = Map<String, dynamic>.from(env)..['format'] = BackupEncryptor.legacyFormat;
+    expect(legacyEnv['format'], 'kelivo-backup');
+    expect(BackupEncryptor.isEnvelope(legacyEnv), isTrue);
+    final out = await BackupEncryptor.open(legacyEnv, passphrase: pass);
+    expect(out, equals(settings));
+  });
 }

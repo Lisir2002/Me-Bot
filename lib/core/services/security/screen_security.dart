@@ -13,7 +13,7 @@ class ScreenSecurity {
   ScreenSecurity._();
 
   static const MethodChannel _channel =
-      MethodChannel('kelivo/screen_security');
+      MethodChannel('minime_core/screen_security');
 
   /// 开启/关闭防截屏。非 Android 平台为 no-op。
   static Future<void> setSecure(bool secure) async {

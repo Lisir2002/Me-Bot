@@ -208,7 +208,7 @@ class MyApp extends StatelessWidget {
           if (settings.showAppUpdates && !_didCheckUpdates) {
             _didCheckUpdates = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              try { context.read<UpdateProvider>().checkForUpdates(); } catch (_) {}
+              try { context.read<UpdateProvider>().checkForUpdates(); } catch (e, s) { Logger.w(LogTags.update, 'checkForUpdates failed', e, s); }
             });
           }
           return DynamicColorBuilder(
@@ -219,7 +219,7 @@ class MyApp extends StatelessWidget {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 try {
                   settings.setDynamicColorSupported(dynSupported);
-                } catch (_) {}
+                } catch (e, s) { Logger.w(LogTags.settings, 'setDynamicColorSupported failed', e, s); }
               });
 
               // Android-only: ensure background execution matches setting and prepare notifications if needed
@@ -238,14 +238,14 @@ class MyApp extends StatelessWidget {
                           );
                           await AndroidBackgroundManager.setEnabled(true);
                         }
-                      } catch (_) {}
+                      } catch (e, s) { Logger.w(LogTags.background, 'AndroidBackground init failed', e, s); }
                       if (mode == AndroidBackgroundChatMode.onNotify) {
                         await NotificationService.ensureInitialized();
                         await NotificationService.ensureAndroidNotificationsPermission();
                       }
                     }
                   }
-                } catch (_) {}
+                } catch (e, s) { Logger.w(LogTags.background, 'Android background setup failed', e, s); }
               });
 
               final useDyn = isAndroid && settings.useDynamicColor;
@@ -269,7 +269,8 @@ class MyApp extends StatelessWidget {
                   try {
                     final s = GoogleFonts.getFont(fam);
                     return s.fontFamily ?? fam;
-                  } catch (_) {
+                  } catch (e, s) {
+                    Logger.d(LogTags.settings, 'GoogleFonts.getFont failed for $fam, fallback to family name', e, s);
                     return fam;
                   }
                 }
@@ -338,9 +339,9 @@ class MyApp extends StatelessWidget {
                 if (!_didEnsureAssistants) {
                   _didEnsureAssistants = true;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    try { ctx.read<AssistantProvider>().ensureDefaults(ctx); } catch (_) {}
-                    try { ctx.read<ChatService>().setDefaultConversationTitle(ctx.l10n.chatServiceDefaultConversationTitle); } catch (_) {}
-                    try { ctx.read<UserProvider>().setDefaultNameIfUnset(ctx.l10n.userProviderDefaultUserName); } catch (_) {}
+                    try { ctx.read<AssistantProvider>().ensureDefaults(ctx); } catch (e, s) { Logger.w(LogTags.assistant, 'ensureDefaults failed', e, s); }
+                    try { ctx.read<ChatService>().setDefaultConversationTitle(ctx.l10n.chatServiceDefaultConversationTitle); } catch (e, s) { Logger.w(LogTags.chat, 'setDefaultConversationTitle failed', e, s); }
+                    try { ctx.read<UserProvider>().setDefaultNameIfUnset(ctx.l10n.userProviderDefaultUserName); } catch (e, s) { Logger.w(LogTags.user, 'setDefaultNameIfUnset failed', e, s); }
                   });
                 }
                 return AnnotatedRegion<SystemUiOverlayStyle>(

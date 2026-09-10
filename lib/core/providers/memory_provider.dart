@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/assistant_memory.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 import '../services/memory_store.dart';
 
 class MemoryProvider extends ChangeNotifier {
@@ -21,8 +23,8 @@ class MemoryProvider extends ChangeNotifier {
     try {
       _memories = await MemoryStore.getAll();
       notifyListeners();
-    } catch (e) {
-      debugPrint('Failed to load memories: $e');
+    } catch (e, s) {
+      Logger.w(LogTags.memory, 'Failed to load memories: $e', e, s);
       _memories = <AssistantMemory>[];
       notifyListeners();
     }

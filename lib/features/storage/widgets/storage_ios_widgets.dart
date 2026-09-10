@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/haptics.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../shared/widgets/card_surface.dart';
 import '../../../shared/widgets/ios_switch.dart';
@@ -312,7 +314,7 @@ class _StorageTactileIconButtonState extends State<StorageTactileIconButton> {
       Haptics.light();
       widget.onTap();
     } catch (e, s) {
-      debugPrint('[StorageTactileIconButton] onTap failed: $e\n$s');
+      Logger.w(LogTags.storage, '[StorageTactileIconButton] onTap failed: $e', e, s);
       if (mounted) {
         showAppSnackBar(context,
             message: context.l10n.operationFailed(e.toString()), type: NotificationType.error);
@@ -363,7 +365,7 @@ class _StorageOutlineButtonState extends State<StorageOutlineButton> {
       Haptics.soft();
       widget.onTap();
     } catch (e, s) {
-      debugPrint('[StorageOutlineButton] onTap failed: $e\n$s');
+      Logger.w(LogTags.storage, '[StorageOutlineButton] onTap failed: $e', e, s);
       if (mounted) {
         showAppSnackBar(context,
             message: context.l10n.operationFailed(e.toString()), type: NotificationType.error);
@@ -429,7 +431,7 @@ class _StorageFilledButtonState extends State<StorageFilledButton> {
       Haptics.soft();
       widget.onTap();
     } catch (e, s) {
-      debugPrint('[StorageFilledButton] onTap failed: $e\n$s');
+      Logger.w(LogTags.storage, '[StorageFilledButton] onTap failed: $e', e, s);
       if (mounted) {
         showAppSnackBar(context,
             message: context.l10n.operationFailed(e.toString()), type: NotificationType.error);

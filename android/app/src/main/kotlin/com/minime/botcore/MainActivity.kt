@@ -8,7 +8,7 @@ import io.flutter.plugin.common.MethodChannel
 // 继承 FlutterFragmentActivity：local_auth（PR-6 隐私门禁）在 Android 上要求
 // foreground activity 是 FragmentActivity，否则直接返回 NOT_FRAGMENT_ACTIVITY。
 class MainActivity : FlutterFragmentActivity() {
-    private val CHANNEL = "kelivo/screen_security"
+    private val CHANNEL = "minime_core/screen_security"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

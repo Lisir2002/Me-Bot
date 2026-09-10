@@ -20,7 +20,7 @@
 ## 2. 硬性铁律（每条带事故锚点；拿不准就停下来问用户）
 
 - **T1 品牌**：对外名称一律 MiniMe-Core。〔锚点：0.0.40 前的 README 遗留 Kelivo 旧名，需专门提交修正〕
-- **T2 l10n 五处同步**：`lib/l10n/` 下 4 个 ARB 是唯一事实源；`app_localizations.dart` / `app_localizations_en.dart` / `app_localizations_zh.dart` 是**提交在仓库的生成物**，CI 可能按 ARB 重新生成；`StatsL10n` 包装器同步收口。任何 key 变更 = 4 ARB + 3 生成 Dart + 包装器五处同步，且**逐类校验值按语言区分**、注入脚本必须幂等并自校验。〔锚点：0.0.43 轮 zh_Hant 类被写入 23 处简体值（应为「總覽/快取 Tokens/則訊息」等），全部返工〕
+- **T2 l10n 三处同步**：`lib/l10n/` 下 **3 个 ARB**（`app_en.arb` / `app_zh.arb` / `app_zh_Hant.arb`）是唯一事实源；`app_localizations.dart` / `app_localizations_en.dart` / `app_localizations_zh.dart` 是**不入库的生成物**（`.gitignore` 已忽略），CI 与本地构建前由 `flutter gen-l10n` 自动生成，禁止手改。任何 key 变更 = 3 ARB 同步加键（en 带参必须带 `@key.placeholders`）→ `flutter gen-l10n` → 代码用 `context.l10n.key`，且**逐类校验值按语言区分**（zh_Hant 用台湾常用语，禁止写入简体值）。四层闸门：①写码时 `custom_lint` 的 `hardcoded_ui_string` 拦截中文面量 ②CI `check_l10n.py`（R1 三语键集一致 / R2 带参必有 meta / R3 死占位符 / R6 空翻译，error 阻断）③`flutter gen-l10n` 编译期键不存在=编译错误 ④`flutter analyze`。`StatsL10n` 可空包装层已于 0.0.48 拆除，统一入口为 `context.l10n`（`BuildContextL10n` extension，非空）；zh_Hans 设备经 languageCode 兜底自动落到 zh，zh_TW/HK/MO 由 framework 特判进 zh_Hant。core/services 层禁止直接依赖 AppLocalizations——scanner 类走 `CheckupStrings` 注入，服务层日志与异常文本永不进 arb。〔锚点：0.0.43 轮 zh_Hant 类被写入 23 处简体值（应为「總覽/快取 Tokens/則訊息」等），全部返工；0.0.48 起 gen 产物不入库、四闸门生效，同类问题已可自动拦截〕
 - **T3 API 验证**：不确定的 API **禁止凭记忆使用**——先 grep 本地依赖源码（pub cache 已有 fl_chart 等），或 WebFetch 官方文档确认签名与语义。〔锚点：`MaterialLocalizations.firstDayOfWeek` 不存在（正确是 `firstDayOfWeekIndex`，0=周日）；`narrowWeekdays` 实为固定周日起始而非本地周序——两者都是凭记忆写错、CI 才暴露〕
 - **T4 依赖**：新增依赖必须先获用户确认；新增 import 后检查同名符号冲突（尤其 intl 等导出通用类型的包）。〔锚点：引入 intl 后其 `TextDirection` 类与 dart:ui 冲突，`TextDirection.ltr` 编译报错〕
 - **T5 脚本写码自校验**：脚本批量修改源文件后必须校验产物仍是合法文本（`file` 命令 + NUL 字节扫描 + JSON 解析）。〔锚点：占位常量字符串被写入 3 个 NUL 字节，grep 显示 binary file matches〕
@@ -32,7 +32,7 @@
 - **最小改动边界**：只修改任务直接涉及的文件。顺手重构、重命名、"顺便优化"必须先说明并获得同意，否则不做。
 - **注释只写"为什么"**：不生成解释"是什么"的废话注释；未经要求不新建文档文件。
 - **既有代码非任务必需不动**：不重命名、不改格式、不换实现风格；发现可改进点先报告，由用户决定。
-- 遵循既有模式：新 widget 走 `features/` 既有分层；文案一律走 l10n（StatsL10n 收口模式），禁止硬编码用户可见字符串。
+- 遵循既有模式：新 widget 走 `features/` 既有分层；文案一律走 l10n（`context.l10n` 非空入口），禁止硬编码用户可见字符串。
 
 ## 4. 行动边界（三级）
 

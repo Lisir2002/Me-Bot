@@ -64,13 +64,10 @@ TextTheme _withFontFallback(TextTheme base, List<String> fallback) {
 // String _lum(Color c) => 'lum=${c.computeLuminance().toStringAsFixed(4)}';
 //
 // void _logOne(String tag, String name, Color c) {
-//   debugPrint('[Theme/$tag][$name] ${_hex(c)} | ${_rgb(c)} | ${_hsl(c)} | ${_hsv(c)} | ${_lum(c)}');
 // }
 //
 // void _logColorScheme(String tag, ColorScheme s) {
 //   // Log a comprehensive dump of the scheme with HEX/RGB/HSL/HSV/Luminance.
-//   debugPrint('[Theme/$tag] ================= ColorScheme Dump =================');
-//   debugPrint('[Theme/$tag] brightness=${s.brightness}');
 //   _logOne(tag, 'primary', s.primary);
 //   _logOne(tag, 'onPrimary', s.onPrimary);
 //   _logOne(tag, 'primaryContainer', s.primaryContainer);
@@ -112,7 +109,6 @@ TextTheme _withFontFallback(TextTheme base, List<String> fallback) {
 //   _logOne(tag, 'surface@1dp', e1);
 //   _logOne(tag, 'surface@3dp', e3);
 //   _logOne(tag, 'surface@6dp', e6);
-//   debugPrint('[Theme/$tag] ======================================================');
 // }
 
 ThemeData buildLightTheme(ColorScheme? dynamicScheme) {

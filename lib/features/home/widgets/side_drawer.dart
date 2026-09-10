@@ -1701,7 +1701,6 @@ extension on _SideDrawerState {
                   bool applied = false;
                   for (int i = 0; i < maxTries; i++) {
                     final qq = randomQQ();
-                    // debugPrint(qq);
                     final url = 'https://q2.qlogo.cn/headimg_dl?dst_uin=' + qq + '&spec=100';
                     try {
                       final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));

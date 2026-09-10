@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/quick_phrase.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 import '../services/quick_phrase_store.dart';
 
 class QuickPhraseProvider with ChangeNotifier {
@@ -24,8 +26,8 @@ class QuickPhraseProvider with ChangeNotifier {
     try {
       _phrases = await QuickPhraseStore.getAll();
       notifyListeners();
-    } catch (e) {
-      debugPrint('Failed to load quick phrases: $e');
+    } catch (e, s) {
+      Logger.w(LogTags.quickPhrase, 'Failed to load quick phrases: $e', e, s);
       _phrases = [];
       notifyListeners();
     }

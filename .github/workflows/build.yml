@@ -88,6 +88,8 @@ jobs:
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
 
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
       - name: 📝 获取版本号
         id: version
         run: |
@@ -163,6 +165,9 @@ jobs:
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
 
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
+
       - name: 📝 获取版本号
         id: version
         run: |
@@ -218,6 +223,9 @@ jobs:
           cat > lib/secrets/fallback.dart <<'EOF'
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
+
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
 
       - name: 📝 获取版本号
         run: |
@@ -289,8 +297,8 @@ jobs:
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
 
-      - name: 🔧 获取依赖
-        run: flutter pub get
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
 
       - name: 🔍 验证 CMake 版本
         shell: pwsh
@@ -365,7 +373,7 @@ jobs:
           $issContent = @"
           #define MyAppName "MiniMeCore"
           #define MyAppVersion "$env:VERSION"
-          #define MyAppPublisher "Psyche"
+          #define MyAppPublisher "MiniMe-Core"
           #define MyAppExeName "minime-core.exe"
 
           [Setup]
@@ -465,6 +473,9 @@ jobs:
           const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
           EOF
 
+      - name: 🔍 质量门禁（l10n / custom_lint / analyze / test）
+        uses: ./.github/actions/quality-gate
+
       - name: 📝 获取版本号
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
@@ -511,13 +522,8 @@ jobs:
           Categories=Utility;
           EOF
           
-          # 复制图标（如果存在）
-          if [ -f "linux/minime-core.png" ]; then
-            cp linux/minime-core.png AppDir/minime-core.png
-          else
-            # 创建一个简单的占位图标
-            touch AppDir/minime-core.png
-          fi
+          # 复制应用图标（使用 assets/app_icon.png，不再创建空占位）
+          cp assets/app_icon.png AppDir/minime-core.png
           
           # 构建 AppImage
           ARCH=x86_64 ./appimagetool AppDir MiniMeCore_linux_${VERSION}.AppImage
@@ -533,6 +539,9 @@ jobs:
           # 复制文件
           cp -r build/linux/x64/release/bundle/* deb/opt/minime-core/
           
+          # 安装应用图标到 hicolor
+          cp assets/app_icon.png deb/usr/share/icons/hicolor/256x256/apps/minime-core.png
+          
           # 创建 control 文件
           cat > deb/DEBIAN/control << EOF
           Package: minime-core
@@ -540,7 +549,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: amd64
-          Maintainer: Psyche <your@email.com>
+          Maintainer: MiniMe-Core <https://github.com/Lisir2002/Me-Bot>
           Depends: libgtk-3-0, libstdc++6, libglu1-mesa, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libglib2.0-0, libc6
           Description: MiniMeCore Application
            A Flutter application for Linux
@@ -583,7 +592,7 @@ jobs:
           Version:        ${VERSION_NUMBER}
           Release:        1%{?dist}
           Summary:        MiniMeCore Application
-          License:        MIT
+          License:        AGPL-3.0
           Source0:        %{name}-%{version}.tar.gz
           BuildArch:      x86_64
           Requires:       gtk3, libstdc++(>=6), mesa-libGLU, gstreamer1, gstreamer1-plugins-base, glib2, glibc
@@ -613,7 +622,7 @@ jobs:
           /usr/share/applications/minime-core.desktop
           
           %changelog
-          * $(date "+%a %b %d %Y") Psyche <your@email.com> - ${VERSION_NUMBER}-1
+          * $(date "+%a %b %d %Y") MiniMe-Core <https://github.com/Lisir2002/Me-Bot> - ${VERSION_NUMBER}-1
           - Initial RPM release
           EOF
           

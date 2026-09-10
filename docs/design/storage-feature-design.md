@@ -96,7 +96,7 @@ class StorageEntry {
 ```
 
 ### 3.4 聊天记录（sqlite 三件套）
-- 目标：`<appData>/kelivo.db`、`kelivo.db-wal`、`kelivo.db-shm`
+- 目标：`<appData>/minime_core.db`、`minime_core.db-wal`、`minime_core.db-shm`
 - 通过 `ChatService` 暴露的数据库文件路径获得（对齐 `getUploadStats` 的取数方式）
 - 只读显示：名称 / `大小 · 1 个文件` / 完整路径；**不可直接删**（编辑 db 文件需经服务层）
 

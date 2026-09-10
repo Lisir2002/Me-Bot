@@ -15,6 +15,8 @@ import '../../core/services/backup/backup_encryptor.dart';
 import '../../core/services/backup/credential_bridge.dart';
 import '../../shared/widgets/ios_switch.dart';
 import '../../shared/widgets/snackbar.dart';
+import '../../icons/lucide_adapter.dart';
+import '../../shared/widgets/app_section.dart';
 
 class DesktopBackupPane extends StatefulWidget {
   const DesktopBackupPane({super.key});
@@ -923,14 +925,14 @@ Future<(BackupCredentialPolicy, String?)> _chooseExportPolicyAndPassphrase(Build
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     title: Text(l10n.backupEncryptPolicy),
     content: Column(mainAxisSize: MainAxisSize.min, children: [
-      ListTile(
-        leading: Icon(Icons.visibility_off),
-        title: Text(l10n.backupExportRedacted),
+      AppNavRow(
+        icon: Lucide.EyeOff,
+        label: l10n.backupExportRedacted,
         onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.redacted),
       ),
-      ListTile(
-        leading: Icon(Icons.lock),
-        title: Text(l10n.backupExportEncrypted),
+      AppNavRow(
+        icon: Lucide.KeyRound,
+        label: l10n.backupExportEncrypted,
         onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.encrypted),
       ),
     ]),

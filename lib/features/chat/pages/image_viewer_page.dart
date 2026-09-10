@@ -364,6 +364,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with TickerProviderSt
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
+      // ⚠️ 裸 Scaffold 豁免（no_raw_scaffold 白名单）：图片查看全屏沉浸页，无导航 chrome。
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(

@@ -5,6 +5,77 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.49] - 2026-09-10
+
+### 📣 For Users
+- **界面风格全面统一（告别割裂感）**：
+  - 安全中心页整页重排：与设置、备份等页面一致的 iOS 分组卡片风格——体检、密钥健康、门禁、白名单、安全事件五段统一呈现；
+  - 桌面端设置里的安全页不再出现双层标题栏；
+  - 备份、存储、字体选择、日志查看、助手编辑等页面同步对齐：统一行高、图标、开关与触感；
+  - 所有操作提示统一为顶部浮层（成功/失败/警示各有颜色语义），不再出现底部黑条。
+
+### 🔧 For Developers
+- **Added**：
+  - 设计系统守护 lint 三条（error 级，CI fatal）：`no_raw_scaffold`（页面壳必须 AppPage，全屏特例走文件级白名单注释）、`no_material_snackbar`（通知必须 showAppSnackBar）、`no_material_list_tile`（列表行必须 AppNavRow/AppSwitchRow）；
+  - CI custom_lint 转 fatal：`dart run custom_lint --no-fatal-infos --no-fatal-warnings`（仅 ERROR 阻塞，存量 warning 继续报告）；
+  - `docs/DESIGN_SYSTEM.md`：组件映射表 + 新页面 checklist + 豁免机制；
+  - 设计令牌 `AppStatusColor`（success/danger/warning，iOS 系统色板，与通知体系同源）。
+- **Changed**：
+  - `security_page` 双端拆壳：`SecurityPage` 移动薄壳（AppPage）+ `SecurityBody` 纯 body（桌面设置 pane 直接嵌入）；802 行手写 Material 风格全部映射为设计系统组件；
+  - 10 文件 SnackBar→showAppSnackBar（backup / storage×5 / model_edit_dialog / webview）、3 文件 ListTile→AppNavRow（google_fonts / log_settings_sheet / backup_pane）、log_viewer 与 assistant_settings_edit 裸 Scaffold→AppPage 壳；
+  - 5 个全屏特例（home / image_viewer / qr_scan / html_preview / webview）登记 no_raw_scaffold 白名单注释；
+  - snackbar 语义色改引 AppStatusColor（单一事实来源）。
+- **Fixed**：
+  - 桌面端设置→安全 pane 双层标题栏（整页嵌入改为 body 嵌入）；
+  - v0.0.48 发版时 pubspec 版本号未随 tag 入库的遗留（本版直接 bump 0.0.49+49）。
+
+### 🤖 For Agents
+- `Scaffold` / `SnackBar` / `ListTile` 在 lib/ 下现为 **error 级 lint 违规**（`no_raw_scaffold` / `no_material_snackbar` / `no_material_list_tile`），生成代码必须走 `AppPage` / `showAppSnackBar` / `AppNavRow`+`AppSwitchRow`；
+- 全屏特例豁免 = 文件内注释含「no_raw_scaffold 白名单」（home / image_viewer / qr_scan / html_preview / webview 五文件已登记，规则检测该标记整文件豁免）；
+- 语义色常量 `AppStatusColor.success/danger/warning`（0xFF34C759 / 0xFFFF3B30 / 0xFFFF9500），`Colors.green/red/amber` 不再允许散落；
+- CI 静态分析步 custom_lint 退出非 0 即禁止合并（error 级规则触发时）。
+
+## [0.0.48] - 2026-09-10
+
+### 📣 For Users
+- **安全中心全面强化**：
+  - 门禁开关更严谨：开启与关闭都需现场验证，防止他人随手关掉让保护形同虚设；
+  - 解锁更省心：验证成功后默认 5 分钟内（可选 0/1/5/15）再次查看无需重复验证，验证失败不进入宽限期；
+  - 新增「最近安全事件」：查看/复制密钥、口令输入、迁移、修复、标记轮换等操作留痕（本机保存，可复制/导出/清空）；
+  - 白名单从只读升级为可管理：MCP 命令白名单支持增删与恢复默认（正则校验），例外网站可增删，MCP 服务器逐个开关；
+  - 密钥健康增强：条目点击直达服务商编辑页，支持一键「标记已轮换」；
+- **界面语言大扫除**：
+  - 修复 60+ 处界面文案在英文等语言下的漏译（安全体检、用量统计、存储管理、翻译页、服务商推广卡等全量补齐）；
+  - 繁体中文全面对齐台湾常用语（金鑰/伺服器/資料/點擊/列印…），简繁切换更自然；
+  - 界面文案新增"防漏译闸门"：以后新增页面的文案漏译会在写代码与构建时被直接拦下。
+
+### 🔧 For Developers
+- **Added**：
+  - `BuildContextL10n` extension（`context.l10n` 非空快捷入口；`l10n.yaml` 开 `nullable-getter: false`）；
+  - `CheckupStrings` 注入接口：scanner 层文案与 l10n 解耦，新增扫描器文案由编译错误驱动补齐；
+  - custom_lint 插件 `tools/l10n_lints`（analyzer 6.x API）：`hardcoded_ui_string`（UI 中文字面量拦截，白名单参数名 + CJK 正则）、`l10n_no_field_cache`（AppLocalizations 字段缓存拦截）；
+  - 护栏 `tools/check_l10n.py`：R1 三语键集一致 / R2 带参必有 meta / R3 死占位符 / R4 驼峰命名 / R5 死键 / R6 空翻译（error 阻断，R4/R5 仅告警）；
+  - `tools/sync_l10n.sh`（护栏+gen 一条龙）、`tools/watch_l10n.sh`（inotify 监听 arb 自动 gen，无 inotify 时轮询降级）；死键存量留档 `tools/l10n_dead_keys.txt`。
+- **Changed**：
+  - zh_Hans 出库：arb 三份（en/zh/zh_Hant），繁体经 OpenCC `s2twp` 生成后人工校词；`supportedLocales` 收窄 `[en, zh, zh_Hant]`；
+  - 546 处 `AppLocalizations.of(ctx)!` 全量替换为 `ctx.l10n`（按捕获变量名机械替换 + analyze 清理 unused import）；
+  - `StatsL10n` 可空包装层拆除（nullable 时代 `?. ?? 中文兜底` 全部消亡，36 getter 直接映射 arb 键）；
+  - arb +27 键（checkup 文案 14 + 推广卡/翻译页/SnackBar/重试 13）、-1 死键（statsNoActivity）。
+- **Hardening**（安全中心强化包）：`AppLockService` 开关双向验证 + 解锁宽限期（`graceChoices` 0/1/5/15 分钟，失败不刷新、管理动作不留宽限）+ `load(verifier)` 注入 + 认证异常兜底；`CredentialAuditLogger`（ring buffer 100 + SharedPreferences 持久化 + recent/clear）；`KeyHealthService.markRotated`；`SecurityPage` 五段重写（体检自动跑+修复确认+fixHint / 健康+标记轮换 / 门禁宽限期 / 白名单 chips / 最近安全事件）。
+- **CI**：5 个构建 job 在 Inject fallback 后前置 `flutter gen-l10n`（gen 产物不入库，路径进 `.gitignore`）；Android 门禁追加 `check_l10n.py` + `custom_lint`（当前 report-only，硬编码清零后转 fatal）。
+- **Verified**：`flutter analyze` 0 error/0 warning；custom_lint 0 issue（29→0）；护栏 PASS（144 warn 为存量死键告警）；`flutter test` 154 用例全绿。
+
+### 🤖 For Agents
+- **行为语义**：`AppLocalizations.of` 返回**非空**——键不存在=编译错误（第一道闸门），不存在"运行时兜底文案"这回事；统一入口 `context.l10n`（`lib/l10n/build_context_l10n.dart`），**禁止**再写 `AppLocalizations.of(context)!`；`supportedLocales=[en, zh, zh_Hant]`：zh_Hans 设备经 gen 代码 languageCode 兜底自动落到 zh（零感知），zh_TW/HK/MO 由 framework 特判进 zh_Hant。
+- **新增文案流程（必经）**：①三份 arb 同步加键（en 带参必须带 `@key.placeholders`）→ ②`flutter gen-l10n`（或开着 `watch_l10n.sh`）→ ③代码用 `context.l10n.key`。漏做会被两端拦截：写码时 custom_lint 红线、CI 门禁护栏 R1/R2。core/services 层**禁止**直接依赖 AppLocalizations——scanner 类走 `CheckupStrings` 注入，服务层日志与异常文本**永不**进 arb。
+- **坑位预警**：
+  ① `// ignore: l10n_no_field_cache` 行内追加中文说明（如 `—— 注释`）会让 analyzer 忽略解析整条 ignore，必须单独成行（实测踩过）；
+  ② gen 产物（`lib/l10n/app_localizations*.dart`）不入库、手改必被覆盖，CI 每次构建前重新生成；
+  ③ 无 l10n delegates 的裸 widget 测试里 `context.l10n` 直接抛非空断言——wrap 需带 `AppLocalizations.localizationsDelegates` + `locale: Locale('zh')`（断言中文文案时 locale 缺省是 en，实测踩过）；
+  ④ `dynamic context` 上调 `context.l10n` 编译不报错但运行时必崩（extension 不参与动态分发）——参数类型必须显式 `BuildContext`（assistant_provider 实测踩过）；
+  ⑤ `List<String>` 不能作 arb 占位符类型，列表参数在注入层 `join(', ')` 后传 String；
+  ⑥ 存量死键 142 条见 `tools/l10n_dead_keys.txt`（R5 仅告警），清理排期后续版本。
+
 ## [0.0.47] - 2026-09-10
 
 ### 📣 For Users

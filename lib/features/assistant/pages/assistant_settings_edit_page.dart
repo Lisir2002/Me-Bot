@@ -42,6 +42,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../core/services/haptics.dart';
 import '../../../shared/widgets/ios_tactile.dart';
+import '../../../shared/widgets/app_page.dart';
 
 class AssistantSettingsEditPage extends StatefulWidget {
   const AssistantSettingsEditPage({super.key, required this.assistantId});
@@ -74,54 +75,34 @@ class _AssistantSettingsEditPageState extends State<AssistantSettingsEditPage>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
     final provider = context.watch<AssistantProvider>();
     final assistant = provider.getById(widget.assistantId);
 
     if (assistant == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: Tooltip(
-            message: l10n.settingsPageBackButton,
-            child: _TactileIconButton(
-              icon: Lucide.ArrowLeft,
-              color: cs.onSurface,
-              size: 22,
-              onTap: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          title: Text(l10n.assistantEditPageTitle),
-          actions: const [SizedBox(width: 12)],
-        ),
+      // 页面壳走设计系统 AppPage（返回键/标题与其他页面统一）。
+      return AppPage(
+        title: l10n.assistantEditPageTitle,
+        scrollable: false,
         body: Center(child: Text(l10n.assistantEditPageNotFound)),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Tooltip(
-          message: l10n.settingsPageBackButton,
-          child: _TactileIconButton(
-            icon: Lucide.ArrowLeft,
-            color: cs.onSurface,
-            size: 22,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-        ),
-        title: Text(
-          assistant.name.isNotEmpty
-              ? assistant.name
-              : l10n.assistantEditPageTitle,
-        ),
-        actions: const [SizedBox(width: 12)],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(52),
-          child: Padding(
+    // 页面壳走设计系统 AppPage；自绘 pill 分段条（_SegTabBar）是页内组件，
+    // 放 body 首行（与原 AppBar.bottom 视觉等价）。
+    return AppPage(
+      title: assistant.name.isNotEmpty
+          ? assistant.name
+          : l10n.assistantEditPageTitle,
+      scrollable: false,
+      actions: const [SizedBox(width: 12)],
+      body: Column(
+        children: [
+          Padding(
             padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _SegTabBar(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SegTabBar(
                     controller: _tabController,
                     tabs: [
                       l10n.assistantEditPageBasicTab,
@@ -136,17 +117,19 @@ class _AssistantSettingsEditPageState extends State<AssistantSettingsEditPage>
               ],
             ),
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _BasicSettingsTab(assistantId: assistant.id),
-          _PromptTab(assistantId: assistant.id),
-          _MemoryTab(assistantId: assistant.id),
-          // _McpTab(assistantId: assistant.id),
-          _QuickPhraseTab(assistantId: assistant.id),
-          _CustomRequestTab(assistantId: assistant.id),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _BasicSettingsTab(assistantId: assistant.id),
+                _PromptTab(assistantId: assistant.id),
+                _MemoryTab(assistantId: assistant.id),
+                // _McpTab(assistantId: assistant.id),
+                _QuickPhraseTab(assistantId: assistant.id),
+                _CustomRequestTab(assistantId: assistant.id),
+              ],
+            ),
+          ),
         ],
       ),
     );

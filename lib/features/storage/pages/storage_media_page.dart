@@ -13,6 +13,7 @@ import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
 import '../widgets/storage_ios_widgets.dart';
 import '../widgets/storage_info_header.dart';
+import '../../../shared/widgets/snackbar.dart';
 
 /// 可作为缩略图渲染的图片扩展名（与 StorageService 的图片集合保持一致）。
 const Set<String> _thumbImageExtensions = {
@@ -119,9 +120,8 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
     } catch (e, s) {
       Logger.e('StorageMedia', 'delete selected failed', e, s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.deleteFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.deleteFailed(e.toString()), type: NotificationType.error);
       }
     }
   }

@@ -3682,6 +3682,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _drawerController.close();
         },
       ),
+      // ⚠️ 裸 Scaffold 豁免（no_raw_scaffold 白名单）：首页全屏沉浸壳，自管底栏/抽屉。
       child: Scaffold(
         // child: Scaffold(
         key: _scaffoldKey,

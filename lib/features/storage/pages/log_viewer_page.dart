@@ -4,6 +4,9 @@ import '../../../core/services/storage/log_store.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/ios_tactile.dart';
 import '../widgets/log_settings_sheet.dart';
 import '../widgets/storage_ios_widgets.dart';
 
@@ -51,36 +54,29 @@ class _LogViewerPageState extends State<LogViewerPage> {
     final cs = Theme.of(context).colorScheme;
     final tabs = [l10n.storageLogContext, l10n.storageLogNetwork, l10n.storageLogRuntime];
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: StorageTactileIconButton(
-          icon: Lucide.ArrowLeft,
-          color: cs.onSurface,
-          size: 22,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(l10n.storageCateLogs),
-        actions: [
-          StorageTactileIconButton(
+    // 页面壳走设计系统 AppPage（返回键/标题/actions 统一）；
+    // pill 分段条是页内组件，放 body 首行（与原 AppBar.bottom 视觉等价）。
+    return AppPage(
+      title: l10n.storageCateLogs,
+      scrollable: false,
+      actions: [
+        Tooltip(
+          message: l10n.logSettingsTitle,
+          child: IosIconButton(
             icon: Lucide.Settings,
-            color: cs.onSurface,
             size: 20,
+            minSize: 44,
             semanticLabel: l10n.logSettingsTitle,
             onTap: () {
-              showModalBottomSheet<void>(
+              showAppSheet<void>(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: cs.surface,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                builder: (_) => const LogSettingsSheet(),
+                builder: const LogSettingsSheet(),
               );
             },
           ),
-          const SizedBox(width: 12),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+      ],
       body: Column(
         children: [
           Padding(

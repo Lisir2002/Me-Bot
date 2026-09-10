@@ -7,6 +7,7 @@ import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../shared/widgets/card_surface.dart';
 import '../../../shared/widgets/ios_switch.dart';
+import '../../../shared/widgets/snackbar.dart';
 
 /// 文件大小格式化（B / KB / MB / GB）。与 backup_page 的私有版保持一致。
 String storageFormatBytes(int bytes) {
@@ -313,9 +314,8 @@ class _StorageTactileIconButtonState extends State<StorageTactileIconButton> {
     } catch (e, s) {
       debugPrint('[StorageTactileIconButton] onTap failed: $e\n$s');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.operationFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.operationFailed(e.toString()), type: NotificationType.error);
       }
     }
   }
@@ -365,9 +365,8 @@ class _StorageOutlineButtonState extends State<StorageOutlineButton> {
     } catch (e, s) {
       debugPrint('[StorageOutlineButton] onTap failed: $e\n$s');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.operationFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.operationFailed(e.toString()), type: NotificationType.error);
       }
     }
   }
@@ -432,9 +431,8 @@ class _StorageFilledButtonState extends State<StorageFilledButton> {
     } catch (e, s) {
       debugPrint('[StorageFilledButton] onTap failed: $e\n$s');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.operationFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.operationFailed(e.toString()), type: NotificationType.error);
       }
     }
   }

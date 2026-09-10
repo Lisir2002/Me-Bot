@@ -5,6 +5,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import 'storage_ios_widgets.dart';
+import '../../../shared/widgets/app_section.dart';
 
 /// 日志设置底部弹窗：保存响应输出 / 省略大载荷 / 自动删除 / 日志大小上限。
 class LogSettingsSheet extends StatefulWidget {
@@ -265,9 +266,9 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
               Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
               for (final o in options)
-                ListTile(
-                  title: Text(o.$1),
-                  trailing: o.$2 ? Icon(Lucide.Check, color: cs.primary, size: 20) : null,
+                AppNavRow(
+                  icon: o.$2 ? Lucide.Check : Lucide.circleDot,
+                  label: o.$1,
                   onTap: () {
                     o.$3();
                     Navigator.of(ctx).pop();

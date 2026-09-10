@@ -154,7 +154,8 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                         case _SettingsMenuItem.backup:
                           return const DesktopBackupPane(key: ValueKey('backup'));
                         case _SettingsMenuItem.security:
-                          return const SecurityPage(key: ValueKey('security'));
+                          // 纯 body 嵌入（无 Scaffold），避免桌面 pane 双层标题栏
+                          return const SecurityBody(key: ValueKey('security'));
                         case _SettingsMenuItem.quickPhrases:
                           return const DesktopQuickPhrasesPane(key: ValueKey('quickPhrases'));
                         case _SettingsMenuItem.tts:
@@ -201,7 +202,7 @@ class _SettingsMenu extends StatelessWidget {
       (_SettingsMenuItem.tts, lucide.Lucide.Volume2, l10n.settingsPageTts),
       (_SettingsMenuItem.networkProxy, lucide.Lucide.EthernetPort, l10n.settingsPageNetworkProxy),
       (_SettingsMenuItem.backup, lucide.Lucide.Database, l10n.settingsPageBackup),
-      (_SettingsMenuItem.security, Icons.shield_outlined, l10n.securitySection),
+      (_SettingsMenuItem.security, lucide.Lucide.Shield, l10n.securitySection),
       (_SettingsMenuItem.about, lucide.Lucide.BadgeInfo, l10n.settingsPageAbout),
     ];
     final cs = Theme.of(context).colorScheme;

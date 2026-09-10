@@ -24,6 +24,24 @@ class AppGap {
 }
 
 /// 圆角体系（对应 Material 3 shape scale）
+/// 语义状态色（iOS 系统色板，与通知体系 `AppSnackBarManager` 同源唯一）。
+///
+/// 页面内的 success / danger / warning 状态色一律取这里，
+/// 禁止散落 `Colors.green` / `Colors.red` / `Colors.amber` 硬编码。
+class AppStatusColor {
+  AppStatusColor._();
+
+  /// 成功 / 通过（iOS systemGreen）。
+  static const Color success = Color(0xFF34C759);
+
+  /// 危险 / 高危（iOS systemRed）。
+  static const Color danger = Color(0xFFFF3B30);
+
+  /// 存疑 / 警告（iOS systemOrange）。
+  static const Color warning = Color(0xFFFF9500);
+}
+
+/// 圆角体系（对应 Material 3 shape scale）
 class AppRadius {
   static const double none = 0;
   static const double tiny = 2;    // chip 内部、badge

@@ -7,6 +7,7 @@ import '../l10n/build_context_l10n.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/providers/assistant_provider.dart';
 import '../core/providers/model_provider.dart';
+import '../shared/widgets/snackbar.dart';
 
 Future<bool?> showDesktopModelEditDialog(BuildContext context, {required String providerKey, required String modelId}) async {
   return _openDialog(context, providerKey: providerKey, modelId: modelId, isNew: false);
@@ -308,12 +309,12 @@ class _ModelEditDialogBodyState extends State<_ModelEditDialogBody> with SingleT
     String id = _idCtrl.text.trim();
     if (id.isEmpty || id.length < 2 || id.contains(' ')) {
       final l10n = context.l10n;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.modelDetailSheetInvalidIdError), backgroundColor: Theme.of(context).colorScheme.error));
+      showAppSnackBar(context, message: l10n.modelDetailSheetInvalidIdError, type: NotificationType.error);
       return;
     }
     if (old.models.contains(id) && id != prevId) {
       final l10n = context.l10n;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.modelDetailSheetModelIdExistsError), backgroundColor: Theme.of(context).colorScheme.error));
+      showAppSnackBar(context, message: l10n.modelDetailSheetModelIdExistsError, type: NotificationType.error);
       return;
     }
     final ov = Map<String, dynamic>.from(old.modelOverrides);

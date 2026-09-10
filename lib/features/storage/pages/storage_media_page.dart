@@ -8,6 +8,7 @@ import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
@@ -31,7 +32,7 @@ bool _isThumbImage(StorageEntry e) {
 ///
 /// 已迁移到 AppPage 槽位骨架：
 /// - Scaffold + AppBar + Column[Expanded(ListView), 底部操作条]
-///   → AppPage(body: ListView, bottom: 操作条)
+///   → AppPage.selfScrolling(body: ListView, bottom: 操作条)
 ///   —— 这是本批次第一个真正用上 `bottom:` 槽位的页面：底部"全选/删除"操作条
 ///      原来靠 Expanded + Column 撑在列表下方，现在由引擎固定到底栏区。
 /// - scrollable: false —— 引擎的 scrollable 用的是 ListView(children:[body])，会给子内容
@@ -135,7 +136,7 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
     final scan = _scan;
     final items = _filteredFor(scan);
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: cfg.title,
       leading: StorageTactileIconButton(
         icon: Lucide.ArrowLeft,
@@ -153,13 +154,11 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
         ),
         const SizedBox(width: AppGap.sm),
       ],
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       body: items.isEmpty
           ? Center(child: AppEmpty(message: l10n.storageEmpty))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                  AppGap.md, AppGap.sm, AppGap.md, AppGap.sm),
+          : AppListView(
+              topPadding: AppGap.sm,
+              bottomPadding: AppGap.sm,
               children: [
                 StorageInfoHeader(
                   title: cfg.title,

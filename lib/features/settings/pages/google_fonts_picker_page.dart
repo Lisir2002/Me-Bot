@@ -10,7 +10,7 @@ import '../../../shared/widgets/app_section.dart';
 /// Google Fonts 选择器。
 ///
 /// 已迁移到 AppPage 槽位骨架：
-/// - Scaffold + AppBar + 自定义返回键 → AppPage(title/body)，返回键由引擎统一提供
+/// - Scaffold + AppBar + 自定义返回键 → AppPage.selfScrolling(title/body)，返回键由引擎统一提供
 /// - ⚠️ body 内含 Expanded(ListView.builder) 需撑满剩余高度 → 必须 scrollable: false
 ///   且 bodyPadding 置零（外层 padding 会挤压 Expanded 可用高度）
 /// - 魔法数字 padding/圆角 → AppGap / AppRadius
@@ -53,11 +53,9 @@ class _GoogleFontsPickerPageState extends State<GoogleFontsPickerPage> {
     // 只算一次，供 itemCount 与 itemBuilder 复用
     final filtered = _filtered(_allFonts);
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: widget.title,
       // body 自带 Expanded 列表 → 必须 false，否则 Expanded 在 ListView 内会抛错
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       body: Column(
         children: [
           Padding(

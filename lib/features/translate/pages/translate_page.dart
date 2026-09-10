@@ -21,7 +21,7 @@ import '../../model/widgets/model_select_sheet.dart' show showModelSelector;
 /// 翻译页：固定高度输入区 + 可伸缩输出区 + 底部「目标语言 / 翻译」操作条。
 ///
 /// 已迁移到 AppPage 槽位骨架：
-/// - Scaffold + AppBar + `SafeArea(Column[...])` → `AppPage(body:, bottom:)`
+/// - Scaffold + AppBar + `SafeArea(Column[...])` → `AppPage.selfScrolling(body:, bottom:)`
 ///   - 底部操作条（语言选择 + 翻译/停止）→ **`bottom:` 槽位**
 ///   - 引擎已对 body 套 SafeArea，故删除页面自带的 `SafeArea`
 ///   - `bottomNavigationBar` 在 SafeArea 之外，所以底栏单独补 `SafeArea(top: false)`
@@ -202,7 +202,7 @@ class _TranslatePageState extends State<TranslatePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final asset = (_modelId != null) ? BrandAssets.assetForName(_modelId!) : null;
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: l10n.desktopNavTranslateTooltip,
       leading: Tooltip(
         message: l10n.settingsPageBackButton,
@@ -278,8 +278,6 @@ class _TranslatePageState extends State<TranslatePage> {
           ),
         ),
       ],
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

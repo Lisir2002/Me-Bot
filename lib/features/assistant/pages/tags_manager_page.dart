@@ -11,7 +11,7 @@ import '../../../theme/design_tokens.dart';
 /// 标签管理页（助手维度）。
 ///
 /// 已迁移到 AppPage 槽位骨架：
-/// - Scaffold + AppBar → AppPage(title/leading/actions/body)
+/// - Scaffold + AppBar → AppPage.selfScrolling(title/leading/actions/body)
 /// - ⚠️ body 是 ReorderableListView（自带滚动）→ 必须 scrollable: false，
 ///   且 bodyPadding 置零（条目自带 LTRB(12,10,12,2) 内边距）
 /// - 顶栏按钮复用共享 IosIconButton（符合 checklist 第 8 条）
@@ -115,7 +115,7 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
     final tp = context.watch<TagProvider>();
     final tags = tp.tags;
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: l10n.assistantTagsManageTitle,
       // 保留 iOS 风格 ChevronLeft（AppPage 默认是 arrow_back_ios_new_rounded）
       leading: Padding(
@@ -139,8 +139,6 @@ class _TagsManagerPageState extends State<TagsManagerPage> {
         ),
       ],
       // body 自带滚动容器 → 必须 false
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       body: ReorderableListView.builder(
         itemCount: tags.length,
         buildDefaultDragHandles: false,

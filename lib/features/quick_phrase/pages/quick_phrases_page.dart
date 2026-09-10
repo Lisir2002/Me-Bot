@@ -17,7 +17,7 @@ import '../../../shared/widgets/ios_tactile.dart';
 /// 快捷短语列表页（全局 / 助手专属）。
 ///
 /// 已迁移到 AppPage 槽位骨架：
-/// - Scaffold + AppBar + (Center 空态 | ReorderableListView) → AppPage(title/leading/actions/body)
+/// - Scaffold + AppBar + (Center 空态 | ReorderableListView) → AppPage.selfScrolling(title/leading/actions/body)
 /// - `scrollable: false` + `bodyPadding: zero`：ReorderableListView 自带滚动与 padding(16)，
 ///   空态的 `Center` 也需要有界高度才能垂直居中（引擎 scrollable 给的是无界高度）
 /// - 空态 → `AppEmpty(message:, icon: Lucide.Zap)`
@@ -95,7 +95,7 @@ class _QuickPhrasesPageState extends State<QuickPhrasesPage> {
         ? quickPhraseProvider.globalPhrases
         : quickPhraseProvider.getForAssistant(widget.assistantId!);
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: widget.assistantId == null
           ? l10n.quickPhraseGlobalTitle
           : l10n.quickPhraseAssistantTitle,
@@ -126,8 +126,6 @@ class _QuickPhrasesPageState extends State<QuickPhrasesPage> {
         ),
         const SizedBox(width: AppGap.sm),
       ],
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       body: phrases.isEmpty
           // AppEmpty 的图标固定 40（原实现 64），文案也走全局 h3 样式。
           // 若要完全还原原观感，把这里换回自定义 Center+Column 即可。

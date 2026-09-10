@@ -25,10 +25,8 @@ class TerminalPlaceholderPage extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final l10n = context.l10n;
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: l10n.mobileTabTerminal,
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

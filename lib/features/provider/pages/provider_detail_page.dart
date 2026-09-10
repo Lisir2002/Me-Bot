@@ -159,7 +159,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
     // - 内容是自管手势的 PageView（左右滑动切页）→ scrollable:false + bodyPadding:zero；
     // - 底部是自绘 iOS 胶囊 _BottomTabs（非 Material NavigationBar，且要保住滑动），
     //   故走 bottom: 槽位而非 segments(bottom)；引擎对 bottom: 不包 SafeArea，自供。
-    return AppPage(
+    return AppPage.selfScrolling(
       title: _nameCtrl.text.isEmpty ? widget.displayName : _nameCtrl.text,
       titleWidget: Row(
         children: [
@@ -266,8 +266,6 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
         // 无 AppGap token 对应的 AppBar 尾距（沿用原字面量 12）
         const SizedBox(width: AppGap.sm),
       ],
-      scrollable: false,
-      bodyPadding: EdgeInsets.zero,
       body: PageView(
         controller: _pc,
         onPageChanged: (i) => setState(() => _index = i),

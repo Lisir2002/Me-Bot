@@ -10,6 +10,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -79,7 +80,7 @@ class _UsageStatsPageState extends State<UsageStatsPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    return AppPage<StatsData>(
+    return AppPage<StatsData>.selfScrolling(
       title: l10n.settingsPageStats,
       actions: [
         Tooltip(
@@ -95,8 +96,6 @@ class _UsageStatsPageState extends State<UsageStatsPage> {
         ),
         const SizedBox(width: AppGap.sm),
       ],
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       states: AppPageStates<StatsData>(
         load: () => loadStatsData(context),
         reloadKey: _reloadToken,
@@ -144,8 +143,9 @@ class _DesktopStatsPaneState extends State<DesktopStatsPane> {
           return Center(child: Text('${snapshot.error}'));
         }
         final data = snapshot.data!;
-        return ListView(
-          padding: const EdgeInsets.all(16),
+        return AppListView(
+          topPadding: AppGap.md,
+          bottomPadding: AppGap.md,
           children: [
             Row(
               children: [
@@ -244,8 +244,9 @@ class _UsageStatsBodyState extends State<UsageStatsBody> {
   Widget build(BuildContext context) {
     final snapshot = _current;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return AppListView(
+      topPadding: AppGap.md,
+      bottomPadding: AppGap.md,
       children: [
         StatsRangeBar(value: widget.range, onChanged: widget.onRangeChanged),
         const SizedBox(height: 16),

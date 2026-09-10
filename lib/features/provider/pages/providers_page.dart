@@ -33,7 +33,7 @@ import '../../../core/services/security/credential_audit_logger.dart';
 // 迁移到 AppPage 骨架（批次 3 收官页，1123 行 → ~950 行）
 //
 // 骨架层：
-//   Scaffold + AppBar + Stack        → AppPage(title / actions / body)
+//   Scaffold + AppBar + Stack        → AppPage.selfScrolling(title / actions / body)
 //   AppBar leading 的私有返回按钮      → AppPage 默认 showBack（44pt 热区）
 //   ⚠️ safeArea: false               —— 本页自己用 `MediaQuery.padding.bottom`
 //                                      手动给列表留出系统栏空间（列表要"贴底"，
@@ -110,13 +110,11 @@ class _ProvidersPageState extends State<ProvidersPage> {
     tmp.addAll(map.values);
     final items = tmp;
 
-    return AppPage(
+    return AppPage.selfScrolling(
       title: l10n.providersPageTitle,
       // 见文件头注释：本页自己处理系统栏，关掉引擎的 SafeArea 避免二次叠加
       safeArea: false,
       // 见文件头注释：ReorderableListView 自带滚动
-      scrollable: false,
-      bodyPadding: AppPagePadding.zero,
       actions: [
         Tooltip(
           message: _selectMode ? l10n.searchServicesPageDone : l10n.providersPageMultiSelectTooltip,

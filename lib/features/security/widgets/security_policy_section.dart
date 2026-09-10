@@ -146,12 +146,7 @@ class SecurityPolicySection extends StatelessWidget {
         ]),
       const AppSectionDivider(),
       // MCP 服务器策略标题
-      Padding(
-        padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xxs, AppGap.sm, AppGap.xxxs),
-        child: Text(l10n.mcpServersPolicy,
-            style: TextStyle(
-                fontSize: 15, color: cs.onSurface.withValues(alpha: 0.9))),
-      ),
+      SecurityRowHeader(l10n.mcpServersPolicy),
       // 新功能 5：策略冲突检测（白名单开启时才检查）
       if (policy.enabled) ..._buildConflicts(context, policy, servers),
       if (servers.isEmpty)

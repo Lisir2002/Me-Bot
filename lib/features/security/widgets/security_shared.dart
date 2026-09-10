@@ -99,10 +99,10 @@ class SecurityStatusRow extends StatelessWidget {
 
 /// 卡内「标题 + 右侧操作」行头（与 AppNavRow 的横向留白对齐）。
 class SecurityRowHeader extends StatelessWidget {
-  const SecurityRowHeader(this.text, {super.key, required this.trailing});
+  const SecurityRowHeader(this.text, {super.key, this.trailing});
 
   final String text;
-  final Widget trailing;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -122,7 +122,7 @@ class SecurityRowHeader extends StatelessWidget {
                 ),
               ),
             ),
-            trailing,
+            if (trailing != null) trailing!,
           ],
         ),
       );

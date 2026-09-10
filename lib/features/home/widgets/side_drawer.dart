@@ -8,12 +8,11 @@ import 'package:provider/provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/providers/settings_provider.dart';
-import '../../../core/models/chat_item.dart';
+import '../../../core/models/conversation.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../settings/pages/settings_page.dart';
 import '../../translate/pages/translate_page.dart';
 import '../../../core/providers/assistant_provider.dart';
-import '../../../core/providers/update_provider.dart';
 import '../../../core/models/assistant.dart';
 import '../../assistant/pages/assistant_settings_edit_page.dart';
 import '../../chat/pages/chat_history_page.dart';
@@ -22,13 +21,9 @@ import 'package:flutter/services.dart';
 import 'dart:io' show File;
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/app_dialog.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:animations/animations.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../utils/avatar_cache.dart';
 import 'dart:ui' as ui;
@@ -40,6 +35,9 @@ import '../../../shared/widgets/emoji_text.dart';
 import '../../../core/providers/tag_provider.dart';
 import '../../assistant/pages/tags_manager_page.dart';
 import '../../assistant/widgets/tags_manager_dialog.dart';
+import 'conversation_sort_switcher.dart';
+import 'conversation_list_builder.dart';
+import 'assistant_avatar.dart';
 
 class SideDrawer extends StatefulWidget {
   const SideDrawer({
@@ -87,124 +85,6 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   bool _assistantHeaderHovered = false;
   TabController? _tabController; // desktop tabs
 
-  // Assistant avatar renderer shared across drawer views
-  Widget _assistantAvatar(BuildContext context, Assistant? a, {double size = 28, VoidCallback? onTap}) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final av = a?.avatar?.trim() ?? '';
-    final name = a?.name ?? '';
-    
-    Widget avatar;
-      if (av.isNotEmpty) {
-        if (av.startsWith('http')) {
-          avatar = FutureBuilder<String?>(
-            future: AvatarCache.getPath(av),
-            builder: (ctx, snap) {
-              final p = snap.data;
-              if (p != null && File(p).existsSync()) {
-                return ClipOval(
-                  child: Image(
-                    image: FileImage(File(p)),
-                    width: size,
-                    height: size,
-                    fit: BoxFit.cover,
-                  ),
-                );
-              }
-              return ClipOval(
-                child: Image.network(
-                  av,
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => _assistantInitialAvatar(cs, name, size),
-                ),
-              );
-            },
-          );
-        } else if (!kIsWeb && (av.startsWith('/') || av.contains(':'))) {
-          final fixed = SandboxPathResolver.fix(av);
-          final f = File(fixed);
-          if (f.existsSync()) {
-            avatar = ClipOval(
-              child: Image(
-                image: FileImage(f),
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-              ),
-            );
-          } else {
-            avatar = _assistantInitialAvatar(cs, name, size);
-          }
-        } else {
-          avatar = _assistantEmojiAvatar(cs, av, size);
-        }
-      } else {
-        avatar = _assistantInitialAvatar(cs, name, size);
-      }
-    
-    // Add border
-    final child = Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isDark ? Colors.white24 : Colors.black12,
-          width: 0.5,
-        ),
-      ),
-      child: avatar,
-    );
-
-    if (onTap == null) return child;
-
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: child,
-    );
-  }
-
-  Widget _assistantInitialAvatar(ColorScheme cs, String name, double size) {
-    final letter = name.isNotEmpty ? name.characters.first : '?';
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: cs.primary.withOpacity(0.15),
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        letter,
-        style: TextStyle(
-          color: cs.primary,
-          fontSize: size * 0.42,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _assistantEmojiAvatar(ColorScheme cs, String emoji, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: cs.primary.withOpacity(0.15),
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: EmojiText(
-        emoji.characters.take(1).toString(),
-        fontSize: size * 0.5,
-        optimizeEmojiAlign: true,
-      ),
-    );
-  }
-
   @override
   void initState() {
     super.initState();
@@ -225,7 +105,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     setState(() {}); // update search hint when switching tabs
   }
 
-  void _showChatMenu(BuildContext context, ChatItem chat, {Offset? anchor}) async {
+  void _showChatMenu(BuildContext context, Conversation chat, {Offset? anchor}) async {
     final l10n = context.l10n;
     final chatService = context.read<ChatService>();
     final isPinned = chatService.getConversation(chat.id)?.isPinned ?? false;
@@ -425,7 +305,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     );
   }
 
-  Future<void> _renameChat(BuildContext context, ChatItem chat) async {
+  Future<void> _renameChat(BuildContext context, Conversation chat) async {
     final l10n = context.l10n;
     final text = await AppDialog.input(
       context,
@@ -501,40 +381,20 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     _closeAssistantPicker();
   }
 
-
-  String _dateLabel(BuildContext context, DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final aDay = DateTime(date.year, date.month, date.day);
-    final diff = today.difference(aDay).inDays;
-    final l10n = context.l10n;
-    if (diff == 0) return l10n.sideDrawerDateToday;
-    if (diff == 1) return l10n.sideDrawerDateYesterday;
-    final sameYear = now.year == date.year;
-    final pattern = sameYear ? l10n.sideDrawerDateShortPattern : l10n.sideDrawerDateFullPattern;
-    final fmt = DateFormat(pattern);
-    return fmt.format(date);
+  /// 构建对话列表（委托给 ConversationListBuilder，根据排序模式自动切换）
+  Widget _buildConversationList(BuildContext context, List<Conversation> allConversations) {
+    return ConversationListBuilder(
+      allConversations: allConversations,
+      currentConversationId: context.read<ChatService>().currentConversationId ?? '',
+      loadingConversationIds: widget.loadingConversationIds,
+      onSelectConversation: (id) => widget.onSelectConversation?.call(id),
+      onShowChatMenu: (ctx, conv, {anchor}) => _showChatMenu(ctx, conv, anchor: anchor),
+      query: _query,
+      includeUpdateBanner: true,
+      embedded: widget.embedded,
+    );
   }
 
-  List<_ChatGroup> _groupByDate(BuildContext context, List<ChatItem> source) {
-    final items = [...source];
-    // group by day (truncate time)
-    final map = <DateTime, List<ChatItem>>{};
-    for (final c in items) {
-      final d = DateTime(c.created.year, c.created.month, c.created.day);
-      map.putIfAbsent(d, () => []).add(c);
-    }
-    // sort groups by date desc (recent first)
-    final keys = map.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
-    return [
-      for (final k in keys)
-        _ChatGroup(
-          label: _dateLabel(context, k),
-          items: (map[k]!..sort((a, b) => b.created.compareTo(a.created))),
-        )
-    ];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -544,27 +404,16 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     final textBase = isDark ? Colors.white : Colors.black; // 纯黑（白天），夜间自动适配
     final chatService = context.watch<ChatService>();
     final ap = context.watch<AssistantProvider>();
+    final settings = context.watch<SettingsProvider>();
     final currentAssistantId = ap.currentAssistantId;
-    final conversations = chatService
-        .getAllConversations()
-        .where((c) => c.assistantId == currentAssistantId || c.assistantId == null)
-        .toList();
-    // Use last-activity time (updatedAt) for ordering and grouping
-    final all = conversations
-        .map((c) => ChatItem(id: c.id, title: c.title, created: c.updatedAt))
-        .toList();
-
-    final base = _query.trim().isEmpty
-        ? all
-        : all.where((c) => c.title.toLowerCase().contains(_query.toLowerCase())).toList();
-    final pinnedList = base
-        .where((c) => (chatService.getConversation(c.id)?.isPinned ?? false))
-        .toList()
-      ..sort((a, b) => b.created.compareTo(a.created));
-    final rest = base
-        .where((c) => !(chatService.getConversation(c.id)?.isPinned ?? false))
-        .toList();
-    final groups = _groupByDate(context, rest);
+    // 根据排序模式决定对话过滤范围
+    final sortMode = settings.conversationSortMode;
+    final allConversations = sortMode == ConversationSortMode.byAssistant
+        ? chatService.getAllConversations()
+        : chatService
+            .getAllConversations()
+            .where((c) => c.assistantId == currentAssistantId || c.assistantId == null)
+            .toList();
 
     // Avatar renderer: emoji / url / file / default initial
     Widget avatarWidget(String name, UserProvider up, {double size = 40}) {
@@ -837,7 +686,21 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                     ),
 
                   SizedBox(height: _isDesktop ? 8 : 12),
-                  
+
+                  // 排序切换器（非纯助手列表模式下显示）
+                  if (!_assistOnly)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2),
+                      child: Row(
+                        children: [
+                          ConversationSortSwitcher(),
+                        ],
+                      ),
+                    ),
+
+                  if (!_assistOnly)
+                    SizedBox(height: _isDesktop ? 8 : 8),
+
                   // 桌面端：替换为 Tab（助手 / 话题）
                   if (_useTabs)
                     _DesktopSidebarTabs(textColor: textBase, controller: _tabController!)
@@ -874,7 +737,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                             padding: const EdgeInsets.fromLTRB(4, 6, 12, 6),
                             child: Row(
                               children: [
-                                _assistantAvatar(
+                                buildAssistantAvatar(
                                   context,
                                   ap.currentAssistant,
                                   size: 32,
@@ -919,7 +782,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                     controller: _tabController!,
                     listController: _listController,
                     buildAssistants: () => _buildAssistantsList(context),
-                    buildConversations: () => _buildConversationsList(context, cs, textBase, chatService, pinnedList, groups, includeUpdateBanner: true),
+                    buildConversations: () => _buildConversationList(context, allConversations),
                   );
                 }
                 if (_assistOnly) {
@@ -938,7 +801,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                     controller: _listController,
                     padding: EdgeInsets.fromLTRB(10, topPad, 10, 16),
                     children: [
-                      _buildConversationsList(context, cs, textBase, chatService, pinnedList, groups, includeUpdateBanner: true),
+                      _buildConversationList(context, allConversations),
                     ],
                   );
                 }
@@ -947,7 +810,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                   isDesktop: _isDesktop,
                   assistantsExpanded: _assistantsExpanded,
                   buildAssistants: () => _buildAssistantsList(context, inlineMode: true),
-                  buildConversations: () => _buildConversationsList(context, cs, textBase, chatService, pinnedList, groups, includeUpdateBanner: true),
+                  buildConversations: () => _buildConversationList(context, allConversations),
                 );
               }(),
             ),
@@ -1892,7 +1755,7 @@ extension on _SideDrawerState {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: _AssistantInlineTile(
-          avatar: _assistantAvatar(context, a, size: _isDesktop ? 28 : 32),
+          avatar: buildAssistantAvatar(context, a, size: _isDesktop ? 28 : 32),
           name: a.name,
           textColor: textBase2,
           embedded: widget.embedded,
@@ -1985,300 +1848,6 @@ extension on _SideDrawerState {
               ),
             ],
         ],
-      ),
-    );
-  }
-
-  // Build conversations list area, optionally including the update banner.
-  Widget _buildConversationsList(
-    BuildContext context,
-    ColorScheme cs,
-    Color textBase,
-    ChatService chatService,
-    List<ChatItem> pinnedList,
-    List<_ChatGroup> groups, {
-    bool includeUpdateBanner = false,
-  }) {
-    final children = <Widget>[];
-    if (includeUpdateBanner) {
-      children.add(Builder(builder: (context) {
-        final settings = context.watch<SettingsProvider>();
-        final upd = context.watch<UpdateProvider>();
-        if (!settings.showAppUpdates) return const SizedBox.shrink();
-        final info = upd.available;
-        if (upd.checking && info == null) return const SizedBox.shrink();
-        if (info == null) return const SizedBox.shrink();
-        final url = info.bestDownloadUrl();
-        if (url == null || url.isEmpty) return const SizedBox.shrink();
-        final ver = info.version;
-        final build = info.build;
-        final l10n = context.l10n;
-        final title = build != null
-            ? l10n.sideDrawerUpdateTitleWithBuild(ver, build)
-            : l10n.sideDrawerUpdateTitle(ver);
-        final cs2 = Theme.of(context).colorScheme;
-        final isDark2 = Theme.of(context).brightness == Brightness.dark;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Material(
-            color: isDark2 ? Colors.white10 : const Color(0xFFF2F3F5),
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () async {
-                final uri = Uri.parse(url);
-                try {
-                  // ignore: deprecated_member_use
-                  await launchUrl(uri);
-                } catch (_) {
-                  Clipboard.setData(ClipboardData(text: url));
-                  showAppSnackBar(
-                    context,
-                    message: l10n.sideDrawerLinkCopied,
-                    type: NotificationType.success,
-                  );
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Lucide.BadgeInfo, size: 18, color: cs2.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if ((info.notes ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        info.notes!,
-                        style: TextStyle(fontSize: 13, color: cs2.onSurface.withOpacity(0.8)),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }));
-    }
-
-    children.add(
-      PageTransitionSwitcher(
-        duration: const Duration(milliseconds: 260),
-        reverse: false,
-        transitionBuilder: (child, primary, secondary) => FadeThroughTransition(
-          fillColor: Colors.transparent,
-          animation: CurvedAnimation(parent: primary, curve: Curves.easeOutCubic),
-          secondaryAnimation: CurvedAnimation(parent: secondary, curve: Curves.easeInCubic),
-          child: child,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          key: ValueKey('${_query}_' + ([...pinnedList.map((c)=>c.id), ...groups.expand((g)=>g.items.map((c)=>c.id))].join(','))),
-          children: [
-            if (pinnedList.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 6, 0, 6),
-                child: Text(
-                  context.l10n.sideDrawerPinnedLabel,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.primary),
-                ).animate().fadeIn(duration: 180.ms).moveY(begin: 4, end: 0, duration: 220.ms, curve: Curves.easeOutCubic),
-              ),
-              Column(
-                children: [
-                  for (int i = 0; i < pinnedList.length; i++)
-                    _ChatTile(
-                      chat: pinnedList[i],
-                      textColor: textBase,
-                      selected: pinnedList[i].id == chatService.currentConversationId,
-                      loading: widget.loadingConversationIds.contains(pinnedList[i].id),
-                      onTap: () => widget.onSelectConversation?.call(pinnedList[i].id),
-                      onLongPress: () => _showChatMenu(context, pinnedList[i]),
-                      onSecondaryTap: (pos) => _showChatMenu(context, pinnedList[i], anchor: pos),
-                    ).animate(key: ValueKey('pin-${pinnedList[i].id}'))
-                      .fadeIn(duration: 220.ms, delay: (20 * i).ms)
-                      .moveY(begin: 8, end: 0, duration: 260.ms, curve: Curves.easeOutCubic, delay: (20 * i).ms),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
-            for (final group in groups) ...[
-              if (context.watch<SettingsProvider>().showChatListDate)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 0, 6),
-                  child: Text(
-                    group.label,
-                    textAlign: TextAlign.left,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.primary),
-                  ).animate().fadeIn(duration: 180.ms).moveY(begin: 4, end: 0, duration: 220.ms, curve: Curves.easeOutCubic),
-                ),
-              Column(
-                children: [
-                  for (int j = 0; j < group.items.length; j++)
-                    _ChatTile(
-                      chat: group.items[j],
-                      textColor: textBase,
-                      selected: group.items[j].id == chatService.currentConversationId,
-                      loading: widget.loadingConversationIds.contains(group.items[j].id),
-                      onTap: () => widget.onSelectConversation?.call(group.items[j].id),
-                      onLongPress: () => _showChatMenu(context, group.items[j]),
-                      onSecondaryTap: (pos) => _showChatMenu(context, group.items[j], anchor: pos),
-                    ).animate(key: ValueKey('grp-${group.label}-${group.items[j].id}'))
-                      .fadeIn(duration: 220.ms, delay: (16 * j).ms)
-                      .moveY(begin: 6, end: 0, duration: 240.ms, curve: Curves.easeOutCubic, delay: (16 * j).ms),
-                ],
-              ),
-              if (context.watch<SettingsProvider>().showChatListDate)
-                const SizedBox(height: 8),
-            ],
-          ],
-        ),
-      ),
-    );
-
-    return Column(children: children);
-  }
-}
-
-class _ChatGroup {
-  final String label;
-  final List<ChatItem> items;
-  _ChatGroup({required this.label, required this.items});
-}
-
-class _ChatTile extends StatefulWidget {
-  const _ChatTile({
-    required this.chat,
-    required this.textColor,
-    this.onTap,
-    this.onLongPress,
-    this.onSecondaryTap,
-    this.selected = false,
-    this.loading = false,
-  });
-
-  final ChatItem chat;
-  final Color textColor;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
-  final void Function(Offset globalPosition)? onSecondaryTap;
-  final bool selected;
-  final bool loading;
-
-  @override
-  State<_ChatTile> createState() => _ChatTileState();
-}
-
-class _ChatTileState extends State<_ChatTile> {
-  bool _hovered = false;
-  bool get _isDesktop => defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final embedded = context.findAncestorWidgetOfExactType<SideDrawer>()?.embedded ?? false;
-    final Color tileColor;
-    if (embedded) {
-      // In tablet embedded mode, keep selected highlight, others transparent
-      tileColor = widget.selected ? cs.primary.withOpacity(0.16) : Colors.transparent;
-    } else {
-      tileColor = widget.selected ? cs.primary.withOpacity(0.12) : cs.surface;
-    }
-    final base = _isDesktop && !widget.selected && _hovered
-        ? (embedded ? cs.primary.withOpacity(0.08) : cs.surface.withOpacity(0.9))
-        : tileColor;
-    final double _vGap = _isDesktop ? 4 : 4;
-    return Padding(
-      padding: EdgeInsets.only(bottom: _vGap),
-      child: GestureDetector(
-        onSecondaryTapDown: (details) {
-          if (_isDesktop) {
-            widget.onSecondaryTap?.call(details.globalPosition);
-          }
-        },
-        onLongPress: () {
-          if (_isDesktop) return;
-          widget.onLongPress?.call();
-        },
-        child: MouseRegion(
-          onEnter: (_) { if (_isDesktop) setState(() => _hovered = true); },
-          onExit: (_) { if (_isDesktop) setState(() => _hovered = false); },
-          cursor: _isDesktop ? SystemMouseCursors.click : SystemMouseCursors.basic,
-        child: IosCardPress(
-          baseColor: base,
-          borderRadius: BorderRadius.circular(16),
-          haptics: false,
-          onTap: widget.onTap,
-          onLongPress: _isDesktop ? null : widget.onLongPress,
-          padding: EdgeInsets.fromLTRB(_isDesktop ? 14 : 14, _isDesktop ? 9 : 10, 8, _isDesktop ? 9 : 10),
-          child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.chat.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: _isDesktop ? 14 : 15,
-                      color: widget.textColor,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-                if (widget.loading) ...[
-                  const SizedBox(width: 8),
-                  _LoadingDot(),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingDot extends StatefulWidget {
-  @override
-  State<_LoadingDot> createState() => _LoadingDotState();
-}
-
-class _LoadingDotState extends State<_LoadingDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return FadeTransition(
-      opacity: _anim,
-      child: Container(
-        width: 9,
-        height: 9,
-        decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
       ),
     );
   }

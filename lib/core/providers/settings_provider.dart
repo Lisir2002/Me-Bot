@@ -20,6 +20,18 @@ import '../services/secure_storage/secure_storage_service.dart';
 // Desktop: topic list position
 enum DesktopTopicPosition { left, right }
 
+/// 历史对话排序模式
+enum ConversationSortMode {
+  /// 自然排序：所有对话平铺，新对话默认最前，支持手动拖拽
+  natural,
+
+  /// 时间排序：按日期分组（今天/昨天/更早）
+  time,
+
+  /// 助手分类排序：按助手分组，手风琴展开/收起
+  byAssistant,
+}
+
 class SettingsProvider extends ChangeNotifier {
   static const String _providersOrderKey = 'providers_order_v1';
   static const String _themeModeKey = 'theme_mode_v1';
@@ -56,6 +68,9 @@ class SettingsProvider extends ChangeNotifier {
   static const String _displayEnableUserMarkdownKey = 'display_enable_user_markdown_v1';
   static const String _displayEnableReasoningMarkdownKey = 'display_enable_reasoning_markdown_v1';
   static const String _displayShowChatListDateKey = 'display_show_chat_list_date_v1';
+  // 历史对话排序模式 + 助手分类手风琴展开状态
+  static const String _conversationSortModeKey = 'conversation_sort_mode_v1';
+  static const String _expandedAssistantIdsKey = 'expanded_assistant_ids_v1';
   static const String _displayDesktopAutoSwitchTopicsKey = 'display_desktop_auto_switch_topics_v1';
   static const String _displayUsePureBackgroundKey = 'display_use_pure_background_v1';
   static const String _displayChatMessageBackgroundStyleKey = 'display_chat_message_background_style_v1';
@@ -457,6 +472,14 @@ class SettingsProvider extends ChangeNotifier {
     _enableUserMarkdown = prefs.getBool(_displayEnableUserMarkdownKey) ?? true;
     _enableReasoningMarkdown = prefs.getBool(_displayEnableReasoningMarkdownKey) ?? true;
     _showChatListDate = prefs.getBool(_displayShowChatListDateKey) ?? false;
+    // 历史对话排序模式
+    final sortModeStr = prefs.getString(_conversationSortModeKey);
+    _conversationSortMode = ConversationSortMode.values.firstWhere(
+      (m) => m.name == sortModeStr,
+      orElse: () => ConversationSortMode.natural,
+    );
+    // 助手分类手风琴展开状态
+    _expandedAssistantIds = (prefs.getStringList(_expandedAssistantIdsKey) ?? const <String>[]).toSet();
     _desktopAutoSwitchTopics = prefs.getBool(_displayDesktopAutoSwitchTopicsKey) ?? false;
     // desktop: topic panel placement + right sidebar open state
     final topicPos = prefs.getString(_desktopTopicPositionKey);
@@ -1548,6 +1571,32 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_displayShowChatListDateKey, v);
+  }
+
+  // 历史对话排序模式
+  ConversationSortMode _conversationSortMode = ConversationSortMode.natural;
+  ConversationSortMode get conversationSortMode => _conversationSortMode;
+  Future<void> setConversationSortMode(ConversationSortMode mode) async {
+    if (_conversationSortMode == mode) return;
+    _conversationSortMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_conversationSortModeKey, mode.name);
+  }
+
+  // 助手分类手风琴展开状态（存储展开的 assistantId 集合）
+  Set<String> _expandedAssistantIds = <String>{};
+  Set<String> get expandedAssistantIds => _expandedAssistantIds;
+  bool isAssistantExpanded(String assistantId) => _expandedAssistantIds.contains(assistantId);
+  Future<void> toggleAssistantExpanded(String assistantId) async {
+    if (_expandedAssistantIds.contains(assistantId)) {
+      _expandedAssistantIds = Set<String>.from(_expandedAssistantIds)..remove(assistantId);
+    } else {
+      _expandedAssistantIds = Set<String>.from(_expandedAssistantIds)..add(assistantId);
+    }
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_expandedAssistantIdsKey, _expandedAssistantIds.toList());
   }
 
   // Desktop-only: auto switch to Topics tab when changing assistant

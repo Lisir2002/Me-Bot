@@ -149,4 +149,7 @@ class Lucide {
   static const IconData Cpu = lucide.LucideIcons.cpu;
   static const IconData ScrollText = lucide.LucideIcons.scrollText;
   static const IconData ZapOff = lucide.LucideIcons.zapOff;
+  static const IconData List = lucide.LucideIcons.list;
+  static const IconData Clock = lucide.LucideIcons.clock;
+  static const IconData Users = lucide.LucideIcons.users;
 }

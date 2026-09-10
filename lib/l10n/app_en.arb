@@ -626,6 +626,20 @@
   },
   "sideDrawerLinkCopied": "Link copied",
   "sideDrawerPinnedLabel": "Pinned",
+  "sideDrawerSortNatural": "Natural",
+  "sideDrawerSortTime": "Time",
+  "sideDrawerSortByAssistant": "By Assistant",
+  "sideDrawerSortTooltip": "Sort conversations",
+  "sideDrawerConversationsCount": "{count} conversations",
+  "@sideDrawerConversationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sideDrawerNoConversations": "No conversations yet",
+  "sideDrawerDefaultAssistant": "Default",
   "sideDrawerHistory": "History",
   "sideDrawerSettings": "Settings",
   "sideDrawerChooseAssistantTitle": "Choose Assistant",

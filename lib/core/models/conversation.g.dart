@@ -27,13 +27,14 @@ class ConversationAdapter extends TypeAdapter<Conversation> {
       assistantId: fields[7] as String?,
       truncateIndex: (fields[8] as int?) ?? -1,
       versionSelections: (fields[9] as Map?)?.map((k, v) => MapEntry(k.toString(), (v as num).toInt())) ?? <String, int>{},
+      sortOrder: fields[10] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Conversation obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +54,9 @@ class ConversationAdapter extends TypeAdapter<Conversation> {
       ..writeByte(8)
       ..write(obj.truncateIndex)
       ..writeByte(9)
-      ..write(obj.versionSelections);
+      ..write(obj.versionSelections)
+      ..writeByte(10)
+      ..write(obj.sortOrder);
   }
 
   @override

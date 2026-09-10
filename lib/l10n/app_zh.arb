@@ -468,6 +468,20 @@
   "sideDrawerUpdateTitleWithBuild": "发现新版本：{version} ({build})",
   "sideDrawerLinkCopied": "已复制下载链接",
   "sideDrawerPinnedLabel": "置顶",
+  "sideDrawerSortNatural": "自然排序",
+  "sideDrawerSortTime": "时间排序",
+  "sideDrawerSortByAssistant": "助手分类",
+  "sideDrawerSortTooltip": "排序方式",
+  "sideDrawerConversationsCount": "{count} 个对话",
+  "@sideDrawerConversationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sideDrawerNoConversations": "暂无对话",
+  "sideDrawerDefaultAssistant": "默认助手",
   "sideDrawerHistory": "聊天历史",
   "sideDrawerSettings": "设置",
   "sideDrawerChooseAssistantTitle": "选择助手",

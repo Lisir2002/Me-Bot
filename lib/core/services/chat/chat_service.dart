@@ -410,6 +410,23 @@ class ChatService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 批量更新一组对话的 sortOrder（用于拖拽排序后持久化）。
+  /// [orderedIds] 为新顺序下的对话 id 列表，索引 0 对应最前。
+  /// 仅更新传入的这些对话，未传入的保持不变。
+  Future<void> reorderConversations(List<String> orderedIds) async {
+    if (!_initialized) return;
+    if (orderedIds.isEmpty) return;
+    for (int i = 0; i < orderedIds.length; i++) {
+      final id = orderedIds[i];
+      final conversation = _conversationsBox.get(id);
+      if (conversation != null) {
+        conversation.sortOrder = i;
+        await conversation.save();
+      }
+    }
+    notifyListeners();
+  }
+
   Future<ChatMessage> addMessage({
     required String conversationId,
     required String role,

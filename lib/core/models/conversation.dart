@@ -39,6 +39,11 @@ class Conversation extends HiveObject {
   @HiveField(9)
   Map<String, int> versionSelections;
 
+  // 自定义排序序号（null 表示未手动排序，按 updatedAt 倒序排列）
+  // 拖拽排序后写入具体值，值越小越靠前
+  @HiveField(10)
+  int? sortOrder;
+
   Conversation({
     String? id,
     required this.title,
@@ -50,6 +55,7 @@ class Conversation extends HiveObject {
     String? assistantId,
     int? truncateIndex,
     Map<String, int>? versionSelections,
+    this.sortOrder,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now(),
@@ -70,6 +76,7 @@ class Conversation extends HiveObject {
     String? assistantId,
     int? truncateIndex,
     Map<String, int>? versionSelections,
+    int? sortOrder,
   }) {
     return Conversation(
       id: id ?? this.id,
@@ -82,6 +89,7 @@ class Conversation extends HiveObject {
       assistantId: assistantId ?? this.assistantId,
       truncateIndex: truncateIndex ?? this.truncateIndex,
       versionSelections: versionSelections ?? this.versionSelections,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -97,6 +105,7 @@ class Conversation extends HiveObject {
       'assistantId': assistantId,
       'truncateIndex': truncateIndex,
       'versionSelections': versionSelections,
+      'sortOrder': sortOrder,
     };
   }
 
@@ -112,6 +121,7 @@ class Conversation extends HiveObject {
       assistantId: json['assistantId'] as String?,
       truncateIndex: json['truncateIndex'] as int? ?? -1,
       versionSelections: (json['versionSelections'] as Map?)?.map((k, v) => MapEntry(k.toString(), (v as num).toInt())) ?? <String, int>{},
+      sortOrder: json['sortOrder'] as int?,
     );
   }
 }

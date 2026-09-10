@@ -460,6 +460,20 @@
   "sideDrawerUpdateTitleWithBuild": "發現新版本：{version} ({build})",
   "sideDrawerLinkCopied": "已複製下載連結",
   "sideDrawerPinnedLabel": "置頂",
+  "sideDrawerSortNatural": "自然排序",
+  "sideDrawerSortTime": "時間排序",
+  "sideDrawerSortByAssistant": "助手分類",
+  "sideDrawerSortTooltip": "排序方式",
+  "sideDrawerConversationsCount": "{count} 個對話",
+  "@sideDrawerConversationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sideDrawerNoConversations": "暫無對話",
+  "sideDrawerDefaultAssistant": "預設助手",
   "sideDrawerHistory": "聊天歷史",
   "sideDrawerSettings": "設定",
   "sideDrawerChooseAssistantTitle": "選擇助理",

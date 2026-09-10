@@ -377,10 +377,11 @@ class _DesktopIconButtonState extends State<_DesktopIconButton> {
           _setPressed(false);
         },
         child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => _setPressed(true),
-          onTapUp: (_) => _setPressed(false),
-          onTapCancel: () => _setPressed(false),
+          // 无回调时用 translucent 让点击穿透到父级（避免外层 GestureDetector 收不到事件）
+          behavior: disabled ? HitTestBehavior.translucent : HitTestBehavior.opaque,
+          onTapDown: disabled ? null : (_) => _setPressed(true),
+          onTapUp: disabled ? null : (_) => _setPressed(false),
+          onTapCancel: disabled ? null : () => _setPressed(false),
           onTap: widget.onTap,
           child: AnimatedScale(
             duration: const Duration(milliseconds: 80),

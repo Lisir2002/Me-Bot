@@ -786,11 +786,12 @@ class _GlassCircleButtonState extends State<_GlassCircleButton> {
     final Color fill = _pressed ? Colors.white.withOpacity(disabled ? 0.12 : 0.24) : baseFill;
 
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+      // 无回调时用 translucent 让点击穿透到父级（避免外层 GestureDetector 收不到事件）
+      behavior: disabled ? HitTestBehavior.translucent : HitTestBehavior.opaque,
       onTap: widget.onTap,
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
+      onTapDown: disabled ? null : (_) => _setPressed(true),
+      onTapUp: disabled ? null : (_) => _setPressed(false),
+      onTapCancel: disabled ? null : () => _setPressed(false),
       child: AnimatedScale(
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOutCubic,

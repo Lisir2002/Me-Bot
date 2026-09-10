@@ -530,10 +530,11 @@ class _TactileRowState extends State<_TactileRow> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
+        // 无回调时用 translucent 让点击穿透到父级（避免外层 GestureDetector 收不到事件）
+        behavior: widget.onTap != null ? HitTestBehavior.opaque : HitTestBehavior.translucent,
+        onTapDown: widget.onTap == null ? null : (_) => setState(() => _pressed = true),
+        onTapUp: widget.onTap == null ? null : (_) => setState(() => _pressed = false),
+        onTapCancel: widget.onTap == null ? null : () => setState(() => _pressed = false),
         onTap: widget.onTap,
         child: AnimatedScale(
           duration: const Duration(milliseconds: 120),

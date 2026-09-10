@@ -12,6 +12,7 @@ class IosIconButton extends StatefulWidget {
     this.builder,
     this.onTap,
     this.onLongPress,
+    this.onTapDown,
     this.size = 20,
     this.padding = const EdgeInsets.all(6),
     this.color,
@@ -27,6 +28,12 @@ class IosIconButton extends StatefulWidget {
   final Widget Function(Color color)? builder;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+
+  /// 可选的按下回调，用于需要获取点击位置的场景（如桌面端右键菜单定位）。
+  ///
+  /// 提供此参数后无需在外层包裹 GestureDetector 来捕获 onTapDown，
+  /// 避免「外层 GestureDetector + 内层 IosIconButton(onTap:null)」的点击穿透问题。
+  final void Function(TapDownDetails details)? onTapDown;
   final double size;
   final EdgeInsets padding;
   final Color? color; // base color; defaults to theme onSurface
@@ -95,29 +102,35 @@ class _IosIconButtonState extends State<IosIconButton> {
       enabled: widget.enabled,
       label: widget.semanticLabel,
       child: MouseRegion(
-        cursor: (widget.enabled && (widget.onTap != null || widget.onLongPress != null))
+        cursor: (widget.enabled && (widget.onTap != null || widget.onLongPress != null || widget.onTapDown != null))
             ? SystemMouseCursors.click
             : MouseCursor.defer,
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: GestureDetector(
           // 无回调时用 translucent 让点击穿透到父级（避免外层 GestureDetector 收不到事件）
-          behavior: (widget.onTap != null || widget.onLongPress != null)
+          behavior: (widget.onTap != null || widget.onLongPress != null || widget.onTapDown != null)
               ? HitTestBehavior.opaque
               : HitTestBehavior.translucent,
-          onTapDown: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = true) : null,
-          onTapUp: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = false) : null,
-          onTapCancel: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? () => setState(() => _pressed = false) : null,
-          onTap: widget.enabled
-              ? () {
-                  if (widget.haptics) Haptics.light();
-                  widget.onTap?.call();
+          onTapDown: (widget.enabled && (widget.onTap != null || widget.onLongPress != null || widget.onTapDown != null))
+              ? (d) {
+                  setState(() => _pressed = true);
+                  widget.onTapDown?.call(d);
                 }
               : null,
-          onLongPress: widget.enabled
+          onTapUp: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = false) : null,
+          onTapCancel: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? () => setState(() => _pressed = false) : null,
+          // 关键防御：仅当存在实际回调时才注册 onTap，避免 no-op 闭包抢占点击事件
+          onTap: (widget.enabled && widget.onTap != null)
               ? () {
                   if (widget.haptics) Haptics.light();
-                  widget.onLongPress?.call();
+                  widget.onTap!.call();
+                }
+              : null,
+          onLongPress: (widget.enabled && widget.onLongPress != null)
+              ? () {
+                  if (widget.haptics) Haptics.light();
+                  widget.onLongPress!.call();
                 }
               : null,
           child: AnimatedContainer(

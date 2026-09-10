@@ -122,6 +122,8 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   bool _inlineThinkWasLoading = false;
   // User message context menu state
   final GlobalKey _userBubbleKey = GlobalKey();
+  // Assistant message context menu anchor（包裹气泡+操作按钮整块区域）
+  final GlobalKey _assistantBubbleKey = GlobalKey();
   OverlayEntry? _userMenuOverlay;
 // for bubble highlight/scale（§9a：用户菜单激活态待接入）
 // ignore: unused_field
@@ -130,6 +132,13 @@ bool _userMenuActive = false;
   final GlobalKey _moreBtnKey1 = GlobalKey();
   final GlobalKey _moreBtnKey2 = GlobalKey();
   final GlobalKey _translateBtnKey2 = GlobalKey();
+
+  /// 是否桌面端（macOS / Windows / Linux）。
+  bool get _isDesktop =>
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux;
+
   late final Ticker _ticker = Ticker((_) {
     if (mounted && _tickActive) setState(() {});
   });
@@ -281,11 +290,93 @@ bool _userMenuActive = false;
     super.dispose();
   }
 
-  void _showUserContextMenu() {
+  /// 复制当前消息内容（优先用外部 onCopy 回调，否则复制原文并提示）。
+  Future<void> _copyMessage() async {
+    final l10n = context.l10n;
+    if (widget.onCopy != null) {
+      widget.onCopy!.call();
+    } else {
+      await Clipboard.setData(ClipboardData(text: widget.message.content));
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          message: l10n.chatMessageWidgetCopiedToClipboard,
+          type: NotificationType.success,
+        );
+      }
+    }
+  }
+
+  /// 用户消息长按/右键菜单项：复制 / 编辑 / 删除。
+  List<_MessageMenuItem> _buildUserMenuItems() {
+    final l10n = context.l10n;
+    return [
+      _MessageMenuItem(
+        icon: Lucide.Copy,
+        label: l10n.shareProviderSheetCopyButton,
+        onTap: _copyMessage,
+      ),
+      _MessageMenuItem(
+        icon: Lucide.Pencil,
+        label: l10n.messageMoreSheetEdit,
+        onTap: () => (widget.onEdit ?? widget.onMore)?.call(),
+      ),
+      _MessageMenuItem(
+        icon: Lucide.Trash2,
+        danger: true,
+        label: l10n.messageMoreSheetDelete,
+        onTap: () => (widget.onDelete ?? widget.onMore)?.call(),
+      ),
+    ];
+  }
+
+  /// 助手消息长按/右键菜单项：复制 / 重新生成 / 朗读 / 翻译 / 删除。
+  List<_MessageMenuItem> _buildAssistantMenuItems() {
+    final l10n = context.l10n;
+    final speaking = context.read<TtsProvider>().isSpeaking;
+    return [
+      _MessageMenuItem(
+        icon: Lucide.Copy,
+        label: l10n.shareProviderSheetCopyButton,
+        onTap: _copyMessage,
+      ),
+      _MessageMenuItem(
+        icon: Lucide.RefreshCw,
+        label: l10n.chatMessageWidgetRegenerateTooltip,
+        onTap: () => widget.onRegenerate?.call(),
+      ),
+      _MessageMenuItem(
+        icon: speaking ? Lucide.CircleStop : Lucide.Volume2,
+        label: l10n.chatMessageWidgetSpeakTooltip,
+        onTap: () => widget.onSpeak?.call(),
+      ),
+      _MessageMenuItem(
+        icon: Lucide.Languages,
+        label: l10n.chatMessageWidgetTranslateTooltip,
+        onTap: () => widget.onTranslate?.call(),
+      ),
+      _MessageMenuItem(
+        icon: Lucide.Trash2,
+        danger: true,
+        label: l10n.messageMoreSheetDelete,
+        onTap: () => (widget.onDelete ?? widget.onMore)?.call(),
+      ),
+    ];
+  }
+
+  /// 移动端长按：以 [anchorKey] 为锚点弹出浮动上下文菜单。
+  ///
+  /// [items] 为菜单项列表；[alignRight] 为 true 时菜单右缘对齐气泡右缘
+  /// （用户消息，靠右），否则左缘对齐气泡左缘（助手消息，靠左）。
+  void _showMessageContextMenu(
+    GlobalKey anchorKey,
+    List<_MessageMenuItem> items, {
+    bool alignRight = true,
+  }) {
     // Haptic feedback (optional)
     try { Haptics.light(); } catch (_) {}
 
-    final box = _userBubbleKey.currentContext?.findRenderObject() as RenderBox?;
+    final box = anchorKey.currentContext?.findRenderObject() as RenderBox?;
     final overlay = Overlay.of(context);
     final overlayBox = overlay.context.findRenderObject() as RenderBox?;
     if (box == null || overlayBox == null) return;
@@ -300,13 +391,19 @@ bool _userMenuActive = false;
     final safeBottom = insets.bottom + 12;
 
     const double menuWidth = 220; // compact width
-    const double estMenuHeight = 140; // ~ 3 rows
+    // 每个 _MenuItem 固定高 44，按菜单项数量估算菜单高度
+    final double estMenuHeight = items.length * 44.0;
     const double gap = 10; // space between bubble and menu
 
-    // Horizontal placement: align menu's right edge to bubble's right edge,
-    // and clamp into safe area for better reachability on long messages.
-    final double bubbleRight = bubbleTopLeft.dx + bubbleSize.width;
-    double x = bubbleRight - menuWidth;
+    // Horizontal placement：用户消息右对齐到气泡右缘，助手消息左对齐到气泡左缘，
+    // 并 clamp 进安全区。
+    double x;
+    if (alignRight) {
+      final double bubbleRight = bubbleTopLeft.dx + bubbleSize.width;
+      x = bubbleRight - menuWidth;
+    } else {
+      x = bubbleTopLeft.dx;
+    }
     final double minX = safeLeft;
     final double maxX = screenSize.width - safeRight - menuWidth;
     if (x < minX) x = minX;
@@ -341,7 +438,6 @@ bool _userMenuActive = false;
     if (mounted) setState(() => _userMenuActive = true);
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = context.l10n;
 
     showGeneralDialog<void>(
       context: context,
@@ -384,52 +480,26 @@ bool _userMenuActive = false;
                           color: Colors.transparent,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                          _MenuItem(
-                            icon: Lucide.Copy,
-                            label: l10n.shareProviderSheetCopyButton,
-                            onTap: () async {
-                              Navigator.of(ctx).pop();
-                          if (widget.onCopy != null) {
-                            widget.onCopy!.call();
-                          } else {
-                            await Clipboard.setData(ClipboardData(text: widget.message.content));
-                            if (mounted) {
-                              showAppSnackBar(
-                                context,
-                                message: l10n.chatMessageWidgetCopiedToClipboard,
-                                type: NotificationType.success,
-                              );
-                            }
-                          }
-                        },
-                      ),
-                      _MenuItem(
-                        icon: Lucide.Pencil,
-                        label: l10n.messageMoreSheetEdit,
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          (widget.onEdit ?? widget.onMore)?.call();
-                        },
-                      ),
-                      _MenuItem(
-                        icon: Lucide.Trash2,
-                        danger: true,
-                        label: l10n.messageMoreSheetDelete,
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          (widget.onDelete ?? widget.onMore)?.call();
-                        },
-                      ),
-                    ],
+                            children: items
+                                .map((it) => _MenuItem(
+                                      icon: it.icon,
+                                      label: it.label,
+                                      danger: it.danger,
+                                      onTap: () {
+                                        Navigator.of(ctx).pop();
+                                        it.onTap?.call();
+                                      },
+                                    ))
+                                .toList(),
                           ),
                         ),
                       ),
                     ),
                   ),
+                ),
               ),
             ),
-          )],
+          ],
         );
       },
     ).whenComplete(() {
@@ -599,18 +669,12 @@ bool _userMenuActive = false;
           // Message content (context menu: long-press on mobile, right-click on desktop)
           GestureDetector(
             onLongPressStart: (_) {
-              final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                  defaultTargetPlatform == TargetPlatform.windows ||
-                  defaultTargetPlatform == TargetPlatform.linux;
-              if (isDesktop) return; // Desktop uses right-click menu
-              _showUserContextMenu();
+              if (_isDesktop) return; // Desktop uses right-click menu
+              _showMessageContextMenu(_userBubbleKey, _buildUserMenuItems());
             },
             onSecondaryTapDown: (details) {
-              final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                  defaultTargetPlatform == TargetPlatform.windows ||
-                  defaultTargetPlatform == TargetPlatform.linux;
-              if (!isDesktop) return; // Mobile keeps long-press
-              _showUserContextMenuAt(details.globalPosition);
+              if (!_isDesktop) return; // Mobile keeps long-press
+              _showMessageContextMenuAt(details.globalPosition, _buildUserMenuItems());
             },
             behavior: HitTestBehavior.translucent,
             child: Container(
@@ -803,7 +867,8 @@ bool _userMenuActive = false;
                 child: Center(
                   child: IosIconButton(
                     size: 16,
-                    padding: EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
                     icon: Lucide.Copy,
                     color: cs.onSurface.withOpacity(0.9),
                     onTap: widget.onCopy ?? () {
@@ -824,7 +889,8 @@ bool _userMenuActive = false;
                 child: Center(
                   child: IosIconButton(
                     size: 16,
-                    padding: EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
                     icon: Lucide.RefreshCw,
                     color: cs.onSurface.withOpacity(0.9),
                     onTap: widget.onResend,
@@ -836,32 +902,24 @@ bool _userMenuActive = false;
                 width: 28,
                 height: 28,
                 child: Center(
-                  child: GestureDetector(
+                  child: IosIconButton(
                     key: _moreBtnKey1,
+                    size: 16,
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
+                    icon: Lucide.Ellipsis,
+                    color: cs.onSurface.withOpacity(0.9),
                     onTapDown: (d) {
-                      final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                          defaultTargetPlatform == TargetPlatform.windows ||
-                          defaultTargetPlatform == TargetPlatform.linux;
-                      if (isDesktop) {
+                      if (_isDesktop) {
                         try { DesktopMenuAnchor.setPosition(d.globalPosition); } catch (_) {}
                       }
                     },
                     onTap: () {
-                      final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                          defaultTargetPlatform == TargetPlatform.windows ||
-                          defaultTargetPlatform == TargetPlatform.linux;
-                      if (isDesktop) {
+                      if (_isDesktop) {
                         _setAnchorFromKey(_moreBtnKey1);
                       }
                       widget.onMore?.call();
                     },
-                    child: IosIconButton(
-                      size: 16,
-                      padding: EdgeInsets.all(4),
-                      icon: Lucide.Ellipsis,
-                      color: cs.onSurface.withOpacity(0.9),
-                      onTap: null,
-                    ),
                   ),
                 ),
               ),
@@ -885,44 +943,21 @@ bool _userMenuActive = false;
     );
   }
 
-  void _showUserContextMenuAt(Offset globalPosition) async {
-    final l10n = context.l10n;
+  /// 桌面端右键：在 [globalPosition] 处弹出系统风格右键菜单。
+  void _showMessageContextMenuAt(Offset globalPosition, List<_MessageMenuItem> items) async {
     // Haptic feedback
     try { Haptics.light(); } catch (_) {}
     await showDesktopContextMenuAt(
       context,
       globalPosition: globalPosition,
-      items: [
-        DesktopContextMenuItem(
-          icon: Lucide.Copy,
-          label: l10n.shareProviderSheetCopyButton,
-          onTap: () async {
-            if (widget.onCopy != null) {
-              widget.onCopy!.call();
-            } else {
-              await Clipboard.setData(ClipboardData(text: widget.message.content));
-              if (mounted) {
-                showAppSnackBar(
-                  context,
-                  message: l10n.chatMessageWidgetCopiedToClipboard,
-                  type: NotificationType.success,
-                );
-              }
-            }
-          },
-        ),
-        DesktopContextMenuItem(
-          icon: Lucide.Pencil,
-          label: l10n.messageMoreSheetEdit,
-          onTap: () => (widget.onEdit ?? widget.onMore)?.call(),
-        ),
-        DesktopContextMenuItem(
-          icon: Lucide.Trash2,
-          label: l10n.messageMoreSheetDelete,
-          danger: true,
-          onTap: () => (widget.onDelete ?? widget.onMore)?.call(),
-        ),
-      ],
+      items: items
+          .map((it) => DesktopContextMenuItem(
+                icon: it.icon,
+                label: it.label,
+                danger: it.danger,
+                onTap: it.onTap,
+              ))
+          .toList(),
     );
   }
 
@@ -1039,11 +1074,25 @@ bool _userMenuActive = false;
         ? widget.message.content.replaceAll(THINKING_REGEX, '').trim()
         : widget.message.content;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    // 助手消息整块（气泡+操作按钮）支持长按/右键弹出快捷菜单。
+    // behavior 用 translucent，内部按钮自身的 GestureDetector 会优先响应，互不影响。
+    return GestureDetector(
+      onLongPressStart: (_) {
+        if (_isDesktop) return; // Desktop 走右键菜单
+        _showMessageContextMenu(_assistantBubbleKey, _buildAssistantMenuItems(),
+            alignRight: false);
+      },
+      onSecondaryTapDown: (details) {
+        if (!_isDesktop) return; // Mobile 走长按
+        _showMessageContextMenuAt(details.globalPosition, _buildAssistantMenuItems());
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Padding(
+        key: _assistantBubbleKey,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header: Model info and time
           Row(
             children: [
@@ -1378,7 +1427,8 @@ bool _userMenuActive = false;
                 child: Center(
                   child: IosIconButton(
                     size: 16,
-                    padding: EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
                     icon: Lucide.Copy,
                     color: cs.onSurface.withOpacity(0.9),
                     onTap: widget.onCopy ?? () {
@@ -1399,7 +1449,8 @@ bool _userMenuActive = false;
                 child: Center(
                   child: IosIconButton(
                     size: 16,
-                    padding: EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
                     icon: Lucide.RefreshCw,
                     color: cs.onSurface.withOpacity(0.9),
                     onTap: widget.onRegenerate,
@@ -1414,7 +1465,8 @@ bool _userMenuActive = false;
                   child: Center(
                     child: IosIconButton(
                       size: 16,
-                      padding: EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(6),
+                      haptics: true,
                       onTap: widget.onSpeak,
                       color: cs.onSurface.withOpacity(0.9),
                       builder: (color) => AnimatedSwitcher(
@@ -1436,32 +1488,46 @@ bool _userMenuActive = false;
                 width: 28,
                 height: 28,
                 child: Center(
-                  child: GestureDetector(
+                  child: IosIconButton(
                     key: _translateBtnKey2,
+                    size: 16,
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
+                    color: cs.onSurface.withOpacity(0.9),
                     onTapDown: (d) {
-                      final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                          defaultTargetPlatform == TargetPlatform.windows ||
-                          defaultTargetPlatform == TargetPlatform.linux;
-                      if (isDesktop) {
+                      if (_isDesktop) {
                         try { DesktopMenuAnchor.setPosition(d.globalPosition); } catch (_) {}
                       }
                     },
                     onTap: () {
-                      final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                          defaultTargetPlatform == TargetPlatform.windows ||
-                          defaultTargetPlatform == TargetPlatform.linux;
-                      if (isDesktop) {
+                      if (_isDesktop) {
                         _setAnchorFromKey(_translateBtnKey2);
                       }
                       widget.onTranslate?.call();
                     },
-                    child: IosIconButton(
-                      size: 16,
-                      padding: EdgeInsets.all(4),
-                      icon: Lucide.Languages,
-                      color: cs.onSurface.withOpacity(0.9),
-                      onTap: null,
-                    ),
+                    // 翻译中时用小转圈替换语言图标；按钮仍可点击（允许取消/重译）
+                    builder: (color) {
+                      final bool isTranslating =
+                          widget.message.translation == l10n.homePageTranslating;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder: (child, anim) =>
+                            ScaleTransition(scale: anim, child: FadeTransition(opacity: anim, child: child)),
+                        child: isTranslating
+                            ? SizedBox(
+                                key: const ValueKey('translating'),
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                              )
+                            : Icon(
+                                Lucide.Languages,
+                                key: const ValueKey('languages'),
+                                size: 16,
+                                color: color,
+                              ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -1470,32 +1536,24 @@ bool _userMenuActive = false;
                 width: 28,
                 height: 28,
                 child: Center(
-                  child: GestureDetector(
+                  child: IosIconButton(
                     key: _moreBtnKey2,
+                    size: 16,
+                    padding: const EdgeInsets.all(6),
+                    haptics: true,
+                    icon: Lucide.Ellipsis,
+                    color: cs.onSurface.withOpacity(0.9),
                     onTapDown: (d) {
-                      final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                          defaultTargetPlatform == TargetPlatform.windows ||
-                          defaultTargetPlatform == TargetPlatform.linux;
-                      if (isDesktop) {
+                      if (_isDesktop) {
                         try { DesktopMenuAnchor.setPosition(d.globalPosition); } catch (_) {}
                       }
                     },
                     onTap: () {
-                      final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
-                          defaultTargetPlatform == TargetPlatform.windows ||
-                          defaultTargetPlatform == TargetPlatform.linux;
-                      if (isDesktop) {
+                      if (_isDesktop) {
                         _setAnchorFromKey(_moreBtnKey2);
                       }
                       widget.onMore?.call();
                     },
-                    child: IosIconButton(
-                      size: 16,
-                      padding: EdgeInsets.all(4),
-                      icon: Lucide.Ellipsis,
-                      color: cs.onSurface.withOpacity(0.9),
-                      onTap: null,
-                    ),
                   ),
                 ),
               ),
@@ -1512,6 +1570,7 @@ bool _userMenuActive = false;
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -1826,6 +1885,21 @@ class _AnimatedPopupState extends State<_AnimatedPopup> {
       child: widget.child,
     );
   }
+}
+
+/// 上下文菜单项的通用数据模型，移动端浮动弹窗与桌面端右键菜单共用。
+class _MessageMenuItem {
+  const _MessageMenuItem({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool danger;
 }
 
 class _MenuItem extends StatelessWidget {

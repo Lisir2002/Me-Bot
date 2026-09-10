@@ -154,8 +154,19 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                         case _SettingsMenuItem.backup:
                           return const DesktopBackupPane(key: ValueKey('backup'));
                         case _SettingsMenuItem.security:
-                          // 纯 body 嵌入（无 Scaffold），避免桌面 pane 双层标题栏
-                          return const SecurityBody(key: ValueKey('security'));
+                          // 纯 body 嵌入（无 Scaffold），避免桌面 pane 双层标题栏。
+                          // 桌面端对齐其它设置 pane：最大宽度 960 居中（与 TTS/搜索/备份一致），
+                          // SecurityBody 自带 ListView padding 提供卡片到居中区的 16 内边距。
+                          return Container(
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 960),
+                                child: const SecurityBody(key: ValueKey('security')),
+                              ),
+                            ),
+                          );
                         case _SettingsMenuItem.quickPhrases:
                           return const DesktopQuickPhrasesPane(key: ValueKey('quickPhrases'));
                         case _SettingsMenuItem.tts:

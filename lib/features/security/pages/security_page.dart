@@ -301,7 +301,7 @@ class _SecurityBodyState extends State<SecurityBody> {
 
   /// 分组小节标题（13px w600，与 backup_page 的 `header` 范式一致）。
   Widget header(String text, {bool first = false}) => Padding(
-        padding: EdgeInsets.fromLTRB(2, first ? 0 : AppGap.lg, 2, AppGap.xxs),
+        padding: EdgeInsets.fromLTRB(AppGap.sm, first ? 0 : AppGap.lg, AppGap.sm, AppGap.xxs),
         child: Text(
           text,
           style: TextStyle(
@@ -314,7 +314,7 @@ class _SecurityBodyState extends State<SecurityBody> {
 
   /// 分组小节描述（12px 弱化）。
   Widget desc(String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(2, 0, 2, AppGap.sm),
+        padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.sm),
         child: Text(
           text,
           style: TextStyle(
@@ -471,7 +471,7 @@ class _SecurityBodyState extends State<SecurityBody> {
         AppSectionCard(children: _healthRows(l10n)),
         if (anyRotation)
           Padding(
-            padding: const EdgeInsets.fromLTRB(2, AppGap.xxs, 2, 0),
+            padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xxs, AppGap.sm, 0),
             child: Text(
               l10n.goRotate,
               style: TextStyle(

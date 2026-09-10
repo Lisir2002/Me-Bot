@@ -5,28 +5,28 @@ import 'package:http/http.dart' as http;
 import 'package:html2md/html2md.dart' as html2md;
 import 'package:mcp_client/mcp_client.dart' as mcp;
 
-/// @minime-core/fetch — In-memory MCP server engine and transport (Flutter/Dart)
+import '../inmemory_transport.dart';
+
+/// MiniMe-Chat — 内置内存 MCP 服务器引擎（Flutter/Dart）。
 ///
-/// Provides a single `fetch` tool that mirrors industry practice (e.g. the
-/// built-in fetch tool in popular MCP servers):
-///   - GET or POST (with body)
-///   - Markdown output by default, raw HTML via raw=true
-///   - max_length truncation + start_index pagination
-///   - JSON responses are auto pretty-printed
+/// 提供一个 `fetch` 工具，对齐业界主流 MCP 内置 fetch 工具的行为：
+///   - GET 或 POST（带 body）
+///   - 默认输出 Markdown，raw=true 返回原始 HTML
+///   - max_length 截断 + start_index 分页
+///   - JSON 响应自动美化打印
 ///
-/// The server implements a minimal subset of MCP over JSON-RPC 2.0:
-/// initialize, tools/list, tools/call. It is intended to run in the same
-/// isolate as the Flutter app and connect to a standard mcp.Client via an
-/// in-memory ClientTransport.
+/// 服务器实现 MCP 的一个最小子集（JSON-RPC 2.0）：
+/// initialize、tools/list、tools/call。运行在与 Flutter App 同一 isolate，
+/// 通过 [InMemoryClientTransport] 连接标准 mcp.Client。
 
 class MiniMeCoreFetchRequestPayload {
   final Uri url;
   final String method; // 'GET' | 'POST'
   final Map<String, String> headers;
   final String? body; // POST body
-  final int maxLength; // output char cap
-  final int startIndex; // pagination offset (chars)
-  final bool raw; // if true, return raw HTML; else Markdown
+  final int maxLength; // 输出字符上限
+  final int startIndex; // 分页偏移（字符）
+  final bool raw; // true=返回原始 HTML；否则 Markdown
 
   MiniMeCoreFetchRequestPayload({
     required this.url,
@@ -103,10 +103,10 @@ class MiniMeCoreFetcher {
       final resp = await _fetch(payload);
       final contentType = (resp.headers['content-type'] ?? '').toLowerCase();
 
-      // Decide output format:
-      //  - JSON response -> pretty JSON
-      //  - raw=true        -> raw HTML
-      //  - otherwise       -> compact Markdown
+      // 决定输出格式：
+      //  - JSON 响应 -> 美化 JSON
+      //  - raw=true   -> 原始 HTML
+      //  - 其他       -> 紧凑 Markdown
       String text;
       if (contentType.contains('application/json')) {
         final dynamic data = jsonDecode(resp.body);
@@ -117,7 +117,7 @@ class MiniMeCoreFetcher {
         text = html2md.convert(resp.body);
       }
 
-      // Truncate + paginate by character index.
+      // 按字符索引截断 + 分页
       final total = text.length;
       final start = payload.startIndex.clamp(0, total);
       final end = (start + payload.maxLength).clamp(0, total);
@@ -152,14 +152,15 @@ class MiniMeCoreFetcher {
       };
 }
 
-/// Minimal JSON-RPC server for MCP that serves @minime-core/fetch tools.
-class MiniMeCoreFetchMcpServerEngine {
+/// MiniMe-Chat 的 JSON-RPC 服务器引擎。
+class MiniMeChatMcpServerEngine implements InMemoryMcpServer {
   bool _closed = false;
 
+  @override
   Future<dynamic> handleMessage(dynamic message) async {
     if (_closed) return null;
 
-    // Support batch arrays defensively (return array of responses)
+    // 防御性支持批量数组（返回响应数组）
     if (message is List) {
       final out = <dynamic>[];
       for (final m in message) {
@@ -186,7 +187,7 @@ class MiniMeCoreFetchMcpServerEngine {
         case mcp.McpProtocol.methodInitialize:
           return _ok(id, result: {
             'serverInfo': {
-              'name': '@minime-core/fetch',
+              'name': 'MiniMe-Chat',
               'version': '0.2.0',
             },
             'protocolVersion': mcp.McpProtocol.defaultVersion,
@@ -228,6 +229,7 @@ class MiniMeCoreFetchMcpServerEngine {
     }
   }
 
+  @override
   void close() {
     _closed = true;
   }
@@ -315,45 +317,5 @@ Guidelines for the model:
         },
       },
     ];
-  }
-}
-
-/// In-memory ClientTransport that directly invokes the local server engine.
-class MiniMeCoreInMemoryClientTransport implements mcp.ClientTransport {
-  final MiniMeCoreFetchMcpServerEngine _server;
-  final _messageController = StreamController<dynamic>.broadcast();
-  final _closeCompleter = Completer<void>();
-  bool _closed = false;
-
-  MiniMeCoreInMemoryClientTransport(this._server);
-
-  @override
-  Stream<dynamic> get onMessage => _messageController.stream;
-
-  @override
-  Future<void> get onClose => _closeCompleter.future;
-
-  @override
-  void send(dynamic message) {
-    if (_closed) return;
-    // Process asynchronously to mimic real transport
-    Future.microtask(() async {
-      final resp = await _server.handleMessage(message);
-      if (_closed) return;
-      if (resp != null) {
-        _messageController.add(resp);
-      }
-    });
-  }
-
-  @override
-  void close() {
-    if (_closed) return;
-    _closed = true;
-    try {
-      _server.close();
-    } catch (_) {}
-    if (!_messageController.isClosed) _messageController.close();
-    if (!_closeCompleter.isCompleted) _closeCompleter.complete();
   }
 }

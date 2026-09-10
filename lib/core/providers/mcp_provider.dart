@@ -3,7 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
-import '../services/mcp/minime_fetch/minime_fetch_server.dart';
+import '../services/mcp/inmemory_transport.dart';
+import '../services/mcp/minime_chat/minime_chat_server.dart';
+import '../services/mcp/minime_code/minime_code_server.dart';
+import '../services/mcp/minime_data/minime_data_server.dart';
 import '../services/logging/logger.dart';
 import '../services/logging/log_tags.dart';
 import '../services/security/mcp_command_policy.dart';
@@ -246,6 +249,20 @@ class McpServerConfig {
 class McpProvider extends ChangeNotifier {
   static const String _prefsKey = 'mcp_servers_v1';
 
+  // ---- 内置 inmemory 服务器元数据（统一在此维护，避免散落硬编码） ----
+  /// 旧版内置服务器 id（0.x 时期叫 minime_fetch），启动时自动迁移为 [_builtinChatId]。
+  static const String _legacyFetchId = 'minime_fetch';
+  static const String _builtinChatId = 'minime_chat';
+  static const String _builtinDataId = 'minime_data';
+  static const String _builtinCodeId = 'minime_code';
+
+  /// 三个内置服务器的 (id, displayName)。新增内置服务器时在此追加即可。
+  static const List<({String id, String name})> _builtinServers = [
+    (id: _builtinChatId, name: 'MiniMe-Chat'),
+    (id: _builtinDataId, name: 'MiniMe-Data'),
+    (id: _builtinCodeId, name: 'MiniMe-Code'),
+  ];
+
   final Map<String, mcp.Client> _clients = {};
   final Map<String, McpStatus> _status = {}; // id -> status
   final Map<String, String> _errors = {}; // id -> last error
@@ -281,8 +298,10 @@ class McpProvider extends ChangeNotifier {
         _servers = list;
       } catch (_) {}
     }
-    // Ensure built-in @minime-core/fetch is present by default
-    _ensureBuiltinFetchServerPresent();
+    // 旧数据迁移：id=minime_fetch -> minime_chat（含 name 更新）
+    _migrateLegacyFetchId();
+    // 确保三个内置服务器（MiniMe-Chat / MiniMe-Data / MiniMe-Code）都存在
+    _ensureBuiltinServersPresent();
     // initialize statuses
     for (final s in _servers) {
       _status[s.id] = McpStatus.idle;
@@ -297,17 +316,62 @@ class McpProvider extends ChangeNotifier {
     }
   }
 
-  void _ensureBuiltinFetchServerPresent() {
-    final exists = _servers.any((s) => s.transport == McpTransportType.inmemory || s.name == '@minime-core/fetch' || s.id == 'minime_fetch');
-    if (exists) return;
-    final cfg = McpServerConfig(
-      id: 'minime_fetch',
-      enabled: true,
-      name: '@minime-core/fetch',
-      transport: McpTransportType.inmemory,
-      tools: const <McpToolConfig>[], // will refresh on connect
-    );
-    _servers = [..._servers, cfg];
+  /// 把旧版 id=`minime_fetch`（旧名 `@minime-core/fetch`）迁移为新 id=`minime_chat`。
+  /// 仅在持久化数据里出现旧 id 时改写；迁移结果随下次 _persist() 落盘。
+  void _migrateLegacyFetchId() {
+    var changed = false;
+    _servers = _servers.map((s) {
+      if (s.id == _legacyFetchId) {
+        changed = true;
+        return s.copyWith(id: _builtinChatId, name: 'MiniMe-Chat');
+      }
+      // 兼容旧数据里 name 仍是旧品牌名的情况（id 可能已经被外部改过）
+      if (s.id == _builtinChatId && s.name == '@minime-core/fetch') {
+        changed = true;
+        return s.copyWith(name: 'MiniMe-Chat');
+      }
+      return s;
+    }).toList(growable: false);
+    if (changed) {
+      Logger.i(LogTags.mcp,
+          '_migrateLegacyFetchId: migrated minime_fetch -> $_builtinChatId');
+      // 异步落盘，不阻塞启动
+      unawaited(_persist());
+    }
+  }
+
+  /// 确保三个内置 inmemory 服务器都在列表中（enabled 默认 true）。
+  /// 按 id 精确匹配，不再用 transport==inmemory 模糊判断。
+  void _ensureBuiltinServersPresent() {
+    var list = List<McpServerConfig>.of(_servers, growable: true);
+    var changed = false;
+    for (final builtin in _builtinServers) {
+      final idx = list.indexWhere((s) => s.id == builtin.id);
+      if (idx < 0) {
+        // 不存在则追加；保留用户可能的 enabled 偏好默认 true
+        list.add(McpServerConfig(
+          id: builtin.id,
+          enabled: true,
+          name: builtin.name,
+          transport: McpTransportType.inmemory,
+          tools: const <McpToolConfig>[], // connect 时刷新
+        ));
+        changed = true;
+      } else {
+        // 已存在但 name 漂移（例如旧数据），统一纠正为品牌名
+        final cur = list[idx];
+        if (cur.name != builtin.name) {
+          list[idx] = cur.copyWith(name: builtin.name);
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      _servers = list;
+      unawaited(_persist());
+    } else {
+      _servers = list;
+    }
   }
 
   Future<void> _persist() async {
@@ -390,16 +454,24 @@ class McpProvider extends ChangeNotifier {
 
       if (serversFromMap != null) {
         final isDesktop = _isDesktopPlatform();
-        bool builtinSeen = false;
-        bool builtinEnabled = true;
+        // 记录三个内置 inmemory 服务器的 enabled 状态（按 id）。
+        // key 为内置 id；未在导出 JSON 中出现的内置服务器默认 enabled=true。
+        final builtinEnabledMap = <String, bool>{
+          for (final b in _builtinServers) b.id: true,
+        };
         serversFromMap.forEach((id, cfgAny) {
           if (cfgAny is! Map) return;
           final cfg = cfgAny.cast<String, dynamic>();
           final typeLower = (cfg['type'] ?? '').toString().toLowerCase();
           if (typeLower == 'inmemory') {
-            // Built-in @minime-core/fetch control via isActive; ignore name mismatches silently
-            builtinSeen = true;
-            builtinEnabled = (cfg['isActive'] as bool?) ?? true;
+            // 内置服务器按 id 精确识别；旧 id=minime_fetch 视为 minime_chat。
+            String normalizedId = id;
+            if (id == _legacyFetchId) normalizedId = _builtinChatId;
+            if (builtinEnabledMap.containsKey(normalizedId)) {
+              builtinEnabledMap[normalizedId] =
+                  (cfg['isActive'] as bool?) ?? true;
+            }
+            // 其他 inmemory id（理论上不应出现）忽略，由下方统一追加内置。
             return;
           }
           final hasStdioShape = cfg.containsKey('command') || cfg.containsKey('args') || cfg.containsKey('env') || (cfg['type']?.toString().toLowerCase() == 'stdio');
@@ -462,12 +534,12 @@ class McpProvider extends ChangeNotifier {
             headers: headers,
           ));
         });
-        if (builtinSeen) {
-          // Append single built-in server with fixed id/name
+        // 始终追加三个内置服务器（保留导出 JSON 中记录的 enabled 状态）。
+        for (final b in _builtinServers) {
           next.add(McpServerConfig(
-            id: 'minime_fetch',
-            enabled: builtinEnabled,
-            name: '@minime-core/fetch',
+            id: b.id,
+            enabled: builtinEnabledMap[b.id] ?? true,
+            name: b.name,
             transport: McpTransportType.inmemory,
           ));
         }
@@ -670,10 +742,13 @@ class McpProvider extends ChangeNotifier {
         enableDebugLogging: false,
       );
 
-      // In-memory builtin server path
+      // In-memory builtin server path：按 server.id 分发到对应引擎
       if (server.transport == McpTransportType.inmemory) {
-        final engine = MiniMeCoreFetchMcpServerEngine();
-        final transport = MiniMeCoreInMemoryClientTransport(engine);
+        final engine = _createInMemoryEngine(id);
+        if (engine == null) {
+          throw StateError('Unknown built-in MCP server id: $id');
+        }
+        final transport = InMemoryClientTransport(engine);
         final client = mcp.McpClient.createClient(clientConfig);
         await client.connect(transport);
         _clients[id] = client;
@@ -746,6 +821,24 @@ class McpProvider extends ChangeNotifier {
       _status[id] = McpStatus.error;
       _errors[id] = e.toString();
       notifyListeners();
+    }
+  }
+
+  /// 按内置 server.id 创建对应的内存 MCP 引擎。
+  ///
+  /// 新增内置服务器时，在 [_builtinServers] 登记 id，并在此追加分支。
+  /// 旧 id `minime_fetch` 也在此兜底路由到 MiniMe-Chat 引擎。
+  InMemoryMcpServer? _createInMemoryEngine(String serverId) {
+    switch (serverId) {
+      case _builtinChatId:
+      case _legacyFetchId: // 兜底：极端情况下旧 id 直连
+        return MiniMeChatMcpServerEngine();
+      case _builtinDataId:
+        return MiniMeDataMcpServerEngine();
+      case _builtinCodeId:
+        return MiniMeCodeMcpServerEngine();
+      default:
+        return null;
     }
   }
 

@@ -1,8 +1,9 @@
 import 'package:mcp_client/mcp_client.dart' as mcp;
 
-import 'minime_fetch_server.dart';
+import '../inmemory_transport.dart';
+import 'minime_chat_server.dart';
 
-/// Build a function-call-friendly tool name (similar to Cherry Studio strategy)
+/// 构造函数调用友好的工具名（对齐 Cherry Studio 策略）。
 String buildFunctionCallToolName(String serverName, String toolName) {
   String sanitizedServer = serverName.trim().replaceAll('-', '_');
   String sanitizedTool = toolName.trim().replaceAll('-', '_');
@@ -19,11 +20,11 @@ String buildFunctionCallToolName(String serverName, String toolName) {
   return name;
 }
 
-/// Start the in-memory @minime-core/fetch MCP server and connect a client to it.
-/// Returns the connected client and a stop() to dispose both ends.
-Future<({mcp.Client client, Future<void> Function() stop})> startFetchMcpInMemory() async {
-  final server = MiniMeCoreFetchMcpServerEngine();
-  final transport = MiniMeCoreInMemoryClientTransport(server);
+/// 启动内置 MiniMe-Chat MCP 服务器并连接一个客户端。
+/// 返回已连接的 client 与 stop() 用于同时释放两端。
+Future<({mcp.Client client, Future<void> Function() stop})> startChatMcpInMemory() async {
+  final server = MiniMeChatMcpServerEngine();
+  final transport = InMemoryClientTransport(server);
 
   final client = mcp.McpClient.createClient(
     mcp.McpClient.simpleConfig(name: 'MiniMe-Core App', version: '1.0.0'),
@@ -43,20 +44,22 @@ Future<({mcp.Client client, Future<void> Function() stop})> startFetchMcpInMemor
   );
 }
 
-/// List tools from the connected in-memory client and optionally map to stable ids.
-Future<List<(mcp.Tool tool, String id)>> listFetchTools(mcp.Client client) async {
+/// 从已连接的内存客户端列出工具，并映射为稳定 id。
+Future<List<(mcp.Tool tool, String id)>> listChatTools(mcp.Client client) async {
   final tools = await client.listTools();
-  const serverName = '@minime-core/fetch';
+  const serverName = 'MiniMe-Chat';
   return tools.map((t) => (t, buildFunctionCallToolName(serverName, t.name))).toList(growable: false);
 }
 
-/// Call the in-memory fetch tool.
-/// name must be 'fetch'.
-Future<mcp.CallToolResult> callFetchTool(
+/// 调用内存 fetch 工具。name 必须为 'fetch'。
+Future<mcp.CallToolResult> callChatTool(
   mcp.Client client,
-  String name,
-  {required String url, String method = 'GET', Map<String, String>? headers, String? body}
-) async {
+  String name, {
+  required String url,
+  String method = 'GET',
+  Map<String, String>? headers,
+  String? body,
+}) async {
   final result = await client.callTool(name, {
     'url': url,
     'method': method,
@@ -65,4 +68,3 @@ Future<mcp.CallToolResult> callFetchTool(
   });
   return result;
 }
-

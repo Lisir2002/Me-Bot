@@ -5,6 +5,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.53] - 2026-09-11
+
+### 📣 For Users
+- **侧边栏历史对话大改版**：历史会话支持三种排序——自然顺序（按对话流）、按时间、按助手分类；支持拖拽直接调整顺序；同一助手的会话自动收进手风琴分组，展开/收起一键到位；侧边栏组件拆成 5 个，后续调样式不再牵一发动全身；
+- **消息快捷按钮终于能点了**：之前聊天消息下方的翻译、更多等快捷按钮偶尔点了没反应，根因是图标按钮的手势行为冲突，已彻底修复；翻译过程中也有明确的加载状态，不会再像卡死；
+- **界面标题全面统一**：全仓 24 个文件的卡片/页面标题统一换成新组件，卡内标题居中、左右边距终于一致，不再有的偏左有的偏右；
+- **安全中心一键修复不再误删配置**：此前"一键修复"会把你辛苦配好的供应商、搜索、TTS 当成旧数据一起清掉，本版彻底修掉——现在只会清真正的明文残留，删之前逐条告诉你要删什么，删完还留备份；
+- **内置 MCP 服务器升级**：原内置网页抓取服务器更名为 MiniMe-Chat（功能不变）；新增 MiniMe-Data，提供加密密钥派生/加解密/密钥健康查询 + 备份导入导出/校验/列备份共 8 个工具；另新增占位服务器 MiniMe-Code，为后续代码能力预留。
+
+### 🔧 For Developers
+- **Added**：
+  - `lib/shared/widgets/app_section_header.dart`：`AppSectionHeader` 统一标题组件，全仓 24 个文件迁移，卡内标题居中与边距问题一并收敛；
+  - `lib/core/services/mcp/inmemory_transport.dart`：`InMemoryMcpServer` 抽象接口 + 通用 `InMemoryClientTransport`，microtask 异步转发，对齐真实 network transport 语义；
+  - `lib/core/services/mcp/jsonrpc_engine_base.dart`：`BaseJsonRpcMcpEngine` 封装 initialize/tools-list/tools-call 与 `_ok`/`_error`/`_noop` 响应样板；
+  - `lib/core/services/mcp/minime_data/`：新建内置 MiniMe-Data 服务器，8 个工具——加密密钥 4 个（`derive_key`/`encrypt`/`decrypt`/`key_health`）+ 备份导入导出 4 个（`export_backup`/`import_backup`/`verify_backup`/`list_backups`），加密复用 `BackupEncryptor`，凭证桥接复用 `BackupCredentialBridge`；
+  - `lib/core/services/mcp/minime_code/`：占位服务器，仅 `ping`/`version` 两个探测工具；
+  - 侧边栏排序：`ConversationSortMode` 自然/时间/助手三模式 + 拖拽排序 + 手风琴分组，拆为 5 个组件；
+  - 安全修复测试：`test/core/services/security/legacy_prefs_scanner_test.dart`（白名单拦截回归）、`test/core/providers/settings_provider_migration_test.dart`（v1→v2 迁移三分支）。
+- **Fixed**：
+  - 消息快捷按钮（翻译/更多）点击无响应：根因 `IosIconButton` 手势行为冲突，统一改为正确的点击手势；翻译按钮补加载态；全仓同类点击穿透问题 3 处一并加固（长按菜单、其他按钮等）；
+  - 安全 P0（误删供应商）：`legacy_prefs_scanner._legacyKeyNames` 只保留真正可删的纯明文残留（全局代理用户名/密码）；新增 `_activeKeysWhitelist` 双保险——`autoFix` 删除前命中白名单一律拒绝并记 error 审计，即使未来有人误把 active key 加回删除清单也不会再丢数据；
+  - 安全 P1（换 key 迁移）：`provider_configs`/`search_services`/`tts_services` 三个配置 key 从 v1 切到 v2 命名空间；`SettingsProvider.migrateLegacyV1Keys(prefs)` 启动期把 v1 内容搬到 v2 并清 v1，三个 key 独立迁移、单失败只 warn；`tts_provider._readTtsServicesRaw` v2 缺失兜底读 v1 并就地搬 v2；`cherry_importer`/`data_sync` 备份导入时 v1→v2 键名归一；
+  - 安全 P2：`autoFix` 删除前把待删 key 当前值备份到 `<文档目录>/security_backups/autofix_<ts>.json`；逐条 `CredentialAuditLogger` 审计（`autoFixDelete`/`autoFixComplete`，不带值）；安全页一键修复确认弹窗逐条列出 `finding.title` + `detail`（截断 120 字）。
+- **Changed**：
+  - 旧内置 `minime_fetch`（旧名 `@minime-core/fetch`）更名为 `minime_chat`（显示名 MiniMe-Chat），`mcp_provider` 启动时自动迁移旧 id 与旧品牌名；三个内置服务器元数据集中在 `_builtinServers` 维护，按 id 精确匹配，不再用 `transport==inmemory` 模糊判断；`connect` 时按 `server.id` 分发到对应引擎（`_createInMemoryEngine`）；
+  - 版本号 `0.0.52+52` → `0.0.53+53`。
+- **Removed**：
+  - 旧 `lib/core/services/mcp/minime_fetch/` 目录（inmemory + server），功能迁入 `minime_chat/`。
+
+### 🤖 For Agents
+- **内置 inmemory MCP 服务器新增流程**：在 `mcp_provider._builtinServers` 登记 `(id, name)`，在 `_createInMemoryEngine` 追加 `case` 分支返回对应引擎；引擎继承 `BaseJsonRpcMcpEngine`，只实现 `serverName`/`serverVersion`/`toolDefinitions`/`callTool`，不要自己写 transport；
+- **旧 id 迁移**：`minime_fetch` → `minime_chat` 在 `_migrateLegacyFetchId` 兜底；新增内置服务器不要复用旧 id，也不要用 `transport==inmemory` 做模糊识别，一律按 id 精确匹配；
+- **prefs 配置 key 命名空间已切 v2**：业务代码一律读写 `*_v2`；v1 副本只在迁移窗口期存在，`SettingsProvider._load` 第一步就是 `migrateLegacyV1Keys`，任何在它之前读 v1 的代码都是错的；新增配置 key 直接用 `_v2` 后缀，不要再开 `_v1`；
+- **安全一键修复红线**：`_legacyKeyNames` 里只能放"凭证已搬进安全存储、prefs 副本无任何业务读取路径"的 key；仍在使用的配置 key 即使以 `_v1` 结尾也绝不能删——它们已进 `_activeKeysWhitelist`，删除会被白名单拦截并记 `autoFixBlocked`；
+- **删除 prefs key 的标准姿势**：先 `_backupBeforeDeleting` 落备份 JSON，再逐条 `CredentialAuditLogger.record('autoFixDelete', ...)`，备份失败只 warn 不阻断；
+- **快捷按钮点击穿透**：消息流内可点击元素统一走已修复的手势行为，不要再包裸 `GestureDetector`/`IosIconButton`；翻译类异步操作必须有加载态；
+- **侧边栏排序**：`ConversationSortMode` 三值（natural/time/assistant），拖拽顺序持久化在 provider，手风琴折叠状态独立；新增排序模式先扩枚举再补分组器。
+
 ## [0.0.52] - 2026-09-10
 
 ### 📣 For Users

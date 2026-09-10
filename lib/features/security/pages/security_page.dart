@@ -21,6 +21,7 @@ import '../../../core/services/security/policy_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_section.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -49,10 +50,8 @@ class SecurityPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return AppPage(
+    return AppPage.selfScrolling(
       title: l10n.securitySection,
-      // body 自带 ListView（见 SecurityBody），关闭 AppPage 默认的滚动包裹
-      scrollable: false,
       body: const SecurityBody(),
     );
   }
@@ -287,8 +286,8 @@ class _SecurityBodyState extends State<SecurityBody> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+    return AppListView(
+      bottomPadding: AppGap.xl,
       children: [
         _checkupSection(l10n),
         _healthSection(l10n),

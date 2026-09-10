@@ -146,6 +146,39 @@ class AppPage<T> extends StatefulWidget {
     this.bottom,
   });
 
+  /// body 内部自带滚动容器（[AppListView] / ListView / ReorderableListView 等）
+  /// 时使用此构造函数。
+  ///
+  /// 自动设置 `scrollable: false` + `bodyPadding: zero`，避免「AppPage 默认
+  /// padding 16 + 内部 ListView padding 16」双层叠加导致卡片过窄。
+  ///
+  /// 典型用法：
+  /// ```dart
+  /// AppPage.selfScrolling(
+  ///   title: '安全',
+  ///   body: AppListView(children: [...]),
+  /// )
+  /// ```
+  const AppPage.selfScrolling({
+    super.key,
+    this.title,
+    this.titleWidget,
+    this.body,
+    this.actions,
+    this.leading,
+    this.showBack = true,
+    this.floatingActionButton,
+    this.drawer,
+    this.endDrawer,
+    this.safeArea = true,
+    this.backgroundColor,
+    this.segments,
+    this.segmentsMode = AppSegmentMode.top,
+    this.states,
+    this.bottom,
+  })  : scrollable = false,
+        bodyPadding = AppPagePadding.zero;
+
   @override
   State<AppPage<T>> createState() => _AppPageState<T>();
 }

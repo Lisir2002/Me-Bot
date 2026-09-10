@@ -56,9 +56,8 @@ class _LogViewerPageState extends State<LogViewerPage> {
 
     // 页面壳走设计系统 AppPage（返回键/标题/actions 统一）；
     // pill 分段条是页内组件，放 body 首行（与原 AppBar.bottom 视觉等价）。
-    return AppPage(
+    return AppPage.selfScrolling(
       title: l10n.storageCateLogs,
-      scrollable: false,
       actions: [
         Tooltip(
           message: l10n.logSettingsTitle,

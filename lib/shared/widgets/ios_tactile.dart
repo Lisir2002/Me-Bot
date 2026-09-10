@@ -101,7 +101,10 @@ class _IosIconButtonState extends State<IosIconButton> {
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
+          // 无回调时用 translucent 让点击穿透到父级（避免外层 GestureDetector 收不到事件）
+          behavior: (widget.onTap != null || widget.onLongPress != null)
+              ? HitTestBehavior.opaque
+              : HitTestBehavior.translucent,
           onTapDown: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = true) : null,
           onTapUp: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? (_) => setState(() => _pressed = false) : null,
           onTapCancel: (widget.enabled && (widget.onTap != null || widget.onLongPress != null)) ? () => setState(() => _pressed = false) : null,

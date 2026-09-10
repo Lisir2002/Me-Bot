@@ -72,7 +72,7 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 - warning 三条大头：`unused_local_variable` 84 · `unnecessary_cast` 73 · `unused_element` 60；最脏文件 `chat_api_service.dart` 89 条。
 - info 最大单头 585 条 `deprecated_member_use`，集中在 `lib/desktop/`（desktop_settings_page 244 条）。
 
-**清零行动见 `docs/WARNING_CLEARANCE.md`（批次 B0–B6、进度看板、红线）。** 已拍板政策：`unreachable_switch_default` 保留 default + ignore 注释；`unused_element` / `unused_field` 逐条判断。三条硬约束：
+**清零行动见 `docs/design/warning-clearance.md`（批次 B0–B6、进度看板、红线）。** 已拍板政策：`unreachable_switch_default` 保留 default + ignore 注释；`unused_element` / `unused_field` 逐条判断。三条硬约束：
 - `dart fix --apply` 会顺带应用 `missing_dependency` 往 `pubspec.yaml` 塞 `xxx: any`——**每批 apply 后必须 diff 并还原 pubspec**（T4）。
 - **禁止对 `unused_element_parameter` 用 `dart fix`**：Dart 3.9 对初始化形参 `this.x` 是误报（`widget.x` 明明在用），机器修复会直接删构造参数，实测引入 15 个 `final_not_initialized_constructor` 编译错误。B1 已整条撤出，转人工。
 - "未使用"类警告（原 201 条）无机器修复，**禁止批量盲删**，须逐条确认无副作用后再处理。B3/B4 已消化 179 条（unused_local_variable / unused_element / unused_element_parameter 已归零；剩 unused_field 1 条为保留字段）。
@@ -90,7 +90,7 @@ android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`co
 | 版本历史与破坏性变更 | `CHANGELOG.md` |
 | 架构与功能概览 | `README.md` |
 | CI workflow | `.github/workflows/build-stable.yml`（FLUTTER_VERSION 3.35.7，B6 起 analyze 为硬门禁） |
-| **warning 清零批次、进度看板、红线** | `docs/WARNING_CLEARANCE.md` |
+| **warning 清零批次、进度看板、红线** | `docs/design/warning-clearance.md` |
 
 ## 7. 本文件的迭代
 

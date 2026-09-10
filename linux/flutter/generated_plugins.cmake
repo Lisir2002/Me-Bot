@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   dynamic_color
   file_selector_linux
+  flutter_secure_storage_linux
   irondash_engine_context
   screen_retriever_linux
   super_native_extensions

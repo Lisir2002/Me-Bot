@@ -7,7 +7,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   dynamic_color
   file_selector_windows
+  flutter_secure_storage_windows
   irondash_engine_context
+  local_auth_windows
   permission_handler_windows
   screen_retriever_windows
   share_plus

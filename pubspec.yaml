@@ -176,10 +176,21 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/app_icon_foreground.png
+  image_path: assets/app_icon.png
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: assets/app_icon_foreground.png
-  remove_alpha_ios: true
+  adaptive_icon_foreground: assets/app_icon.png
+  remove_alpha_ios: false
+  web:
+    generate: true
+    image_path: "assets/app_icon.png"
+    background_color: "#FFFFFF"
+  windows:
+    generate: true
+    image_path: "assets/app_icon.png"
+    icon_size: 108
+  macos:
+    generate: true
+    image_path: "assets/app_icon.png"
 
 flutter_native_splash:
   # Apply to both platforms

@@ -63,3 +63,8 @@ internationalization.md
 lib/l10n/app_localizations.dart
 lib/l10n/app_localizations_en.dart
 lib/l10n/app_localizations_zh.dart
+l10n_untranslated.txt
+
+# DevTools 工具配置
+devtools_options.yaml
+

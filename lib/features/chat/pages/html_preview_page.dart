@@ -68,6 +68,7 @@ class _HtmlPreviewPageState extends State<HtmlPreviewPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    // ⚠️ 裸 Scaffold 豁免（no_raw_scaffold 白名单）：HTML 渲染全屏预览页。
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.assistantEditPreviewTitle),

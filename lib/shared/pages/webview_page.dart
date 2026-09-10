@@ -9,6 +9,7 @@ import '../../core/services/logging/logger.dart';
 import '../../core/services/logging/log_tags.dart';
 import '../../core/services/security/url_policy.dart';
 import '../../core/services/security/policy_provider.dart';
+import '../widgets/snackbar.dart';
 
 class WebViewPage extends StatefulWidget {
   const WebViewPage({super.key, this.url, this.contentBase64});
@@ -82,7 +83,7 @@ class _WebViewPageState extends State<WebViewPage> {
       // Keep parity with existing Linux limitation: no WebView support
       final l10n = context.l10n;
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.htmlPreviewNotSupportedOnLinux)));
+      showAppSnackBar(context, message: l10n.htmlPreviewNotSupportedOnLinux, type: NotificationType.warning);
       Navigator.of(context).maybePop();
       return;
     }
@@ -150,6 +151,7 @@ class _WebViewPageState extends State<WebViewPage> {
         }
         return true;
       },
+      // ⚠️ 裸 Scaffold 豁免（no_raw_scaffold 白名单）：WebView 浏览器全屏页，AppBar 动态操作自管。
       child: Scaffold(
         appBar: AppBar(
           title: Text(_title?.isNotEmpty == true ? _title! : (_currentUrl ?? '')),

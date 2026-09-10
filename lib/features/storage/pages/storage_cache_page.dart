@@ -14,6 +14,7 @@ import '../../../theme/design_tokens.dart';
 import '../../../utils/app_directories.dart';
 import '../widgets/storage_ios_widgets.dart';
 import '../widgets/storage_info_header.dart';
+import '../../../shared/widgets/snackbar.dart';
 
 /// 可清理明细型（缓存）子页面。
 /// 顶部两个描边按钮：清理头像缓存 / 清理缓存；下方明细卡。
@@ -83,9 +84,8 @@ class _StorageCachePageState extends State<StorageCachePage> {
     } catch (e, s) {
       Logger.e('StorageCache', 'clear avatar cache failed', e, s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.clearAvatarCacheFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.clearAvatarCacheFailed(e.toString()), type: NotificationType.error);
       }
     }
   }
@@ -98,9 +98,8 @@ class _StorageCachePageState extends State<StorageCachePage> {
     } catch (e, s) {
       Logger.e('StorageCache', 'clear app cache failed', e, s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.clearCacheFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.clearCacheFailed(e.toString()), type: NotificationType.error);
       }
     }
   }

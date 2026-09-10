@@ -3,7 +3,7 @@ import 'package:analyzer/error/error.dart';
 import 'package:analyzer/error/listener.dart';
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-/// Me-Bot l10n 自定义 lint。
+/// Me-Bot l10n + 设计系统自定义 lint。
 ///
 /// 规则 1 `hardcoded_ui_string`：UI widget 参数位出现含中文的字符串字面量
 ///   → 语言遗漏的实时红线（IDE 波浪线 + CI）。项目 UI 主语言为中文，
@@ -12,6 +12,16 @@ import 'package:custom_lint_builder/custom_lint_builder.dart';
 ///
 /// 规则 2 `l10n_no_field_cache`：把 AppLocalizations 存进字段/缓存
 ///   → 语言切换后旧文案不刷新的头号坑，直接禁止。
+///
+/// 规则 3 `no_material_snackbar`（error）：禁止裸 SnackBar / ScaffoldMessenger，
+///   通知一律走 `showAppSnackBar`（AppSnackBarManager 统一渲染 + 语义色）。
+///
+/// 规则 4 `no_material_list_tile`（error）：禁止裸 ListTile 系组件，
+///   列表行一律走 `AppNavRow` / `AppSwitchRow`（iOS 触觉 + 按压缩放 + 统一密度）。
+///
+/// 规则 5 `no_raw_scaffold`（error）：禁止页面自写裸 Scaffold，
+///   页面骨架一律走 `AppPage`。全屏特例（浏览器/查看器/扫码/首页）在文件内
+///   写明「no_raw_scaffold 白名单」注释后整文件豁免（见 image_viewer_page 等）。
 PluginBase createPlugin() => _MeBotL10nLints();
 
 class _MeBotL10nLints extends PluginBase {
@@ -19,6 +29,9 @@ class _MeBotL10nLints extends PluginBase {
   List<LintRule> getLintRules(CustomLintConfigs configs) => [
         HardcodedUiString(),
         L10nNoFieldCache(),
+        NoMaterialSnackBar(),
+        NoMaterialListTile(),
+        NoRawScaffold(),
       ];
 }
 
@@ -139,6 +152,142 @@ class L10nNoFieldCache extends DartLintRule {
           reporter.reportErrorForNode(code, v);
         }
       }
+    });
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// 设计系统守护规则（UI 对齐批次新增，error 级）
+//
+// 目的：把「新页面必须走设计系统」从口头约定变成机器红线——
+// 写码时 IDE 直接标红，CI 里 custom_lint fatal，双端拦截。
+// ──────────────────────────────────────────────────────────────
+
+/// 共享的运行环境判定。
+extension _GuardEnv on CustomLintResolver {
+  /// 是否豁免目录（测试 / 设计系统实现自身 / lint 插件自身）。
+  bool get inExemptDir =>
+      path.contains('/test/') ||
+      path.contains('l10n_lints/') ||
+      path.contains('/tools/');
+
+  /// 文件内是否带整文件豁免标记（全屏特例页在 Scaffold 处注明）。
+  bool get hasWhitelistMark =>
+      source.contents.data.contains('no_raw_scaffold 白名单');
+}
+
+/// 规则 3 `no_material_snackbar`：裸 SnackBar / SnackBarAction 一律 error。
+class NoMaterialSnackBar extends DartLintRule {
+  NoMaterialSnackBar() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'no_material_snackbar',
+    problemMessage: '禁止裸 SnackBar——通知一律用 showAppSnackBar(context, '
+        'message: ..., type: ...)（统一渲染、语义色、可点行为）',
+    correctionMessage: "import '../../../shared/widgets/snackbar.dart' 后改用 "
+        'showAppSnackBar；NotificationType.success/error/info/warning 表达语义',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
+
+  /// 被禁止的 Material 通知组件。
+  static const _banned = {'SnackBar', 'SnackBarAction'};
+
+  /// 设计系统实现自身（snackbar.dart）不在检查范围。
+  static const _exemptPaths = ['/shared/widgets/snackbar.dart'];
+
+  @override
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    if (resolver.inExemptDir ||
+        _exemptPaths.any(resolver.path.contains)) {
+      return;
+    }
+    context.registry.addInstanceCreationExpression((node) {
+      final type = node.constructorName.type.toString();
+      if (_banned.contains(type)) {
+        reporter.reportErrorForNode(code, node.constructorName.type);
+      }
+    });
+  }
+}
+
+/// 规则 4 `no_material_list_tile`：裸 ListTile 系组件一律 error。
+class NoMaterialListTile extends DartLintRule {
+  NoMaterialListTile() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'no_material_list_tile',
+    problemMessage: '禁止裸 ListTile / SwitchListTile 等列表行——'
+        '一律用 AppNavRow / AppSwitchRow（iOS 触觉、按压缩放、统一密度与图标列）',
+    correctionMessage: "import '../../../shared/widgets/app_section.dart' 后改用 "
+        'AppNavRow（导航/选择行）或 AppSwitchRow（开关行）',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
+
+  /// 被禁止的 Material 列表行组件。
+  static const _banned = {
+    'ListTile',
+    'SwitchListTile',
+    'CheckboxListTile',
+    'RadioListTile',
+    'ExpansionTile',
+    'AboutListTile',
+  };
+
+  @override
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    if (resolver.inExemptDir) return;
+    context.registry.addInstanceCreationExpression((node) {
+      final type = node.constructorName.type.toString();
+      if (_banned.contains(type)) {
+        reporter.reportErrorForNode(code, node.constructorName.type);
+      }
+    });
+  }
+}
+
+/// 规则 5 `no_raw_scaffold`：页面自写裸 Scaffold 一律 error。
+///
+/// 页面骨架必须走 `AppPage`（统一返回键/标题/滚动/SafeArea）。
+/// 全屏特例（浏览器、查看器、扫码、首页）在文件任意处写
+/// 「no_raw_scaffold 白名单」注释即可整文件豁免。
+class NoRawScaffold extends DartLintRule {
+  NoRawScaffold() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'no_raw_scaffold',
+    problemMessage: '禁止页面自写裸 Scaffold——页面骨架一律用 AppPage '
+        '（统一返回键、标题、滚动与 SafeArea，防止风格漂移）',
+    correctionMessage: "import '../../../shared/widgets/app_page.dart' 后改用 "
+        'AppPage(title: ..., body: ...)；全屏特例在文件内加 '
+        '「no_raw_scaffold 白名单：…原因」注释豁免',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
+
+  /// 设计系统实现自身（AppPage 内部组装 Scaffold）。
+  static const _exemptPaths = ['/shared/widgets/app_page.dart'];
+
+  @override
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    if (resolver.inExemptDir ||
+        _exemptPaths.any(resolver.path.contains) ||
+        resolver.hasWhitelistMark) {
+      return;
+    }
+    context.registry.addInstanceCreationExpression((node) {
+      if (node.constructorName.type.toString() != 'Scaffold') return;
+      reporter.reportErrorForNode(code, node.constructorName.type);
     });
   }
 }

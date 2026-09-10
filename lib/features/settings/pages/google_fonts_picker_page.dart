@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../theme/design_tokens.dart';
+import '../../../icons/lucide_adapter.dart';
+import '../../../shared/widgets/app_section.dart';
 
 /// Google Fonts 选择器。
 ///
@@ -83,11 +85,12 @@ class _GoogleFontsPickerPageState extends State<GoogleFontsPickerPage> {
               itemCount: filtered.length,
               itemBuilder: (context, i) {
                 final fam = filtered[i];
-                return ListTile(
-                  title: Text(fam),
+                return AppNavRow(
+                  icon: Lucide.FileText,
+                  label: fam,
                   // 字形预览样张：任何语言下展示相同样张，非可翻译文案
                   // ignore: hardcoded_ui_string
-                  trailing: Text('Aa字', style: GoogleFonts.getFont(fam, fontSize: 18)),
+                  detailBuilder: (_) => Text('Aa字', style: GoogleFonts.getFont(fam, fontSize: 18)),
                   onTap: () => Navigator.of(context).pop(fam),
                 );
               },

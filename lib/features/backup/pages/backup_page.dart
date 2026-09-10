@@ -296,7 +296,7 @@ class _BackupPageState extends State<BackupPage> {
 
   void _showError(BuildContext context, String msg) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    showAppSnackBar(context, message: msg, type: NotificationType.error);
   }
 
   /// 运行一次导入任务，遇到加密备份缺口令时弹窗索要并重试；口令错误提示后放弃。

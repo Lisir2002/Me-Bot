@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/services/haptics.dart';
+import '../../theme/design_tokens.dart';
 
 enum NotificationType {
   success,
@@ -335,13 +336,14 @@ class _NotificationWidgetState extends State<NotificationWidget> with SingleTick
   }
 
   Color _getIconColor(ColorScheme cs) {
+    // 语义色统一取自设计令牌 AppStatusColor（iOS 系统色板唯一事实来源）
     switch (widget.notification.type) {
       case NotificationType.success:
-        return const Color(0xFF34C759);
+        return AppStatusColor.success;
       case NotificationType.error:
-        return const Color(0xFFFF3B30);
+        return AppStatusColor.danger;
       case NotificationType.warning:
-        return const Color(0xFFFF9500);
+        return AppStatusColor.warning;
       case NotificationType.info:
         return cs.primary;
     }

@@ -18,10 +18,18 @@ import '../../../core/services/security/key_health_service.dart';
 import '../../../core/services/security/app_lock_service.dart';
 import '../../../core/services/security/credential_audit_logger.dart';
 import '../../../core/services/security/policy_provider.dart';
+import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
-import '../checkup_strings_l10n.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/ios_switch.dart';
+import '../../../shared/widgets/ios_tactile.dart';
+import '../../../shared/widgets/snackbar.dart';
+import '../../../theme/design_tokens.dart';
 import '../../../utils/app_directories.dart';
+import '../checkup_strings_l10n.dart';
 import '../../provider/pages/provider_detail_page.dart';
 
 /// 安全中心（PR-5 ~ PR-8 的统一入口）。
@@ -30,15 +38,42 @@ import '../../provider/pages/provider_detail_page.dart';
 /// 标记已轮换 / 跳转换 Key）③ 隐私门禁（开关双向验证 + 解锁宽限期）
 /// ④ 白名单策略（命令/例外站点可增删、MCP 服务器逐个开关）
 /// ⑤ 最近安全事件（审计可见化）。
-/// 移动与桌面共用同一页，避免两套 UI 逻辑漂移。
-class SecurityPage extends StatefulWidget {
+///
+/// 双端结构（对齐设计系统的关键约束）：
+/// - [SecurityPage] 移动端薄壳，只负责 [AppPage] 骨架（标题/返回键/滚动）；
+/// - [SecurityBody] 纯 body（**无 Scaffold**），桌面端设置 pane 直接嵌入，
+///   避免整页嵌套造成「双层标题栏」；业务逻辑只在 [SecurityBody] 一处。
+class SecurityPage extends StatelessWidget {
   const SecurityPage({super.key});
 
   @override
-  State<SecurityPage> createState() => _SecurityPageState();
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AppPage(
+      title: l10n.securitySection,
+      // body 自带 ListView（见 SecurityBody），关闭 AppPage 默认的滚动包裹
+      scrollable: false,
+      body: const SecurityBody(),
+    );
+  }
 }
 
-class _SecurityPageState extends State<SecurityPage> {
+/// 安全中心正文（移动 / 桌面共用）。
+///
+/// ⚠️ 必须走设计系统，禁止回退：
+/// - 容器用 [AppSectionCard]（裸 `Card` / `Scaffold` 不允许）；
+/// - 行用 [AppNavRow] / [AppSwitchRow]（裸 `ListTile` / `SwitchListTile` 不允许）；
+/// - 通知用 [showAppSnackBar]（裸 `ScaffoldMessenger` / `SnackBar` 不允许）；
+/// - 语义色用 [AppStatusColor]（`Colors.red/green/amber` 不允许）；
+/// - 弹层用 [showAppSheet] + [AppSheet]（裸 `showModalBottomSheet` 不允许）。
+class SecurityBody extends StatefulWidget {
+  const SecurityBody({super.key});
+
+  @override
+  State<SecurityBody> createState() => _SecurityBodyState();
+}
+
+class _SecurityBodyState extends State<SecurityBody> {
   CheckupReport? _report;
   bool _running = false;
   List<KeyHealthInfo> _health = const [];
@@ -158,7 +193,7 @@ class _SecurityPageState extends State<SecurityPage> {
     await svc.fix(fixable);
     CredentialAuditLogger.record('fix', 'checkup:${fixable.length}');
     if (!mounted) return;
-    _snack(l10n.checkupFixSuccess);
+    _snack(l10n.checkupFixSuccess, type: NotificationType.success);
     await _runCheckup();
     await _loadHealth();
   }
@@ -217,7 +252,10 @@ class _SecurityPageState extends State<SecurityPage> {
     final svc = KeyHealthService(SecureStorage.instance);
     final ok = await svc.markRotated(info.providerId);
     if (!mounted) return;
-    _snack(ok ? l10n.rotateMarked : l10n.keyHealthEmpty);
+    _snack(
+      ok ? l10n.rotateMarked : l10n.keyHealthEmpty,
+      type: ok ? NotificationType.success : NotificationType.info,
+    );
     if (ok) {
       CredentialAuditLogger.record('markRotated', 'provider:${info.providerId}');
       await _loadHealth();
@@ -239,177 +277,258 @@ class _SecurityPageState extends State<SecurityPage> {
     await _loadHealth();
   }
 
-  void _snack(String msg) {
+  void _snack(String msg, {NotificationType type = NotificationType.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    showAppSnackBar(context, message: msg, type: type);
   }
+
+  // ─────────────────────────────────────────── 页面骨架（黄金范式：backup_page）
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xl),
+      children: [
+        _checkupSection(l10n),
+        _healthSection(l10n),
+        _lockSection(l10n),
+        _policySection(l10n),
+        _auditSection(l10n),
+      ],
+    );
+  }
+
+  /// 分组小节标题（13px w600，与 backup_page 的 `header` 范式一致）。
+  Widget header(String text, {bool first = false}) => Padding(
+        padding: EdgeInsets.fromLTRB(2, first ? 0 : AppGap.lg, 2, AppGap.xxs),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+          ),
+        ),
+      );
+
+  /// 分组小节描述（12px 弱化）。
+  Widget desc(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 0, 2, AppGap.sm),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+          ),
+        ),
+      );
+
+  /// 卡内统一状态行（原 `_banner` 的设计系统版）。
+  Widget statusRow(String text, {IconData? icon, Color? color}) {
     final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.securitySection)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _checkupSection(l10n, cs),
-          const Divider(height: 32),
-          _healthSection(l10n, cs),
-          const Divider(height: 32),
-          _lockSection(l10n, cs),
-          const Divider(height: 32),
-          _policySection(l10n, cs),
-          const Divider(height: 32),
-          _auditSection(l10n, cs),
-        ],
+    final tint = color ?? cs.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: AppGap.xxs),
+      child: Container(
+        padding: const EdgeInsets.all(AppGap.sm),
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: tint, size: 18),
+              const SizedBox(width: AppGap.sm),
+            ],
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: cs.onSurface.withOpacity(0.7),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ------------------------------------------------------------ ① 安全体检
-  Widget _checkupSection(AppLocalizations l10n, ColorScheme cs) {
+  Widget _checkupSection(AppLocalizations l10n) {
+    final report = _report;
+    final fixable = report?.fixable ?? const [];
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.securityCheckup, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(l10n.securityCheckupDesc,
-            style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            FilledButton.icon(
-              onPressed: _running ? null : _runCheckup,
-              icon: _running
-                  ? const SizedBox(
+        header(l10n.securityCheckup, first: true),
+        desc(l10n.securityCheckupDesc),
+        AppSectionCard(children: [
+          AppNavRow(
+            icon: Lucide.RefreshCw,
+            label: _running ? l10n.checkupRunning : l10n.runCheckup,
+            onTap: _running ? null : _runCheckup,
+            detailBuilder: _running
+                ? (_) => const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.refresh),
-              label: Text(_running ? l10n.checkupRunning : l10n.runCheckup),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                : null,
+          ),
+          if (!_running && fixable.isNotEmpty) ...[
+            const AppSectionDivider(),
+            AppNavRow(
+              icon: Lucide.Wand2,
+              label: l10n.checkupFix,
+              detailText: '${fixable.length}',
+              onTap: _autoFix,
             ),
-            const SizedBox(width: 12),
-            if (_report != null && _report!.fixable.isNotEmpty)
-              OutlinedButton.icon(
-                onPressed: _autoFix,
-                icon: const Icon(Icons.auto_fix_high),
-                label: Text(l10n.checkupFix),
-              ),
           ],
-        ),
-        const SizedBox(height: 12),
-        if (_report == null && !_running)
-          const SizedBox.shrink()
-        else if (_report != null && _report!.findings.isEmpty)
-          _banner(cs, Icons.check_circle, l10n.checkupNoIssue, Colors.green)
-        else if (_report != null)
-          ..._report!.findings.map((f) => _findingCard(f, l10n, cs)),
+          if (!_running && report != null) ...[
+            if (report.findings.isEmpty) ...[
+              const AppSectionDivider(),
+              statusRow(
+                l10n.checkupNoIssue,
+                icon: Lucide.circleCheckBig,
+                color: AppStatusColor.success,
+              ),
+            ] else
+              for (final f in report.findings) ...[
+                const AppSectionDivider(),
+                _findingRow(f, l10n),
+              ],
+          ],
+        ]),
       ],
     );
   }
 
-  Widget _findingCard(CheckupFinding f, AppLocalizations l10n, ColorScheme cs) {
-    final color = switch (f.severity) {
-      CheckupSeverity.danger => Colors.red,
-      CheckupSeverity.warn => Colors.amber.shade700,
-      CheckupSeverity.safe => Colors.green,
+  /// 体检发现行：severity → (图标, 语义色)，富文本行 + 可选修复按钮。
+  Widget _findingRow(CheckupFinding f, AppLocalizations l10n) {
+    final cs = Theme.of(context).colorScheme;
+    final (IconData icon, Color color) = switch (f.severity) {
+      CheckupSeverity.danger => (Lucide.CircleX, AppStatusColor.danger),
+      CheckupSeverity.warn => (Lucide.circleDot, AppStatusColor.warning),
+      CheckupSeverity.safe => (Lucide.circleCheckBig, AppStatusColor.success),
     };
-    IconData icon = Icons.info_outline;
-    if (f.severity == CheckupSeverity.danger) {
-      icon = Icons.error_outline;
-    } else if (f.severity == CheckupSeverity.warn) {
-      icon = Icons.warning_amber_rounded;
-    }
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Expanded(child: Text(f.title, style: const TextStyle(fontWeight: FontWeight.w600))),
-            ]),
-            const SizedBox(height: 4),
-            Text(f.detail, style: Theme.of(context).textTheme.bodySmall),
-            if (f.fixHint != null && f.fixHint!.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text('${l10n.fixHintLabel}${f.fixHint}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: cs.primary)),
-            ],
-            if (f.autoFixable) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: _autoFix,
-                  icon: const Icon(Icons.auto_fix_high, size: 16),
-                  label: Text(l10n.checkupFix),
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: AppGap.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 36, child: Icon(icon, size: 18, color: color)),
+          const SizedBox(width: AppGap.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(f.title,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                if (f.detail.isNotEmpty) ...[
+                  const SizedBox(height: AppGap.xxxs),
+                  Text(f.detail,
+                      style: TextStyle(
+                          fontSize: 12, color: cs.onSurface.withOpacity(0.6))),
+                ],
+                if (f.fixHint != null && f.fixHint!.isNotEmpty) ...[
+                  const SizedBox(height: AppGap.xxs),
+                  Text('${l10n.fixHintLabel}${f.fixHint}',
+                      style: TextStyle(fontSize: 12, color: cs.primary)),
+                ],
+              ],
+            ),
+          ),
+          if (f.autoFixable) ...[
+            const SizedBox(width: AppGap.xxs),
+            Tooltip(
+              message: l10n.checkupFix,
+              child: IosIconButton(
+                haptics: true,
+                icon: Lucide.Wand2,
+                size: 16,
+                minSize: 32,
+                onTap: _autoFix,
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   // ---------------------------------------------------------- ② 密钥健康
-  Widget _healthSection(AppLocalizations l10n, ColorScheme cs) {
+  Widget _healthSection(AppLocalizations l10n) {
+    final anyRotation = _health.any((h) => h.needsRotation);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.keyHealth, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(l10n.keyHealthDesc, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 12),
-        if (_loadingHealth)
-          const Center(child: CircularProgressIndicator())
-        else if (_health.isEmpty)
-          _banner(cs, Icons.key_off, l10n.keyHealthEmpty, cs.onSurfaceVariant)
-        else
-          ..._health.map((h) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  onTap: () => _gotoProvider(h),
-                  leading: Icon(
-                    h.needsRotation ? Icons.warning_amber_rounded : Icons.verified_user,
-                    color: h.needsRotation ? Colors.amber.shade700 : Colors.green,
-                  ),
-                  title: Text(h.providerId),
-                  subtitle: Text(
-                      '${l10n.keyCountLabel}: ${h.keyCount} · ${l10n.lastRotated}: ${_fmt(l10n, h.lastRotatedAt)}'),
-                  trailing: h.needsRotation
-                      ? Row(mainAxisSize: MainAxisSize.min, children: [
-                          Chip(
-                            label: Text(l10n.suggestRotation),
-                            backgroundColor: Colors.amber.shade100,
-                          ),
-                          IconButton(
-                            tooltip: l10n.rotateAction,
-                            icon: const Icon(Icons.task_alt, size: 20),
-                            onPressed: () => _markRotated(h),
-                          ),
-                        ])
-                      : Chip(label: Text(l10n.rotationOk)),
-                ),
-              )),
-        if (_health.any((h) => h.needsRotation)) ...[
-          const SizedBox(height: 4),
-          Text(l10n.goRotate,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: cs.onSurfaceVariant)),
-        ],
+        header(l10n.keyHealth),
+        desc(l10n.keyHealthDesc),
+        AppSectionCard(children: _healthRows(l10n)),
+        if (anyRotation)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(2, AppGap.xxs, 2, 0),
+            child: Text(
+              l10n.goRotate,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+              ),
+            ),
+          ),
       ],
     );
+  }
+
+  List<Widget> _healthRows(AppLocalizations l10n) {
+    if (_loadingHealth) {
+      return const [
+        Padding(
+          padding: EdgeInsets.all(AppGap.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    }
+    if (_health.isEmpty) {
+      return [statusRow(l10n.keyHealthEmpty, icon: Lucide.KeyRound)];
+    }
+    return [
+      for (final h in _health) ...[
+        if (h != _health.first) const AppSectionDivider(),
+        AppNavRow(
+          icon: Lucide.KeyRound,
+          label: h.providerId,
+          onTap: () => _gotoProvider(h),
+          detailBuilder: (ctx) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${h.keyCount} · ${_fmt(l10n, h.lastRotatedAt)}'),
+              Text(
+                h.needsRotation ? l10n.suggestRotation : l10n.rotationOk,
+                style: h.needsRotation
+                    ? const TextStyle(color: AppStatusColor.warning)
+                    : null,
+              ),
+              if (h.needsRotation)
+                Tooltip(
+                  message: l10n.rotateAction,
+                  child: IosIconButton(
+                    haptics: true,
+                    icon: Lucide.RotateCw,
+                    size: 14,
+                    minSize: 28,
+                    onTap: () => _markRotated(h),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ];
   }
 
   String _fmt(AppLocalizations l10n, DateTime? d) {
@@ -418,7 +537,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   // ------------------------------------------------------------ ③ 隐私门禁
-  Widget _lockSection(AppLocalizations l10n, ColorScheme cs) {
+  Widget _lockSection(AppLocalizations l10n) {
     return FutureBuilder<AppLockService>(
       future: AppLockService.instance != null
           ? Future.value(AppLockService.instance)
@@ -426,56 +545,61 @@ class _SecurityPageState extends State<SecurityPage> {
       builder: (context, snap) {
         final lock = snap.data;
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.appLock, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(l10n.appLockDesc, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 8),
-            FutureBuilder<bool>(
-              future: lock?.canEnable() ?? Future<bool>.value(false),
-              builder: (context, snap2) {
-                final supported = snap2.data ?? false;
-                if (!supported) {
-                  return _banner(cs, Icons.no_encryption, l10n.appLockUnsupported,
-                      cs.onSurfaceVariant);
-                }
-                return Column(children: [
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(l10n.appLockEnable),
-                    value: lock?.enabled ?? false,
-                    onChanged: (v) => _toggleLock(lock!, v),
-                  ),
-                  if (lock?.enabled == true) ...[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      title: Text(l10n.appLockGrace),
-                      subtitle: Text(l10n.appLockGraceDesc),
-                      trailing: Text(_graceLabel(l10n, lock!.graceMinutes)),
-                      onTap: () => _pickGrace(lock),
-                    ),
-                    if (lock.graceMinutes > 0)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () async {
-                            await lock.lockNow();
-                            _snack(l10n.appLockLockNow);
-                          },
-                          icon: const Icon(Icons.lock_outline, size: 18),
-                          label: Text(l10n.appLockLockNow),
-                        ),
-                      ),
-                  ],
-                ]);
-              },
-            ),
+            header(l10n.appLock),
+            desc(l10n.appLockDesc),
+            AppSectionCard(children: _lockRows(l10n, lock)),
           ],
         );
       },
     );
+  }
+
+  List<Widget> _lockRows(AppLocalizations l10n, AppLockService? lock) {
+    if (lock == null) return const [];
+    return [
+      FutureBuilder<bool>(
+        future: lock.canEnable(),
+        builder: (context, snap) {
+          final supported = snap.data ?? false;
+          if (!supported) {
+            return statusRow(l10n.appLockUnsupported, icon: Lucide.Shield);
+          }
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppSwitchRow(
+                icon: Lucide.Shield,
+                label: l10n.appLockEnable,
+                value: lock.enabled,
+                onChanged: (v) => _toggleLock(lock, v),
+              ),
+              if (lock.enabled) ...[
+                const AppSectionDivider(),
+                AppNavRow(
+                  icon: Lucide.History,
+                  label: l10n.appLockGrace,
+                  detailText: _graceLabel(l10n, lock.graceMinutes),
+                  onTap: () => _pickGrace(lock),
+                ),
+                if (lock.graceMinutes > 0) ...[
+                  const AppSectionDivider(),
+                  AppNavRow(
+                    icon: Lucide.EyeOff,
+                    label: l10n.appLockLockNow,
+                    onTap: () async {
+                      await lock.lockNow();
+                      _snack(l10n.appLockLockNow);
+                    },
+                  ),
+                ],
+              ],
+            ],
+          );
+        },
+      ),
+    ];
   }
 
   String _graceLabel(AppLocalizations l10n, int minutes) =>
@@ -489,7 +613,7 @@ class _SecurityPageState extends State<SecurityPage> {
         verify: () => lock.verifyWith(l10n.appLockVerifyToEnable));
     if (!mounted) return;
     if (!ok) {
-      _snack(l10n.appLockAuthFailed);
+      _snack(l10n.appLockAuthFailed, type: NotificationType.error);
       return;
     }
     setState(() {});
@@ -497,22 +621,22 @@ class _SecurityPageState extends State<SecurityPage> {
 
   Future<void> _pickGrace(AppLockService lock) async {
     final l10n = context.l10n;
-    final picked = await showModalBottomSheet<int>(
+    final picked = await showAppSheet<int>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(l10n.appLockGrace, style: Theme.of(ctx).textTheme.titleMedium),
-          ),
+      builder: AppSheet(
+        title: l10n.appLockGrace,
+        children: [
+          // Builder 拿到 sheet 路由内的 context，pop 才能把选中值带回去
+          // （与 display_settings_page 的 _OptionSheet 同一原理）。
           for (final m in AppLockService.graceChoices)
-            ListTile(
-              title: Text(_graceLabel(l10n, m)),
-              trailing: m == lock.graceMinutes ? const Icon(Icons.check) : null,
-              onTap: () => Navigator.pop(ctx, m),
+            Builder(
+              builder: (sheetCtx) => AppNavRow(
+                icon: m == lock.graceMinutes ? Lucide.Check : Lucide.circleDot,
+                label: _graceLabel(l10n, m),
+                onTap: () => Navigator.pop(sheetCtx, m),
+              ),
             ),
-          const SizedBox(height: 8),
-        ]),
+        ],
       ),
     );
     if (picked != null) {
@@ -522,7 +646,7 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   // ---------------------------------------------------------- ④ 白名单策略
-  Widget _policySection(AppLocalizations l10n, ColorScheme cs) {
+  Widget _policySection(AppLocalizations l10n) {
     return FutureBuilder<LocalPolicyProvider>(
       future: LocalPolicyProvider.instance != null
           ? Future.value(LocalPolicyProvider.instance)
@@ -532,117 +656,171 @@ class _SecurityPageState extends State<SecurityPage> {
         if (policy == null) return const SizedBox.shrink();
         final servers = context.watch<McpProvider>().servers;
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.allowlist, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(l10n.allowlistDesc, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.allowlistEnable),
-              value: policy.enabled,
-              onChanged: (v) async {
-                await policy.setEnabled(v);
-                if (mounted) setState(() {});
-              },
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(l10n.allowHttp),
-              value: policy.allowWebViewHttp,
-              onChanged: (v) async {
-                await policy.setAllowWebViewHttp(v);
-                if (mounted) setState(() {});
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(children: [
-              Expanded(
-                  child: Text(l10n.mcpCommandAllowlist,
-                      style: Theme.of(context).textTheme.bodyMedium)),
-              TextButton.icon(
-                onPressed: () => _restoreDefaultCmds(policy),
-                icon: const Icon(Icons.restart_alt, size: 16),
-                label: Text(l10n.restoreDefaultCmds),
-              ),
-            ]),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 6,
-              runSpacing: -6,
-              children: [
-                for (final c in policy.allowedMcpCommands)
-                  InputChip(
-                    label: Text(c),
-                    onDeleted: () async {
-                      final next = Set.of(policy.allowedMcpCommands)..remove(c);
-                      await policy.setAllowedMcpCommands(next);
-                      if (mounted) setState(() {});
-                    },
-                  ),
-                ActionChip(
-                  avatar: const Icon(Icons.add, size: 18),
-                  label: Text(l10n.addCommand),
-                  onPressed: () => _addCommand(policy),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(
-                  child: Text(l10n.webviewHosts,
-                      style: Theme.of(context).textTheme.bodyMedium)),
-              TextButton.icon(
-                onPressed: () => _addHost(policy),
-                icon: const Icon(Icons.add, size: 16),
-                label: Text(l10n.addHost),
-              ),
-            ]),
-            if (policy.allowedWebViewHosts.isEmpty)
-              Text(l10n.webviewHostsEmpty,
-                  style: Theme.of(context).textTheme.bodySmall)
-            else
-              Wrap(
-                spacing: 6,
-                runSpacing: -6,
-                children: [
-                  for (final h in policy.allowedWebViewHosts)
-                    InputChip(
-                      label: Text(h),
-                      onDeleted: () async {
-                        final next = Set.of(policy.allowedWebViewHosts)..remove(h);
-                        await policy.setWebViewHosts(next);
-                        if (mounted) setState(() {});
-                      },
-                    ),
-                ],
-              ),
-            const SizedBox(height: 12),
-            Text(l10n.mcpServersPolicy,
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 4),
-            if (servers.isEmpty)
-              Text(l10n.mcpServersEmpty,
-                  style: Theme.of(context).textTheme.bodySmall)
-            else
-              ...servers.map((s) => SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    title: Text(s.name.isNotEmpty ? s.name : s.id),
-                    subtitle: s.command != null && s.command!.isNotEmpty
-                        ? Text('stdio: ${s.command}', style: const TextStyle(fontSize: 12))
-                        : Text(s.transport.name, style: const TextStyle(fontSize: 12)),
-                    value: policy.isMcpServerAllowed(s.id),
-                    onChanged: (v) async {
-                      await policy.setMcpServerEnabled(s.id, v);
-                      if (mounted) setState(() {});
-                    },
-                  )),
+            header(l10n.allowlist),
+            desc(l10n.allowlistDesc),
+            AppSectionCard(children: _policyRows(l10n, policy, servers)),
           ],
         );
       },
+    );
+  }
+
+  List<Widget> _policyRows(
+    AppLocalizations l10n,
+    LocalPolicyProvider policy,
+    List<McpServerConfig> servers,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    return [
+      AppSwitchRow(
+        icon: Lucide.Shield,
+        label: l10n.allowlistEnable,
+        value: policy.enabled,
+        onChanged: (v) async {
+          await policy.setEnabled(v);
+          if (mounted) setState(() {});
+        },
+      ),
+      const AppSectionDivider(),
+      AppSwitchRow(
+        icon: Lucide.Globe,
+        label: l10n.allowHttp,
+        value: policy.allowWebViewHttp,
+        onChanged: (v) async {
+          await policy.setAllowWebViewHttp(v);
+          if (mounted) setState(() {});
+        },
+      ),
+      const AppSectionDivider(),
+      _rowHeader(l10n.mcpCommandAllowlist, trailing: TextButton.icon(
+        onPressed: () => _restoreDefaultCmds(policy),
+        icon: const Icon(Lucide.RefreshCw, size: 16),
+        label: Text(l10n.restoreDefaultCmds),
+      )),
+      _chipWrap([
+        for (final c in policy.allowedMcpCommands)
+          InputChip(
+            label: Text(c),
+            onDeleted: () async {
+              final next = Set.of(policy.allowedMcpCommands)..remove(c);
+              await policy.setAllowedMcpCommands(next);
+              if (mounted) setState(() {});
+            },
+          ),
+        ActionChip(
+          avatar: const Icon(Lucide.Plus, size: 18),
+          label: Text(l10n.addCommand),
+          onPressed: () => _addCommand(policy),
+        ),
+      ]),
+      const AppSectionDivider(),
+      _rowHeader(l10n.webviewHosts, trailing: TextButton.icon(
+        onPressed: () => _addHost(policy),
+        icon: const Icon(Lucide.Plus, size: 16),
+        label: Text(l10n.addHost),
+      )),
+      if (policy.allowedWebViewHosts.isEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.xxs),
+          child: Text(l10n.webviewHostsEmpty,
+              style: TextStyle(
+                  fontSize: 12, color: cs.onSurface.withOpacity(0.55))),
+        )
+      else
+        _chipWrap([
+          for (final h in policy.allowedWebViewHosts)
+            InputChip(
+              label: Text(h),
+              onDeleted: () async {
+                final next = Set.of(policy.allowedWebViewHosts)..remove(h);
+                await policy.setWebViewHosts(next);
+                if (mounted) setState(() {});
+              },
+            ),
+        ]),
+      const AppSectionDivider(),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xxs, AppGap.sm, AppGap.xxxs),
+        child: Text(l10n.mcpServersPolicy,
+            style: TextStyle(
+                fontSize: 15, color: cs.onSurface.withOpacity(0.9))),
+      ),
+      if (servers.isEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.xxs),
+          child: Text(l10n.mcpServersEmpty,
+              style: TextStyle(
+                  fontSize: 12, color: cs.onSurface.withOpacity(0.55))),
+        )
+      else
+        for (final s in servers)
+          _serverRow(l10n, cs, policy, s),
+    ];
+  }
+
+  /// 卡内「标题 + 右侧操作」行头（与 AppNavRow 的横向留白对齐）。
+  Widget _rowHeader(String text, {required Widget trailing}) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: AppGap.xxs),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
+                ),
+              ),
+            ),
+            trailing,
+          ],
+        ),
+      );
+
+  Widget _chipWrap(List<Widget> chips) => Padding(
+        padding: const EdgeInsets.fromLTRB(AppGap.sm, AppGap.xxs, AppGap.sm, AppGap.xxs),
+        child: Wrap(spacing: 6, runSpacing: -6, children: chips),
+      );
+
+  /// MCP 服务器开关行（AppSwitchRow 无副标题槽位，富副标题自定义行）。
+  Widget _serverRow(
+    AppLocalizations l10n,
+    ColorScheme cs,
+    LocalPolicyProvider policy,
+    McpServerConfig s,
+  ) {
+    final sub = s.command != null && s.command!.isNotEmpty
+        ? 'stdio: ${s.command}'
+        : s.transport.name;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppGap.sm, vertical: AppGap.xxs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(s.name.isNotEmpty ? s.name : s.id,
+                    style: TextStyle(
+                        fontSize: 15, color: cs.onSurface.withOpacity(0.9))),
+                const SizedBox(height: AppGap.xxxs),
+                Text(sub,
+                    style: TextStyle(
+                        fontSize: 12, color: cs.onSurface.withOpacity(0.55))),
+              ],
+            ),
+          ),
+          IosSwitch(
+            value: policy.isMcpServerAllowed(s.id),
+            onChanged: (v) async {
+              await policy.setMcpServerEnabled(s.id, v);
+              if (mounted) setState(() {});
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -681,7 +859,7 @@ class _SecurityPageState extends State<SecurityPage> {
     if (ok != true) return;
     final cmd = ctrl.text.trim();
     if (cmd.isEmpty || !_cmdRe.hasMatch(cmd)) {
-      _snack(l10n.invalidCommand);
+      _snack(l10n.invalidCommand, type: NotificationType.error);
       return;
     }
     final next = Set.of(policy.allowedMcpCommands)..add(cmd);
@@ -716,7 +894,7 @@ class _SecurityPageState extends State<SecurityPage> {
     if (ok != true) return;
     final host = ctrl.text.trim().toLowerCase();
     if (host.isEmpty || !_hostRe.hasMatch(host)) {
-      _snack(l10n.invalidHost);
+      _snack(l10n.invalidHost, type: NotificationType.error);
       return;
     }
     final next = Set.of(policy.allowedWebViewHosts)..add(host);
@@ -725,42 +903,41 @@ class _SecurityPageState extends State<SecurityPage> {
   }
 
   // ---------------------------------------------------------- ⑤ 最近安全事件
-  Widget _auditSection(AppLocalizations l10n, ColorScheme cs) {
+  Widget _auditSection(AppLocalizations l10n) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(children: [
-          Expanded(
-              child: Text(l10n.auditTrail,
-                  style: Theme.of(context).textTheme.titleMedium)),
-          if (_audit.isNotEmpty)
-            TextButton(
-              onPressed: _clearAudit,
-              child: Text(l10n.auditClear),
-            ),
-        ]),
-        const SizedBox(height: 4),
-        Text(l10n.auditTrailDesc, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 12),
-        if (_auditLoading)
-          const Center(child: CircularProgressIndicator())
-        else if (_audit.isEmpty)
-          _banner(cs, Icons.receipt_long, l10n.auditEmpty, cs.onSurfaceVariant)
-        else
-          ..._audit.map((e) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                leading: Icon(
-                  e.ok ? Icons.receipt_long : Icons.warning_amber_rounded,
-                  size: 20,
-                  color: e.ok ? cs.onSurfaceVariant : Colors.amber.shade700,
-                ),
-                title: Text(_auditText(l10n, e)),
-                subtitle: Text(_fmtTime(e.time),
-                    style: Theme.of(context).textTheme.bodySmall),
-              )),
+        header(l10n.auditTrail),
+        desc(l10n.auditTrailDesc),
+        AppSectionCard(children: _auditRows(l10n)),
       ],
     );
+  }
+
+  List<Widget> _auditRows(AppLocalizations l10n) {
+    if (_auditLoading) {
+      return const [
+        Padding(
+          padding: EdgeInsets.all(AppGap.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    }
+    if (_audit.isEmpty) {
+      return [statusRow(l10n.auditEmpty, icon: Lucide.ScrollText)];
+    }
+    return [
+      for (final e in _audit) ...[
+        if (e != _audit.first) const AppSectionDivider(),
+        AppNavRow(
+          icon: e.ok ? Lucide.ScrollText : Lucide.CircleX,
+          label: _auditText(l10n, e),
+          detailText: _fmtTime(e.time),
+        ),
+      ],
+      const AppSectionDivider(),
+      AppNavRow(icon: Lucide.Eraser, label: l10n.auditClear, onTap: _clearAudit),
+    ];
   }
 
   String _auditText(AppLocalizations l10n, AuditEvent e) {
@@ -782,21 +959,4 @@ class _SecurityPageState extends State<SecurityPage> {
   String _fmtTime(DateTime t) =>
       '${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')} '
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-
-  Widget _banner(ColorScheme cs, IconData icon, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
 }

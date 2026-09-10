@@ -261,7 +261,7 @@ class SettingsPage extends StatelessWidget {
             _iosDivider(context),
             _iosNavRow(
               context,
-              icon: Icons.shield_outlined,
+              icon: Lucide.Shield,
               label: l10n.securitySection,
               onTap: () {
                 Navigator.of(context).push(

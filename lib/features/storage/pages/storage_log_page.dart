@@ -14,6 +14,7 @@ import '../../../theme/design_tokens.dart';
 import '../widgets/storage_ios_widgets.dart';
 import '../widgets/storage_info_header.dart';
 import 'log_viewer_page.dart';
+import '../../../shared/widgets/snackbar.dart';
 
 /// 可清理明细型（日志）子页面。
 /// 顶部：查看日志 / 清理日志；下方日志明细卡（无独立按钮）。
@@ -72,9 +73,8 @@ class _StorageLogPageState extends State<StorageLogPage> {
     } catch (e, s) {
       Logger.e('StorageLog', 'clear logs failed', e, s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.clearLogsFailed(e.toString()))),
-        );
+        showAppSnackBar(context,
+            message: context.l10n.clearLogsFailed(e.toString()), type: NotificationType.error);
       }
     }
   }

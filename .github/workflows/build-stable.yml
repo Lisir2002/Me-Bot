@@ -106,10 +106,19 @@ jobs:
       - name: 🔍 静态分析门禁（warning/error 阻塞）
         run: |
           flutter pub get
-          # l10n 护栏：arb 一致性/元数据/空翻译（error 阻塞）；custom_lint 本期只报告
+          # l10n 护栏：arb 一致性/元数据/空翻译（error 阻塞）
           python3 tools/check_l10n.py
-          dart run custom_lint > /tmp/custom_lint.log 2>&1 || true
-          tail -3 /tmp/custom_lint.log || true
+          # custom_lint 设计系统守护（2026-09-10 UI 批次转 fatal）：
+          # error 级规则 no_material_snackbar / no_material_list_tile / no_raw_scaffold 阻塞合并；
+          # --no-fatal-infos --no-fatal-warnings 让存量 warning/info（hardcoded_ui_string 等）继续只报告。
+          dart run custom_lint --no-fatal-infos --no-fatal-warnings > /tmp/custom_lint.log 2>&1
+          lcode=$?
+          tail -5 /tmp/custom_lint.log || true
+          if [ $lcode -ne 0 ]; then
+            echo "=== custom_lint error 级违规（退出码 $lcode），禁止合并 ==="
+            grep -E "• ERROR" /tmp/custom_lint.log || true
+            exit $lcode
+          fi
           # gen 产物不入库，analyze 前必须生成
           flutter gen-l10n
           # 退出码必须紧跟 analyze 取；管道后再取 ${PIPESTATUS[0]} 会被后续

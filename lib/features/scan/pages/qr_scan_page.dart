@@ -16,6 +16,7 @@ class _QrScanPageState extends State<QrScanPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
+    // ⚠️ 裸 Scaffold 豁免（no_raw_scaffold 白名单）：扫码相机全屏预览页。
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

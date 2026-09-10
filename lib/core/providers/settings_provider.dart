@@ -13,6 +13,8 @@ import '../models/backup.dart';
 import '../models/provider_credentials.dart';
 import '../models/service_credentials.dart';
 import '../services/haptics.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 import '../services/secure_storage/credential_keys.dart';
 import '../services/secure_storage/secure_storage_bootstrap.dart';
 import '../services/secure_storage/secure_storage_service.dart';
@@ -35,7 +37,7 @@ enum ConversationSortMode {
 class SettingsProvider extends ChangeNotifier {
   static const String _providersOrderKey = 'providers_order_v1';
   static const String _themeModeKey = 'theme_mode_v1';
-  static const String _providerConfigsKey = 'provider_configs_v1';
+  static const String _providerConfigsKey = 'provider_configs_v2';
   static const String _pinnedModelsKey = 'pinned_models_v1';
   static const String _selectedModelKey = 'selected_model_v1';
   static const String _titleModelKey = 'title_model_v1';
@@ -93,7 +95,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _translatePromptKey = 'translate_prompt_v1';
   static const String _learningModeEnabledKey = 'learning_mode_enabled_v1';
   static const String _learningModePromptKey = 'learning_mode_prompt_v1';
-  static const String _searchServicesKey = 'search_services_v1';
+  static const String _searchServicesKey = 'search_services_v2';
   static const String _searchCommonKey = 'search_common_v1';
   static const String _searchSelectedKey = 'search_selected_v1';
   static const String _searchEnabledKey = 'search_enabled_v1';
@@ -106,7 +108,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _globalProxyUsernameKey = 'global_proxy_username_v1';
   static const String _globalProxyPasswordKey = 'global_proxy_password_v1';
   // TTS services (network)
-  static const String _ttsServicesKey = 'tts_services_v1';
+  static const String _ttsServicesKey = 'tts_services_v2';
   static const String _ttsSelectedKey = 'tts_selected_v1';
   // Desktop UI
   static const String _desktopSidebarWidthKey = 'desktop_sidebar_width_v1';
@@ -355,6 +357,52 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  /// v1 → v2 配置 key 迁移表。
+  ///
+  /// 历史 bug：`provider_configs_v1` / `search_services_v1` / `tts_services_v1`
+  /// 的凭证已被剥离，却被安全体检当成"旧明文残留"一键删除，导致配置全丢。
+  /// 现统一迁到 v2 命名空间。v1 内容已剥离凭证，直接复制到 v2 是安全的。
+  static const Map<String, String> _legacyV1ToV2 = {
+    'provider_configs_v1': 'provider_configs_v2',
+    'search_services_v1': 'search_services_v2',
+    'tts_services_v1': 'tts_services_v2',
+  };
+
+  /// 启动期把 v1 配置 key 的内容搬到 v2，并清掉 v1。
+  ///
+  /// 三个 key 独立迁移、互不影响；单个失败只记 warn，不拖垮其余与启动流程。
+  /// - v1 不存在：跳过；
+  /// - v2 已有非空值：认为 v2 是有效副本，删掉冗余 v1；
+  /// - v2 为空 / 缺失但 v1 有值：复制到 v2，再删 v1。
+  ///
+  /// static + @visibleForTesting：不依赖 provider 实例即可单测迁移分支。
+  @visibleForTesting
+  static Future<void> migrateLegacyV1Keys(SharedPreferences prefs) async {
+    for (final entry in _legacyV1ToV2.entries) {
+      final v1 = entry.key;
+      final v2 = entry.value;
+      try {
+        final v1Raw = prefs.getString(v1);
+        if (v1Raw == null) continue;
+        final v2Raw = prefs.getString(v2);
+        if (v2Raw != null && v2Raw.isNotEmpty) {
+          await prefs.remove(v1);
+          continue;
+        }
+        if (v1Raw.isEmpty) {
+          await prefs.remove(v1);
+          continue;
+        }
+        await prefs.setString(v2, v1Raw);
+        await prefs.remove(v1);
+        Logger.i(LogTags.settings,
+            'migrate prefs key $v1 -> $v2 (len=${v1Raw.length})');
+      } catch (e, st) {
+        Logger.w(LogTags.settings, 'migrate prefs key $v1 failed', e, st);
+      }
+    }
+  }
+
   SettingsProvider() {
     // PR-7：把 chat 路径的「凭证被使用」回调接到本实例（去抖在方法内）。
     onCredentialUsed = (id) {
@@ -365,6 +413,9 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
+    // P1：把旧 v1 配置 key 的内容搬到 v2，并清掉 v1。
+    // 必须在任何读取这些 key 之前完成，保证后续读到的就是 v2。
+    await migrateLegacyV1Keys(prefs);
     _providersOrder = prefs.getStringList(_providersOrderKey) ?? [];
     final m = prefs.getString(_themeModeKey);
     switch (m) {

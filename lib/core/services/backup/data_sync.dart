@@ -19,6 +19,16 @@ import '../../../utils/app_directories.dart';
 import 'credential_bridge.dart';
 import 'backup_encryptor.dart';
 
+/// 备份导入时 v1 → v2 键名归一表。
+///
+/// 旧版本 / 旧备份里的配置仍是 v1 key；导入时统一改写为 v2，
+/// 否则写回 prefs 后 SettingsProvider（已切到 v2）读不到这些配置。
+const Map<String, String> _v1ToV2BackupKeys = {
+  'provider_configs_v1': 'provider_configs_v2',
+  'search_services_v1': 'search_services_v2',
+  'tts_services_v1': 'tts_services_v2',
+};
+
 class DataSync {
   final ChatService chatService;
   DataSync({required this.chatService});
@@ -436,10 +446,16 @@ class DataSync {
         }
         // 先把备份里的凭证抽走写进安全存储，剩下的才是能安全写回 prefs 的内容
         // （老备份含明文，不抽就会把明文带回磁盘）
-        final map = SecureStorage.isInitialized
+        final rawMap = SecureStorage.isInitialized
             ? await BackupCredentialBridge(SecureStorage.instance)
                 .absorbOnRestore(settings)
             : settings;
+        // 旧备份仍是 v1 key 的，统一归一到 v2（v2 已存在则优先保留 v2）。
+        final map = <String, dynamic>{};
+        for (final e in rawMap.entries) {
+          final k = _v1ToV2BackupKeys[e.key] ?? e.key;
+          map.putIfAbsent(k, () => e.value);
+        }
         final prefs = await SharedPreferencesAsync.instance;
         if (mode == RestoreMode.overwrite) {
           // For overwrite mode, restore all settings
@@ -451,10 +467,10 @@ class DataSync {
           // Keys that should be merged as JSON arrays/objects
           const mergeableKeys = {
             'assistants_v1',       // Assistant configurations
-            'provider_configs_v1', // Provider configurations
+            'provider_configs_v2', // Provider configurations
             'pinned_models_v1',    // Pinned models list
             'providers_order_v1',  // Provider order list
-            'search_services_v1',  // Search services configuration
+            'search_services_v2',  // Search services configuration
             'assistant_tags_v1',         // Ordered tag list [{id,name}]
             'assistant_tag_map_v1',      // assistantId -> tagId
             'assistant_tag_collapsed_v1' // tagId -> bool
@@ -540,7 +556,7 @@ class DataSync {
                 } catch (e) {
                   // If merge fails, keep existing
                 }
-              } else if (key == 'provider_configs_v1' && existing.containsKey(key)) {
+              } else if (key == 'provider_configs_v2' && existing.containsKey(key)) {
                 // Merge provider configs: combine both maps
                 try {
                   final existingConfigs = jsonDecode(existing[key] as String) as Map<String, dynamic>;
@@ -624,7 +640,7 @@ class DataSync {
                   final merged = <String, dynamic>{...newMap, ...existingMap};
                   await prefs.restoreSingle(key, jsonEncode(merged));
                 } catch (_) {}
-              } else if ((key == 'providers_order_v1' || key == 'search_services_v1') && existing.containsKey(key)) {
+              } else if ((key == 'providers_order_v1' || key == 'search_services_v2') && existing.containsKey(key)) {
                 // For these lists, prefer the imported version if different
                 // This ensures new providers/services are properly ordered
                 await prefs.restoreSingle(key, newValue);

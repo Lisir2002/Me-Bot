@@ -186,10 +186,22 @@ class _SecurityBodyState extends State<SecurityBody> {
       _snack(l10n.checkupFixNone);
       return;
     }
+    // P2-2：确认消息不只说"将修复 N 项"，而是逐条列出 finding.title + detail，
+    // 让用户在点确认前明确知道每一项会动什么（detail 里已含将删除的 key 列表）。
+    final msgBuf = StringBuffer()
+      ..writeln(l10n.checkupAutoFixConfirmBody(fixable.length));
+    for (final f in fixable) {
+      final raw = f.detail.trim();
+      final detail = raw.length > 120 ? '${raw.substring(0, 120)}…' : raw;
+      msgBuf
+        ..writeln('')
+        ..writeln('· ${f.title}');
+      if (detail.isNotEmpty) msgBuf.writeln('  $detail');
+    }
     final confirmed = await AppDialog.confirm(
       context,
       title: l10n.checkupAutoFixConfirmTitle,
-      message: l10n.checkupAutoFixConfirmBody(fixable.length),
+      message: msgBuf.toString().trim(),
       confirmText: l10n.checkupFix,
       cancelText: MaterialLocalizations.of(context).cancelButtonLabel,
     );

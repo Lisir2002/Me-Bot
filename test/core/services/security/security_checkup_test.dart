@@ -57,9 +57,12 @@ void main() {
   });
 
   group('LegacyPrefsScanner', () {
-    test('旧明文 key 残留 → danger 且可修复', () async {
+    test('纯明文残留 key 残留 → danger 且可修复；仍在使用的配置 key 不被碰', () async {
       SharedPreferences.setMockInitialValues({
-        CredentialKeys.legacyProviderConfigs: '{"x":1}',
+        // 真·纯明文残留（迁移后应删）：全局代理用户名
+        CredentialKeys.legacyGlobalProxyUsername: 'plain-user',
+        // 仍在使用的配置 key（已剥离凭证）：绝不能被一键删除
+        CredentialKeys.legacyProviderConfigs: '{"openai":{"name":"OpenAI"}}',
         'unrelated_setting': 'value',
       });
       final prefs = await SharedPreferences.getInstance();
@@ -70,7 +73,11 @@ void main() {
       expect(danger.first.autoFixable, isTrue);
 
       expect(await scanner.autoFix(danger.first), isTrue);
-      expect(prefs.containsKey(CredentialKeys.legacyProviderConfigs), isFalse);
+      // 纯明文残留被删
+      expect(prefs.containsKey(CredentialKeys.legacyGlobalProxyUsername), isFalse);
+      // 仍在使用的供应商配置完好保留（回归：曾被一键修复误删）
+      expect(prefs.getString(CredentialKeys.legacyProviderConfigs),
+          '{"openai":{"name":"OpenAI"}}');
     });
 
     test('无残留 → 无发现', () async {

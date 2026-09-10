@@ -32,7 +32,7 @@ class CherryImporter {
   CherryImporter._();
 
   // Persisted keys used by SettingsProvider/AssistantProvider
-  static const String _providersKey = 'provider_configs_v1';
+  static const String _providersKey = 'provider_configs_v2';
   static const String _providersOrderKey = 'providers_order_v1';
   static const String _assistantsKey = 'assistants_v1';
 

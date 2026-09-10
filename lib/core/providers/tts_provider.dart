@@ -601,16 +601,31 @@ class TtsProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final selected = prefs.getInt('tts_selected_v1') ?? -1;
       if (selected < 0) return null;
-      final jsonStr = prefs.getString('tts_services_v1') ?? '';
+      final jsonStr = _readTtsServicesRaw(prefs);
       if (jsonStr.isEmpty) return null;
       final list = jsonDecode(jsonStr) as List;
       if (selected >= list.length) return null;
-      final obj = list[selected]; 
+      final obj = list[selected];
       final map = obj is Map<String, dynamic> ? obj : Map<String, dynamic>.from(obj as Map);
       return TtsServiceOptions.fromJson(map);
     } catch (_) {
       return null;
     }
+  }
+
+  /// 读取网络 TTS 服务列表原始 JSON（v1 → v2 兼容）。
+  ///
+  /// 优先 v2 key；v2 缺失但 v1 仍在（旧版数据 / 旧备份恢复）时，
+  /// 就地把 v1 内容搬到 v2 并删除 v1，与 SettingsProvider 的迁移保持一致。
+  String _readTtsServicesRaw(SharedPreferences prefs) {
+    var raw = prefs.getString('tts_services_v2') ?? '';
+    if (raw.isNotEmpty) return raw;
+    final legacy = prefs.getString('tts_services_v1') ?? '';
+    if (legacy.isEmpty) return '';
+    prefs.setString('tts_services_v2', legacy).then((_) {
+      prefs.remove('tts_services_v1');
+    });
+    return legacy;
   }
 }
 

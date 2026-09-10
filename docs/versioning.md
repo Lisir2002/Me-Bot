@@ -42,6 +42,7 @@ MAJOR.MINOR.PATCH+buildCode
    - 正式版：`publish_release=true`，`release_tag=v<正式版本>`。
    - RC：同上，`release_tag=v<版本>-rc.N`（CI 上传后需手动把对应 Release 标记为 Prerelease）。
 4. 所有 APK / 安装包**必须用 release-key.jks 正式签名**（见下节），未签名的包视为无效。
+5. **Release 说明必须同步填写**（见第 7 节），禁止发空 Release。
 
 ## 5. 签名
 
@@ -56,3 +57,38 @@ MAJOR.MINOR.PATCH+buildCode
 - [ ] 是否 RC 已在 Release 页面标记为 `Prerelease`
 - [ ] 安装包已用 `release-key.jks` 签名
 - [ ] 应用内"检查更新"链接指向 GitHub Releases 的正确资产
+- [ ] **CHANGELOG.md 已新增本版条目（三档格式）**
+- [ ] **GitHub Release body 已填写（用户档扩充版）**
+
+## 7. Release 说明规范（强制）
+
+每次发布必须同时更新两处说明，**禁止发空 Release**：
+
+### 7.1 CHANGELOG.md（开发者档 + 模型档）
+
+在文件顶部新增 `## [x.y.z] - YYYY-MM-DD` 条目，包含三档：
+
+```
+### 📣 For Users
+- 人话讲用户能感知到的收益（修复了什么、新增了什么、体验改善）
+
+### 🔧 For Developers
+- **Added** / **Changed** / **Fixed** / **Removed**：工程细节与迁移说明
+
+### 🤖 For Agents
+- 符号级变更、行为语义、坑位预警、后续待办
+```
+
+### 7.2 GitHub Release body（用户档扩充版）
+
+- 以 `📣 For Users` 为主，可附 `🔧 For Developers` 摘要；
+- 末尾附下载说明（Assets 中的文件名、大小、签名状态）；
+- 附 CHANGELOG.md 链接供查阅完整开发者档。
+
+### 7.3 操作顺序
+
+1. 代码合入 main 后，先写 CHANGELOG.md 并提交；
+2. 打 tag 并推送；
+3. 触发 CI 构建发布；
+4. CI 完成后，通过 GitHub API 或网页更新 Release body；
+5. 验证 Release 页面说明非空、格式正确。

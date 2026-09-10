@@ -59,12 +59,13 @@
 
 ### 5.3 发布流程
 1. bump `pubspec.yaml` version → commit
-2. push main（TLS 失败重试 ≥3 次后降级走 Git Data API：blob→tree→commit→ref，见经验文档 §9.2）
-3. 建 annotated tag：API 路线 `POST /git/tags`（**object 必须完整 40 位 sha**）+ `POST /git/refs`
-4. 触发 `build-stable.yml` workflow_dispatch：`build_android=true`，其余平台 false，`publish_release=true`，`release_tag=v0.0.N`
-5. 轮询 `actions/runs/{id}`；失败则按经验文档 §9.1 两步法拉日志（**第二步裸 GET，不带 Authorization**）
-6. PATCH release body（用户档）；同步写 `CHANGELOG.md`（开发者档 + 模型档）
-7. 资产校验：APK 文件名含正确版本号；与上一版 **sha256 必须不同**（防重复包；字节数可能因 zip 对齐恰好相同）
+2. ⚠️ **先写 CHANGELOG.md**（三档齐全，见 5.2）→ commit；禁止发版后补写或空 Release
+3. push main（TLS 失败重试 ≥3 次后降级走 Git Data API：blob→tree→commit→ref，见经验文档 §9.2）
+4. 建 annotated tag：API 路线 `POST /git/tags`（**object 必须完整 40 位 sha**）+ `POST /git/refs`
+5. 触发 `build-stable.yml` workflow_dispatch：`build_android=true`，其余平台 false，`publish_release=true`，`release_tag=v0.0.N`
+6. 轮询 `actions/runs/{id}`；失败则按经验文档 §9.1 两步法拉日志（**第二步裸 GET，不带 Authorization**）
+7. ⚠️ **PATCH release body（用户档扩充版）**——Release body 禁止为空；格式见 5.2，末尾附下载说明与 CHANGELOG 链接
+8. 资产校验：APK 文件名含正确版本号；与上一版 **sha256 必须不同**（防重复包；字节数可能因 zip 对齐恰好相同）
 
 ### 5.4 CI analyze 门禁（分级推进）
 android job 已插入观察步骤：`flutter analyze | grep -v "info •"`（`continue-on-error: true`；过滤 info 是因为 Actions 单步输出会截断）。

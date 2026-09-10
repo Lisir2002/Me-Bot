@@ -10,6 +10,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -89,9 +90,8 @@ class TtsServicesPage extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _header(context, l10n.ttsServicesPageTitle, first: true),
-              SettingsSectionCard(children: [
-                // System TTS as first row
+              AppSectionHeader(l10n.ttsServicesPageTitle, first: true),
+              SettingsSectionCard(children: [                // System TTS as first row
                 IosTactileRow(
                   pressedScale: 0.98,
                   haptics: false,
@@ -196,18 +196,6 @@ class TtsServicesPage extends StatelessWidget {
 }
 
 // --- iOS-style widgets and helpers ---
-
-Widget _header(BuildContext context, String text, {bool first = false}) {
-  final cs = Theme.of(context).colorScheme;
-  return Padding(
-    padding: EdgeInsets.fromLTRB(AppGap.sm, first ? 6 : 18, AppGap.sm, 6),
-    child: Text(text,
-        style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: cs.onSurface.withOpacity(0.8))),
-  );
-}
 
 /// 行内小图标按钮（试听 / 配置 / 删除）。
 ///

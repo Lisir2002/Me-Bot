@@ -8,47 +8,6 @@ import '../../../theme/design_tokens.dart';
 /// 从 security_page.dart 961 行单文件中抽出，避免 5 个 section 各自复制粘贴。
 /// 所有组件严格走设计系统：AppSectionCard / AppStatusColor / Lucide 图标。
 
-/// 分组小节标题（13px w600，与 backup_page 的 header 范式一致）。
-class SecuritySectionHeader extends StatelessWidget {
-  const SecuritySectionHeader(this.text, {super.key, this.first = false});
-
-  final String text;
-  final bool first;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-            AppGap.sm, first ? 0 : AppGap.lg, AppGap.sm, AppGap.xxs),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-          ),
-        ),
-      );
-}
-
-/// 分组小节描述（12px 弱化）。
-class SecuritySectionDesc extends StatelessWidget {
-  const SecuritySectionDesc(this.text, {super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.sm),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
-          ),
-        ),
-      );
-}
-
 /// 卡内统一状态行（原 _banner 的设计系统版）。
 class SecurityStatusRow extends StatelessWidget {
   const SecurityStatusRow(
@@ -95,37 +54,6 @@ class SecurityStatusRow extends StatelessWidget {
       ),
     );
   }
-}
-
-/// 卡内「标题 + 右侧操作」行头（与 AppNavRow 的横向留白对齐）。
-class SecurityRowHeader extends StatelessWidget {
-  const SecurityRowHeader(this.text, {super.key, this.trailing});
-
-  final String text;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppGap.sm, vertical: AppGap.xxs),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.9),
-                ),
-              ),
-            ),
-            if (trailing != null) trailing!,
-          ],
-        ),
-      );
 }
 
 /// Chip 横向包裹容器（统一内边距与间距）。

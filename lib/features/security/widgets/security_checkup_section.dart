@@ -6,6 +6,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
 import 'security_shared.dart';
@@ -65,8 +66,8 @@ class _SecurityCheckupSectionState extends State<SecurityCheckupSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SecuritySectionHeader(l10n.securityCheckup, first: true),
-        SecuritySectionDesc(l10n.securityCheckupDesc),
+        AppSectionHeader(l10n.securityCheckup, first: true),
+        AppSectionDesc(l10n.securityCheckupDesc),
         AppSectionCard(children: [
           // 运行体检（running 时右侧转圈、禁用点击）
           AppNavRow(

@@ -4578,7 +4578,8 @@ Widget _iosSectionCard({required List<Widget> children}) {
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Column(children: children),
+        // stretch：强制所有子项占满整行，避免裸 Padding+Text 被居中。
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
       ),
     );
   });

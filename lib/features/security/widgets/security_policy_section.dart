@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../theme/design_tokens.dart';
@@ -44,8 +45,8 @@ class SecurityPolicySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SecuritySectionHeader(l10n.allowlist, first: true),
-        SecuritySectionDesc(l10n.allowlistDesc),
+        AppSectionHeader(l10n.allowlist, first: true),
+        AppSectionDesc(l10n.allowlistDesc),
         FutureBuilder<LocalPolicyProvider>(
           future: policyFuture,
           builder: (context, snap) {
@@ -91,7 +92,7 @@ class SecurityPolicySection extends StatelessWidget {
       ),
       const AppSectionDivider(),
       // MCP 命令白名单标题 + 恢复默认
-      SecurityRowHeader(
+      AppCardHeader(
         l10n.mcpCommandAllowlist,
         trailing: TextButton.icon(
           onPressed: () => _restoreDefaultCmds(policy),
@@ -117,7 +118,7 @@ class SecurityPolicySection extends StatelessWidget {
       ]),
       const AppSectionDivider(),
       // WebView 主机白名单标题 + 添加
-      SecurityRowHeader(
+      AppCardHeader(
         l10n.webviewHosts,
         trailing: TextButton.icon(
           onPressed: () => _addHost(context, policy),
@@ -126,12 +127,7 @@ class SecurityPolicySection extends StatelessWidget {
         ),
       ),
       if (policy.allowedWebViewHosts.isEmpty)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.xxs),
-          child: Text(l10n.webviewHostsEmpty,
-              style: TextStyle(
-                  fontSize: 12, color: cs.onSurface.withValues(alpha: 0.55))),
-        )
+        AppCardDesc(l10n.webviewHostsEmpty)
       else
         SecurityChipWrap([
           for (final h in policy.allowedWebViewHosts)
@@ -146,16 +142,11 @@ class SecurityPolicySection extends StatelessWidget {
         ]),
       const AppSectionDivider(),
       // MCP 服务器策略标题
-      SecurityRowHeader(l10n.mcpServersPolicy),
+      AppCardHeader(l10n.mcpServersPolicy),
       // 新功能 5：策略冲突检测（白名单开启时才检查）
       if (policy.enabled) ..._buildConflicts(context, policy, servers),
       if (servers.isEmpty)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(AppGap.sm, 0, AppGap.sm, AppGap.xxs),
-          child: Text(l10n.mcpServersEmpty,
-              style: TextStyle(
-                  fontSize: 12, color: cs.onSurface.withValues(alpha: 0.55))),
-        )
+        AppCardDesc(l10n.mcpServersEmpty)
       else
         for (final s in servers)
           _serverRow(context, l10n, cs, policy, s),

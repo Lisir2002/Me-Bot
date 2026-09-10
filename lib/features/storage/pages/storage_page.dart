@@ -7,6 +7,7 @@ import '../../../core/providers/storage_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../widgets/storage_categories.dart';
 import '../widgets/storage_ios_widgets.dart';
@@ -164,7 +165,7 @@ class _StorageBodyState extends State<_StorageBody>
           ),
         ),
         const SizedBox(height: 12),
-        StorageSectionHeader(l10n.storageCategoriesHeader, first: true),
+        AppSectionHeader(l10n.storageCategoriesHeader, first: true),
         const SizedBox(height: 6),
         StorageSectionCard(
           children: [

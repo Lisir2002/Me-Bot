@@ -6,6 +6,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../theme/design_tokens.dart';
 import 'security_shared.dart';
 
@@ -74,8 +75,8 @@ class _SecurityAuditSectionState extends State<SecurityAuditSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SecuritySectionHeader(l10n.auditTrail),
-        SecuritySectionDesc(l10n.auditTrailDesc),
+        AppSectionHeader(l10n.auditTrail),
+        AppSectionDesc(l10n.auditTrailDesc),
         AppSectionCard(children: _buildChildren(l10n)),
       ],
     );

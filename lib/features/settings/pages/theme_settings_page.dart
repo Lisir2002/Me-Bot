@@ -7,6 +7,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../theme/palettes.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -30,14 +31,6 @@ class ThemeSettingsPage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final settings = context.watch<SettingsProvider>();
 
-    Widget header(String text) => Padding(
-          padding: const EdgeInsets.fromLTRB(AppGap.sm, 18, AppGap.sm, 6),
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.8)),
-          ),
-        );
-
     return AppPage(
       title: l10n.displaySettingsPageThemeSettingsTitle,
       leading: Tooltip(
@@ -59,7 +52,7 @@ class ThemeSettingsPage extends StatelessWidget {
           if (!kIsWeb &&
               defaultTargetPlatform == TargetPlatform.android &&
               settings.dynamicColorSupported) ...[
-            header(l10n.themeSettingsPageDynamicColorSection),
+            AppSectionHeader(l10n.themeSettingsPageDynamicColorSection, first: true),
             SettingsSectionCard(
               pureBackground: true,
               verticalPadding: 6,

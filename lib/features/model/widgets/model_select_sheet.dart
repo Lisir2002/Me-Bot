@@ -12,6 +12,7 @@ import '../../provider/pages/provider_detail_page.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../utils/brand_assets.dart';
 import '../../../shared/widgets/ios_tactile.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../desktop/desktop_home_page.dart' show DesktopHomePage;
 
 class ModelSelection {
@@ -691,7 +692,7 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
       itemBuilder: (context, index) {
         final row = _rows[index];
         if (row is _HeaderRow) {
-          return _sectionHeader(context, row.title);
+          return AppCardHeader(row.title);
         } else if (row is _ModelRow) {
           return _modelTile(context, row.item, showProviderLabel: row.showProviderLabel);
         }
@@ -728,15 +729,6 @@ class _ModelSelectSheetState extends State<_ModelSelectSheet> {
         scrollDirection: Axis.horizontal,
         child: Row(children: providerTabs),
       ),
-    );
-  }
-
-  Widget _sectionHeader(BuildContext context, String title) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-      child: Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.6))),
     );
   }
 

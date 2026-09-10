@@ -79,7 +79,8 @@ class AppSectionCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: verticalPadding),
-        child: Column(children: children),
+        // stretch：强制所有子项占满整行，避免裸 Padding+Text 被居中。
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
       ),
     );
   }

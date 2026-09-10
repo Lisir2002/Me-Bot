@@ -7,6 +7,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../theme/design_tokens.dart';
@@ -67,8 +68,8 @@ class _SecurityAppLockSectionState extends State<SecurityAppLockSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SecuritySectionHeader(l10n.appLock, first: true),
-            SecuritySectionDesc(l10n.appLockDesc),
+            AppSectionHeader(l10n.appLock, first: true),
+            AppSectionDesc(l10n.appLockDesc),
             AppSectionCard(children: _lockRows(l10n, lock)),
           ],
         );

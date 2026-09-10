@@ -43,6 +43,7 @@ import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -427,15 +428,8 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
           ),
           const SizedBox(height: 12),
         ],
-        // 顶部管理分组标题（左侧缩进以对齐卡片内容）
-        Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Text(
-            l10n.providerDetailPageManageSectionTitle,
-            style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.8)),
-          ),
-        ),
-        const SizedBox(height: 6),
+        // 顶部管理分组标题
+        AppSectionHeader(l10n.providerDetailPageManageSectionTitle, first: true),
         // Top iOS-style section card for key settings
         _iosSectionCard(children: [
           if (widget.keyName.toLowerCase() != 'minime-corein') _providerKindRow(context),
@@ -890,7 +884,8 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
         // ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(children: children),
+      // stretch：强制所有子项占满整行，避免裸 Padding+Text 被居中。
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
 

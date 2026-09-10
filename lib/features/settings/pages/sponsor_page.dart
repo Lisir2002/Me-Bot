@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
@@ -65,17 +66,6 @@ class _SponsorPageState extends State<SponsorPage> {
     return const _SponsorData(updatedAt: '', sponsors: <_Sponsor>[]);
   }
 
-  // iOS-style header (neutral color)
-  Widget _header(BuildContext context, String text, {bool first = false}) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(AppGap.sm, first ? AppGap.xxxs : 18, AppGap.sm, 6),
-      child: Text(text,
-          style:
-              TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.8))),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -102,7 +92,7 @@ class _SponsorPageState extends State<SponsorPage> {
       bodyPadding: AppPagePadding.content,
       body: Column(
         children: [
-          _header(context, l10n.sponsorPageMethodsSectionTitle, first: true),
+          AppSectionHeader(l10n.sponsorPageMethodsSectionTitle, first: true),
           SettingsSectionCard(children: [
             SettingsNavRow(
               haptics: false,              icon: Lucide.Heart,
@@ -127,8 +117,7 @@ class _SponsorPageState extends State<SponsorPage> {
             ),
           ]),
 
-          const SizedBox(height: AppGap.sm),
-          _header(context, l10n.sponsorPageSponsorsSectionTitle),
+          AppSectionHeader(l10n.sponsorPageSponsorsSectionTitle),
           FutureBuilder<_SponsorData>(
             future: _future,
             builder: (context, snapshot) {

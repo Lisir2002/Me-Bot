@@ -40,7 +40,8 @@ class StorageSectionCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: children),
+        // stretch：强制所有子项占满整行，避免裸 Padding+Text 被居中。
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
       ),
     );
   }
@@ -56,29 +57,6 @@ Color storageCardBackground(ThemeData theme) {
 /// 细微黑边：浅色下用低透明度黑，深色下用低透明度白，保证卡片轮廓清晰但不刺眼。
 Border storageCardBorder(BuildContext context, {double width = 0.8}) {
   return AppCardSurface.border(context, width: width);
-}
-
-/// iOS 风格分组标题。
-class StorageSectionHeader extends StatelessWidget {
-  const StorageSectionHeader(this.text, {super.key, this.first = false});
-  final String text;
-  final bool first;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, first ? 2 : 18, 12, 6),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: cs.onSurface.withOpacity(0.8),
-        ),
-      ),
-    );
-  }
 }
 
 /// 行间分隔线，缩进对齐图标槽位。

@@ -22,6 +22,7 @@ import 'usage_stats_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/haptics.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../theme/design_tokens.dart';
@@ -80,19 +81,6 @@ class SettingsPage extends StatelessWidget {
       }
     }
 
-    // iOS-style section header (neutral color, not theme color)
-    Widget header(String text, {bool first = false}) => Padding(
-          padding: EdgeInsets.fromLTRB(12, first ? 2 : 12, 12, 6),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface.withOpacity(0.8),
-            ),
-          ),
-        );
-
     return AppPage(
       title: l10n.settingsPageTitle,
       // 用自定义 leading 保留原来的 Tooltip 文案（AppPage 默认用系统 backButtonTooltip）
@@ -126,7 +114,7 @@ class SettingsPage extends StatelessWidget {
             ),
 
           // 通用设置：使用iOS风格分组卡片，黑色（中性）图标与标题，无描述
-          header(l10n.settingsPageGeneralSection, first: true),
+          AppSectionHeader(l10n.settingsPageGeneralSection, first: true),
           AppSectionCard(children: [
             _iosNavRow(
               context,
@@ -159,8 +147,7 @@ class SettingsPage extends StatelessWidget {
             ),
           ]),
 
-          const SizedBox(height: 12),
-          header(l10n.settingsPageModelsServicesSection),
+          AppSectionHeader(l10n.settingsPageModelsServicesSection),
           AppSectionCard(children: [
             _iosNavRow(
               context,
@@ -234,8 +221,7 @@ class SettingsPage extends StatelessWidget {
             ),
           ]),
 
-          const SizedBox(height: 12),
-          header(l10n.settingsPageDataSection),
+          AppSectionHeader(l10n.settingsPageDataSection),
           AppSectionCard(children: [
             _iosNavRow(
               context,
@@ -282,8 +268,7 @@ class SettingsPage extends StatelessWidget {
             ),
           ]),
 
-          const SizedBox(height: 12),
-          header(l10n.settingsPageAboutSection),
+          AppSectionHeader(l10n.settingsPageAboutSection),
           AppSectionCard(children: [
             _iosNavRow(
               context,

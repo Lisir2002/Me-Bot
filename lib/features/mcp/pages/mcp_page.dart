@@ -9,6 +9,7 @@ import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_states.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../theme/design_tokens.dart';
@@ -186,27 +187,13 @@ class McpPage extends StatelessWidget {
     final builtin = servers.where((s) => s.transport == McpTransportType.inmemory).toList();
     final third = servers.where((s) => s.transport != McpTransportType.inmemory).toList();
 
-    Widget header(String text, IconData icon) => Padding(
-          padding: const EdgeInsets.fromLTRB(AppGap.xxs, 14, 0, 6),
-          child: Row(
-            children: [
-              Icon(icon, size: 14, color: cs.primary),
-              const SizedBox(width: 6),
-              Text(
-                text,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-        );
-
     final out = <Widget>[];
     if (builtin.isNotEmpty) {
-      out.add(header(l10n.mcpGroupBuiltin, Lucide.Bot));
+      out.add(AppSectionHeader(l10n.mcpGroupBuiltin, icon: Lucide.Bot, iconColor: cs.primary));
       out.addAll(builtin.map((s) => _serverCard(context, s)).toList());
     }
     if (third.isNotEmpty) {
-      out.add(header(l10n.mcpGroupThirdParty, Lucide.Terminal));
+      out.add(AppSectionHeader(l10n.mcpGroupThirdParty, icon: Lucide.Terminal, iconColor: cs.primary));
       out.addAll(third.map((s) => _serverCard(context, s)).toList());
     }
     return out;

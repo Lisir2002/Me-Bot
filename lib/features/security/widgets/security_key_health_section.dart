@@ -6,6 +6,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
 import 'security_shared.dart';
@@ -55,8 +56,8 @@ class SecurityKeyHealthSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SecuritySectionHeader(l10n.keyHealth),
-        SecuritySectionDesc(l10n.keyHealthDesc),
+        AppSectionHeader(l10n.keyHealth),
+        AppSectionDesc(l10n.keyHealthDesc),
         AppSectionCard(children: _healthRows(context, l10n)),
         if (anyRotation)
           Padding(

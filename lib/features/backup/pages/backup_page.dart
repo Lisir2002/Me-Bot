@@ -51,6 +51,7 @@ import '../../../utils/app_directories.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../theme/design_tokens.dart';
 import '../../storage/pages/local_snapshot_page.dart';
@@ -413,20 +414,6 @@ class _BackupPageState extends State<BackupPage> {
         final vm = context.watch<BackupProvider>();
         final cfg = vm.config;
 
-        // iOS-style section header
-        Widget header(String text, {bool first = false}) => Padding(
-          // 18 / 6 无精确 token（md=16 / lg=20、xs=8），保留字面量
-          padding: EdgeInsets.fromLTRB(AppGap.sm, first ? AppGap.xxxs : 18, AppGap.sm, 6),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface.withOpacity(0.8),
-            ),
-          ),
-        );
-
         return AppPage(
           title: l10n.backupPageTitle,
           leading: Tooltip(
@@ -448,7 +435,7 @@ class _BackupPageState extends State<BackupPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Section 1: 备份管理
-              header(l10n.backupPageBackupManagement, first: true),
+              AppSectionHeader(l10n.backupPageBackupManagement, first: true),
               AppSectionCard(children: [
                 AppSwitchRow(
                   icon: Lucide.MessageSquare,
@@ -474,7 +461,7 @@ class _BackupPageState extends State<BackupPage> {
               ]),
 
               // Section 1.5: 备份提醒
-              header(l10n.backupPageReminderHeader),
+              AppSectionHeader(l10n.backupPageReminderHeader),
               AppSectionCard(children: [
                 AppSwitchRow(
                   icon: Lucide.Bell,
@@ -489,7 +476,7 @@ class _BackupPageState extends State<BackupPage> {
               ]),
 
               // Section 1.6: 本地副本
-              header(l10n.backupPageLocalCopiesHeader),
+              AppSectionHeader(l10n.backupPageLocalCopiesHeader),
               AppSectionCard(children: [
                 AppSwitchRow(
                   icon: Lucide.Save,
@@ -512,7 +499,7 @@ class _BackupPageState extends State<BackupPage> {
               ]),
 
               // Section 2: WebDAV备份
-              header(l10n.backupPageWebDavBackup),
+              AppSectionHeader(l10n.backupPageWebDavBackup),
               AppSectionCard(children: [
                 AppNavRow(
                   icon: Lucide.Settings,
@@ -635,7 +622,7 @@ class _BackupPageState extends State<BackupPage> {
               ]),
 
               // Section 3: 本地备份
-              header(l10n.backupPageLocalBackup),
+              AppSectionHeader(l10n.backupPageLocalBackup),
               AppSectionCard(children: [
                 AppNavRow(
                   icon: Lucide.Export,

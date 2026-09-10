@@ -14,6 +14,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -353,7 +354,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 设置卡
-          StorageSectionHeader(l10n.snapshotSettingsHeader, first: true),
+          AppSectionHeader(l10n.snapshotSettingsHeader, first: true),
           const SizedBox(height: 6),
           StorageSectionCard(
             children: [
@@ -451,17 +452,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
           ),
 
           const SizedBox(height: AppGap.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: AppGap.xxs, horizontal: AppGap.xxxs),
-            child: Text(
-              l10n.snapshotListHeader(_snapshots.length, storageFormatBytes(totalBytes)),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface.withOpacity(0.8),
-              ),
-            ),
-          ),
+          AppSectionHeader(l10n.snapshotListHeader(_snapshots.length, storageFormatBytes(totalBytes))),
           const SizedBox(height: 6),
 
           if (_loading)

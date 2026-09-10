@@ -7,6 +7,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
 import '../../../utils/app_directories.dart';
@@ -125,7 +126,7 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
             ),
           ],
           const SizedBox(height: 18),
-          StorageSectionHeader(l10n.storageDetailHeader, first: true),
+          AppSectionHeader(l10n.storageDetailHeader, first: true),
           const SizedBox(height: 6),
           if (rows.isEmpty)
             AppEmpty(message: l10n.storageEmpty)

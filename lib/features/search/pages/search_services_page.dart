@@ -37,6 +37,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_section.dart';
+import '../../../shared/widgets/app_section_header.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -209,7 +210,7 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _sectionHeader(l10n.searchServicesPageSearchProviders, cs, first: true),
+          AppSectionHeader(l10n.searchServicesPageSearchProviders, first: true),
           AppSectionCard(children: [
             for (int i = 0; i < _services.length; i++) ...[
               _iosProviderRow(context, index: i),
@@ -217,18 +218,12 @@ class _SearchServicesPageState extends State<SearchServicesPage> {
             ],
           ]),
           const SizedBox(height: AppGap.md),
-          _sectionHeader(l10n.searchServicesPageGeneralOptions, cs),
+          AppSectionHeader(l10n.searchServicesPageGeneralOptions),
           _buildCommonOptionsSection(context),
         ],
       ),
     );
   }
-
-  Widget _sectionHeader(String text, ColorScheme cs, {bool first = false}) => Padding(
-        // 18 / 6 无精确 token（md=16 / lg=20、xs=8），保留字面量
-        padding: EdgeInsets.fromLTRB(AppGap.sm, first ? AppGap.xxxs : 18, AppGap.sm, 6),
-        child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface.withOpacity(0.8))),
-      );
 
   Widget _buildCommonOptionsSection(BuildContext context) {
     final cs = Theme.of(context).colorScheme;

@@ -554,11 +554,6 @@ class _SmallIconBtnState extends State<_SmallIconBtn> {
   }
 }
 
-Widget _deskDivider(BuildContext context) {
-  final cs = Theme.of(context).colorScheme;
-  return Divider(height: 6, thickness: 0.6, indent: 12, endIndent: 12, color: cs.outlineVariant.withOpacity(0.18));
-}
-
 class _SelectRow extends StatelessWidget {
   const _SelectRow({required this.label, required this.value, required this.options, required this.onSelected});
   final String label;
@@ -707,7 +702,6 @@ Future<TtsServiceOptions?> _showAddNetworkDialog(BuildContext context) => _showN
 Future<TtsServiceOptions?> _showEditNetworkDialog(BuildContext context, TtsServiceOptions initial) => _showNetworkDialog(context, initial);
 
 Future<TtsServiceOptions?> _showNetworkDialog(BuildContext context, TtsServiceOptions? initial) async {
-  final cs = Theme.of(context).colorScheme;
   final l10n = context.l10n;
   NetworkTtsKind kind = initial?.kind ?? NetworkTtsKind.openai;
   final nameCtl = TextEditingController(text: initial?.name ?? '');

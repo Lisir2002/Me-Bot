@@ -5,6 +5,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.50] - 2026-09-10
+
+### 📣 For Users
+- **全新应用图标**：Android（含自适应圆角）、iOS、Web、Windows、macOS 全平台图标统一替换，视觉一致；
+- **安全中心边距对齐**：修复安全页卡片/小节标题在宽屏下与其它设置页的边距、宽度不一致的问题，现在整页对齐统一设计；
+- **文档重做**：README 重构为规范技术文档（功能矩阵、架构分层、快速上手），支持中英双语；
+- 仓库内部结构整理（不影响你手上的产物）。
+
+### 🔧 For Developers
+- **Added**：
+  - `assets/app_icon.png`（1252×1252）由用户提供的原图（WEBP）仅做格式转换生成，作为唯一图标源；统一 `pubspec.yaml` 的 `flutter_launcher_icons:` 段（`image_path` / `adaptive_icon_foreground` 均指向 `assets/app_icon.png`，`remove_alpha_ios: false`）；
+- **Changed**：
+  - `lib/features/security/pages/security_page.dart`：小节标题/描述 `EdgeInsets.fromLTRB(2, …)` 游离字面量 → `AppGap.sm`（回归设计 token，与 backup / storage / settings 页对齐）；
+  - `lib/desktop/desktop_settings_page.dart`：桌面端安全 pane 嵌入 `SecurityBody` 处补 `Container(alignment: topCenter) + ConstrainedBox(maxWidth: 960)`，与 TTS / 搜索 / 备份等桌面设置 pane 完全一致（宽屏居中、窄屏对齐）；
+  - README 双语重写：移除商店徽章 / 应用图片 / 示例截图（`docx/` 示例图文件夹已删除），结构按标准文档规范（Overview / Features / 平台表 / Documentation / Architecture / Project Structure / Getting Started）；
+  - 仓库清理：删除构建产物与临时文件（`build/`、`.dart_tool/`、`.trae-html-share-packages/`、`android/.gradle/`、`android/local.properties`、`pubspec.lock`、`devtools_options.yaml`、`l10n_untranslated.txt` 等），文档归层为 `docs/architecture/`、`docs/design/`、`docs/versioning.md`；
+- **Removed**：
+  - 旧图标变体 `assets/app_icon_2.png` / `app_icon_dark.png` / `app_icon_macos.png` / `app_icon_macos2.png` / `app_icon_foreground.png`；顶层 `flutter_launcher_icons.yaml`；`docx/` 示例图文件夹。
+
+### 🤖 For Agents
+- 图标唯一源 = `assets/app_icon.png`；`pubspec.yaml` 的 `flutter_launcher_icons:` 段已统一指向它（`image_path` / `adaptive_icon_foreground` 均用该路径，`remove_alpha_ios: false`，iOS 不生成 dark 变体）；改图标只动 `assets/app_icon.png` 后跑 `flutter pub run flutter_launcher_icons`；
+- 小节标题横向缩进必须用语义 token：安全页已用 `AppGap.sm`，新增页面禁止再用字面量 `2`（属设计 token 红线）；
+- 桌面端设置 pane 嵌入子页面 body 时，必须包 `Container(alignment: topCenter) + ConstrainedBox(maxWidth: 960)`（参考 `desktop_settings_page.dart` 的 TTS / 搜索 / 备份 / 安全，统一宽屏居中），否则宽屏下卡片铺满全宽、与别的页宽度不一致；
+- `pubspec.lock`、`build/`、`.dart_tool/`、`.trae-html-share-packages/`、`android/.gradle/`、`android/local.properties`、`devtools_options.yaml`、`l10n_untranslated.txt` 等**不入库**（已加 `.gitignore`）；`dependencies/flutter_tts/` 是 `path:` 构建必需源码依赖，**必须保留**；
+- 文档分层：架构审计 → `docs/architecture/overview.md` + `action-items.md`；设计类 → `docs/design/*`；版本规范 → `docs/versioning.md`；跨文档引用已更新，移动文件须同步改链接。
+
 ## [0.0.49] - 2026-09-10
 
 ### 📣 For Users

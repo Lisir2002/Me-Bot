@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../icons/lucide_adapter.dart';
 import '../l10n/build_context_l10n.dart';
 import '../shared/animations/widgets.dart';
+import '../shared/widgets/app_dialog.dart';
+import '../shared/widgets/app_list_view.dart';
 import '../shared/widgets/snackbar.dart';
 import '../core/services/chat/chat_service.dart';
 import '../core/models/conversation.dart';
@@ -55,6 +56,7 @@ class _ChatHistoryDesktopDialogState extends State<_ChatHistoryDesktopDialog> {
     final pinned = filtered.where((c) => c.isPinned).toList();
     final others = filtered.where((c) => !c.isPinned).toList();
 
+    // no_raw_alert_dialog 白名单：桌面端会话历史窗口，带自定义标题栏（搜索/清空按钮）与 560px 宽会话列表，非标准确认/通知弹窗，不适合 AppDialog 固定宽度+底部 actions 布局
     return Dialog(
       elevation: 12,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -94,19 +96,13 @@ class _ChatHistoryDesktopDialogState extends State<_ChatHistoryDesktopDialog> {
                         tooltip: l10n.chatHistoryPageDeleteAllTooltip,
                         icon: const Icon(Lucide.Trash2),
                         onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: Text(l10n.chatHistoryPageDeleteAllDialogTitle),
-                              content: Text(l10n.chatHistoryPageDeleteAllDialogContent),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.chatHistoryPageCancel)),
-                                TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(true),
-                                  child: Text(l10n.chatHistoryPageDelete, style: const TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
+                          final confirm = await AppDialog.confirm(
+                            context,
+                            title: l10n.chatHistoryPageDeleteAllDialogTitle,
+                            message: l10n.chatHistoryPageDeleteAllDialogContent,
+                            confirmText: l10n.chatHistoryPageDelete,
+                            cancelText: l10n.chatHistoryPageCancel,
+                            danger: true,
                           );
                           if (confirm == true) {
                             final svc = context.read<ChatService>();
@@ -194,9 +190,10 @@ class _ChatHistoryDesktopDialogState extends State<_ChatHistoryDesktopDialog> {
                         )
                       : Scrollbar(
                           controller: _scrollCtrl,
-                          child: ListView(
+                          child: AppListView(
                             controller: _scrollCtrl,
-                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+                            topPadding: 10,
+                            bottomPadding: 14,
                             children: [
                               if (pinned.isNotEmpty) ...[
                                 Padding(

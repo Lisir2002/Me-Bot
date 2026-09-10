@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -7,6 +6,7 @@ import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/build_context_l10n.dart';
 import '../../core/models/quick_phrase.dart';
 import '../../core/providers/quick_phrase_provider.dart';
+import '../../shared/widgets/app_dialog.dart';
 
 class DesktopQuickPhrasesPane extends StatefulWidget {
   const DesktopQuickPhrasesPane({super.key});
@@ -253,60 +253,37 @@ class _QuickPhraseEditDialogState extends State<_QuickPhraseEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    return Dialog(
-      backgroundColor: cs.surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 58),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(widget.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(context).maybePop()),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _titleController,
-                    decoration: _deskInputDecoration(context).copyWith(hintText: l10n.quickPhraseTitleLabel),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _contentController,
-                    maxLines: 8,
-                    decoration: _deskInputDecoration(context).copyWith(hintText: l10n.quickPhraseContentLabel),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: _DeskIosButton(
-                label: l10n.quickPhraseSaveButton,
-                filled: true,
-                dense: true,
-                onTap: () {
-                  Navigator.of(context).pop({
-                    'title': _titleController.text,
-                    'content': _contentController.text,
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
+    return AppDialog(
+      title: widget.title,
+      maxWidth: 520,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _titleController,
+            decoration: _deskInputDecoration(context).copyWith(hintText: l10n.quickPhraseTitleLabel),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _contentController,
+            maxLines: 8,
+            decoration: _deskInputDecoration(context).copyWith(hintText: l10n.quickPhraseContentLabel),
+          ),
+        ],
       ),
+      actions: [
+        AppDialog.button(
+          label: l10n.quickPhraseSaveButton,
+          onPressed: () {
+            Navigator.of(context).pop({
+              'title': _titleController.text,
+              'content': _contentController.text,
+            });
+          },
+        ),
+      ],
     );
   }
 }

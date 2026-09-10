@@ -3,7 +3,10 @@ import 'dart:ui' as ui show TextDirection;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/models/chat_message.dart';
 import '../../../core/services/stats/stats_aggregator.dart';
+import '../../../icons/lucide_adapter.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../theme/design_tokens.dart';
 import 'stats_card.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -193,9 +196,103 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
       if (_selected != null) setState(() => _selected = null);
       return;
     }
-    // 再次点击同一天 → 取消
-    setState(() =>
-        _selected = _selected?.day == hit.day ? null : hit);
+    // 点选：小气泡跟随选中格，同时弹出底部 AppSheet 展示当日详情。
+    setState(() => _selected = hit);
+    _showDayDetail(hit.day);
+  }
+
+  /// 归一到日粒度比较（快照内 `_dayOf` 私有，这里内联一份）。
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// assistantId → 展示名（与数据层 `_computeAssistantRows` 同口径）。
+  String _assistantName(String aid) {
+    if (aid.isEmpty) return context.l10n.statsGlobalAssistant;
+    for (final a in widget.snapshot.assistants) {
+      if (a.id == aid) return a.name;
+    }
+    return aid;
+  }
+
+  /// 点选某天后弹出底部 AppSheet：当日消息数 / token / 模型分布 / 助手分布。
+  void _showDayDetail(DateTime day) {
+    final t = context.l10n;
+    final ml = MaterialLocalizations.of(context);
+    final dateStr = ml.formatMediumDate(day);
+
+    // 从窗口内消息中筛选当天
+    final all = widget.snapshot.windowMessages;
+    final dayMsgs = <ChatMessage>[
+      for (final m in all)
+        if (_isSameDay(m.timestamp, day)) m,
+    ];
+
+    final count = dayMsgs.length;
+    final tokens =
+        dayMsgs.fold<int>(0, (s, m) => s + StatsSnapshot.tokenOf(m));
+
+    // 模型分布：按 token 聚合降序
+    final modelTokens = <String, int>{};
+    for (final m in dayMsgs) {
+      final id = m.modelId?.trim();
+      final key = (id == null || id.isEmpty)
+          ? StatsSnapshot.unknownModelKey
+          : id;
+      modelTokens[key] = (modelTokens[key] ?? 0) + StatsSnapshot.tokenOf(m);
+    }
+    final topModels = modelTokens.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    // 助手分布：按消息数聚合降序
+    final assistantCounts = <String, int>{};
+    for (final m in dayMsgs) {
+      final aid = widget.snapshot.convoToAssistant[m.conversationId] ?? '';
+      assistantCounts[aid] = (assistantCounts[aid] ?? 0) + 1;
+    }
+    final topAssistants = assistantCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    showAppSheet(
+      context: context,
+      builder: AppSheet(
+        title: dateStr,
+        children: [
+          if (count == 0)
+            _DayDetailEmpty(text: t.statsHeatmapNoActivity(dateStr))
+          else ...[
+            _DayOverviewStats(
+              count: count,
+              tokens: tokens,
+              messagesLabel: t.statsColMessages,
+              tokensLabel: t.statsTokensUnit,
+            ),
+            const SizedBox(height: AppGap.md),
+            if (topModels.isNotEmpty) ...[
+              _DetailSectionHeader(title: t.statsColModel),
+              const SizedBox(height: AppGap.xs),
+              for (final e in topModels.take(5))
+                _DetailRow(
+                  name: e.key == StatsSnapshot.unknownModelKey
+                      ? t.statsUnknownModel
+                      : e.key,
+                  value:
+                      '${formatCompactNumber(e.value)} ${t.statsTokensUnit}',
+                ),
+              const SizedBox(height: AppGap.md),
+            ],
+            if (topAssistants.isNotEmpty) ...[
+              _DetailSectionHeader(title: t.statsColAssistant),
+              const SizedBox(height: AppGap.xs),
+              for (final e in topAssistants.take(5))
+                _DetailRow(
+                  name: _assistantName(e.key),
+                  value: t.statsMessageCount(e.value),
+                ),
+            ],
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -323,7 +420,10 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
                 ],
               ),
               Expanded(
-                child: SingleChildScrollView(
+                // 整个热力图网格的无障碍语义标签（CustomPaint 不自带语义）
+                child: Semantics(
+                  label: 'Chat activity heatmap, $countStr messages in period',
+                  child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   controller: _hScroll,
                   child: MouseRegion(
@@ -372,6 +472,7 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
                       ),
                     ),
                   ),
+                  ),
                 ),
               ),
             ],
@@ -418,6 +519,146 @@ class _StatsHeatmapCardState extends State<StatsHeatmapCard>
     return count > 0
         ? t.statsHeatmapDayDetail(dateStr, count)
         : t.statsHeatmapNoActivity(dateStr);
+  }
+}
+
+/// 当日无消息的空态。
+class _DayDetailEmpty extends StatelessWidget {
+  final String text;
+
+  const _DayDetailEmpty({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppGap.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Lucide.MessageSquare, size: 36, color: cs.onSurfaceVariant),
+          const SizedBox(height: AppGap.sm),
+          Text(text, style: TextStyle(color: cs.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+
+/// 当日概览：左侧消息数（大字），右侧 token 用量，中间细分隔线。
+class _DayOverviewStats extends StatelessWidget {
+  final int count;
+  final int tokens;
+  final String messagesLabel;
+  final String tokensLabel;
+
+  const _DayOverviewStats({
+    required this.count,
+    required this.tokens,
+    required this.messagesLabel,
+    required this.tokensLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    Widget block(String value, String label) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppGap.xxs),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ],
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppGap.sm),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: block('$count', messagesLabel)),
+          Container(
+            width: 1,
+            height: 36,
+            color: cs.outlineVariant.withValues(alpha: 0.4),
+          ),
+          Expanded(child: block(formatCompactNumber(tokens), tokensLabel)),
+        ],
+      ),
+    );
+  }
+}
+
+/// 详情分区小标题。
+class _DetailSectionHeader extends StatelessWidget {
+  final String title;
+
+  const _DetailSectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: cs.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+/// 详情行：名称左对齐 + 数值右对齐。
+class _DetailRow extends StatelessWidget {
+  final String name;
+  final String value;
+
+  const _DetailRow({required this.name, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppGap.xxs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: cs.onSurface),
+            ),
+          ),
+          const SizedBox(width: AppGap.sm),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

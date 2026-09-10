@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -13,6 +12,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -207,8 +207,8 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
 
     return showDialog<RestoreMode>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.backupPageSelectImportMode),
+      builder: (ctx) => AppDialog(
+        title: l10n.backupPageSelectImportMode,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -230,9 +230,11 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
           ],
         ),
         actions: [
-          TextButton(
+          AppDialog.button(
+            label: l10n.backupPageCancel,
+            kind: AppDialogButtonKind.secondary,
+            filled: false,
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.backupPageCancel),
           ),
         ],
       ),
@@ -247,18 +249,11 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     try {
       await _sync.restoreFromLocalFile(File(snap.path), const WebDavConfig(), mode: mode);
       if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (dctx) => AlertDialog(
-            title: Text(l10n.backupPageRestartRequired),
-            content: Text(l10n.backupPageRestartContent),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dctx).pop(),
-                child: Text(l10n.backupPageOK),
-              ),
-            ],
-          ),
+        await AppDialog.alert(
+          context,
+          title: l10n.backupPageRestartRequired,
+          message: l10n.backupPageRestartContent,
+          buttonText: l10n.backupPageOK,
         );
       }
     } catch (e) {
@@ -302,22 +297,13 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
 
   Future<bool?> _confirmDelete(SnapshotInfo snap) {
     final l10n = l10nOf();
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.snapshotDelete),
-        content: Text('${l10n.snapshotSafetyNote}\n\n${snap.name}'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.storageCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.backupPageOK, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    return AppDialog.confirm(
+      context,
+      title: l10n.snapshotDelete,
+      message: '${l10n.snapshotSafetyNote}\n\n${snap.name}',
+      confirmText: l10n.backupPageOK,
+      cancelText: l10n.storageCancel,
+      danger: true,
     );
   }
 
@@ -507,15 +493,21 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     final prefs = await SharedPreferences.getInstance();
     final v = await showDialog<int>(
       context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.snapshotKeepCount),
-        children: [
-          for (final n in opts)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(n),
-              child: Text('${l10n.snapshotCopies(n)}${n == _keepCount ? ' ✓' : ''}'),
-            ),
-        ],
+      builder: (ctx) => AppDialog(
+        title: l10n.snapshotKeepCount,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final n in opts)
+              InkWell(
+                onTap: () => Navigator.of(ctx).pop(n),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  child: Text('${l10n.snapshotCopies(n)}${n == _keepCount ? ' ✓' : ''}'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
     if (v == null || !mounted) return;
@@ -555,15 +547,21 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     if (!mounted) return;
     final v = await showDialog<int>(
       context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.snapshotFrequency),
-        children: [
-          for (final (id, label) in tiers)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(id),
-              child: Text('$label${id == _freq ? ' ✓' : ''}'),
-            ),
-        ],
+      builder: (ctx) => AppDialog(
+        title: l10n.snapshotFrequency,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (id, label) in tiers)
+              InkWell(
+                onTap: () => Navigator.of(ctx).pop(id),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  child: Text('$label${id == _freq ? ' ✓' : ''}'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
     if (v == null || !mounted) return;
@@ -583,15 +581,21 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     if (!mounted) return;
     final v = await showDialog<int>(
       context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.snapshotSizeLimit),
-        children: [
-          for (final (gb, label) in tiers)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(gb),
-              child: Text('$label${gb == _sizeLimitGb ? ' ✓' : ''}'),
-            ),
-        ],
+      builder: (ctx) => AppDialog(
+        title: l10n.snapshotSizeLimit,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (gb, label) in tiers)
+              InkWell(
+                onTap: () => Navigator.of(ctx).pop(gb),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  child: Text('$label${gb == _sizeLimitGb ? ' ✓' : ''}'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
     if (v == null || !mounted) return;

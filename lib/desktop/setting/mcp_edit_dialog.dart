@@ -1,4 +1,5 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_raw_alert_dialog 白名单：MCP 服务器编辑对话框为 720x640 带 Tab 切换的
+// 复杂面板，需要 Expanded 填充滚动表单区域，AppDialog 的 min-size Column 布局无法承载。
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 

@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -237,6 +236,7 @@ class _ImagePreviewDesktopDialogState extends State<_ImagePreviewDesktopDialog> 
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
+    // no_raw_alert_dialog 白名单：桌面端图片预览窗口，自定义工具栏标题栏（复制/分享/保存/关闭）+ Expanded 可滚动图片区，固定尺寸，不适合 AppDialog
     return Dialog(
       elevation: 12,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

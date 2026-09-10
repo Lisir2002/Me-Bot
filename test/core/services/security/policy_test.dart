@@ -139,4 +139,52 @@ void main() {
       expect(p2.allowedWebViewHosts, {'intranet.local'});
     });
   });
+
+  group('LocalPolicyProvider 正则校验（P3 服务端加固）', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('isValidCommand：合法命令名通过', () {
+      expect(LocalPolicyProvider.isValidCommand('node'), isTrue);
+      expect(LocalPolicyProvider.isValidCommand('python3'), isTrue);
+      expect(LocalPolicyProvider.isValidCommand('my-cmd_v2.0'), isTrue);
+      expect(LocalPolicyProvider.isValidCommand('npx'), isTrue);
+    });
+
+    test('isValidCommand：非法命令名拒绝', () {
+      expect(LocalPolicyProvider.isValidCommand(''), isFalse);
+      expect(LocalPolicyProvider.isValidCommand('-start'), isFalse); // 不能以符号开头
+      expect(LocalPolicyProvider.isValidCommand('cmd with space'), isFalse);
+      expect(LocalPolicyProvider.isValidCommand('cmd;rm -rf /'), isFalse);
+      expect(LocalPolicyProvider.isValidCommand('cmd|pipe'), isFalse);
+      expect(LocalPolicyProvider.isValidCommand('../etc/passwd'), isFalse);
+    });
+
+    test('isValidHost：合法主机名通过', () {
+      expect(LocalPolicyProvider.isValidHost('example.com'), isTrue);
+      expect(LocalPolicyProvider.isValidHost('intranet.local'), isTrue);
+      expect(LocalPolicyProvider.isValidHost('sub-domain.example.co.uk'), isTrue);
+      expect(LocalPolicyProvider.isValidHost('localhost'), isTrue);
+    });
+
+    test('isValidHost：非法主机名拒绝', () {
+      expect(LocalPolicyProvider.isValidHost(''), isFalse);
+      expect(LocalPolicyProvider.isValidHost('-bad.com'), isFalse);
+      expect(LocalPolicyProvider.isValidHost('host with space'), isFalse);
+      expect(LocalPolicyProvider.isValidHost('http://example.com'), isFalse);
+      expect(LocalPolicyProvider.isValidHost('example.com/path'), isFalse);
+      expect(LocalPolicyProvider.isValidHost('.leading-dot.com'), isFalse);
+    });
+
+    test('setAllowedMcpCommands 过滤非法命令', () async {
+      final p = await LocalPolicyProvider.load();
+      await p.setAllowedMcpCommands({'node', 'bad cmd', ';rm -rf', 'python3'});
+      expect(p.allowedMcpCommands, {'node', 'python3'});
+    });
+
+    test('setWebViewHosts 过滤非法主机并统一小写', () async {
+      final p = await LocalPolicyProvider.load();
+      await p.setWebViewHosts({'Example.COM', 'bad host', 'intranet.local'});
+      expect(p.allowedWebViewHosts, {'example.com', 'intranet.local'});
+    });
+  });
 }

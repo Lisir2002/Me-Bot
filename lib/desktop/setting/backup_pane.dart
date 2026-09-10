@@ -1,4 +1,5 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_raw_alert_dialog 白名单：_RemoteBackupsDialog 为带 Expanded 滚动列表的复杂桌面面板，
+// AppDialog 的 min-size Column 布局无法承载可伸缩高度的列表区域，保留裸 Dialog。
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,6 +15,7 @@ import '../../core/services/chat/chat_service.dart';
 import '../../core/services/backup/cherry_importer.dart';
 import '../../core/services/backup/backup_encryptor.dart';
 import '../../core/services/backup/credential_bridge.dart';
+import '../../shared/widgets/app_dialog.dart';
 import '../../shared/widgets/ios_switch.dart';
 import '../../shared/widgets/snackbar.dart';
 import '../../icons/lucide_adapter.dart';
@@ -120,17 +122,11 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
     }
     if (!mounted) return;
     // Inform restart requirement
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(l10n.backupPageRestartRequired),
-        content: Text(l10n.backupPageRestartContent),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.backupPageOK)),
-        ],
-      ),
+    await AppDialog.alert(
+      context,
+      title: l10n.backupPageRestartRequired,
+      message: l10n.backupPageRestartContent,
+      buttonText: l10n.backupPageOK,
     );
   }
 
@@ -366,21 +362,22 @@ class _DesktopBackupPaneState extends State<DesktopBackupPane> {
                       final chat = context.read<ChatService>();
                       try {
                         await CherryImporter.importFromCherryStudio(file: f, mode: mode, settings: settings, chatService: chat);
-                        await showDialog(context: context, builder: (_) => AlertDialog(
-                          backgroundColor: cs.surface,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          title: Text(l10n.backupPageRestartRequired),
-                          content: Text(l10n.backupPageRestartContent),
-                          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.backupPageOK))],
-                        ));
+                        if (!mounted) return;
+                        await AppDialog.alert(
+                          context,
+                          title: l10n.backupPageRestartRequired,
+                          message: l10n.backupPageRestartContent,
+                          buttonText: l10n.backupPageOK,
+                        );
                       } catch (e) {
-                        await showDialog(context: context, builder: (_) => AlertDialog(
-                          backgroundColor: cs.surface,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          title: Text('Error'),
-                          content: Text(e.toString()),
-                          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.backupPageOK))],
-                        ));
+                        if (!mounted) return;
+                        await AppDialog.alert(
+                          context,
+                          title: 'Error',
+                          message: e.toString(),
+                          buttonText: l10n.backupPageOK,
+                          type: NotificationType.error,
+                        );
                       }
                     }),
                   ]),
@@ -513,7 +510,6 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
     final mode = await showDialog<RestoreMode>(context: context, builder: (_) => _RestoreModeDialog());
     if (mode == null) return;
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
     try {
       await action(mode, null);
     } on BackupCryptoError catch (e) {
@@ -539,13 +535,12 @@ class _RemoteBackupsDialogState extends State<_RemoteBackupsDialog> {
       }
     }
     if (!mounted) return;
-    await showDialog(context: context, builder: (_) => AlertDialog(
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(l10n.backupPageRestartRequired),
-      content: Text(l10n.backupPageRestartContent),
-      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.backupPageOK))],
-    ));
+    await AppDialog.alert(
+      context,
+      title: l10n.backupPageRestartRequired,
+      message: l10n.backupPageRestartContent,
+      buttonText: l10n.backupPageOK,
+    );
   }
 
   @override
@@ -662,38 +657,36 @@ class _RestoreModeDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    return Dialog(
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 320, maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-          child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.backupPageSelectImportMode, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            Text(l10n.backupPageSelectImportModeDescription, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.8))),
-            const SizedBox(height: 12),
-            _RestoreModeTile(
-              title: l10n.backupPageOverwriteMode,
-              subtitle: l10n.backupPageOverwriteModeDescription,
-              onTap: () => Navigator.of(context).pop(RestoreMode.overwrite),
-            ),
-            const SizedBox(height: 8),
-            _RestoreModeTile(
-              title: l10n.backupPageMergeMode,
-              subtitle: l10n.backupPageMergeModeDescription,
-              onTap: () => Navigator.of(context).pop(RestoreMode.merge),
-            ),
-            const SizedBox(height: 12),
-            Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.backupPageCancel))),
-          ],
+    return AppDialog(
+      title: l10n.backupPageSelectImportMode,
+      maxWidth: 420,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.backupPageSelectImportModeDescription, style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.8))),
+          const SizedBox(height: 12),
+          _RestoreModeTile(
+            title: l10n.backupPageOverwriteMode,
+            subtitle: l10n.backupPageOverwriteModeDescription,
+            onTap: () => Navigator.of(context).pop(RestoreMode.overwrite),
           ),
-        ),
+          const SizedBox(height: 8),
+          _RestoreModeTile(
+            title: l10n.backupPageMergeMode,
+            subtitle: l10n.backupPageMergeModeDescription,
+            onTap: () => Navigator.of(context).pop(RestoreMode.merge),
+          ),
+        ],
       ),
+      actions: [
+        AppDialog.button(
+          label: l10n.backupPageCancel,
+          kind: AppDialogButtonKind.secondary,
+          filled: false,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }
@@ -855,16 +848,13 @@ InputDecoration _deskInputDecoration(BuildContext context) {
 /// 供 [DesktopBackupPane]（本地导入/导出）与 [_RemoteBackupsDialog]（远程恢复）共用。
 Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) {
   final l10n = context.l10n;
-  final cs = Theme.of(context).colorScheme;
   final controller = TextEditingController();
   final confirmController = TextEditingController();
   var obscured = true;
   final formKey = GlobalKey<FormState>();
   return showDialog<String>(context: context, builder: (ctx) => StatefulBuilder(
-    builder: (ctx2, setState) => AlertDialog(
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(confirm ? l10n.backupPassphrase : l10n.backupEnterPassphrase),
+    builder: (ctx2, setState) => AppDialog(
+      title: confirm ? l10n.backupPassphrase : l10n.backupEnterPassphrase,
       content: Form(key: formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextFormField(
           controller: controller,
@@ -893,13 +883,18 @@ Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) 
         ],
       ])),
       actions: [
-        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.backupPageCancel)),
-        TextButton(
+        AppDialog.button(
+          label: l10n.backupPageCancel,
+          kind: AppDialogButtonKind.secondary,
+          filled: false,
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+        AppDialog.button(
+          label: l10n.backupPageSave,
           onPressed: () {
             if (formKey.currentState?.validate() != true) return;
             Navigator.of(ctx).pop(controller.text);
           },
-          child: Text(l10n.backupPageSave),
         ),
       ],
     ),
@@ -908,23 +903,20 @@ Future<String?> _promptPassphrase(BuildContext context, {bool confirm = false}) 
 
 void _showError(BuildContext context, String msg) {
   if (!context.mounted) return;
-  final cs = Theme.of(context).colorScheme;
-  showDialog(context: context, builder: (_) => AlertDialog(
-    backgroundColor: cs.surface,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    title: Text(msg),
-    actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(context.l10n.backupPageOK))],
-  ));
+  AppDialog.alert(
+    context,
+    title: 'Error',
+    message: msg,
+    buttonText: context.l10n.backupPageOK,
+    type: NotificationType.error,
+  );
 }
 
 /// 选择导出策略与口令（桌面端）。返回 (策略, 口令)；加密档取消口令则返回 (encrypted, null)。
 Future<(BackupCredentialPolicy, String?)> _chooseExportPolicyAndPassphrase(BuildContext context) async {
   final l10n = context.l10n;
-  final cs = Theme.of(context).colorScheme;
-  final policy = await showDialog<BackupCredentialPolicy>(context: context, builder: (ctx) => AlertDialog(
-    backgroundColor: cs.surface,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    title: Text(l10n.backupEncryptPolicy),
+  final policy = await showDialog<BackupCredentialPolicy>(context: context, builder: (ctx) => AppDialog(
+    title: l10n.backupEncryptPolicy,
     content: Column(mainAxisSize: MainAxisSize.min, children: [
       AppNavRow(
         icon: Lucide.EyeOff,
@@ -937,7 +929,14 @@ Future<(BackupCredentialPolicy, String?)> _chooseExportPolicyAndPassphrase(Build
         onTap: () => Navigator.of(ctx).pop(BackupCredentialPolicy.encrypted),
       ),
     ]),
-    actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.backupPageCancel))],
+    actions: [
+      AppDialog.button(
+        label: l10n.backupPageCancel,
+        kind: AppDialogButtonKind.secondary,
+        filled: false,
+        onPressed: () => Navigator.of(ctx).pop(),
+      ),
+    ],
   ));
   if (policy == null) return (BackupCredentialPolicy.redacted, null);
   String? passphrase;

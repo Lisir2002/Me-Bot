@@ -131,12 +131,33 @@ Future<void> _runMigrations() async {
 }
 
 /// Increments the persistent app-launch counter used by the Stats page.
+///
+/// 同时把「今天」追加到 `app_launch_dates`（逗号分隔的日粒度日期串，同一天
+/// 只记一次），供统计页按时间区间过滤启动次数。
 Future<void> _incrementAppLaunchCount() async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    const key = 'app_launch_count';
-    final prev = prefs.getInt(key) ?? 0;
-    await prefs.setInt(key, prev + 1);
+    const countKey = 'app_launch_count';
+    final prev = prefs.getInt(countKey) ?? 0;
+    await prefs.setInt(countKey, prev + 1);
+
+    // 记录启动日期：读取现有串 → 追加今天（去重）→ 写回。
+    const datesKey = 'app_launch_dates';
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    final today = '${now.year}-${two(now.month)}-${two(now.day)}';
+    final existing = prefs.getString(datesKey) ?? '';
+    final dates = existing.isEmpty
+        ? <String>[]
+        : existing
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+    if (!dates.contains(today)) {
+      dates.add(today);
+      await prefs.setString(datesKey, dates.join(','));
+    }
   } catch (_) {
     // Best-effort; never block startup on a stats counter.
   }

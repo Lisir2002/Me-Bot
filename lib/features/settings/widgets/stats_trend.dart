@@ -137,8 +137,11 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
     final trend = _trend;
 
     final visible = _visible;
-    final empty = trend.isEmpty || trend.maxTotal <= 0 ||
-        (visible.isEmpty && trend.models.isNotEmpty);
+    // 用户把所有模型都隐藏时（防御态，正常交互至少留一个），
+    // 提示「请至少选择一个模型」而非通用 No data。
+    final allHidden = trend.models.isNotEmpty && visible.isEmpty;
+    final empty =
+        trend.isEmpty || trend.maxTotal <= 0 || allHidden;
 
     return StatsSectionCard(
       title: t.statsSectionTrend,
@@ -148,7 +151,8 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
               text: trend.daily ? t.statsGranularityDay : t.statsGranularityMonth,
             ),
       child: empty
-          ? StatsEmptyHint(text: t.statsNoData)
+          ? StatsEmptyHint(
+              text: allHidden ? 'Select at least one model' : t.statsNoData)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -162,13 +166,18 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
                     final chartW =
                         math.max(available, trend.buckets.length * slot);
 
-                    return SingleChildScrollView(
+                    // 整个趋势图的无障碍语义标签
+                    return Semantics(
+                      label:
+                          'Token usage trend chart, ${formatCompactNumber(trend.maxTotal)} peak tokens',
+                      child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: SizedBox(
                         width: chartW,
                         height: 200,
                         child: _buildChart(context, visible),
                       ),
+                    ),
                     );
                   },
                 ),
@@ -345,7 +354,9 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
       runSpacing: 6,
       children: [
         for (final m in _trend.models)
-          GestureDetector(
+          Semantics(
+            label: '$m, ${!_hidden.contains(m) ? 'visible' : 'hidden'}',
+            child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() {
               if (_hidden.contains(m)) {
@@ -376,6 +387,7 @@ class _StatsTrendCardState extends State<StatsTrendCard> {
                 ],
               ),
             ),
+          ),
           ),
       ],
     );

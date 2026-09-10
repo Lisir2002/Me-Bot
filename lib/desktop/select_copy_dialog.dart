@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import '../core/models/chat_message.dart';
 import '../l10n/build_context_l10n.dart';
@@ -30,6 +29,7 @@ class _SelectCopyDesktopDialog extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
+    // no_raw_alert_dialog 白名单：桌面端选词复制窗口，自定义标题栏（全部复制/关闭按钮）+ Expanded 可滚动选中文本区，固定尺寸，不适合 AppDialog
     return Dialog(
       elevation: 12,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
@@ -57,22 +57,13 @@ class _StorageCachePageState extends State<StorageCachePage> {
   /// 逐字相同的 AlertDialog，抽出来避免文案/i18n 后续只改一处。
   Future<bool> _confirmClear() async {
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.storageCacheClearConfirmTitle),
-        content: Text(l10n.storageCacheClearConfirmBody),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.storageCancel)),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.storageConfirmDeleteBtn,
-                style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final ok = await AppDialog.confirm(
+      context,
+      title: l10n.storageCacheClearConfirmTitle,
+      message: l10n.storageCacheClearConfirmBody,
+      confirmText: l10n.storageConfirmDeleteBtn,
+      cancelText: l10n.storageCancel,
+      danger: true,
     );
     return ok == true;
   }

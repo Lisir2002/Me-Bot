@@ -1,9 +1,9 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/tag_provider.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../icons/lucide_adapter.dart';
+import '../../../shared/widgets/app_dialog.dart';
 
 Future<void> showAssistantTagsManagerDialog(BuildContext context, {required String assistantId}) async {
   final cs = Theme.of(context).colorScheme;
@@ -70,73 +70,47 @@ class _TagsManagerBody extends StatefulWidget {
 class _TagsManagerBodyState extends State<_TagsManagerBody> {
   Future<void> _createTag(BuildContext context) async {
     final l10n = context.l10n;
-    final TextEditingController c = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.assistantTagsCreateDialogTitle),
-        content: TextField(
-          controller: c,
-          autofocus: true,
-          decoration: InputDecoration(hintText: l10n.assistantTagsNameHint),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantTagsCreateDialogCancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantTagsCreateDialogOk)),
-        ],
-      ),
+    final name = await AppDialog.input(
+      context,
+      title: l10n.assistantTagsCreateDialogTitle,
+      hintText: l10n.assistantTagsNameHint,
+      confirmText: l10n.assistantTagsCreateDialogOk,
+      cancelText: l10n.assistantTagsCreateDialogCancel,
     );
-    if (ok == true) {
-      final name = c.text.trim();
-      if (name.isEmpty) return; // invalid; ignore silently in dialog
-      final tp = context.read<TagProvider>();
-      // Prevent duplicates by name
-      if (tp.tags.any((t) => t.name == name)) return;
-      await tp.createTag(name);
-    }
+    if (name == null || name.isEmpty) return; // invalid; ignore silently in dialog
+    final tp = context.read<TagProvider>();
+    // Prevent duplicates by name
+    if (tp.tags.any((t) => t.name == name)) return;
+    await tp.createTag(name);
   }
 
   Future<void> _renameTag(BuildContext context, String tagId, String oldName) async {
     final l10n = context.l10n;
-    final TextEditingController c = TextEditingController(text: oldName);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.assistantTagsRenameDialogTitle),
-        content: TextField(
-          controller: c,
-          autofocus: true,
-          decoration: InputDecoration(hintText: l10n.assistantTagsNameHint),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantTagsCreateDialogCancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantTagsRenameDialogOk)),
-        ],
-      ),
+    final name = await AppDialog.input(
+      context,
+      title: l10n.assistantTagsRenameDialogTitle,
+      initialText: oldName,
+      hintText: l10n.assistantTagsNameHint,
+      confirmText: l10n.assistantTagsRenameDialogOk,
+      cancelText: l10n.assistantTagsCreateDialogCancel,
     );
-    if (ok == true) {
-      final name = c.text.trim();
-      if (name.isEmpty) return;
-      final tp = context.read<TagProvider>();
-      if (tp.tags.any((t) => t.name == name && t.id != tagId)) return;
-      await tp.renameTag(tagId, name);
-    }
+    if (name == null || name.isEmpty) return;
+    final tp = context.read<TagProvider>();
+    if (tp.tags.any((t) => t.name == name && t.id != tagId)) return;
+    await tp.renameTag(tagId, name);
   }
 
   Future<void> _deleteTag(BuildContext context, String tagId) async {
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.assistantTagsDeleteConfirmTitle),
-        content: Text(l10n.assistantTagsDeleteConfirmContent),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantTagsDeleteConfirmCancel)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantTagsDeleteConfirmOk)),
-        ],
-      ),
+    final ok = await AppDialog.confirm(
+      context,
+      title: l10n.assistantTagsDeleteConfirmTitle,
+      message: l10n.assistantTagsDeleteConfirmContent,
+      confirmText: l10n.assistantTagsDeleteConfirmOk,
+      cancelText: l10n.assistantTagsDeleteConfirmCancel,
+      danger: true,
     );
-    if (ok == true) {
+    if (ok) {
       await context.read<TagProvider>().deleteTag(tagId);
     }
   }

@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -6,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -411,23 +411,15 @@ class McpPage extends StatelessWidget {
                 ),
               ),
               onPressed: (_) async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (dctx) => AlertDialog(
-                    backgroundColor: cs.surface,
-                    title: Text(l10n.mcpPageConfirmDeleteTitle),
-                    content: Text(l10n.mcpPageConfirmDeleteContent),
-                    actions: [
-                      TextButton(
-                          onPressed: () => Navigator.of(dctx).pop(false),
-                          child: Text(l10n.mcpPageCancel)),
-                      TextButton(
-                          onPressed: () => Navigator.of(dctx).pop(true),
-                          child: Text(l10n.mcpPageDelete)),
-                    ],
-                  ),
+                final ok = await AppDialog.confirm(
+                  context,
+                  title: l10n.mcpPageConfirmDeleteTitle,
+                  message: l10n.mcpPageConfirmDeleteContent,
+                  confirmText: l10n.mcpPageDelete,
+                  cancelText: l10n.mcpPageCancel,
+                  danger: true,
                 );
-                if (ok != true) return;
+                if (!ok) return;
                 final prov = context.read<McpProvider>();
                 final prev = prov.getById(s.id);
                 await prov.removeServer(s.id);

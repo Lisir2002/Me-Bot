@@ -104,4 +104,61 @@ void main() {
       expect(await KeyHealthService(svc).markRotated('ghost'), isFalse);
     });
   });
+
+  group('KeyHealthInfo 倒计时计算', () {
+    const threshold = 90;
+
+    test('从未轮换 → daysUntilRotation=null, isOverdue=true, daysOverdue=null', () {
+      final info = KeyHealthInfo(providerId: 'p', keyCount: 1);
+      expect(info.daysUntilRotation(threshold), isNull);
+      expect(info.isOverdue(threshold), isTrue);
+      expect(info.daysOverdue(threshold), isNull);
+    });
+
+    test('刚轮换 → daysUntilRotation≈90, isOverdue=false, daysOverdue=0', () {
+      final info = KeyHealthInfo(
+        providerId: 'p',
+        keyCount: 1,
+        lastRotatedAt: DateTime.now(),
+      );
+      expect(info.daysUntilRotation(threshold), greaterThanOrEqualTo(89));
+      expect(info.isOverdue(threshold), isFalse);
+      expect(info.daysOverdue(threshold), 0);
+    });
+
+    test('轮换 80 天前 → 未超期，距到期约 10 天', () {
+      final info = KeyHealthInfo(
+        providerId: 'p',
+        keyCount: 1,
+        lastRotatedAt: DateTime.now().subtract(const Duration(days: 80)),
+      );
+      expect(info.daysUntilRotation(threshold), lessThanOrEqualTo(10));
+      expect(info.daysUntilRotation(threshold), greaterThanOrEqualTo(9));
+      expect(info.isOverdue(threshold), isFalse);
+      expect(info.daysOverdue(threshold), 0);
+    });
+
+    test('轮换 100 天前 → 已超期约 10 天', () {
+      final info = KeyHealthInfo(
+        providerId: 'p',
+        keyCount: 1,
+        lastRotatedAt: DateTime.now().subtract(const Duration(days: 100)),
+      );
+      expect(info.daysUntilRotation(threshold), lessThanOrEqualTo(-9));
+      expect(info.isOverdue(threshold), isTrue);
+      expect(info.daysOverdue(threshold), greaterThanOrEqualTo(9));
+      expect(info.daysOverdue(threshold), lessThanOrEqualTo(11));
+    });
+
+    test('自定义阈值生效', () {
+      final info = KeyHealthInfo(
+        providerId: 'p',
+        keyCount: 1,
+        lastRotatedAt: DateTime.now().subtract(const Duration(days: 10)),
+      );
+      expect(info.isOverdue(5), isTrue); // 阈值 5 天 → 超期
+      expect(info.isOverdue(30), isFalse); // 阈值 30 天 → 未超期
+      expect(info.daysOverdue(5), greaterThanOrEqualTo(4));
+    });
+  });
 }

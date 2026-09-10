@@ -1,7 +1,7 @@
-import 'package:characters/characters.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/stats/stats_aggregator.dart';
+import '../../../icons/lucide_adapter.dart';
 import '../../../theme/design_tokens.dart';
 import 'stats_card.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -34,15 +34,21 @@ class StatsModelTable extends StatelessWidget {
           ? StatsEmptyHint(text: t.statsNoData)
           : Column(
               children: [
-                StatsTableHeader(left: t.statsColModel, right: t.statsColMessages),
+                // 右侧无对应 l10n key，按约定用英文硬编码
+                StatsTableHeader(left: t.statsColModel, right: 'Count / Token'),
                 const SizedBox(height: AppGap.xs),
                 for (final r in rows)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: StatsPillRow(
-                      badge: _badge(r, t),
-                      name: _name(r, t),
-                      value: t.statsMessageCount(r.value),
+                    child: Semantics(
+                      label:
+                          '${_name(r, t)}: ${t.statsMessageCount(r.value)}, ${formatCompactNumber(r.token ?? 0)} tokens',
+                      child: StatsPillRow(
+                        badge: _badge(r, t),
+                        name: _name(r, t),
+                        value: t.statsMessageCount(r.value),
+                        subValue: '${formatCompactNumber(r.token ?? 0)} tokens',
+                      ),
                     ),
                   ),
               ],
@@ -76,15 +82,21 @@ class StatsAssistantTable extends StatelessWidget {
           ? StatsEmptyHint(text: t.statsNoData)
           : Column(
               children: [
-                StatsTableHeader(left: t.statsColAssistant, right: t.statsColTopicCount),
+                // 右侧无对应 l10n key，按约定用英文硬编码
+                StatsTableHeader(left: t.statsColAssistant, right: 'Count / Token'),
                 const SizedBox(height: AppGap.xs),
                 for (final r in rows)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: StatsPillRow(
-                      badge: _badge(r, t),
-                      name: _name(r, t),
-                      value: t.statsTopicCount(r.value),
+                    child: Semantics(
+                      label:
+                          '${_name(r, t)}: ${t.statsTopicCount(r.value)}, ${formatCompactNumber(r.token ?? 0)} tokens',
+                      child: StatsPillRow(
+                        badge: _badge(r, t),
+                        name: _name(r, t),
+                        value: t.statsTopicCount(r.value),
+                        subValue: '${formatCompactNumber(r.token ?? 0)} tokens',
+                      ),
                     ),
                   ),
               ],
@@ -123,10 +135,14 @@ class StatsTopicTable extends StatelessWidget {
                 for (final r in rows)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: StatsPillRow(
-                      badgeIcon: Icons.chat_bubble_outline,
-                      name: _name(r, t),
-                      value: t.statsMessageCount(r.value),
+                    child: Semantics(
+                      label:
+                          '${_name(r, t)}: ${t.statsMessageCount(r.value)}',
+                      child: StatsPillRow(
+                        badgeIcon: Lucide.MessageSquare,
+                        name: _name(r, t),
+                        value: t.statsMessageCount(r.value),
+                      ),
                     ),
                   ),
               ],

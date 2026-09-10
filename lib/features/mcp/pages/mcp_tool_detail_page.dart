@@ -1,4 +1,3 @@
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -8,8 +7,10 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/ios_switch.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
+import '../../../theme/design_tokens.dart';
 import '../widgets/mcp_tool_test_sheet.dart';
 
 /// 工具详情独立页：顶栏 Tab「工具操作 / 操作记录」。
@@ -100,8 +101,9 @@ class McpToolDetailPage extends StatelessWidget {
       schemaText = tool.schema.toString();
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+    return AppListView(
+      topPadding: AppGap.sm,
+      bottomPadding: AppGap.xxl,
       children: [
         // ---- 描述 + 参数 ----
         _card(context, children: [
@@ -218,8 +220,9 @@ class McpToolDetailPage extends StatelessWidget {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+    return AppListView(
+      topPadding: AppGap.sm,
+      bottomPadding: AppGap.xxl,
       children: [
         _card(context, children: [
           for (final rec in history.reversed.take(20).toList())

@@ -37,6 +37,27 @@ class KeyHealthInfo {
     if (lastUsedAt == null) return null;
     return DateTime.now().difference(lastUsedAt!).inDays;
   }
+
+  /// 距离需要轮换还有多少天（正数=未到期，负数=已超期天数）。
+  /// 从未轮换过返回 null（UI 应显示「从未轮换」）。
+  int? daysUntilRotation(int thresholdDays) {
+    if (lastRotatedAt == null) return null;
+    final elapsed = DateTime.now().difference(lastRotatedAt!).inDays;
+    return thresholdDays - elapsed;
+  }
+
+  /// 是否已超期（超过轮换阈值）。从未轮换过视为超期。
+  bool isOverdue(int thresholdDays) {
+    if (lastRotatedAt == null) return true;
+    return DateTime.now().difference(lastRotatedAt!).inDays >= thresholdDays;
+  }
+
+  /// 已超期天数（未超期返回 0，从未轮换返回 null）。
+  int? daysOverdue(int thresholdDays) {
+    if (lastRotatedAt == null) return null;
+    final elapsed = DateTime.now().difference(lastRotatedAt!).inDays;
+    return elapsed >= thresholdDays ? elapsed - thresholdDays : 0;
+  }
 }
 
 /// 密钥健康服务（PR-7）。

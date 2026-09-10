@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 // ──────────────────────────────────────────────────────────────
 // 迁移到 AppPage 骨架（批次 4 第 2 页，1405 → 见下方行数）
 //
@@ -32,6 +30,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -149,8 +148,8 @@ class _BackupPageState extends State<BackupPage> {
 
     return showDialog<RestoreMode>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.backupPageSelectImportMode),
+      builder: (ctx) => AppDialog(
+        title: l10n.backupPageSelectImportMode,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -172,9 +171,11 @@ class _BackupPageState extends State<BackupPage> {
           ],
         ),
         actions: [
-          TextButton(
+          AppDialog.button(
+            label: l10n.backupPageCancel,
+            kind: AppDialogButtonKind.secondary,
+            filled: false,
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.backupPageCancel),
           ),
         ],
       ),
@@ -190,8 +191,8 @@ class _BackupPageState extends State<BackupPage> {
     final cardColor = isDark ? Colors.white10 : const Color(0xFFF7F7F9);
     return showDialog<BackupCredentialPolicy>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.backupEncryptPolicy),
+      builder: (ctx) => AppDialog(
+        title: l10n.backupEncryptPolicy,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -213,9 +214,11 @@ class _BackupPageState extends State<BackupPage> {
           ],
         ),
         actions: [
-          TextButton(
+          AppDialog.button(
+            label: l10n.backupPageCancel,
+            kind: AppDialogButtonKind.secondary,
+            filled: false,
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.backupPageCancel),
           ),
         ],
       ),
@@ -241,8 +244,8 @@ class _BackupPageState extends State<BackupPage> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx2, setState) => AlertDialog(
-          title: Text(confirm ? l10n.backupPassphrase : l10n.backupEnterPassphrase),
+        builder: (ctx2, setState) => AppDialog(
+          title: confirm ? l10n.backupPassphrase : l10n.backupEnterPassphrase,
           content: Form(
             key: formKey,
             child: Column(
@@ -279,16 +282,18 @@ class _BackupPageState extends State<BackupPage> {
             ),
           ),
           actions: [
-            TextButton(
+            AppDialog.button(
+              label: l10n.backupPageCancel,
+              kind: AppDialogButtonKind.secondary,
+              filled: false,
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(l10n.backupPageCancel),
             ),
-            TextButton(
+            AppDialog.button(
+              label: l10n.backupPageSave,
               onPressed: () {
                 if (formKey.currentState?.validate() != true) return;
                 Navigator.of(ctx).pop(controller.text);
               },
-              child: Text(l10n.backupPageSave),
             ),
           ],
         ),
@@ -600,15 +605,11 @@ class _BackupPageState extends State<BackupPage> {
                             ),
                           );
                           if (!mounted || !ok) return;
-                          await showDialog(
-                            context: context,
-                            builder: (dctx) => AlertDialog(
-                              title: Text(l10n.backupPageRestartRequired),
-                              content: Text(l10n.backupPageRestartContent),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.of(dctx).pop(), child: Text(l10n.backupPageOK)),
-                              ],
-                            ),
+                          await AppDialog.alert(
+                            context,
+                            title: l10n.backupPageRestartRequired,
+                            message: l10n.backupPageRestartContent,
+                            buttonText: l10n.backupPageOK,
                           );
                         },
                       ),
@@ -678,11 +679,11 @@ class _BackupPageState extends State<BackupPage> {
                           chatService: cs,
                         );
                         if (!mounted) return;
-                        await showDialog(
-                          context: context,
-                          builder: (dctx) => AlertDialog(
-                            title: Text(l10n.backupPageRestartRequired),
-                            content: Text(
+                        await AppDialog.alert(
+                          context,
+                          title: l10n.backupPageRestartRequired,
+                          buttonText: l10n.backupPageOK,
+                          message:
                               '${l10n.backupPageImportFromCherryStudio}:\n'
                               ' • Providers: ${res.providers}\n'
                               ' • Assistants: ${res.assistants}\n'
@@ -690,14 +691,6 @@ class _BackupPageState extends State<BackupPage> {
                               ' • Messages: ${res.messages}\n'
                               ' • Files: ${res.files}\n\n'
                               '${l10n.backupPageRestartContent}',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(dctx).pop(),
-                                child: Text(l10n.backupPageOK),
-                              ),
-                            ],
-                          ),
                         );
                       } catch (e) {
                         if (!mounted) return;
@@ -771,13 +764,11 @@ class _BackupPageState extends State<BackupPage> {
       ),
     );
     if (!mounted || !ok) return;
-    await showDialog(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        title: Text(l10n.backupPageRestartRequired),
-        content: Text(l10n.backupPageRestartContent),
-        actions: [TextButton(onPressed: () => Navigator.of(dctx).pop(), child: Text(l10n.backupPageOK))],
-      ),
+    await AppDialog.alert(
+      context,
+      title: l10n.backupPageRestartRequired,
+      message: l10n.backupPageRestartContent,
+      buttonText: l10n.backupPageOK,
     );
   }
 

@@ -1,4 +1,5 @@
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
+// no_manual_listview_padding 保留原因：文件内唯一 ListView.builder 位于语言下拉浮层（_LangDropdownOverlay）内部，
+// 使用 shrinkWrap + 6px 紧凑 padding，不属于页面级列表，不适合 AppListView（固定水平 16 + 无 shrinkWrap）。
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -613,6 +614,7 @@ class _LangDropdownOverlayState extends State<_LangDropdownOverlay> with SingleT
                   child: Scrollbar(
                     thickness: 6,
                     radius: const Radius.circular(3),
+                    // no_manual_listview_padding 白名单：语言下拉浮层（Popup）内部的 shrinkWrap 选项列表，非页面级列表
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
                       shrinkWrap: true,

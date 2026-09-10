@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 // ──────────────────────────────────────────────────────────────
 // AppPage 槽位迁移（批次 4 · 4/4 收官）
 //
@@ -42,6 +40,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_switch.dart';
+import '../../../shared/widgets/app_dialog.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -230,18 +230,15 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               size: 22,
               minSize: 44,
               onTap: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text(l10n.providerDetailPageDeleteProviderTitle),
-                    content: Text(l10n.providerDetailPageDeleteProviderContent),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.providerDetailPageCancelButton)),
-                      TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.providerDetailPageDeleteButton, style: const TextStyle(color: Colors.red))),
-                    ],
-                  ),
+                final confirm = await AppDialog.confirm(
+                  context,
+                  title: l10n.providerDetailPageDeleteProviderTitle,
+                  message: l10n.providerDetailPageDeleteProviderContent,
+                  confirmText: l10n.providerDetailPageDeleteButton,
+                  cancelText: l10n.providerDetailPageCancelButton,
+                  danger: true,
                 );
-                if (confirm == true) {
+                if (confirm) {
                   // Clear assistant-level model selections that reference this provider
                   try {
                     final ap = context.read<AssistantProvider>();
@@ -302,8 +299,9 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   }
 
   Widget _buildConfigTab(BuildContext context, ColorScheme cs, AppLocalizations l10n) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+    return AppListView(
+      topPadding: AppGap.sm,
+      bottomPadding: AppGap.md,
       children: [
         if (widget.keyName.toLowerCase() == 'minime-corein') ...[
           Container(
@@ -704,19 +702,15 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
                             ),
                           ),
                           onPressed: (_) async {
-                            final ok = await showDialog<bool>(
-                              context: context,
-                              builder: (dctx) => AlertDialog(
-                                backgroundColor: cs.surface,
-                                title: Text(l10n.providerDetailPageConfirmDeleteTitle),
-                                content: Text(l10n.providerDetailPageConfirmDeleteContent),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.of(dctx).pop(false), child: Text(l10n.providerDetailPageCancelButton)),
-                                  TextButton(onPressed: () => Navigator.of(dctx).pop(true), child: Text(l10n.providerDetailPageDeleteButton)),
-                                ],
-                              ),
+                            final ok = await AppDialog.confirm(
+                              context,
+                              title: l10n.providerDetailPageConfirmDeleteTitle,
+                              message: l10n.providerDetailPageConfirmDeleteContent,
+                              confirmText: l10n.providerDetailPageDeleteButton,
+                              cancelText: l10n.providerDetailPageCancelButton,
+                              danger: true,
                             );
-                            if (ok != true) return;
+                            if (!ok) return;
                             final settings = context.read<SettingsProvider>();
                             final old = settings.getProviderConfig(widget.keyName, defaultName: widget.displayName);
                             final prevList = List<String>.from(old.models);
@@ -1355,6 +1349,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
                             ? const Center(child: CircularProgressIndicator())
                           : error.isNotEmpty
                               ? Center(child: Text(error, style: TextStyle(color: cs.error)))
+                              // no_manual_listview_padding 白名单：模型选择底部弹层（DraggableScrollableSheet）内部列表，需复用 sheet 的 scrollController 以支持拖拽伸缩，非页面级列表
                               : ListView(
                                   controller: scrollController,
                                   padding: EdgeInsets.only(bottom: bottomPadding),
@@ -1646,6 +1641,7 @@ class _ConnectionTestDialogState extends State<_ConnectionTestDialog> {
     final l10n = context.l10n;
     final title = l10n.providerDetailPageTestConnectionTitle;
     final canTest = _selectedModelId != null && _state != _TestState.loading;
+    // no_raw_alert_dialog 白名单：连接测试对话框含动态状态机（选择模型/测试中/成功/失败）与随状态切换的禁用测试按钮，不适合 AppDialog 静态 actions 布局
     return Dialog(
       backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

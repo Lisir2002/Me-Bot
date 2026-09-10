@@ -1,10 +1,10 @@
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'package:flutter/material.dart';
 
 import '../../../core/services/storage/log_store.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -118,18 +118,24 @@ class _LogViewerPageState extends State<LogViewerPage> {
         ),
       );
     }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+    return AppListViewBuilder(
       itemCount: _entries.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final e = _entries[i];
-        return _TactileLogCard(
-          title: e.title,
-          time: e.time,
-          onTap: () => setState(() => _selected = e),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _TactileLogCard(
+              title: e.title,
+              time: e.time,
+              onTap: () => setState(() => _selected = e),
+            ),
+            if (i < _entries.length - 1) const SizedBox(height: 8),
+          ],
         );
       },
+      topPadding: 8,
+      bottomPadding: 24,
     );
   }
 }
@@ -233,8 +239,9 @@ class LogEntryDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+    return AppListView(
+      topPadding: 8,
+      bottomPadding: 24,
       children: [
         Text(
           entry.title,

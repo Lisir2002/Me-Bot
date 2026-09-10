@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
@@ -96,23 +96,13 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
   Future<void> _confirmDelete() async {
     try {
       final l10n = context.l10n;
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l10n.storageDeleteConfirmTitle),
-          content: Text(l10n.storageDeleteConfirmBody(_selected.length)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.storageCancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.storageConfirmDeleteBtn,
-                  style: const TextStyle(color: Colors.red)),
-            ),
-          ],
-        ),
+      final ok = await AppDialog.confirm(
+        context,
+        title: l10n.storageDeleteConfirmTitle,
+        message: l10n.storageDeleteConfirmBody(_selected.length),
+        confirmText: l10n.storageConfirmDeleteBtn,
+        cancelText: l10n.storageCancel,
+        danger: true,
       );
       if (ok != true || !mounted) return;
       await Provider.of<StorageProvider>(context, listen: false)

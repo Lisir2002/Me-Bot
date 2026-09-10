@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +6,7 @@ import '../../../core/providers/model_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/card_surface.dart';
@@ -490,28 +489,15 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
       return;
     }
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(l10n.multiKeyPageDeleteErrorsConfirmTitle),
-          content: Text(l10n.multiKeyPageDeleteErrorsConfirmContent),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.multiKeyPageCancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: TextButton.styleFrom(foregroundColor: cs.error),
-              child: Text(l10n.multiKeyPageDelete),
-            ),
-          ],
-        );
-      },
+    final ok = await AppDialog.confirm(
+      context,
+      title: l10n.multiKeyPageDeleteErrorsConfirmTitle,
+      message: l10n.multiKeyPageDeleteErrorsConfirmContent,
+      confirmText: l10n.multiKeyPageDelete,
+      cancelText: l10n.multiKeyPageCancel,
+      danger: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     final remain = keys.where((e) => e.status != ApiKeyStatus.error).toList();
     await settings.setProviderConfig(widget.providerKey, cfg.copyWith(apiKeys: remain));
     if (!mounted) return;

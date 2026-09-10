@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/build_context_l10n.dart';
+import '../../shared/widgets/app_dialog.dart';
 class DesktopAboutPane extends StatefulWidget {
   const DesktopAboutPane({super.key});
 
@@ -446,108 +446,81 @@ Future<void> _showSponsorDesktopDialog(BuildContext context) async {
     barrierDismissible: true,
     builder: (ctx) {
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
-      return Dialog(
-        backgroundColor: cs.surface,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      return AppDialog(
+        title: l10n.settingsPageSponsor,
+        maxWidth: 560,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Methods card
+            _DeskCard(
+              title: l10n.sponsorPageMethodsSectionTitle,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.settingsPageSponsor,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: l10n.mcpPageClose,
-                      icon: Icon(lucide.Lucide.X, size: 18, color: cs.onSurface),
-                      onPressed: () => Navigator.of(ctx).maybePop(),
-                    ),
-                  ],
+                _DeskNavRow(
+                  icon: lucide.Lucide.Heart,
+                  label: l10n.sponsorPageAfdianTitle,
+                  onTap: () => open(afdianUrl),
                 ),
-                const SizedBox(height: 8),
-
-                // Methods card
-                _DeskCard(
-                  title: l10n.sponsorPageMethodsSectionTitle,
-                  children: [
-                    _DeskNavRow(
-                      icon: lucide.Lucide.Heart,
-                      label: l10n.sponsorPageAfdianTitle,
-                      onTap: () => open(afdianUrl),
-                    ),
-                    const _DeskRowDivider(),
-                    _DeskNavRow(
-                      icon: lucide.Lucide.Link,
-                      label: l10n.sponsorPageWeChatTitle,
-                      onTap: () => open(wechatQrUrl),
-                    ),
-                  ],
+                const _DeskRowDivider(),
+                _DeskNavRow(
+                  icon: lucide.Lucide.Link,
+                  label: l10n.sponsorPageWeChatTitle,
+                  onTap: () => open(wechatQrUrl),
                 ),
-
-                const SizedBox(height: 12),
-
-                // WeChat QR preview card (inline)
-                _DeskCard(
-                  title: l10n.sponsorPageWeChatTitle,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      child: Center(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.14 : 0.18)),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.network(
-                            wechatQrUrl,
-                            width: 220,
-                            height: 220,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 220,
-                              height: 220,
-                              color: cs.surface,
-                              alignment: Alignment.center,
-                              child: Icon(lucide.Lucide.ImageOff, color: cs.onSurface.withOpacity(0.5)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                      child: Center(
-                        child: Text(
-                          'Scan the QR code to sponsor',
-                          style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 6),
-                // Align(
-                //   alignment: Alignment.centerRight,
-                //   child: TextButton(
-                //     onPressed: () => Navigator.of(ctx).maybePop(),
-                //     child: Text(l10n.mcpPageClose, style: TextStyle(color: cs.primary)),
-                //   ),
-                // ),
               ],
             ),
-          ),
+
+            const SizedBox(height: 12),
+
+            // WeChat QR preview card (inline)
+            _DeskCard(
+              title: l10n.sponsorPageWeChatTitle,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: cs.outlineVariant.withOpacity(isDark ? 0.14 : 0.18)),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.network(
+                        wechatQrUrl,
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 220,
+                          height: 220,
+                          color: cs.surface,
+                          alignment: Alignment.center,
+                          child: Icon(lucide.Lucide.ImageOff, color: cs.onSurface.withOpacity(0.5)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                  child: Center(
+                    child: Text(
+                      'Scan the QR code to sponsor',
+                      style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
+        actions: [
+          AppDialog.button(
+            label: l10n.mcpPageClose,
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+        ],
       );
     },
   );

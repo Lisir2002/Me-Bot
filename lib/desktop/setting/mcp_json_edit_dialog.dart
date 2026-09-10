@@ -1,4 +1,5 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_raw_alert_dialog 白名单：JSON 编辑器为 860x720 固定尺寸的大面板，
+// 需要 Expanded 填充编辑区，AppDialog 的 min-size Column 布局无法承载。
 import 'dart:convert';
 
 import 'package:flutter/material.dart';

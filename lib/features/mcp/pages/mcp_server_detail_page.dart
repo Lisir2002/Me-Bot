@@ -1,4 +1,3 @@
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +5,7 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../core/services/haptics.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../theme/design_tokens.dart';
@@ -156,8 +156,9 @@ class McpServerDetailPage extends StatelessWidget {
     final isBuiltin = server.transport == McpTransportType.inmemory;
 
     // 分段模式下引擎不加 padding，body 自带滚动
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xxl),
+    return AppListView(
+      topPadding: AppGap.sm,
+      bottomPadding: AppGap.xxl,
       children: [
         _card(context, children: [
           Padding(
@@ -282,8 +283,9 @@ class McpServerDetailPage extends StatelessWidget {
               style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
         );
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(AppGap.md, AppGap.sm, AppGap.md, AppGap.xxl),
+    return AppListView(
+      topPadding: AppGap.sm,
+      bottomPadding: AppGap.xxl,
       children: server.tools.map((tool) {
         final enabledColor = tool.enabled ? Colors.green : cs.onSurface.withOpacity(0.5);
         return GestureDetector(

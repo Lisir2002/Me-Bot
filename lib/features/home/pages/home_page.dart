@@ -1,11 +1,13 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
+// no_manual_listview_padding 白名单：聊天消息流需水平 0 贴边并保留
+// keyboardDismissBehavior，AppListViewBuilder 固定水平 16 且不支持该参数，
+// 故保留裸 ListView.builder（AlertDialog 已全部迁移到 AppDialog）。
 import 'package:flutter/material.dart';
 import '../../../l10n/build_context_l10n.dart';
 import 'dart:async';
 import 'dart:convert';
 // Replaced flutter_zoom_drawer with a custom InteractiveDrawer
 import '../../../shared/widgets/interactive_drawer.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/responsive/breakpoints.dart';
 
 import '../widgets/chat_input_bar.dart';
@@ -4065,22 +4067,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                   } : null,
                                   onDelete: message.role == 'user' ? () async {
                                     final l10n = context.l10n;
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: Text(l10n.homePageDeleteMessage),
-                                        content: Text(l10n.homePageDeleteMessageConfirm),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(ctx).pop(false),
-                                            child: Text(l10n.homePageCancel),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.of(ctx).pop(true),
-                                            child: Text(l10n.homePageDelete, style: const TextStyle(color: Colors.red)),
-                                          ),
-                                        ],
-                                      ),
+                                    final confirm = await AppDialog.confirm(
+                                      context,
+                                      title: l10n.homePageDeleteMessage,
+                                      message: l10n.homePageDeleteMessageConfirm,
+                                      confirmText: l10n.homePageDelete,
+                                      cancelText: l10n.homePageCancel,
+                                      danger: true,
                                     );
                                     if (confirm == true) {
                                       final id = message.id;
@@ -4123,22 +4116,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                 if (!mounted) return;
                                 if (action == MessageMoreAction.delete) {
                                   final l10n = context.l10n;
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text(l10n.homePageDeleteMessage),
-                                      content: Text(l10n.homePageDeleteMessageConfirm),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(false),
-                                          child: Text(l10n.homePageCancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(true),
-                                          child: Text(l10n.homePageDelete, style: const TextStyle(color: Colors.red)),
-                                        ),
-                                      ],
-                                    ),
+                                  final confirm = await AppDialog.confirm(
+                                    context,
+                                    title: l10n.homePageDeleteMessage,
+                                    message: l10n.homePageDeleteMessageConfirm,
+                                    confirmText: l10n.homePageDelete,
+                                    cancelText: l10n.homePageCancel,
+                                    danger: true,
                                   );
                                   if (confirm == true) {
                                     final id = message.id;
@@ -5147,16 +5131,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                     onDelete: message.role == 'user'
                                                         ? () async {
                                                             final l10n = context.l10n;
-                                                            final confirm = await showDialog<bool>(
-                                                              context: context,
-                                                              builder: (ctx) => AlertDialog(
-                                                                title: Text(l10n.homePageDeleteMessage),
-                                                                content: Text(l10n.homePageDeleteMessageConfirm),
-                                                                actions: [
-                                                                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.homePageCancel)),
-                                                                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.homePageDelete, style: const TextStyle(color: Colors.red))),
-                                                                ],
-                                                              ),
+                                                            final confirm = await AppDialog.confirm(
+                                                              context,
+                                                              title: l10n.homePageDeleteMessage,
+                                                              message: l10n.homePageDeleteMessageConfirm,
+                                                              confirmText: l10n.homePageDelete,
+                                                              cancelText: l10n.homePageCancel,
+                                                              danger: true,
                                                             );
                                                             if (confirm == true) {
                                                               final id = message.id;
@@ -5197,16 +5178,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                       if (!mounted) return;
                                                       if (action == MessageMoreAction.delete) {
                                                         final l10n = context.l10n;
-                                                        final confirm = await showDialog<bool>(
-                                                          context: context,
-                                                          builder: (ctx) => AlertDialog(
-                                                            title: Text(l10n.homePageDeleteMessage),
-                                                            content: Text(l10n.homePageDeleteMessageConfirm),
-                                                            actions: [
-                                                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.homePageCancel)),
-                                                              TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.homePageDelete, style: const TextStyle(color: Colors.red))),
-                                                            ],
-                                                          ),
+                                                        final confirm = await AppDialog.confirm(
+                                                          context,
+                                                          title: l10n.homePageDeleteMessage,
+                                                          message: l10n.homePageDeleteMessageConfirm,
+                                                          confirmText: l10n.homePageDelete,
+                                                          cancelText: l10n.homePageCancel,
+                                                          danger: true,
                                                         );
                                                         if (confirm == true) {
                                                           final id = message.id;

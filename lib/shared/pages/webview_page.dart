@@ -1,4 +1,3 @@
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;

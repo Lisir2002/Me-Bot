@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../utils/brand_assets.dart';
@@ -12,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -303,18 +302,15 @@ class _ProvidersPageState extends State<ProvidersPage> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('${l10n.providerDetailPageDeleteProviderTitle} (${keysToDelete.length})'),
-        content: Text(l10n.providersPageDeleteSelectedConfirmContent),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.providerDetailPageCancelButton)),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.providerDetailPageDeleteButton, style: const TextStyle(color: Colors.red))),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: '${l10n.providerDetailPageDeleteProviderTitle} (${keysToDelete.length})',
+      message: l10n.providersPageDeleteSelectedConfirmContent,
+      confirmText: l10n.providerDetailPageDeleteButton,
+      cancelText: l10n.providerDetailPageCancelButton,
+      danger: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     try {
       // 尽可能复用 ProviderDetailPage 删除前的清理逻辑：清理引用该 provider 的助手模型选择
       try {

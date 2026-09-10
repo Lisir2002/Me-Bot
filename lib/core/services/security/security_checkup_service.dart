@@ -33,11 +33,19 @@ class SecurityCheckupService {
   /// [strings] 为用户可见文案的 l10n 注入入口（展示层传 `L10nCheckupStrings`，
   /// 测试传 Fake）。
   /// 单扫描器抛异常不会拖垮整体：异常被记作一条 warn 发现，并记日志。
+  /// 整体扫描超时 10 秒，避免某个扫描器卡死导致页面永远 loading。
   Future<CheckupReport> run(CheckupStrings strings) async {
     final findings = <CheckupFinding>[];
     for (final scanner in _scanners) {
       try {
-        final r = await scanner.scan(strings);
+        final r = await scanner.scan(strings).timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                Logger.w(LogTags.security,
+                    '[${scanner.id}] scan timed out after 10s, skipped');
+                return const [];
+              },
+            );
         if (r.isNotEmpty) findings.addAll(r);
       } catch (e, s) {
         Logger.w(LogTags.security,

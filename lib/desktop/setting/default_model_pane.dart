@@ -1,10 +1,10 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../features/model/widgets/model_select_sheet.dart';
+import '../../shared/widgets/app_dialog.dart';
 import '../../utils/brand_assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:characters/characters.dart';
@@ -103,55 +103,45 @@ class DesktopDefaultModelPane extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       builder: (ctx) {
-        return Dialog(
-          backgroundColor: cs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(l10n.defaultModelPagePromptLabel, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(ctx).maybePop()),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 160),
-                    child: TextField(
-                      controller: ctrl,
-                      maxLines: null,
-                      minLines: 8,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: _deskInputDecoration(ctx).copyWith(hintText: l10n.defaultModelPageTitlePromptHint),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _DeskIosButton(label: l10n.defaultModelPageResetDefault, filled: false, dense: true, onTap: () async {
-                        await sp.resetTitlePrompt();
-                        ctrl.text = sp.titlePrompt;
-                      }),
-                      const Spacer(),
-                      _DeskIosButton(label: l10n.defaultModelPageSave, filled: true, dense: true, onTap: () async {
-                        await sp.setTitlePrompt(ctrl.text.trim());
-                        if (ctx.mounted) Navigator.of(ctx).maybePop();
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(l10n.defaultModelPageTitleVars('{content}', '{locale}'), style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12)),
-                ],
+        return AppDialog(
+          title: l10n.defaultModelPagePromptLabel,
+          maxWidth: 600,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 160),
+                child: TextField(
+                  controller: ctrl,
+                  maxLines: null,
+                  minLines: 8,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: _deskInputDecoration(ctx).copyWith(hintText: l10n.defaultModelPageTitlePromptHint),
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+              Text(l10n.defaultModelPageTitleVars('{content}', '{locale}'), style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12)),
+            ],
           ),
+          actions: [
+            AppDialog.button(
+              label: l10n.defaultModelPageResetDefault,
+              kind: AppDialogButtonKind.secondary,
+              filled: false,
+              onPressed: () async {
+                await sp.resetTitlePrompt();
+                ctrl.text = sp.titlePrompt;
+              },
+            ),
+            AppDialog.button(
+              label: l10n.defaultModelPageSave,
+              onPressed: () async {
+                await sp.setTitlePrompt(ctrl.text.trim());
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              },
+            ),
+          ],
         );
       },
     );
@@ -166,55 +156,45 @@ class DesktopDefaultModelPane extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       builder: (ctx) {
-        return Dialog(
-          backgroundColor: cs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(l10n.defaultModelPagePromptLabel, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(ctx).maybePop()),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 160),
-                    child: TextField(
-                      controller: ctrl,
-                      maxLines: null,
-                      minLines: 8,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: _deskInputDecoration(ctx).copyWith(hintText: l10n.defaultModelPageTranslatePromptHint),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _DeskIosButton(label: l10n.defaultModelPageResetDefault, filled: false, dense: true, onTap: () async {
-                        await sp.resetTranslatePrompt();
-                        ctrl.text = sp.translatePrompt;
-                      }),
-                      const Spacer(),
-                      _DeskIosButton(label: l10n.defaultModelPageSave, filled: true, dense: true, onTap: () async {
-                        await sp.setTranslatePrompt(ctrl.text.trim());
-                        if (ctx.mounted) Navigator.of(ctx).maybePop();
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(l10n.defaultModelPageTranslateVars('{source_text}', '{target_lang}'), style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12)),
-                ],
+        return AppDialog(
+          title: l10n.defaultModelPagePromptLabel,
+          maxWidth: 600,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 160),
+                child: TextField(
+                  controller: ctrl,
+                  maxLines: null,
+                  minLines: 8,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: _deskInputDecoration(ctx).copyWith(hintText: l10n.defaultModelPageTranslatePromptHint),
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+              Text(l10n.defaultModelPageTranslateVars('{source_text}', '{target_lang}'), style: TextStyle(color: cs.onSurface.withOpacity(0.6), fontSize: 12)),
+            ],
           ),
+          actions: [
+            AppDialog.button(
+              label: l10n.defaultModelPageResetDefault,
+              kind: AppDialogButtonKind.secondary,
+              filled: false,
+              onPressed: () async {
+                await sp.resetTranslatePrompt();
+                ctrl.text = sp.translatePrompt;
+              },
+            ),
+            AppDialog.button(
+              label: l10n.defaultModelPageSave,
+              onPressed: () async {
+                await sp.setTranslatePrompt(ctrl.text.trim());
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              },
+            ),
+          ],
         );
       },
     );

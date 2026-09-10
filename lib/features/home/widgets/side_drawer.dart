@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:characters/characters.dart';
@@ -27,6 +26,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:animations/animations.dart';
 import '../../../utils/sandbox_path_resolver.dart';
@@ -426,36 +426,17 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
   }
 
   Future<void> _renameChat(BuildContext context, ChatItem chat) async {
-    final controller = TextEditingController(text: chat.title);
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(l10n.sideDrawerMenuRename),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: l10n.sideDrawerRenameHint,
-            ),
-            onSubmitted: (_) => Navigator.of(ctx).pop(true),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.sideDrawerCancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.sideDrawerOK),
-            ),
-          ],
-        );
-      },
+    final text = await AppDialog.input(
+      context,
+      title: l10n.sideDrawerMenuRename,
+      initialText: chat.title,
+      hintText: l10n.sideDrawerRenameHint,
+      confirmText: l10n.sideDrawerOK,
+      cancelText: l10n.sideDrawerCancel,
     );
-    if (ok == true) {
-      await context.read<ChatService>().renameConversation(chat.id, controller.text.trim());
+    if (text != null) {
+      await context.read<ChatService>().renameConversation(chat.id, text);
     }
   }
 
@@ -1230,16 +1211,13 @@ extension on _SideDrawerState {
           label: l10n.assistantTagsContextMenuDeleteAssistant,
           danger: true,
           onTap: () async {
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text(l10n.assistantSettingsDeleteDialogTitle),
-                content: Text(l10n.assistantSettingsDeleteDialogContent),
-                actions: [
-                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.assistantSettingsDeleteDialogCancel)),
-                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.assistantSettingsDeleteDialogConfirm)),
-                ],
-              ),
+            final confirmed = await AppDialog.confirm(
+              context,
+              title: l10n.assistantSettingsDeleteDialogTitle,
+              message: l10n.assistantSettingsDeleteDialogContent,
+              confirmText: l10n.assistantSettingsDeleteDialogConfirm,
+              cancelText: l10n.assistantSettingsDeleteDialogCancel,
+              danger: true,
             );
             if (confirmed != true) return;
             final ok = await context.read<AssistantProvider>().deleteAssistant(a.id);
@@ -1308,16 +1286,13 @@ extension on _SideDrawerState {
                   await Navigator.of(context).push(MaterialPageRoute(builder: (_) => TagsManagerPage(assistantId: a.id)));
                 }),
                 row(l10n.assistantTagsContextMenuDeleteAssistant, Lucide.Trash2, () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx2) => AlertDialog(
-                      title: Text(l10n.assistantSettingsDeleteDialogTitle),
-                      content: Text(l10n.assistantSettingsDeleteDialogContent),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx2).pop(false), child: Text(l10n.assistantSettingsDeleteDialogCancel)),
-                        TextButton(onPressed: () => Navigator.of(ctx2).pop(true), child: Text(l10n.assistantSettingsDeleteDialogConfirm)),
-                      ],
-                    ),
+                  final confirmed = await AppDialog.confirm(
+                    context,
+                    title: l10n.assistantSettingsDeleteDialogTitle,
+                    message: l10n.assistantSettingsDeleteDialogContent,
+                    confirmText: l10n.assistantSettingsDeleteDialogConfirm,
+                    cancelText: l10n.assistantSettingsDeleteDialogCancel,
+                    danger: true,
                   );
                   if (confirmed != true) return;
                   final ok = await context.read<AssistantProvider>().deleteAssistant(a.id);
@@ -1437,11 +1412,9 @@ extension on _SideDrawerState {
           final media = MediaQuery.of(ctx);
           final avail = media.size.height - media.viewInsets.bottom;
           final double gridHeight = (avail * 0.28).clamp(120.0, 220.0);
-          return AlertDialog(
-            scrollable: true,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            backgroundColor: cs.surface,
-            title: Text(l10n.sideDrawerEmojiDialogTitle),
+          return AppDialog(
+            title: l10n.sideDrawerEmojiDialogTitle,
+            maxWidth: 380,
             content: SizedBox(
               width: 360,
               child: Column(
@@ -1558,10 +1531,8 @@ extension on _SideDrawerState {
         bool valid(String s) => s.trim().startsWith('http://') || s.trim().startsWith('https://');
         String value = '';
         return StatefulBuilder(builder: (ctx, setLocal) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            backgroundColor: cs.surface,
-            title: Text(l10n.sideDrawerImageUrlDialogTitle),
+          return AppDialog(
+            title: l10n.sideDrawerImageUrlDialogTitle,
             content: TextField(
               controller: controller,
               autofocus: true,
@@ -1663,10 +1634,8 @@ extension on _SideDrawerState {
           return sb.toString();
         }
         return StatefulBuilder(builder: (ctx, setLocal) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            backgroundColor: cs.surface,
-            title: Text(l10n.sideDrawerQQAvatarDialogTitle),
+          return AppDialog(
+            title: l10n.sideDrawerQQAvatarDialogTitle,
             content: TextField(
               controller: controller,
               autofocus: true,
@@ -1693,55 +1662,62 @@ extension on _SideDrawerState {
                 if (valid(value)) Navigator.of(ctx).pop(true);
               },
             ),
-            actionsAlignment: MainAxisAlignment.spaceBetween,
             actions: [
-              TextButton(
-                onPressed: () async {
-                  // Try multiple times until a valid avatar is fetched
-                  const int maxTries = 20;
-                  bool applied = false;
-                  for (int i = 0; i < maxTries; i++) {
-                    final qq = randomQQ();
-                    final url = 'https://q2.qlogo.cn/headimg_dl?dst_uin=' + qq + '&spec=100';
-                    try {
-                      final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
-                      if (resp.statusCode == 200 && resp.bodyBytes.isNotEmpty) {
-                        await context.read<UserProvider>().setAvatarUrl(url);
-                        applied = true;
-                        break;
-                      }
-                    } catch (_) {}
-                  }
-                  if (applied) {
-                    if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop(false);
-                  } else {
-                    showAppSnackBar(
-                      context,
-                      message: l10n.sideDrawerQQAvatarFetchFailed,
-                      type: NotificationType.error,
-                    );
-                  }
-                },
-                child: Text(l10n.sideDrawerRandomQQ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    child: Text(l10n.sideDrawerCancel),
-                  ),
-                  TextButton(
-                    onPressed: valid(value) ? () => Navigator.of(ctx).pop(true) : null,
-                    child: Text(
-                      l10n.sideDrawerSave,
-                      style: TextStyle(
-                        color: valid(value) ? cs.primary : cs.onSurface.withOpacity(0.38),
-                        fontWeight: FontWeight.w600,
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        // Try multiple times until a valid avatar is fetched
+                        const int maxTries = 20;
+                        bool applied = false;
+                        for (int i = 0; i < maxTries; i++) {
+                          final qq = randomQQ();
+                          final url = 'https://q2.qlogo.cn/headimg_dl?dst_uin=' + qq + '&spec=100';
+                          try {
+                            final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+                            if (resp.statusCode == 200 && resp.bodyBytes.isNotEmpty) {
+                              await context.read<UserProvider>().setAvatarUrl(url);
+                              applied = true;
+                              break;
+                            }
+                          } catch (_) {}
+                        }
+                        if (applied) {
+                          if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop(false);
+                        } else {
+                          showAppSnackBar(
+                            context,
+                            message: l10n.sideDrawerQQAvatarFetchFailed,
+                            type: NotificationType.error,
+                          );
+                        }
+                      },
+                      child: Text(l10n.sideDrawerRandomQQ),
                     ),
-                  ),
-                ],
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: Text(l10n.sideDrawerCancel),
+                        ),
+                        TextButton(
+                          onPressed: valid(value) ? () => Navigator.of(ctx).pop(true) : null,
+                          child: Text(
+                            l10n.sideDrawerSave,
+                            style: TextStyle(
+                              color: valid(value) ? cs.primary : cs.onSurface.withOpacity(0.38),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           );
@@ -1811,10 +1787,8 @@ extension on _SideDrawerState {
         bool valid(String v) => v.trim().isNotEmpty && v.trim() != initial;
         return StatefulBuilder(
           builder: (ctx, setLocal) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              backgroundColor: cs.surface,
-              title: Text(l10n.sideDrawerSetNicknameTitle),
+            return AppDialog(
+              title: l10n.sideDrawerSetNicknameTitle,
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

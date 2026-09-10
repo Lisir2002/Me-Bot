@@ -5,6 +5,47 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.52] - 2026-09-10
+
+### 📣 For Users
+- **统计页面大升级**：数据更准了——会话数只统计有实际消息的会话、模型和助手排行按 token 用量排序；新增周期对比（环比上周期涨跌幅）、CSV 数据导出、热力图点击查看当天详情、趋势图悬停显示明细；加载时有骨架屏，数字切换有平滑动画；
+- **安全中心全面增强**：新增安全评分仪表盘（0-100 分，点击看扣分明细）；体检项支持单个修复（之前一键修复会误修全部）；清除审计日志现在需要生物识别验证；密钥健康显示配置名和轮换倒计时；隐私门禁显示生物识别状态和剩余宽限时间；白名单策略新增冲突检测（命令不在白名单时警告并一键添加）；安全事件改为时间线视图，支持筛选和分页加载；
+- **弹窗体验统一**：全仓确认弹窗、通知弹窗、输入弹窗统一为新的共享组件，视觉和交互一致；新页面强制使用共享组件构建，后续不会再出现风格割裂的弹窗。
+
+### 🔧 For Developers
+- **Added**：
+  - `lib/shared/widgets/app_dialog.dart`：`AppDialog` 统一弹窗组件——`confirm`（确认/危险确认）、`alert`（通知）、`input`（文本输入）、`progress`（进度加载）四种模式，统一圆角/颜色 token/动画；
+  - `tools/l10n_lints/lib/l10n_lints.dart` 新增 3 条强制执行 lint：`no_raw_alert_dialog`（禁止裸 AlertDialog/Dialog）、`no_manual_listview_padding`（禁止页面手写 ListView padding）、`no_scrollable_false`（禁止 `AppPage(scrollable:false)` 必须用 `AppPage.selfScrolling`）；
+  - 统计页面：`StatsSkeleton` 骨架屏、`AnimatedNumber` 数字动画、周期对比 `StatsSnapshot.previous`、CSV 导出、热力图 AppSheet 详情；
+  - 安全页面：7 个 widget 文件拆分（`security_shared` / `security_score_card` / `security_checkup_section` / `security_key_health_section` / `security_app_lock_section` / `security_policy_section` / `security_audit_section`）；
+  - 安全服务层：`KeyHealthInfo.rotationDaysRemaining` 倒计时计算、`LocalPolicyProvider` 正则校验、`SecurityCheckupService` 每扫描器 10 秒超时。
+- **Fixed**：
+  - 统计 P0：`conversationCount` 从按会话 createdAt 过滤改为遍历窗口内消息按 conversationId 去重；模型/助手排行从按消息条数改为按 token 聚合降序；
+  - 统计 P1：`launchCount` 按天过滤（`app_launch_dates` 按日去重）；`StatsSnapshot.compute` 移至后台 isolate（Hive 对象 detach 后跨 isolate）；
+  - 安全 P0：单 finding 修复按钮（原 `onTap:_autoFix` 修复全部 → `onFixSingle(f)` 只修当前项）；清除审计日志增加 `AppLockService.verifyWith` 生物识别验证；
+  - 安全 P1：密钥健康显示配置名（`providerConfigs[name]?.name ?? providerId`）；`_buildService` 缓存到 `_cachedService`；`_lockFuture`/`_policyFuture` 在 initState 创建避免重复 build；MCP 服务器关闭时弹危险确认；
+  - 安全 P2：审计日志分页（硬编码 12 → 可扩展 limit + 加载更多）；`listSync()` → `list().toList()` 异步；添加命令/主机重复提示；`allowHttp` 开启时风险警告；`lockNow` 后清空解锁态强制重验证；
+  - 安全 P3：自动修复记录每条 finding 的 title/severity 到审计 detail；`markRotated` 失败也记录审计。
+- **Changed**：
+  - 全仓迁移：约 80 处 `AlertDialog`/`Dialog`/`SimpleDialog` → `AppDialog`；约 17 处 `ListView(padding:)` → `AppListView`；涉及 44 个文件；
+  - `security_page.dart`：912 行单文件 → 388 行薄壳 + 7 个 section widget；
+  - 版本号 `0.0.51+51` → `0.0.52+52`。
+- **Tests**：
+  - 统计：`test/stats/stats_aggregator_test.dart`（24 个）+ `test/stats/stats_window_test.dart`（6 个），共 30 个全部通过；
+  - 安全：`test/core/services/security/key_health_test.dart`（+6 倒计时）+ `policy_test.dart`（+6 正则）+ `security_score_test.dart`（新建 11 个评分），安全模块共 81 个全部通过。
+
+### 🤖 For Agents
+- **新页面强制执行规则**（custom_lint，CI 硬门禁）：
+  - 禁止裸 `AlertDialog(` / `Dialog(` / `SimpleDialog(` → 必须用 `AppDialog.confirm/alert/input/progress`；
+  - 禁止页面级 `ListView(padding:)` → 必须用 `AppListView` / `AppListViewBuilder`（水平 padding 固化 16 不可覆盖）；
+  - 禁止 `AppPage(scrollable: false)` → 必须用 `AppPage.selfScrolling`（自动 `bodyPadding:zero`）；
+  - 豁免：行尾加 `// ignore: no_raw_alert_dialog 白名单：<原因>`，仅限桌面端固定尺寸复杂窗口（JSON 编辑器/MCP 编辑表单/HTML 预览等）、聊天流 padding=0、下拉浮层内 shrinkWrap 列表等合理场景；
+- `AppDialog` API：`AppDialog.confirm(context, {title, message, confirmText, cancelText, danger})` / `AppDialog.alert(context, {title, message})` / `AppDialog.input(context, {title, hintText, initialValue, confirmText, cancelText})` / `AppDialog.progress(context, {title, message})` 返回 `Future<bool>` / `Future<String?>`；
+- 统计 `StatsSnapshot.compute(report, window, launchDates)` 必须传 `launchDates` 否则启动次数不过滤（UI 层标注 `(all)`）；`StatsSnapshot.previous` 自动计算上一周期，总览格显示环比百分比；
+- 安全 section 组件均为纯展示 widget，状态和回调由 `SecurityBody` 父级持有；新增安全功能优先在对应 section 文件中扩展，不要把逻辑塞回 `security_page.dart`；
+- 安全评分 `SecurityScoreResult.compute({report, health, lockEnabled, allowlistEnabled})` 0-100 分，4 级颜色（≥85 优秀/≥70 良好/≥50 一般/<50 危险），扣分明细可展开；
+- 全仓仍有 13 个文件保留 `no_raw_alert_dialog` 白名单（桌面端复杂独立窗口）、5 个保留 `no_manual_listview_padding`（聊天流/浮层列表）、5 个保留 `no_scrollable_false`（TabBarView/空态页面），均为预审计合理例外，新增页面不得效仿。
+
 ## [0.0.51] - 2026-09-10
 
 ### 📣 For Users

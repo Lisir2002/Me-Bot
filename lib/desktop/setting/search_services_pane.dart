@@ -1,10 +1,10 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/search/search_service.dart';
+import '../../shared/widgets/app_dialog.dart';
 import '../../utils/brand_assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:uuid/uuid.dart';
@@ -507,56 +507,33 @@ class _AddServiceDialogState extends State<_AddServiceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    return Dialog(
-      backgroundColor: cs.surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 58),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(l10n.searchServicesAddDialogTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(context).maybePop()),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: _ServiceTypeDropdown(
-                      selectedType: _selectedType,
-                      onChanged: (t) => setState(() => _selectedType = t),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ..._buildFields(),
-                ],
-              ),
+    return AppDialog(
+      title: l10n.searchServicesAddDialogTitle,
+      maxWidth: 420,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: _ServiceTypeDropdown(
+              selectedType: _selectedType,
+              onChanged: (t) => setState(() => _selectedType = t),
             ),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: _DeskIosButton(
-                label: l10n.searchServicesAddDialogAdd,
-                filled: true,
-                dense: true,
-                onTap: () {
-                  final created = _createService();
-                  Navigator.of(context).pop(created);
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          ..._buildFields(),
+        ],
       ),
+      actions: [
+        AppDialog.button(
+          label: l10n.searchServicesAddDialogAdd,
+          onPressed: () {
+            final created = _createService();
+            Navigator.of(context).pop(created);
+          },
+        ),
+      ],
     );
   }
 
@@ -678,50 +655,27 @@ class _EditServiceDialogState extends State<_EditServiceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final name = SearchService.getService(widget.service).name;
-    return Dialog(
-      backgroundColor: cs.surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 58),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(context).maybePop()),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ..._buildFields(),
-                ],
-              ),
-            ),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: _DeskIosButton(
-                label: l10n.searchServicesEditDialogSave,
-                filled: true,
-                dense: true,
-                onTap: () {
-                  final updated = _updateService();
-                  Navigator.of(context).pop(updated);
-                },
-              ),
-            ),
-          ],
-        ),
+    return AppDialog(
+      title: name,
+      maxWidth: 480,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ..._buildFields(),
+        ],
       ),
+      actions: [
+        AppDialog.button(
+          label: l10n.searchServicesEditDialogSave,
+          onPressed: () {
+            final updated = _updateService();
+            Navigator.of(context).pop(updated);
+          },
+        ),
+      ],
     );
   }
 

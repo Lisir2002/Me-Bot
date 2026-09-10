@@ -1,4 +1,3 @@
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 // ──────────────────────────────────────────────────────────────
 // 迁移到 AppPage 骨架（批次 4 第 3 页，1533 → 见下方行数）
 //
@@ -607,6 +606,7 @@ class _AddServiceBottomSheetState extends State<_AddServiceBottomSheet> {
       {'type': 'perplexity', 'name': l10n.searchServiceNamePerplexity},
       {'type': 'bocha', 'name': l10n.searchServiceNameBocha},
     ];
+    // no_manual_listview_padding 白名单：添加搜索服务底部弹层内的服务类型选择列表（shrinkWrap），随 AnimatedSwitcher 切换，非页面级列表
     return ListView.builder(
       key: const ValueKey('service_list'),
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),

@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 // no_scrollable_false_without_selfscrolling 白名单：内部 ListView 无水平 padding，靠 AppPage bodyPadding(fromLTRB 12,10,12,14) 提供边距
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +9,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/animations/widgets.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_states.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -88,22 +87,13 @@ class _ChatHistoryPageState extends State<ChatHistoryPage> with TickerProviderSt
           tooltip: l10n.chatHistoryPageDeleteAllTooltip,
           icon: const Icon(Lucide.Trash2),
           onPressed: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text(l10n.chatHistoryPageDeleteAllDialogTitle),
-                content: Text(l10n.chatHistoryPageDeleteAllDialogContent),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(l10n.chatHistoryPageCancel)),
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    child: Text(l10n.chatHistoryPageDelete,
-                        style: const TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
+            final confirm = await AppDialog.confirm(
+              context,
+              title: l10n.chatHistoryPageDeleteAllDialogTitle,
+              message: l10n.chatHistoryPageDeleteAllDialogContent,
+              confirmText: l10n.chatHistoryPageDelete,
+              cancelText: l10n.chatHistoryPageCancel,
+              danger: true,
             );
             if (confirm == true) {
               final svc = context.read<ChatService>();

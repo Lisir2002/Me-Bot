@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -7,7 +6,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/rendering.dart';
@@ -28,6 +26,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../utils/sandbox_path_resolver.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/markdown_with_highlight.dart';
 import '../../../shared/widgets/export_capture_scope.dart';
 import '../../../shared/widgets/mermaid_exporter.dart';
@@ -471,6 +470,7 @@ Future<void> showMessageExportSheet(BuildContext context, ChatMessage message) a
   try {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       // Desktop: show centered dialog
+      // no_raw_alert_dialog 白名单：桌面端单条/批量导出对话框外壳，内部为带导出选项开关与进度的独立 StatefulWidget，不适合 AppDialog
       await showDialog<void>(
         context: context,
         barrierDismissible: true,
@@ -2219,40 +2219,8 @@ class _ExportDisclaimer extends StatelessWidget {
 }
 
 Future<void> _runWithExportingOverlay(BuildContext context, Future<void> Function() task) async {
-  final cs = Theme.of(context).colorScheme;
   final l10n = context.l10n;
-  // Show overlay first
-  showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => Center(
-      child: Material(
-        color: cs.surface,
-        elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CupertinoActivityIndicator(radius: 16),
-              const SizedBox(height: 12),
-              Text(
-                l10n.messageExportSheetExporting,
-                style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.8)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-  try {
-    await task();
-  } finally {
-    Navigator.of(context, rootNavigator: true).pop();
-  }
+  await AppDialog.progress(context, message: l10n.messageExportSheetExporting, future: task());
 }
 
 class _Parsed {

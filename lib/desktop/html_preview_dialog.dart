@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -145,6 +144,7 @@ class _HtmlPreviewDialogState extends State<_HtmlPreviewDialog> {
     final cs = Theme.of(context).colorScheme;
     // Keep content updated with theme changes
     WidgetsBinding.instance.addPostFrameCallback((_) { _loadWithTheme(); });
+    // no_raw_alert_dialog 白名单：桌面端 HTML 预览窗口（自定义标题栏 + Expanded WebView）及其控制台日志窗口（自定义标题栏 + 日志列表），均为带固定尺寸的独立桌面窗口
     return Dialog(
       elevation: 12,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

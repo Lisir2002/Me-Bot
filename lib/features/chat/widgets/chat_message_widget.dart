@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'dart:ui' as ui;
@@ -1589,6 +1588,7 @@ bool _userMenuActive = false;
         context: context,
         barrierDismissible: true,
         builder: (ctx) {
+          // no_raw_alert_dialog 白名单：桌面端引用来源弹窗与工具调用详情弹窗，均为自定义标题栏（图标+标题+关闭）+ Expanded 内容区的固定尺寸独立窗口，不适合 AppDialog
           return Dialog(
             elevation: 12,
             insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

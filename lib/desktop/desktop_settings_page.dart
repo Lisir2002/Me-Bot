@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -9,9 +7,12 @@ import 'dart:convert';
 import '../icons/lucide_adapter.dart' as lucide;
 import '../l10n/build_context_l10n.dart';
 import '../theme/palettes.dart';
+import '../theme/design_tokens.dart';
 import '../core/providers/settings_provider.dart';
 import '../core/providers/model_provider.dart';
 import 'model_fetch_dialog.dart' show showModelFetchDialog;
+import '../shared/widgets/app_dialog.dart';
+import '../shared/widgets/app_list_view.dart';
 import '../shared/widgets/ios_switch.dart';
 // Desktop assistants panel dependencies
 import '../features/assistant/pages/assistant_settings_edit_page.dart' show showAssistantDesktopDialog; // dialog opener only
@@ -45,6 +46,19 @@ import '../features/settings/pages/usage_stats_page.dart';
 import 'package:system_fonts/system_fonts.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// no_raw_alert_dialog 白名单：
+//   - _showProviderSettingsDialog：多字段提供商配置表单（名称/代理主机/端口/用户名/密码），
+//     使用 Consumer 实时同步配置，属于复杂多字段表单，不适合 AppDialog 静态方法。
+//   - _showNetworkDialog：代理设置弹窗，含 StatefulBuilder + AnimatedCrossFade 条件显示，
+//     多字段条件表单，不适合 AppDialog。
+//   - 多密钥管理弹窗（_showMultiKeyDialog）：固定 680x620 面板，含 Expanded 填充的密钥列表、
+//     工具栏按钮（删除错误/检测/关闭），属于桌面端复杂管理窗口。
+//   - 字体选择弹窗：固定 520x520 面板，含搜索框 + Expanded 字体列表，属于桌面端选择窗口。
+// no_manual_listview_padding 白名单：
+//   - _ProviderTypeDropdown 弹出菜单：OverlayEntry 下拉浮层内部的 ListView，
+//     非页面级列表，需要紧凑的 8/6 padding 适配浮层样式。
+//   - _StrategyDropdown 弹出菜单：同上，OverlayEntry 下拉浮层内部的 ListView。
 
 /// Desktop settings layout: left menu + vertical divider + right content.
 /// For now, only the left menu and the Display Settings content are implemented.
@@ -222,8 +236,9 @@ class _SettingsMenu extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: width,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: AppListView(
+        topPadding: AppGap.sm,
+        bottomPadding: AppGap.sm,
         children: [
           for (int i = 0; i < items.length; i++) ...[
             _MenuItem(
@@ -461,94 +476,13 @@ class _AddAssistantButtonState extends State<_AddAssistantButton> {
 
 Future<String?> _showAddAssistantDesktopDialog(BuildContext context) async {
   final l10n = context.l10n;
-  final cs = Theme.of(context).colorScheme;
-  final controller = TextEditingController();
-  String? result;
-  await showDialog<String>(
-    context: context,
-    barrierDismissible: true,
-    builder: (ctx) {
-      return Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: 44,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(l10n.assistantSettingsAddSheetTitle, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      ),
-                      IconButton(
-                        tooltip: MaterialLocalizations.of(ctx).closeButtonTooltip,
-                        icon: const Icon(lucide.Lucide.X, size: 18),
-                        color: cs.onSurface,
-                        onPressed: () => Navigator.of(ctx).maybePop(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: controller,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: l10n.assistantSettingsAddSheetHint,
-                        filled: true,
-                        fillColor: Theme.of(ctx).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.2)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: cs.primary.withOpacity(0.4)),
-                        ),
-                      ),
-                      onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _DeskIosButton(
-                          label: l10n.assistantSettingsAddSheetCancel,
-                          filled: false,
-                          dense: true,
-                          onTap: () => Navigator.of(ctx).pop(),
-                        ),
-                        const SizedBox(width: 8),
-                        _DeskIosButton(
-                          label: l10n.assistantSettingsAddSheetSave,
-                          filled: true,
-                          dense: true,
-                          onTap: () => Navigator.of(ctx).pop(controller.text.trim()),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  ).then((v) => result = v);
+  final result = await AppDialog.input(
+    context,
+    title: l10n.assistantSettingsAddSheetTitle,
+    hintText: l10n.assistantSettingsAddSheetHint,
+    confirmText: l10n.assistantSettingsAddSheetSave,
+    cancelText: l10n.assistantSettingsAddSheetCancel,
+  );
   final s = (result ?? '').trim();
   if (s.isEmpty) return null;
   return s;
@@ -1046,16 +980,13 @@ class _DesktopProvidersBodyState extends State<_DesktopProvidersBody> {
                                 ? null
                                 : () async {
                                     final l10n = context.l10n;
-                                    final ok = await showDialog<bool>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: Text(l10n.providerDetailPageDeleteProviderTitle),
-                                        content: Text(l10n.providerDetailPageDeleteProviderContent),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.providerDetailPageCancelButton)),
-                                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.providerDetailPageDeleteButton, style: const TextStyle(color: Colors.red))),
-                                        ],
-                                      ),
+                                    final ok = await AppDialog.confirm(
+                                      context,
+                                      title: l10n.providerDetailPageDeleteProviderTitle,
+                                      message: l10n.providerDetailPageDeleteProviderContent,
+                                      confirmText: l10n.providerDetailPageDeleteButton,
+                                      cancelText: l10n.providerDetailPageCancelButton,
+                                      danger: true,
                                     );
                                     if (ok == true) {
                                       await settings.removeProviderConfig(item.key);
@@ -1164,48 +1095,14 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
   }
 
   Future<String?> _inputDialog(BuildContext context, {required String title, required String hint}) async {
-    final cs = Theme.of(context).colorScheme;
-    final ctrl = TextEditingController();
-    String? result;
-    await showDialog<String>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(children: [
-                  Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                  _IconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(ctx).maybePop()),
-                ]),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: ctrl,
-                  autofocus: true,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: _inputDecoration(ctx).copyWith(hintText: hint),
-                  onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _DeskIosButton(label: context.l10n.assistantEditEmojiDialogSave, filled: true, dense: true, onTap: () => Navigator.of(ctx).pop(ctrl.text.trim())),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).then((v) => result = v);
-    return (result ?? '').trim().isEmpty ? null : result!.trim();
+    final result = await AppDialog.input(
+      context,
+      title: title,
+      hintText: hint,
+      confirmText: context.l10n.assistantEditEmojiDialogSave,
+    );
+    final s = (result ?? '').trim();
+    return s.isEmpty ? null : s;
   }
 
   @override
@@ -1268,8 +1165,9 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           child: Divider(height: 1, thickness: 0.5, color: cs.outlineVariant.withOpacity(0.12)),
         ),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: AppListView(
+            topPadding: AppGap.sm,
+            bottomPadding: AppGap.md,
             children: [
               // Partner info banners
               if (widget.providerKey.toLowerCase() == 'tensdaq') ...[
@@ -2217,17 +2115,13 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           final errorKeys = keys.where((e) => e.status == ApiKeyStatus.error).toList();
           if (errorKeys.isEmpty) return;
           final l10nX = dctx.l10n;
-          final csX = Theme.of(dctx).colorScheme;
-          final ok = await showDialog<bool>(
-            context: dctx,
-            builder: (ctx2) => AlertDialog(
-              title: Text(l10nX.multiKeyPageDeleteErrorsConfirmTitle),
-              content: Text(l10nX.multiKeyPageDeleteErrorsConfirmContent),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(ctx2).pop(false), child: Text(l10nX.multiKeyPageCancel)),
-                TextButton(onPressed: () => Navigator.of(ctx2).pop(true), style: TextButton.styleFrom(foregroundColor: csX.error), child: Text(l10nX.multiKeyPageDelete)),
-              ],
-            ),
+          final ok = await AppDialog.confirm(
+            dctx,
+            title: l10nX.multiKeyPageDeleteErrorsConfirmTitle,
+            message: l10nX.multiKeyPageDeleteErrorsConfirmContent,
+            confirmText: l10nX.multiKeyPageDelete,
+            cancelText: l10nX.multiKeyPageCancel,
+            danger: true,
           );
           if (ok != true) return;
           final remain = keys.where((e) => e.status != ApiKeyStatus.error).toList();
@@ -2237,7 +2131,6 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
         }
 
         Future<ApiKeyConfig?> _showEditKeyDialog(BuildContext dctx, ApiKeyConfig k) async {
-          final cs2 = Theme.of(dctx).colorScheme;
           final l10n2 = dctx.l10n;
           final aliasCtrl = TextEditingController(text: k.name ?? '');
           final keyCtrl = TextEditingController(text: k.key);
@@ -2245,73 +2138,45 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
           final res = await showDialog<ApiKeyConfig?>(
             context: dctx,
             barrierDismissible: true,
-            builder: (c2) => Dialog(
-              backgroundColor: cs2.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
-                child: StatefulBuilder(builder: (cc, setCC) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        height: 44,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Row(
-                            children: [
-                              Expanded(child: Text(l10n2.multiKeyPageEdit, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
-                              _IconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(c2).maybePop()),
-                            ],
-                          ),
-                        ),
+            builder: (c2) => AppDialog(
+              title: l10n2.multiKeyPageEdit,
+              maxWidth: 520,
+              content: StatefulBuilder(builder: (cc, setCC) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _sectionLabel(cc, l10n2.multiKeyPageAlias),
+                    const SizedBox(height: 6),
+                    TextField(controller: aliasCtrl, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(cc)),
+                    const SizedBox(height: 12),
+                    _sectionLabel(cc, l10n2.multiKeyPageKey),
+                    const SizedBox(height: 6),
+                    TextField(controller: keyCtrl, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(cc)),
+                    const SizedBox(height: 12),
+                    _sectionLabel(cc, l10n2.multiKeyPagePriority),
+                    const SizedBox(height: 6),
+                    TextField(controller: priCtrl, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(cc).copyWith(hintText: '1-10')),
+                  ],
+                );
+              }),
+              actions: [
+                AppDialog.button(
+                  label: l10n2.multiKeyPageEdit,
+                  onPressed: () {
+                    final p = int.tryParse(priCtrl.text.trim()) ?? k.priority;
+                    final clamped = p.clamp(1, 10);
+                    Navigator.of(c2).pop(
+                      k.copyWith(
+                        name: aliasCtrl.text.trim().isEmpty ? null : aliasCtrl.text.trim(),
+                        key: keyCtrl.text.trim(),
+                        priority: clamped,
+                        updatedAt: DateTime.now().millisecondsSinceEpoch,
                       ),
-                      Divider(height: 1, thickness: 0.5, color: cs2.outlineVariant.withOpacity(0.12)),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _sectionLabel(cc, l10n2.multiKeyPageAlias),
-                            const SizedBox(height: 6),
-                            TextField(controller: aliasCtrl, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(cc)),
-                            const SizedBox(height: 12),
-                            _sectionLabel(cc, l10n2.multiKeyPageKey),
-                            const SizedBox(height: 6),
-                            TextField(controller: keyCtrl, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(cc)),
-                            const SizedBox(height: 12),
-                            _sectionLabel(cc, l10n2.multiKeyPagePriority),
-                            const SizedBox(height: 6),
-                            TextField(controller: priCtrl, style: const TextStyle(fontSize: 13), decoration: _inputDecoration(cc).copyWith(hintText: '1-10')),
-                            const SizedBox(height: 14),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: _DeskIosButton(
-                                label: l10n2.multiKeyPageEdit,
-                                filled: true,
-                                onTap: () {
-                                  final p = int.tryParse(priCtrl.text.trim()) ?? k.priority;
-                                  final clamped = p.clamp(1, 10);
-                                  Navigator.of(c2).pop(
-                                    k.copyWith(
-                                      name: aliasCtrl.text.trim().isEmpty ? null : aliasCtrl.text.trim(),
-                                      key: keyCtrl.text.trim(),
-                                      priority: clamped,
-                                      updatedAt: DateTime.now().millisecondsSinceEpoch,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ),
+                    );
+                  },
+                ),
+              ],
             ),
           );
           return res;
@@ -2402,9 +2267,10 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
                     child: Scrollbar(
                       thumbVisibility: true,
                       controller: listCtrl,
-                      child: ListView(
+                      child: AppListView(
                         controller: listCtrl,
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        topPadding: 0,
+                        bottomPadding: AppGap.md,
                         children: [
                           _DesktopIosSectionCard(
                             children: [
@@ -2544,64 +2410,58 @@ class _DesktopProviderDetailPaneState extends State<_DesktopProviderDetailPane> 
             color = cs.error;
             break;
         }
-        return Dialog(
-          backgroundColor: cs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(child: Text(l10n.providerDetailPageTestConnectionTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700))),
-                  const SizedBox(height: 14),
-                  GestureDetector(
-                    onTap: pickModel,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Theme.of(ctx).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: cs.outlineVariant.withOpacity(0.12), width: 0.6),
-                      ),
-                      child: Row(
-                        children: [
-                          if (selectedModelId != null) _BrandCircle(name: selectedModelId!, size: 22),
-                          if (selectedModelId != null) const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              selectedModelId ?? l10n.providerDetailPageSelectModelButton,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+        return AppDialog(
+          title: l10n.providerDetailPageTestConnectionTitle,
+          maxWidth: 520,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GestureDetector(
+                onTap: pickModel,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cs.outlineVariant.withOpacity(0.12), width: 0.6),
                   ),
-                  const SizedBox(height: 14),
-                  if (state == _TestState.loading)
-                    Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary)))
-                  else if (state != _TestState.idle)
-                    Center(child: Text(message, textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 14, fontWeight: state == _TestState.success ? FontWeight.w700 : FontWeight.w600))),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  child: Row(
                     children: [
-                      _DeskIosButton(label: l10n.providerDetailPageCancelButton, filled: false, dense: true, onTap: () => Navigator.of(ctx).maybePop()),
-                      const SizedBox(width: 8),
-                      _DeskIosButton(label: l10n.providerDetailPageTestButton, filled: true, dense: true, onTap: canTest ? doTest : () {}),
+                      if (selectedModelId != null) _BrandCircle(name: selectedModelId!, size: 22),
+                      if (selectedModelId != null) const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          selectedModelId ?? l10n.providerDetailPageSelectModelButton,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 14),
+              if (state == _TestState.loading)
+                Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary)))
+              else if (state != _TestState.idle)
+                Center(child: Text(message, textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 14, fontWeight: state == _TestState.success ? FontWeight.w700 : FontWeight.w600))),
+            ],
           ),
+          actions: [
+            AppDialog.button(
+              label: l10n.providerDetailPageCancelButton,
+              kind: AppDialogButtonKind.secondary,
+              filled: false,
+              onPressed: () => Navigator.of(ctx).maybePop(),
+            ),
+            AppDialog.button(
+              label: l10n.providerDetailPageTestButton,
+              onPressed: canTest ? doTest : () {},
+            ),
+          ],
         );
       },
     );
@@ -5057,28 +4917,21 @@ Future<String?> _showDesktopFontChooserDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
         final cs2 = Theme.of(ctx).colorScheme;
-        return Dialog(
-          elevation: 0,
-          backgroundColor: bg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const CupertinoActivityIndicator(radius: 12),
-                const SizedBox(height: 12),
-                Text(
+        return AppDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CupertinoActivityIndicator(radius: 12),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
                   l10n.desktopFontLoading,
                   style: TextStyle(color: cs2.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

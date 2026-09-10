@@ -1,10 +1,10 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/mcp_provider.dart';
+import '../../shared/widgets/app_dialog.dart';
 import '../../shared/widgets/snackbar.dart';
 import 'mcp_edit_dialog.dart' show showDesktopMcpEditDialog;
 import 'mcp_json_edit_dialog.dart' show showDesktopMcpJsonEditDialog;
@@ -381,68 +381,44 @@ Future<void> _showErrorDetails(BuildContext context, {required String name, Stri
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
-      return Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.mcpPageErrorDialogTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 6),
-                          Text(name, style: TextStyle(color: cs.onSurface.withOpacity(0.7))),
-                        ],
-                      ),
-                    ),
-                    _SmallIconBtn(
-                      icon: lucide.Lucide.X,
-                      onTap: () => Navigator.of(ctx).maybePop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF7F7F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
-                  ),
-                  child: SingleChildScrollView(
-                    child: SelectableText(
-                      (message?.isNotEmpty == true ? message! : l10n.mcpPageErrorNoDetails),
-                      style: (Theme.of(ctx).textTheme.bodyMedium ?? const TextStyle())
-                          .copyWith(fontSize: 13.0, height: 1.35),
-                    ),
+      final isDark = Theme.of(ctx).brightness == Brightness.dark;
+      return AppDialog(
+        title: l10n.mcpPageErrorDialogTitle,
+        titleIcon: Icons.error_outline,
+        maxWidth: 640,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(name, style: TextStyle(color: cs.onSurface.withOpacity(0.7))),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white10 : const Color(0xFFF7F7F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outlineVariant.withOpacity(0.2)),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    (message?.isNotEmpty == true ? message! : l10n.mcpPageErrorNoDetails),
+                    style: (Theme.of(ctx).textTheme.bodyMedium ?? const TextStyle())
+                        .copyWith(fontSize: 13.0, height: 1.35),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(ctx).maybePop(),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: Text(l10n.mcpPageClose),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
+        actions: [
+          AppDialog.button(
+            label: l10n.mcpPageClose,
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+        ],
       );
     },
   );
@@ -450,74 +426,12 @@ Future<void> _showErrorDetails(BuildContext context, {required String name, Stri
 
 Future<bool?> _confirmDelete(BuildContext context) async {
   final l10n = context.l10n;
-  final cs = Theme.of(context).colorScheme;
-  return showDialog<bool>(
-    context: context,
-    barrierDismissible: true,
-    builder: (ctx) {
-      return Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(l10n.mcpPageConfirmDeleteTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 10),
-                Text(l10n.mcpPageConfirmDeleteContent, style: TextStyle(color: cs.onSurface.withOpacity(0.8))),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Builder(builder: (context) {
-                      final isDark = Theme.of(context).brightness == Brightness.dark;
-                      return TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        style: ButtonStyle(
-                          splashFactory: NoSplash.splashFactory,
-                          overlayColor: const MaterialStatePropertyAll(Colors.transparent),
-                          minimumSize: const MaterialStatePropertyAll(Size(88, 36)),
-                          shape: MaterialStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                          backgroundColor: MaterialStateProperty.resolveWith((states) {
-                            if (states.contains(MaterialState.hovered)) {
-                              return isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05);
-                            }
-                            return Colors.transparent;
-                          }),
-                        ),
-                        child: Text(l10n.mcpPageCancel),
-                      );
-                    }),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: cs.error, foregroundColor: cs.onError)
-                          .copyWith(
-                            splashFactory: NoSplash.splashFactory,
-                            overlayColor: const MaterialStatePropertyAll(Colors.transparent),
-                            minimumSize: const MaterialStatePropertyAll(Size(88, 36)),
-                            shape: MaterialStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                            backgroundColor: MaterialStateProperty.resolveWith((states) {
-                              if (states.contains(MaterialState.hovered)) {
-                                return Color.lerp(cs.error, Colors.white, 0.08);
-                              }
-                              return cs.error;
-                            }),
-                          ),
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(l10n.mcpPageDelete),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    },
+  return AppDialog.confirm(
+    context,
+    title: l10n.mcpPageConfirmDeleteTitle,
+    message: l10n.mcpPageConfirmDeleteContent,
+    confirmText: l10n.mcpPageDelete,
+    cancelText: l10n.mcpPageCancel,
+    danger: true,
   );
 }

@@ -1,7 +1,7 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:characters/characters.dart';
 import '../../l10n/build_context_l10n.dart';
+import 'app_dialog.dart';
 import 'emoji_text.dart';
 
 /// A reusable emoji picker dialog used by both mobile and desktop.
@@ -33,30 +33,29 @@ Future<String?> showEmojiPickerDialog(
           final media = MediaQuery.of(ctx);
           final avail = media.size.height - media.viewInsets.bottom;
           final double gridHeight = (avail * 0.28).clamp(120.0, 220.0);
-          return AlertDialog(
-            scrollable: true,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            backgroundColor: cs.surface,
-            title: Text(title ?? l10n.assistantEditEmojiDialogTitle),
-            content: SizedBox(
-              width: 360,
+          return AppDialog(
+            title: title ?? l10n.assistantEditEmojiDialogTitle,
+            maxWidth: 400,
+            content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: cs.primary.withOpacity(0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: EmojiText(
-                      value.isEmpty ? '🙂' : value.characters.take(1).toString(),
-                      fontSize: 40,
-                      optimizeEmojiAlign: true,
-                      nudge: Offset.zero, // picker preview: no extra nudge
+                  Center(
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: cs.primary.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: EmojiText(
+                        value.isEmpty ? '🙂' : value.characters.take(1).toString(),
+                        fontSize: 40,
+                        optimizeEmojiAlign: true,
+                        nudge: Offset.zero,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -114,7 +113,7 @@ Future<String?> showEmojiPickerDialog(
                               e,
                               fontSize: 20,
                               optimizeEmojiAlign: true,
-                              nudge: Offset.zero, // picker grid: no extra nudge
+                              nudge: Offset.zero,
                             ),
                           ),
                         );
@@ -125,19 +124,19 @@ Future<String?> showEmojiPickerDialog(
               ),
             ),
             actions: [
-              TextButton(
+              AppDialog.button(
+                label: l10n.assistantEditEmojiDialogCancel,
+                kind: AppDialogButtonKind.secondary,
+                filled: false,
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(l10n.assistantEditEmojiDialogCancel),
               ),
-              TextButton(
-                onPressed: validGrapheme(value)
-                    ? () => Navigator.of(ctx).pop(value.characters.take(1).toString())
-                    : null,
-                child: Text(
-                  l10n.assistantEditEmojiDialogSave,
-                  style: TextStyle(
-                    color: validGrapheme(value) ? cs.primary : cs.onSurface.withOpacity(0.38),
-                    fontWeight: FontWeight.w600,
+              Opacity(
+                opacity: validGrapheme(value) ? 1.0 : 0.5,
+                child: AbsorbPointer(
+                  absorbing: !validGrapheme(value),
+                  child: AppDialog.button(
+                    label: l10n.assistantEditEmojiDialogSave,
+                    onPressed: () => Navigator.of(ctx).pop(value.characters.take(1).toString()),
                   ),
                 ),
               ),

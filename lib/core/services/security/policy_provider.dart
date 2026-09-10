@@ -71,6 +71,19 @@ class LocalPolicyProvider implements PolicyProvider {
     'bun',
   };
 
+  /// MCP 命令名校验：字母数字开头，后续允许字母数字、点、下划线、连字符。
+  static final RegExp cmdPattern = RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*$');
+
+  /// WebView 主机名校验：字母数字开头和结尾，中间允许字母数字、点、连字符。
+  static final RegExp hostPattern =
+      RegExp(r'^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$');
+
+  /// 校验命令名是否合法。
+  static bool isValidCommand(String cmd) => cmdPattern.hasMatch(cmd);
+
+  /// 校验主机名是否合法。
+  static bool isValidHost(String host) => hostPattern.hasMatch(host);
+
   /// 从 SharedPreferences 装配单例（幂等，已 load 直接返回内存态）。
   static Future<LocalPolicyProvider> load() async {
     if (_loaded && _instance != null) return _instance!;
@@ -123,7 +136,8 @@ class LocalPolicyProvider implements PolicyProvider {
 
   @override
   Future<void> setAllowedMcpCommands(Set<String> commands) async {
-    _allowedMcpCommands = Set.from(commands);
+    // 服务端校验：过滤掉不合法的命令名，防止注入危险命令。
+    _allowedMcpCommands = commands.where(isValidCommand).toSet();
     await _prefs.setStringList(_kMcpCommands, _allowedMcpCommands.toList());
   }
 
@@ -136,7 +150,9 @@ class LocalPolicyProvider implements PolicyProvider {
 
   @override
   Future<void> setWebViewHosts(Set<String> hosts) async {
-    _allowedWebViewHosts = Set.from(hosts);
+    // 服务端校验：过滤掉不合法的主机名，统一小写。
+    _allowedWebViewHosts =
+        hosts.map((h) => h.trim().toLowerCase()).where(isValidHost).toSet();
     await _prefs.setStringList(_kWebViewHosts, _allowedWebViewHosts.toList());
   }
 

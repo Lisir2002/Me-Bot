@@ -1,5 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
-// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 // no_scrollable_false_without_selfscrolling 白名单：ReorderableListView 无 padding，靠 AppPage bodyPadding(fromLTRB 12,12,12,100) 提供边距
 import 'dart:io' show File;
 
@@ -14,6 +12,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_tactile.dart';
@@ -365,25 +364,13 @@ OutlineInputBorder _fieldBorder(BuildContext context, double opacity, Color colo
 }
 
 Future<bool?> _confirmDelete(BuildContext context, AppLocalizations l10n) async {
-  return showDialog<bool>(
-    context: context,
-    builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
-      return AlertDialog(
-        title: Text(l10n.assistantSettingsDeleteDialogTitle),
-        content: Text(l10n.assistantSettingsDeleteDialogContent),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.assistantSettingsDeleteDialogCancel)),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.assistantSettingsDeleteDialogConfirm,
-                style: TextStyle(color: cs.error)),
-          ),
-        ],
-      );
-    },
+  return AppDialog.confirm(
+    context,
+    title: l10n.assistantSettingsDeleteDialogTitle,
+    message: l10n.assistantSettingsDeleteDialogContent,
+    confirmText: l10n.assistantSettingsDeleteDialogConfirm,
+    cancelText: l10n.assistantSettingsDeleteDialogCancel,
+    danger: true,
   );
 }
 

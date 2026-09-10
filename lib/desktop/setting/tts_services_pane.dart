@@ -1,4 +1,3 @@
-// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +7,7 @@ import '../../l10n/build_context_l10n.dart';
 import '../../core/providers/tts_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/services/tts/network_tts.dart';
+import '../../shared/widgets/app_dialog.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../utils/brand_assets.dart';
 
@@ -263,43 +263,25 @@ void _showErrorDialog(BuildContext context, String message) {
   final l10n = context.l10n;
   showDialog<void>(
     context: context,
-    builder: (ctx) => Dialog(
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(children: [
-                Expanded(child: Text(l10n.ttsServicesDialogErrorTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(ctx).maybePop()),
-              ]),
-              const SizedBox(height: 10),
-              _deskDivider(ctx),
-              const SizedBox(height: 10),
-              // Make error content scrollable to avoid overflow
-              Flexible(
-                child: SingleChildScrollView(
-                  child: SelectableText(
-                    message,
-                    style: TextStyle(color: cs.onSurface.withOpacity(0.9), fontSize: 13),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(onPressed: () => Navigator.of(ctx).maybePop(), child: Text(l10n.ttsServicesCloseButton)),
-              ),
-            ],
+    builder: (ctx) => AppDialog(
+      title: l10n.ttsServicesDialogErrorTitle,
+      titleIcon: Icons.error_outline,
+      maxWidth: 560,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 400),
+        child: SingleChildScrollView(
+          child: SelectableText(
+            message,
+            style: TextStyle(color: cs.onSurface.withOpacity(0.9), fontSize: 13),
           ),
         ),
       ),
+      actions: [
+        AppDialog.button(
+          label: l10n.ttsServicesCloseButton,
+          onPressed: () => Navigator.of(ctx).pop(),
+        ),
+      ],
     ),
   );
 }
@@ -433,104 +415,85 @@ class _SystemTtsCardState extends State<_SystemTtsCard> {
       context: context,
       barrierDismissible: true,
       builder: (ctx) {
-      return Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(l10n.ttsServicesPageSystemTtsSettingsTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(ctx).maybePop()),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _deskDivider(context),
-                  const SizedBox(height: 10),
-                  // Engine selection
-                  FutureBuilder<List<String>>(
-                    future: tts.listEngines(),
-                    builder: (context, snap) {
-                      final engines = snap.data ?? const <String>[];
-                      final cur = tts.engineId ?? (engines.isNotEmpty ? engines.first : '');
-                      return _SelectRow(
-                        label: l10n.ttsServicesPageEngineLabel,
-                        value: cur.isEmpty ? l10n.ttsServicesPageAutoLabel : cur,
-                        options: engines,
-                        onSelected: (picked) async {
-                          await tts.setEngineId(picked);
-                          if (ctx.mounted) (ctx as Element).markNeedsBuild();
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                  // Language selection
-                  FutureBuilder<List<String>>(
-                    future: tts.listLanguages(),
-                    builder: (context, snap) {
-                      final langs = snap.data ?? const <String>[];
-                      final cur = tts.languageTag ?? (langs.contains('zh-CN')
-                          ? 'zh-CN'
-                          : (langs.contains('en-US')
-                              ? 'en-US'
-                              : (langs.isNotEmpty ? langs.first : '')));
-                      return _SelectRow(
-                        label: l10n.ttsServicesPageLanguageLabel,
-                        value: cur.isEmpty ? l10n.ttsServicesPageAutoLabel : cur,
-                        options: langs,
-                        onSelected: (picked) async {
-                          await tts.setLanguageTag(picked);
-                          if (ctx.mounted) (ctx as Element).markNeedsBuild();
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Text(l10n.ttsServicesPageSpeechRateLabel, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
-                  Slider(
-                    value: rate,
-                    min: 0.1,
-                    max: 1.0,
-                    onChanged: (v) {
-                      rate = v;
+      return AppDialog(
+        title: l10n.ttsServicesPageSystemTtsSettingsTitle,
+        maxWidth: 440,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+              // Engine selection
+              FutureBuilder<List<String>>(
+                future: tts.listEngines(),
+                builder: (context, snap) {
+                  final engines = snap.data ?? const <String>[];
+                  final cur = tts.engineId ?? (engines.isNotEmpty ? engines.first : '');
+                  return _SelectRow(
+                    label: l10n.ttsServicesPageEngineLabel,
+                    value: cur.isEmpty ? l10n.ttsServicesPageAutoLabel : cur,
+                    options: engines,
+                    onSelected: (picked) async {
+                      await tts.setEngineId(picked);
                       if (ctx.mounted) (ctx as Element).markNeedsBuild();
                     },
-                    onChangeEnd: (v) async => tts.setSpeechRate(v),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(l10n.ttsServicesPagePitchLabel, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
-                  Slider(
-                    value: pitch,
-                    min: 0.5,
-                    max: 2.0,
-                    onChanged: (v) {
-                      pitch = v;
-                      if (ctx.mounted) (ctx as Element).markNeedsBuild();
-                    },
-                    onChangeEnd: (v) async => tts.setPitch(v),
-                  ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () => Navigator.of(ctx).maybePop(),
-                      icon: const Icon(lucide.Lucide.Check, size: 16),
-                      label: Text(l10n.ttsServicesPageDoneButton),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
+              const SizedBox(height: 6),
+              // Language selection
+              FutureBuilder<List<String>>(
+                future: tts.listLanguages(),
+                builder: (context, snap) {
+                  final langs = snap.data ?? const <String>[];
+                  final cur = tts.languageTag ?? (langs.contains('zh-CN')
+                      ? 'zh-CN'
+                      : (langs.contains('en-US')
+                          ? 'en-US'
+                          : (langs.isNotEmpty ? langs.first : '')));
+                  return _SelectRow(
+                    label: l10n.ttsServicesPageLanguageLabel,
+                    value: cur.isEmpty ? l10n.ttsServicesPageAutoLabel : cur,
+                    options: langs,
+                    onSelected: (picked) async {
+                      await tts.setLanguageTag(picked);
+                      if (ctx.mounted) (ctx as Element).markNeedsBuild();
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              Text(l10n.ttsServicesPageSpeechRateLabel, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
+              Slider(
+                value: rate,
+                min: 0.1,
+                max: 1.0,
+                onChanged: (v) {
+                  rate = v;
+                  if (ctx.mounted) (ctx as Element).markNeedsBuild();
+                },
+                onChangeEnd: (v) async => tts.setSpeechRate(v),
+              ),
+              const SizedBox(height: 4),
+              Text(l10n.ttsServicesPagePitchLabel, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.7))),
+              Slider(
+                value: pitch,
+                min: 0.5,
+                max: 2.0,
+                onChanged: (v) {
+                  pitch = v;
+                  if (ctx.mounted) (ctx as Element).markNeedsBuild();
+                },
+                onChangeEnd: (v) async => tts.setPitch(v),
+              ),
+          ],
+        ),
+        actions: [
+          AppDialog.button(
+            label: l10n.ttsServicesPageDoneButton,
+            onPressed: () => Navigator.of(ctx).pop(),
           ),
-        );
+        ],
+      );
       },
     );
   }
@@ -672,34 +635,26 @@ Future<String?> _showOptionsDialog(BuildContext context, List<String> options, S
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
-      return Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(ctx).size.height * 0.6,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < options.length; i++) ...[
-                      _DialogOption(
-                        label: options[i],
-                        selected: options[i] == current,
-                        onTap: () => Navigator.of(ctx).pop(options[i]),
-                      ),
-                      if (i != options.length - 1)
-                        Divider(height: 10, thickness: 0.6, indent: 4, endIndent: 4, color: cs.outlineVariant.withOpacity(0.12)),
-                    ],
-                  ],
-                ),
-              ),
+      return AppDialog(
+        maxWidth: 420,
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.6,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < options.length; i++) ...[
+                  _DialogOption(
+                    label: options[i],
+                    selected: options[i] == current,
+                    onTap: () => Navigator.of(ctx).pop(options[i]),
+                  ),
+                  if (i != options.length - 1)
+                    Divider(height: 10, thickness: 0.6, indent: 4, endIndent: 4, color: cs.outlineVariant.withOpacity(0.12)),
+                ],
+              ],
             ),
           ),
         ),
@@ -801,124 +756,89 @@ Future<TtsServiceOptions?> _showNetworkDialog(BuildContext context, TtsServiceOp
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
-      return Dialog(
-        backgroundColor: cs.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: StatefulBuilder(
-              builder: (ctx2, setState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
+      return StatefulBuilder(
+        builder: (ctx2, setState) {
+          return AppDialog(
+            title: initial == null ? l10n.ttsServicesDialogAddTitle : l10n.ttsServicesDialogEditTitle,
+            maxWidth: 560,
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 480),
+              child: SingleChildScrollView(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(children: [
-                      Expanded(child: Text(initial == null ? l10n.ttsServicesDialogAddTitle : l10n.ttsServicesDialogEditTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
-                      _SmallIconBtn(icon: lucide.Lucide.X, onTap: () => Navigator.of(ctx).maybePop()),
-                    ]),
-                    const SizedBox(height: 10),
-                    _deskDivider(context),
-                    const SizedBox(height: 10),
-                    // Scrollable form area
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Provider kind
-                            _SelectRow(
-                              label: l10n.ttsServicesDialogProviderType,
-                              value: networkTtsKindDisplayName(kind),
-                              options: [
-                                networkTtsKindDisplayName(NetworkTtsKind.openai),
-                                networkTtsKindDisplayName(NetworkTtsKind.gemini),
-                                networkTtsKindDisplayName(NetworkTtsKind.minimax),
-                                networkTtsKindDisplayName(NetworkTtsKind.elevenlabs),
-                              ],
-                              onSelected: (picked) {
-                                setState(() {
-                                  if (picked == networkTtsKindDisplayName(NetworkTtsKind.openai)) kind = NetworkTtsKind.openai;
-                                  if (picked == networkTtsKindDisplayName(NetworkTtsKind.gemini)) kind = NetworkTtsKind.gemini;
-                                  if (picked == networkTtsKindDisplayName(NetworkTtsKind.minimax)) kind = NetworkTtsKind.minimax;
-                                  if (picked == networkTtsKindDisplayName(NetworkTtsKind.elevenlabs)) kind = NetworkTtsKind.elevenlabs;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 6),
-                            _InputRow(label: l10n.ttsServicesFieldNameLabel, controller: nameCtl, hint: networkTtsKindDisplayName(kind)),
-                            const SizedBox(height: 6),
-                            _InputRow(label: l10n.ttsServicesFieldApiKeyLabel, controller: apiKeyCtl, obscure: true),
-                            const SizedBox(height: 6),
-                            _InputRow(label: l10n.ttsServicesFieldBaseUrlLabel, controller: baseCtl, hint: _defaultBaseUrl(kind)),
-                            const SizedBox(height: 6),
-                            _InputRow(label: l10n.ttsServicesFieldModelLabel, controller: modelCtl, hint: _defaultModel(kind)),
-                            const SizedBox(height: 6),
-                            _InputRow(label: _voiceLabelFor(kind, l10n), controller: voiceCtl, hint: _defaultVoice(kind)),
-                            if (kind == NetworkTtsKind.minimax) ...[
-                              const SizedBox(height: 6),
-                              _InputRow(label: l10n.ttsServicesFieldEmotionLabel, controller: emotionCtl, hint: 'calm'),
-                              const SizedBox(height: 6),
-                              _InputRow(label: l10n.ttsServicesFieldSpeedLabel, controller: speedCtl, hint: '1.0'),
-                            ],
-                            const SizedBox(height: 14),
-                          ],
-                        ),
-                      ),
+                    // Provider kind
+                    _SelectRow(
+                      label: l10n.ttsServicesDialogProviderType,
+                      value: networkTtsKindDisplayName(kind),
+                      options: [
+                        networkTtsKindDisplayName(NetworkTtsKind.openai),
+                        networkTtsKindDisplayName(NetworkTtsKind.gemini),
+                        networkTtsKindDisplayName(NetworkTtsKind.minimax),
+                        networkTtsKindDisplayName(NetworkTtsKind.elevenlabs),
+                      ],
+                      onSelected: (picked) {
+                        setState(() {
+                          if (picked == networkTtsKindDisplayName(NetworkTtsKind.openai)) kind = NetworkTtsKind.openai;
+                          if (picked == networkTtsKindDisplayName(NetworkTtsKind.gemini)) kind = NetworkTtsKind.gemini;
+                          if (picked == networkTtsKindDisplayName(NetworkTtsKind.minimax)) kind = NetworkTtsKind.minimax;
+                          if (picked == networkTtsKindDisplayName(NetworkTtsKind.elevenlabs)) kind = NetworkTtsKind.elevenlabs;
+                        });
+                      },
                     ),
-                    // Actions
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).maybePop(),
-                            style: TextButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            ),
-                            child: Text(l10n.ttsServicesDialogCancelButton),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton(
-                            onPressed: () {
-                              final name = (nameCtl.text.trim().isEmpty) ? networkTtsKindDisplayName(kind) : nameCtl.text.trim();
-                              final apiKey = apiKeyCtl.text.trim();
-                              final base = baseCtl.text.trim().isEmpty ? _defaultBaseUrl(kind) : baseCtl.text.trim();
-                              final model = modelCtl.text.trim().isEmpty ? _defaultModel(kind) : modelCtl.text.trim();
-                              final voice = voiceCtl.text.trim().isEmpty ? _defaultVoice(kind) : voiceCtl.text.trim();
-                              if (apiKey.isEmpty) return; // guard
-                              if (kind == NetworkTtsKind.openai) {
-                                result = OpenAiTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, model: model, voice: voice);
-                              } else if (kind == NetworkTtsKind.gemini) {
-                                result = GeminiTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, model: model, voiceName: voice);
-                              } else if (kind == NetworkTtsKind.minimax) {
-                                final spd = double.tryParse(speedCtl.text.trim()) ?? 1.0;
-                                result = MiniMaxTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, model: model, voiceId: voice, emotion: emotionCtl.text.trim().isEmpty ? 'calm' : emotionCtl.text.trim(), speed: spd);
-                              } else {
-                                // ElevenLabs
-                                result = ElevenLabsTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, modelId: model.isEmpty ? _defaultModel(kind) : model, voiceId: voice);
-                              }
-                              Navigator.of(ctx).pop();
-                            },
-                            style: FilledButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            ),
-                            child: Text(initial == null ? l10n.ttsServicesDialogAddButton : l10n.ttsServicesDialogSaveButton),
-                          ),
-                        ],
-                      ),
-                    ),
+                    const SizedBox(height: 6),
+                    _InputRow(label: l10n.ttsServicesFieldNameLabel, controller: nameCtl, hint: networkTtsKindDisplayName(kind)),
+                    const SizedBox(height: 6),
+                    _InputRow(label: l10n.ttsServicesFieldApiKeyLabel, controller: apiKeyCtl, obscure: true),
+                    const SizedBox(height: 6),
+                    _InputRow(label: l10n.ttsServicesFieldBaseUrlLabel, controller: baseCtl, hint: _defaultBaseUrl(kind)),
+                    const SizedBox(height: 6),
+                    _InputRow(label: l10n.ttsServicesFieldModelLabel, controller: modelCtl, hint: _defaultModel(kind)),
+                    const SizedBox(height: 6),
+                    _InputRow(label: _voiceLabelFor(kind, l10n), controller: voiceCtl, hint: _defaultVoice(kind)),
+                    if (kind == NetworkTtsKind.minimax) ...[
+                      const SizedBox(height: 6),
+                      _InputRow(label: l10n.ttsServicesFieldEmotionLabel, controller: emotionCtl, hint: 'calm'),
+                      const SizedBox(height: 6),
+                      _InputRow(label: l10n.ttsServicesFieldSpeedLabel, controller: speedCtl, hint: '1.0'),
+                    ],
                   ],
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ),
+            actions: [
+              AppDialog.button(
+                label: l10n.ttsServicesDialogCancelButton,
+                kind: AppDialogButtonKind.secondary,
+                filled: false,
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+              AppDialog.button(
+                label: initial == null ? l10n.ttsServicesDialogAddButton : l10n.ttsServicesDialogSaveButton,
+                onPressed: () {
+                  final name = (nameCtl.text.trim().isEmpty) ? networkTtsKindDisplayName(kind) : nameCtl.text.trim();
+                  final apiKey = apiKeyCtl.text.trim();
+                  final base = baseCtl.text.trim().isEmpty ? _defaultBaseUrl(kind) : baseCtl.text.trim();
+                  final model = modelCtl.text.trim().isEmpty ? _defaultModel(kind) : modelCtl.text.trim();
+                  final voice = voiceCtl.text.trim().isEmpty ? _defaultVoice(kind) : voiceCtl.text.trim();
+                  if (apiKey.isEmpty) return; // guard
+                  if (kind == NetworkTtsKind.openai) {
+                    result = OpenAiTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, model: model, voice: voice);
+                  } else if (kind == NetworkTtsKind.gemini) {
+                    result = GeminiTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, model: model, voiceName: voice);
+                  } else if (kind == NetworkTtsKind.minimax) {
+                    final spd = double.tryParse(speedCtl.text.trim()) ?? 1.0;
+                    result = MiniMaxTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, model: model, voiceId: voice, emotion: emotionCtl.text.trim().isEmpty ? 'calm' : emotionCtl.text.trim(), speed: spd);
+                  } else {
+                    // ElevenLabs
+                    result = ElevenLabsTtsOptions(enabled: true, name: name, apiKey: apiKey, baseUrl: base, modelId: model.isEmpty ? _defaultModel(kind) : model, voiceId: voice);
+                  }
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+          );
+        },
       );
     },
   ).then((_) {});

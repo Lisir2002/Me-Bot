@@ -5,6 +5,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.51] - 2026-09-10
+
+### 📣 For Users
+- **安全中心卡片宽度修复**：安全页面的卡片之前比其他设置页偏窄（左右留白过大），现已与设置、备份等页面完全对齐；
+- **日志查看页同步修复**：日志页面存在同样的卡片过窄问题，本版一并修复；
+- **页面宽度统一保障**：新增统一的滚动列表容器，后续新页面的卡片宽度会自动保持一致，不再出现个别页面偏窄的情况。
+
+### 🔧 For Developers
+- **Added**：
+  - `lib/shared/widgets/app_list_view.dart`：`AppListView` / `AppListViewBuilder` 共享组件——水平 padding 固定 `AppGap.md`(16) 不允许覆盖，垂直 padding 有默认值（top 12 / bottom 16）可通过 `topPadding` / `bottomPadding` 配置；
+  - `AppPage.selfScrolling` 命名构造函数——自动设置 `scrollable: false` + `bodyPadding: AppPagePadding.zero`，语义化 API 杜绝漏配；
+- **Fixed**：
+  - `security_page.dart`：原 `AppPage(scrollable:false)` 未传 `bodyPadding:zero`，与内部 `ListView(padding:16)` 叠加成双层水平内边距（16+16=32px/侧），改为 `AppPage.selfScrolling` + `AppListView`；
+  - `log_viewer_page.dart`：同样的双层 padding 问题，改为 `AppPage.selfScrolling`；
+- **Changed**：
+  - 版本号 `0.0.50+50` → `0.0.51+51`。
+
+### 🤖 For Agents
+- **内部自带滚动容器的页面必须用 `AppPage.selfScrolling`**，禁止再写 `AppPage(scrollable: false)` 而漏配 `bodyPadding: zero`——这是双层 padding 的唯一根因；
+- **列表容器用 `AppListView`**，水平 padding 已固化为 16，不允许页面自行覆盖；垂直 padding 仅在底部有悬浮按钮等特殊场景下调大 `bottomPadding`；
+- `AppPage.selfScrolling` 与默认 `AppPage` 的区别：前者 `scrollable=false + bodyPadding=zero`，后者 `scrollable=true + bodyPadding=hv(16,12)`；body 内部无滚动时用默认构造函数，body 内部有 ListView/ReorderableListView 时用 `selfScrolling`；
+- 全仓仍有约 13 个 `scrollable: false` 的页面未迁移到 `selfScrolling`，后续逐步替换（已迁移：security / log_viewer）。
+
 ## [0.0.50] - 2026-09-10
 
 ### 📣 For Users

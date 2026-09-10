@@ -24,11 +24,16 @@ showAppSnackBar 的 iOS 风格体系严重割裂，移动端与桌面端还各�
 | 魔法数字间距/圆角 | **`AppGap` / `AppRadius` / `AppPagePadding`** | 间距 2/4/8/12/16/20/24/32/48，圆角 12/16 |
 | Material Icons（`Icons.xxx`） | **`Lucide.*`**（`icons/lucide_adapter.dart`） | 全项目图标统一 Lucide；新图标需先在 adapter 子集中确认/补充 |
 | `MaterialLocalizations` 返回键 | `AppPage` 自带 leading | 自动 `IosIconButton` + `arrow_back_ios_new_rounded` + Tooltip |
+| `AlertDialog` / `Dialog` / `SimpleDialog` | **`AppDialog`**（`shared/widgets/app_dialog.dart`） | 中心化弹窗统一入口：confirm/alert/progress/input/announcement，圆角 20、按钮语义色统一 |
+| 页面级手写 `ListView(padding:)` | **`AppListView`** / **`AppListViewBuilder`**（`shared/widgets/app_list_view.dart`） | 水平 padding 固定 16，防止双层 padding 导致卡片过窄；组件内部 ListView 不受限 |
+| `AppPage(scrollable: false)` | **`AppPage.selfScrolling(...)`** | body 自带滚动容器时必须用命名构造（自动 bodyPadding:zero）；body 无滚动容器需保留 bodyPadding 时加白名单 |
 
 **允许保留的例外**（项目惯例，非 error）：
-- `AlertDialog` 确认/输入对话框（10+ 文件惯例，桌面端比 sheet 更合适）；
 - `InputChip` / `ActionChip`（无设计系统等价物）；
-- `FilledButton` / `TextButton` / `OutlinedButton`（按钮体系暂不收口）。
+- `FilledButton` / `TextButton` / `OutlinedButton`（按钮体系暂不收口）；
+- 现有弹窗（37 文件）已加 `no_raw_alert_dialog 白名单`，逐步迁移到 AppDialog；
+- 现有页面 ListView（17 文件）已加 `no_manual_listview_padding 白名单`，逐步迁移到 AppListView；
+- 5 处不迁移 selfScrolling 的页面已加 `no_scrollable_false_without_selfscrolling 白名单`（body 无滚动容器或靠 AppPage 提供边距）。
 
 ## 三、AppPage 五段速查
 
@@ -48,12 +53,53 @@ class XxxPage extends StatelessWidget {
 ```
 
 - 响应式页面（Provider 驱动）**不要用 `states:`**，在 body 里手动判断 loading/error；
-- body 需要桌面端复用时（如设置 pane 内嵌），Body 自带 ListView 并传 `scrollable: false`。
+- body 需要桌面端复用时（如设置 pane 内嵌），Body 自带 ListView 并传 `scrollable: false`；
+- body 自带滚动容器（ListView/ReorderableListView/PageView 等）时用 `AppPage.selfScrolling`，自动 `bodyPadding: zero`。
+
+## 三-B、弹窗三层反馈体系选型
+
+| 场景 | 组件 | 特点 |
+|---|---|---|
+| 阻断式确认/输入 | `AppDialog.confirm` / `AppDialog.input` | 中心化，必须用户决策，危险操作按钮红色 |
+| 通知/提示 | `AppDialog.alert` | 中心化，单按钮"知道了"，支持语义图标 |
+| 加载中/不可中断 | `AppDialog.progress` | 中心化，barrierDismissible=false，可传 future 自动关闭 |
+| 公告/更新说明 | `AppDialog.announcement` | 中心化，支持"不再提示"勾选 |
+| 选项列表/长内容 | `showAppSheet` + `AppSheet` | 底部弹层，可滚动，圆角/grabber/键盘避让统一 |
+| 轻量通知/操作反馈 | `showAppSnackBar` | 顶部浮层，自动消失，支持 action 与点按 |
+
+```dart
+// 确认弹窗（危险操作）
+final ok = await AppDialog.confirm(
+  context,
+  title: '删除对话',
+  message: '删除后不可恢复，确定继续吗？',
+  confirmText: '删除',
+  danger: true,
+);
+
+// 进度弹窗（自动等待 future）
+await AppDialog.progress(
+  context,
+  message: '正在导出...',
+  future: exportData(),
+);
+
+// 输入弹窗
+final name = await AppDialog.input(
+  context,
+  title: '重命名',
+  initialText: oldName,
+  hintText: '请输入新名称',
+);
+```
 
 ## 四、新页面 Checklist（提 PR 前自查）
 
 - [ ] 页面壳是 `AppPage`，没有裸 `Scaffold`/`AppBar`（`no_raw_scaffold`）；
+- [ ] body 自带滚动容器时用 `AppPage.selfScrolling`，不手写 `scrollable: false`（`no_scrollable_false_without_selfscrolling`）；
+- [ ] 页面列表用 `AppListView` / `AppListViewBuilder`，不手写 `ListView(padding:)`（`no_manual_listview_padding`）；
 - [ ] 所有通知走 `showAppSnackBar`，并选对了 `NotificationType`（`no_material_snackbar`）；
+- [ ] 所有中心化弹窗走 `AppDialog.confirm/alert/progress/input/announcement`，不裸用 `AlertDialog`/`Dialog`（`no_raw_alert_dialog`）；
 - [ ] 所有列表行走 `AppNavRow` / `AppSwitchRow`，分组容器用 `AppSectionCard`（`no_material_list_tile`）；
 - [ ] 分组小节标题用 13px w600 小节头（参考 `backup_page.dart` 的 `header` 范式）；
 - [ ] 没有散落的 `Colors.green/red/amber`，语义色取 `AppStatusColor`；
@@ -70,6 +116,9 @@ class XxxPage extends StatelessWidget {
 | `no_raw_scaffold` | ERROR | 页面自写裸 `Scaffold` |
 | `no_material_snackbar` | ERROR | `SnackBar` / `SnackBarAction` |
 | `no_material_list_tile` | ERROR | `ListTile` / `SwitchListTile` / `CheckboxListTile` / `RadioListTile` / `ExpansionTile` / `AboutListTile` |
+| `no_raw_alert_dialog` | ERROR | 裸 `AlertDialog` / `Dialog` / `SimpleDialog`（必须用 `AppDialog`） |
+| `no_manual_listview_padding` | ERROR | 页面级手写 `ListView(padding:)`（必须用 `AppListView`，仅查 `*_page.dart`） |
+| `no_scrollable_false_without_selfscrolling` | ERROR | `AppPage(scrollable: false)` 未用 `AppPage.selfScrolling` |
 | `hardcoded_ui_string` | WARNING | UI 参数位硬编码中文 |
 | `l10n_no_field_cache` | WARNING | 缓存 AppLocalizations 到字段 |
 

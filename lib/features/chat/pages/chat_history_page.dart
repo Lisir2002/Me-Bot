@@ -1,3 +1,6 @@
+// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
+// no_scrollable_false_without_selfscrolling 白名单：内部 ListView 无水平 padding，靠 AppPage bodyPadding(fromLTRB 12,10,12,14) 提供边距
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

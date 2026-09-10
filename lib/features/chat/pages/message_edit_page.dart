@@ -1,3 +1,4 @@
+// no_scrollable_false_without_selfscrolling 白名单：body 是 Column(TextField)，无内部滚动容器，scrollable:false 为有界高度
 import 'package:flutter/material.dart';
 
 import '../../../core/models/chat_message.dart';

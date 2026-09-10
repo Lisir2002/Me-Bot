@@ -1,3 +1,4 @@
+// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:characters/characters.dart';

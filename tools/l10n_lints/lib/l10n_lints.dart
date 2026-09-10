@@ -22,6 +22,21 @@ import 'package:custom_lint_builder/custom_lint_builder.dart';
 /// 规则 5 `no_raw_scaffold`（error）：禁止页面自写裸 Scaffold，
 ///   页面骨架一律走 `AppPage`。全屏特例（浏览器/查看器/扫码/首页）在文件内
 ///   写明「no_raw_scaffold 白名单」注释后整文件豁免（见 image_viewer_page 等）。
+///
+/// 规则 6 `no_raw_alert_dialog`（error）：禁止裸 AlertDialog / Dialog，
+///   中心化弹窗一律走 `AppDialog`（confirm/alert/progress/input/announcement）。
+///   底部弹层走 `showAppSheet`，顶部通知走 `showAppSnackBar`。
+///   现有复杂弹窗（tool_approval/emoji_picker/desktop 系列）加白名单注释豁免。
+///
+/// 规则 7 `no_manual_listview_padding`（error）：禁止页面级手写
+///   `ListView(padding:)`，列表一律走 `AppListView` / `AppListViewBuilder`
+///   （水平 padding 固定 16，防止双层 padding 导致卡片过窄）。
+///   组件内部 ListView（非 *_page.dart）不受限。
+///
+/// 规则 8 `no_scrollable_false_without_selfscrolling`（error）：禁止
+///   `AppPage(scrollable: false)` 而不用 `AppPage.selfScrolling`。
+///   body 内部自带滚动容器时必须用 selfScrolling 命名构造（自动 bodyPadding:zero）。
+///   特例（body 无滚动容器、靠 AppPage bodyPadding 提供边距）加白名单注释豁免。
 PluginBase createPlugin() => _MeBotL10nLints();
 
 class _MeBotL10nLints extends PluginBase {
@@ -32,6 +47,9 @@ class _MeBotL10nLints extends PluginBase {
         NoMaterialSnackBar(),
         NoMaterialListTile(),
         NoRawScaffold(),
+        NoRawAlertDialog(),
+        NoManualListviewPadding(),
+        NoScrollableFalseWithoutSelfscrolling(),
       ];
 }
 
@@ -288,6 +306,150 @@ class NoRawScaffold extends DartLintRule {
     context.registry.addInstanceCreationExpression((node) {
       if (node.constructorName.type.toString() != 'Scaffold') return;
       reporter.reportErrorForNode(code, node.constructorName.type);
+    });
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// 规则 6-8：弹窗 + 页面滚动容器强制执行（UI 统一化批次新增）
+// ──────────────────────────────────────────────────────────────
+
+/// 规则 6 `no_raw_alert_dialog`：禁止裸 AlertDialog / Dialog。
+///
+/// 中心化弹窗一律走 `AppDialog`（confirm/alert/progress/input/announcement）。
+/// 现有复杂弹窗（tool_approval / emoji_picker / desktop 系列）在文件内写
+/// 「no_raw_alert_dialog 白名单」注释豁免。
+class NoRawAlertDialog extends DartLintRule {
+  NoRawAlertDialog() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'no_raw_alert_dialog',
+    problemMessage: '禁止裸 AlertDialog / Dialog——中心化弹窗一律用 AppDialog '
+        '（confirm/alert/progress/input/announcement），底部弹层用 showAppSheet，'
+        '顶部通知用 showAppSnackBar',
+    correctionMessage: "import '../../../shared/widgets/app_dialog.dart' 后改用 "
+        'AppDialog.confirm/alert/progress/input/announcement；复杂弹窗加 '
+        '「no_raw_alert_dialog 白名单：…原因」注释豁免',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
+
+  /// 被禁止的 Material 弹窗组件。
+  static const _banned = {'AlertDialog', 'Dialog', 'SimpleDialog'};
+
+  /// 设计系统实现自身。
+  static const _exemptPaths = [
+    '/shared/widgets/app_dialog.dart',
+    '/shared/widgets/app_sheet.dart',
+  ];
+
+  @override
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    if (resolver.inExemptDir ||
+        _exemptPaths.any(resolver.path.contains) ||
+        resolver.source.contents.data.contains('no_raw_alert_dialog 白名单')) {
+      return;
+    }
+    context.registry.addInstanceCreationExpression((node) {
+      final type = node.constructorName.type.toString();
+      if (_banned.contains(type)) {
+        reporter.reportErrorForNode(code, node.constructorName.type);
+      }
+    });
+  }
+}
+
+/// 规则 7 `no_manual_listview_padding`：禁止页面级手写 ListView(padding:)。
+///
+/// 只在 *_page.dart 文件中检测，组件内部 ListView 不受限。
+/// 页面列表一律走 `AppListView` / `AppListViewBuilder`（水平 padding 固定 16）。
+class NoManualListviewPadding extends DartLintRule {
+  NoManualListviewPadding() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'no_manual_listview_padding',
+    problemMessage: '禁止页面级手写 ListView(padding:)——列表一律用 AppListView / '
+        'AppListViewBuilder（水平 padding 固定 16，防止双层 padding 导致卡片过窄）',
+    correctionMessage: "import '../../../shared/widgets/app_list_view.dart' 后改用 "
+        'AppListView(children: [...]) 或 AppListViewBuilder(itemCount: ..., itemBuilder: ...)',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
+
+  /// 设计系统实现自身。
+  static const _exemptPaths = ['/shared/widgets/app_list_view.dart'];
+
+  @override
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    // 只查页面文件
+    if (!resolver.path.endsWith('_page.dart')) return;
+    if (resolver.inExemptDir ||
+        _exemptPaths.any(resolver.path.contains) ||
+        resolver.source.contents.data.contains('no_manual_listview_padding 白名单')) {
+      return;
+    }
+    context.registry.addInstanceCreationExpression((node) {
+      final type = node.constructorName.type.toString();
+      if (type != 'ListView' && type != 'ListView.builder' && type != 'ListView.separated') return;
+      // 检查是否有 padding 参数
+      final hasPadding = node.argumentList.arguments.any(
+        (arg) => arg is NamedExpression && arg.name.label.name == 'padding',
+      );
+      if (hasPadding) {
+        reporter.reportErrorForNode(code, node.constructorName.type);
+      }
+    });
+  }
+}
+
+/// 规则 8 `no_scrollable_false_without_selfscrolling`：禁止
+/// `AppPage(scrollable: false)` 而不用 `AppPage.selfScrolling`。
+///
+/// body 内部自带滚动容器时必须用 selfScrolling 命名构造（自动 bodyPadding:zero）。
+/// 特例（body 无滚动容器、靠 AppPage bodyPadding 提供边距）加白名单注释豁免。
+class NoScrollableFalseWithoutSelfscrolling extends DartLintRule {
+  NoScrollableFalseWithoutSelfscrolling() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'no_scrollable_false_without_selfscrolling',
+    problemMessage: '禁止 AppPage(scrollable: false)——body 自带滚动容器时一律用 '
+        'AppPage.selfScrolling(...)（自动 bodyPadding:zero，防止双层 padding）',
+    correctionMessage: '改用 AppPage.selfScrolling(title: ..., body: ...)；'
+        '若 body 无滚动容器需保留 bodyPadding，加 '
+        '「no_scrollable_false_without_selfscrolling 白名单：…原因」注释豁免',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
+
+  @override
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    if (resolver.inExemptDir ||
+        resolver.source.contents.data
+            .contains('no_scrollable_false_without_selfscrolling 白名单')) {
+      return;
+    }
+    context.registry.addInstanceCreationExpression((node) {
+      final type = node.constructorName.type.toString();
+      // 只查 AppPage（非 selfScrolling 命名构造）
+      if (type != 'AppPage') return;
+      // 检查是否有 scrollable: false 参数
+      final hasScrollableFalse = node.argumentList.arguments.any((arg) {
+        if (arg is! NamedExpression) return false;
+        if (arg.name.label.name != 'scrollable') return false;
+        return arg.expression.toString() == 'false';
+      });
+      if (hasScrollableFalse) {
+        reporter.reportErrorForNode(code, node.constructorName.type);
+      }
     });
   }
 }

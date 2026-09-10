@@ -1,3 +1,5 @@
+// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 // ──────────────────────────────────────────────────────────────
 // AppPage 槽位迁移（批次 4 · 4/4 收官）
 //

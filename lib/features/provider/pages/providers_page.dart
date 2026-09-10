@@ -1,3 +1,5 @@
+// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../utils/brand_assets.dart';

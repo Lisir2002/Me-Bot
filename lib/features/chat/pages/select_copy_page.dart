@@ -1,3 +1,4 @@
+// no_scrollable_false_without_selfscrolling 白名单：内部 SingleChildScrollView 无 padding，靠 AppPage bodyPadding.all 提供边距
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

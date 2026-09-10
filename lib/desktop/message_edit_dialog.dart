@@ -1,3 +1,4 @@
+// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
 import 'package:flutter/material.dart';
 import '../core/models/chat_message.dart';
 import '../l10n/build_context_l10n.dart';

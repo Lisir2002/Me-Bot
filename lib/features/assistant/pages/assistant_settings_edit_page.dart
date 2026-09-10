@@ -1,3 +1,6 @@
+// no_raw_alert_dialog 白名单：现有弹窗待迁移到 AppDialog
+// no_manual_listview_padding 白名单：现有页面内部 ListView 待迁移到 AppListView
+// no_scrollable_false_without_selfscrolling 白名单：空态 body=Center 无滚动；主页面 TabBarView 内部 tab 无水平 padding，靠 AppPage bodyPadding 提供边距
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';

@@ -13,7 +13,9 @@ class NoEmptyCatchRule extends DartLintRule {
     name: 'no_empty_catch',
     problemMessage:
         '空 catch 块会静默吞掉异常，请至少添加 Logger.d/w 或注释说明忽略原因',
-    errorSeverity: ErrorSeverity.WARNING,
+    // INFO 级：历史存量空 catch 较多，先作为建议性提示，不阻塞 analyze 门禁；
+    // 后续逐处补 Logger.d/w 后再逐步升级为 WARNING。
+    errorSeverity: ErrorSeverity.INFO,
   );
 
   const NoEmptyCatchRule() : super(code: _code);

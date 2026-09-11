@@ -307,7 +307,7 @@ Future<File?> _renderWidgetDirectly(
         break;
       } catch (e) {
         if (retry == 9) {
-          print('Failed to capture image after 10 retries: $e');
+          Logger.w('Export', 'Failed to capture image after 10 retries: $e');
           return null;
         }
         // Wait before retrying

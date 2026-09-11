@@ -5,6 +5,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.55] - 2026-09-11
+
+### 📣 For Users
+- **对话流样式系统全量落地**：聊天界面终于能换风格了——一次性上架 15 种对话流样式（默认气泡 / 紧凑气泡 / 极简列表 / 卡片 / 双栏 / 杂志 / 代码优先 / 学术 / 禅意 / 弹幕 / 未来感 / 手账 / 商务 / 哥特 / 萌系），在设置页点开"对话样式"即可实时预览每一种样式长什么样，点一下立即生效，无需重启；
+- **不懂选哪个？让 AI 帮你挑**：新增 StyleResolver 自动推荐——根据你日常对话长度、代码占比、阅读节奏，自动推荐最顺手的 3 种样式，点"推荐样式"一键应用；
+- **所有样式共享同一份对话数据**：切换样式不会丢任何消息、不会重新排版历史、不会影响导出和搜索，样式只是"皮肤"，底层数据完全统一。
+
+### 🔧 For Developers
+- **Added**：
+  - `lib/features/chat/style/`：对话流样式系统工程落地——可插拔 `StyleRenderer` 渲染策略接口，15 种样式各自实现一套 renderer，共享同一套 `MessagePart` 数据模型；
+  - `ConversationDataSource` 统一数据进出口：所有样式经同一数据源读写消息，禁止样式直接操作底层存储；
+  - `StyleResolver`：根据对话长度、代码块占比、消息密度等特征自动推荐样式，输出 top-N 候选；
+  - 设置页新增"对话样式"预览入口：横向滑动预览卡片 + 一键应用 + 自动推荐按钮；
+  - 样式渲染器数据访问约束 lint 规则纳入 `tools/me_bot_lints/`，防止样式绕过数据源直读存储。
+- **Changed**：
+  - 聊天消息渲染主链路从"固定气泡 widget"改为"按当前选中样式分发到对应 StyleRenderer"；
+  - 版本号 `0.0.54+54` → `0.0.55+55`。
+
+### 🤖 For Agents
+- **新增样式**：实现 `StyleRenderer` 接口，在样式注册表登记 `(id, name, rendererFactory)`，样式内部只读 `MessagePart` 树，禁止直接访问数据库/prefs；
+- **数据读写**：一律走 `ConversationDataSource`，样式层不得出现"绕过数据源直读存储"的代码，me_bot_lints 会拦；
+- **自动推荐**：在 `StyleResolver` 扩特征维度时，新特征必须可解释（输出推荐理由给用户看），不要塞黑盒权重；
+- **预览入口**：设置页预览走统一的预览卡片组件，不要为某个样式单独写预览页；
+- **设计文档**：架构与扩展点见 `docs/design/conversation-style-system.md`（0.0.54 已落 v1.0，本版为工程实现落地）。
+
 ## [0.0.54] - 2026-09-11
 
 ### 📣 For Users

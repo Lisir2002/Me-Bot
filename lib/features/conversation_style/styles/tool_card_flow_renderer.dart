@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'dart:convert';
 
 import 'package:flutter/material.dart';

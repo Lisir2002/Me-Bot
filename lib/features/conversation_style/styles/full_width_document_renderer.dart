@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';

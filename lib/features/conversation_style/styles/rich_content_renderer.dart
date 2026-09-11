@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 

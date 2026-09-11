@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/snackbar.dart';

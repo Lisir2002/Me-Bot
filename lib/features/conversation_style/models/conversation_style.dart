@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'message_part.dart';
 
 /// 对话样式枚举 —— 定义 15 种样式 + 自动模式

@@ -62,7 +62,6 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'dart:ui' as ui;
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:desktop_drop/desktop_drop.dart';
 import '../../../core/services/search/search_tool_service.dart';
@@ -85,8 +84,6 @@ import '../../../utils/app_directories.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../core/services/logging/log_tags.dart';
-// 对话流样式系统（P0 渐进接入）
-import '../../conversation_style/conversation_style.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -138,25 +135,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _showJumpToBottom = false;
   bool _isUserScrolling = false;
   Timer? _userScrollTimer;
-
-  // ── 对话流样式系统（P0 渐进接入）─────────────────────────────
-  /// 样式渲染器注册表（9 种样式，lazy load，在 initState 注册）
-  final StyleRendererRegistry _styleRegistry = StyleRendererRegistry();
-  /// 样式设置持久化服务（全局/助手/会话三级覆盖 + autoMode）
-  final StyleSettingsService _styleSettingsService = StyleSettingsService();
-  /// 当前会话的样式数据源（桥接 ChatMessage 与样式 Message 模型）
-  /// 样式渲染器只读它，不直接碰 Hive/Provider。
-  HiveConversationDataSource? _conversationDataSource;
-  /// 当前生效的对话样式；classicBubble 走既有列表，其余样式走 ConversationView
-  ConversationStyle _currentStyle = ConversationStyle.classicBubble;
-  /// ConversationView 的全局 key（非经典样式下通过它切换，保留渲染状态）
-  final GlobalKey<ConversationViewState> _conversationViewKey = GlobalKey();
-  /// 当前被引用回复的消息（非经典样式长按"引用回复"时设置）
-  ChatMessage? _quotedMessage;
-
-  /// 会话级"始终允许"的审批操作标识集合（按 ApprovalPart.action）。
-  /// 用户在审批弹窗选择"本会话始终允许"后记录；后续同类操作自动 approve，不再弹窗。
-  final Set<String> _sessionAutoAllowedActions = <String>{};
 
   // Sanitize/translate JSON Schema to each provider's accepted subset
   static Map<String, dynamic> _sanitizeToolParametersForProvider(Map<String, dynamic> schema, ProviderKind kind) {
@@ -775,9 +753,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _convoFadeController.value = 1.0;
     // Use the provided ChatService instance
     _chatService = context.read<ChatService>();
-    // 注册 9 种对话流样式（lazy load，首次用到才实例化渲染器）
-    registerAllStyles(_styleRegistry);
-    // 样式设置的 Hive box 在下方 _initChat 完成 Hive 初始化后再加载
     _initChat();
     _scrollController.addListener(_onScrollControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureInputBar());
@@ -949,243 +924,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
-  // ── 对话流样式系统辅助方法 ──────────────────────────────────
-
-  /// 把当前已折叠版本的消息全量同步到样式数据源。
-  ///
-  /// 在会话加载/切换、发送消息、流式结束、编辑删除等 _messages 结构性变更后调用。
-  /// 数据源始终桥接当前会话；切换会话时若 conversationId 变化则重建实例。
-  void _syncConversationDataSource() {
-    final cid = _currentConversation?.id;
-    if (cid == null) {
-      _conversationDataSource?.dispose();
-      _conversationDataSource = null;
-      return;
-    }
-    if (_conversationDataSource == null ||
-        _conversationDataSource!.conversationId != cid) {
-      _conversationDataSource?.dispose();
-      _conversationDataSource = HiveConversationDataSource(conversationId: cid);
-      // 解析当前会话应生效的样式：会话覆盖 > 全局默认
-      final resolved = _styleSettingsService.resolve(conversationId: cid);
-      if (_currentStyle != resolved) {
-        _currentStyle = resolved;
-      }
-    }
-    _conversationDataSource!
-      ..onMessageAction = _handleStyleMessageAction
-      ..onApprovalRequired = _handleApprovalRequired
-      // 选中版本变更回调：对齐经典列表写法，更新宿主内存映射并写回服务层持久化。
-      // 容器内部 setSelectedVersion 已完成折叠视图重渲染并广播，此处只负责落盘。
-      ..onSelectedVersionChanged = (gid, idx) {
-        _versionSelections[gid] = idx;
-        final cid = _currentConversation?.id;
-        if (cid != null) {
-          _chatService.setSelectedVersion(cid, gid, idx);
-        }
-      }
-      // 多消息分享回调：选择模式"分享所选"触发，复用分享面板实现
-      ..onShareMessages = _shareStyleMessages
-      // 喂入【未折叠的原始 _messages】，由数据源按 groupId 分组、按选中版本折叠发射；
-      // 同时透传宿主持久化的截断位置，使版本导航 ◀▶ 与"已截断上下文"分隔线
-      // 在非经典样式下真正可用，而渲染仍只展示每个分组的当前选中版本。
-      ..syncConversationFull(
-        _messages,
-        selectedVersions: _versionSelections,
-        truncateIndexRaw: _currentConversation?.truncateIndex,
-      );
-  }
-
-  /// 非经典样式下，dataSource 检测到新审批请求时弹出完整审批对话框
-  void _handleApprovalRequired(ApprovalPart approval) {
-    if (!mounted) return;
-    // 本会话已"始终允许"同类操作：直接放行，不再打扰用户
-    if (_sessionAutoAllowedActions.contains(approval.action)) {
-      _conversationDataSource?.approveAction(approval.id);
-      return;
-    }
-    // 复用项目完整 ToolApprovalDialog 视觉（AppDialog）的三选项审批流程
-    showRichToolApprovalDialog(
-      context,
-      toolName: approval.action,
-      description: approval.description,
-      details: approval.details,
-    ).then((decision) {
-      if (decision == null || !mounted) return;
-      switch (decision) {
-        case ToolApprovalAllowOnce():
-          // 允许一次：本次放行，不加入会话级白名单
-          _conversationDataSource?.approveAction(approval.id);
-        case ToolApprovalAlwaysAllow():
-          // 本会话始终允许：本次放行并记录，后续同类自动通过
-          _sessionAutoAllowedActions.add(approval.action);
-          _conversationDataSource?.approveAction(approval.id);
-        case ToolApprovalRejected(:final reason):
-          // 拒绝（可附原因，原因会反馈给模型）
-          _conversationDataSource?.rejectAction(approval.id, reason: reason);
-      }
-    });
-  }
-
-  /// 非经典样式下，渲染器长按菜单动作的宿主处理
-  void _handleStyleMessageAction(Message m, MessageAction action) {
-    switch (action) {
-      case MessageAction.quote:
-        final orig = _messages.where((e) => e.id == m.id).toList();
-        if (orig.isNotEmpty) {
-          setState(() => _quotedMessage = orig.first);
-        }
-      case MessageAction.delete:
-        try {
-          _chatService.deleteMessage(m.id);
-        } catch (e, st) {
-          Logger.w(LogTags.home, 'deleteMessage failed', e, st);
-        }
-        setState(() => _messages.removeWhere((e) => e.id == m.id));
-        _syncConversationDataSource();
-      case MessageAction.retry:
-        final orig = _messages.where((e) => e.id == m.id).toList();
-        if (orig.isNotEmpty) {
-          _regenerateAtMessage(orig.first);
-        }
-      case MessageAction.share:
-        // 分享消息文本；若含本地文件则一并通过系统分享面板分享
-        _shareStyleMessage(m);
-      case MessageAction.copy:
-        // copy 已由渲染器自处理，宿主无需介入
-        break;
-    }
-  }
-
-  /// 分享单条消息（长按"分享"）—— 委托到多消息分享实现，保持既有单条行为不变。
-  Future<void> _shareStyleMessage(Message m) => _shareStyleMessages([m]);
-
-  /// 分享多条消息：文本合并后走 Share.share；本地真实存在文件走 Share.shareXFiles，
-  /// 网络/远程文件地址附加到文本中。选择模式"分享所选"与长按单条分享共用本实现。
-  Future<void> _shareStyleMessages(List<Message> messages) async {
-    if (messages.isEmpty) return;
-    try {
-      final l10n = context.l10n;
-      // iPad / 大屏需要分享锚点，这里用屏幕中心兜底；提前捕获避免跨 async gap 使用 context
-      final size = MediaQuery.of(context).size;
-      final origin = Rect.fromCenter(
-        center: Offset(size.width / 2, size.height / 2),
-        width: 1,
-        height: 1,
-      );
-      final buffer = StringBuffer();
-      // 收集本地真实存在的文件，其余（远程/不存在）以文本形式附在分享内容后
-      final localFiles = <String>[];
-      final remoteRefs = <String>[];
-      for (final m in messages) {
-        final text = m.textContent.trim();
-        if (text.isNotEmpty) {
-          if (buffer.isNotEmpty) buffer.writeln();
-          buffer.write(text);
-        }
-        for (final f in m.files) {
-          final url = f.url.trim();
-          if (url.isEmpty) continue;
-          final isRemote = url.startsWith('http://') || url.startsWith('https://');
-          if (!isRemote && await File(url).exists()) {
-            localFiles.add(url);
-          } else {
-            remoteRefs.add('${f.name}: $url');
-          }
-        }
-      }
-      if (!mounted) return;
-      if (remoteRefs.isNotEmpty) {
-        if (buffer.isNotEmpty) buffer.writeln();
-        buffer.write(remoteRefs.join('\n'));
-      }
-      final combined = buffer.toString().trim();
-
-      if (localFiles.isNotEmpty) {
-        await Share.shareXFiles(
-          [for (final p in localFiles) XFile(p)],
-          text: combined.isEmpty ? null : combined,
-          subject: l10n.convStyleShareSheetTitle,
-          sharePositionOrigin: origin,
-        );
-      } else if (combined.isNotEmpty) {
-        await Share.share(
-          combined,
-          subject: l10n.convStyleShareSheetTitle,
-          sharePositionOrigin: origin,
-        );
-      }
-    } catch (e, st) {
-      Logger.w(LogTags.home, 'share style messages failed', e, st);
-    }
-  }
-
-  /// 输入框上方的引用回复块（摘要 + 关闭按钮）
-  Widget? _buildQuoteChip() {
-    final q = _quotedMessage;
-    if (q == null) return null;
-    final preview = q.content.length > 60
-        ? '${q.content.substring(0, 60)}…'
-        : q.content;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.format_quote, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              preview,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 16),
-            onPressed: () => setState(() => _quotedMessage = null),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 对话页右上角样式切换回调：切换并持久化为当前会话覆盖
-  void _onStyleSelected(ConversationStyle style) {
-    final cid = _currentConversation?.id;
-    final oldStyle = _currentStyle;
-    if (cid != null) {
-      _styleSettingsService.setConversationOverride(cid, style);
-    }
-    // 记录用户切换行为（任务学习：A→B 说明 A 不够贴合，降 A 升 B）
-    if (oldStyle != style) {
-      _styleSettingsService.recordSwitch(oldStyle, style);
-    }
-    setState(() => _currentStyle = style);
-    // 非经典样式之间互切时，ConversationView 已挂载，通过 key 触发内部切换以保留状态
-    if (style != ConversationStyle.classicBubble &&
-        _conversationViewKey.currentState != null) {
-      _conversationViewKey.currentState?.switchStyle(style);
-    }
-    // 切换完成 toast（输入框草稿与滚动位置不受影响）
-    if (mounted) {
-      showAppSnackBar(
-        context,
-        message: '已切换为 ${style.l10nName(context.l10n)}',
-        type: NotificationType.info,
-      );
-    }
-  }
-
   Future<void> _initChat() async {
     await _chatService.init();
-    // Hive 已由 ChatService 初始化，此时再加载持久化的样式设置
-    await _styleSettingsService.load();
     // Respect user preference: create new chat on launch
     final prefs = context.read<SettingsProvider>();
     if (prefs.newChatOnLaunch) {
@@ -1203,7 +943,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _loadVersionSelections();
           _restoreMessageUiState();
         });
-        _syncConversationDataSource();
         _scrollToBottomSoon();
       }
     }
@@ -1232,7 +971,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _loadVersionSelections();
           _restoreMessageUiState();
         });
-        _syncConversationDataSource();
         // Ensure list lays out, then jump to bottom while hidden
         try { await WidgetsBinding.instance.endOfFrame; } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: endOfFrame', e, st); }
         _scrollToBottom();
@@ -1544,7 +1282,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _toolParts.clear();
       _reasoningSegments.clear();
     });
-    _syncConversationDataSource();
     // Inject assistant preset messages into new conversation (ordered)
     try {
       final ap2 = context.read<AssistantProvider>();
@@ -1645,7 +1382,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     setState(() {
       _messages.add(userMessage);
-      _quotedMessage = null; // 发送后清除引用
     });
     _setConversationLoading(_currentConversation!.id, true);
 
@@ -1667,8 +1403,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     setState(() {
       _messages.add(assistantMessage);
     });
-    // 同步用户消息 + 空流式占位到样式数据源
-    _syncConversationDataSource();
 
     // Haptics on generate (if enabled)
     try {
@@ -2138,9 +1872,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             );
           }
         });
-        // 流式结束：关闭打字光标，并全量对齐样式数据源（含最终 token/版本）
-        _conversationDataSource?.finishStreaming(assistantMessage.id);
-        _syncConversationDataSource();
         _setConversationLoading(assistantMessage.conversationId, false);
         final r = _reasoning[assistantMessage.id];
         if (r != null) {
@@ -2189,12 +1920,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             if (streamOutput) {
               final r = _reasoning[assistantMessage.id] ?? _ReasoningData();
               r.text += chunk.reasoning!;
-              // 把推理增量推到样式数据源（非经典样式实时渲染思考过程）
-              _conversationDataSource?.updateStreamingMessage(
-                assistantMessage.id,
-                '',
-                reasoningDelta: chunk.reasoning!,
-              );
               r.startAt ??= DateTime.now();
               // keep finishedAt as-is; don't reset to null once set
               r.expanded = false; // default collapsed while generating
@@ -2281,16 +2006,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             final existing = List<ToolUIPart>.of(_toolParts[assistantMessage.id] ?? const []);
             for (final c in chunk.toolCalls!) {
               existing.add(ToolUIPart(id: c.id, toolName: c.name, arguments: c.arguments, loading: true));
-              // 新工具调用 → 推一个 running 卡片到样式数据源
-              _conversationDataSource?.updateToolCall(
-                assistantMessage.id,
-                ToolCallPart(
-                  id: c.id,
-                  toolName: c.name,
-                  arguments: Map<String, dynamic>.from(c.arguments),
-                  status: ToolCallStatus.running,
-                ),
-              );
             }
             if (mounted && _currentConversation?.id == _cidForStream) setState(() {
               _toolParts[assistantMessage.id] = _dedupeToolPartsList(existing);
@@ -2357,18 +2072,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   content: r.content,
                 );
               } catch (e, st) { Logger.w(LogTags.home, 'upsertToolEvent persist failed', e, st); }
-              // 工具结果返回 → 用同 id 的成功状态原地更新样式数据源卡片
-              final toolId = r.id.isNotEmpty ? r.id : r.name;
-              _conversationDataSource?.updateToolCall(
-                assistantMessage.id,
-                ToolCallPart(
-                  id: toolId,
-                  toolName: r.name,
-                  arguments: Map<String, dynamic>.from(r.arguments),
-                  status: ToolCallStatus.success,
-                  result: r.content,
-                ),
-              );
             }
             if (mounted && _currentConversation?.id == _cidForStream) setState(() {
               _toolParts[assistantMessage.id] = _dedupeToolPartsList(parts);
@@ -2500,11 +2203,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   }
                 });
               }
-              // 把正文增量推到样式数据源（非经典样式实时逐字渲染）
-              _conversationDataSource?.updateStreamingMessage(
-                assistantMessage.id,
-                chunk.content,
-              );
               // 滚动到底部显示新内容（仅在未处于用户滚动延迟阶段时）
               Future.delayed(const Duration(milliseconds: 50), () {
                 if (!_isUserScrolling) {
@@ -2537,11 +2235,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               );
             }
           });
-          // 出错也结束流式并对齐样式数据源
-          _conversationDataSource?.finishStreaming(assistantMessage.id);
-          _conversationDataSource?.markMessageFailed(
-              assistantMessage.id, displayContent);
-          _syncConversationDataSource();
           _setConversationLoading(assistantMessage.conversationId, false);
 
           // End reasoning on error
@@ -4075,11 +3768,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ],
         ),
         actions: [
-          // 对话流样式快捷切换（选中后持久化为当前会话覆盖）
-          StyleSwitcherButton(
-            currentStyle: _currentStyle,
-            onStyleSelected: _onStyleSelected,
-          ),
           // Mini map button (to the left of new conversation)
           IosIconButton(
             size: 20,
@@ -4187,25 +3875,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Expanded(
                 child: Builder(
                     builder: (context) {
-                      // 非经典样式：用 ConversationView 渲染，数据只读自样式数据源
-                      // classicBubble 走下方既有列表，保证现有功能零回归。
-                      if (_currentStyle != ConversationStyle.classicBubble) {
-                        final ds = _conversationDataSource;
-                        if (ds != null) {
-                          Widget view = ConversationView(
-                            key: _conversationViewKey,
-                            dataSource: ds,
-                            registry: _styleRegistry,
-                            initialStyle: _currentStyle,
-                            settings: _styleSettingsService.settings,
-                            inputBar: null,
-                          );
-                          if (defaultTargetPlatform != TargetPlatform.android) {
-                            view = FadeTransition(opacity: _convoFade, child: view);
-                          }
-                          return view;
-                        }
-                      }
                       final __content = KeyedSubtree(
                         key: ValueKey<String>(_currentConversation?.id ?? 'none'),
                         child: (() {
@@ -4686,11 +4355,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           builtinSearchActive = list.map((e) => e.toString().toLowerCase()).contains('search');
                         }
                       }
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildQuoteChip() ?? const SizedBox.shrink(),
-                          ChatInputBar(
+                      return ChatInputBar(
                         key: _inputBarKey,
                         onMore: _toggleTools,
                         // Highlight when app-level search enabled OR model built-in search enabled
@@ -4793,8 +4458,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             MaterialPageRoute(builder: (_) => const QuickPhrasesPage()),
                           );
                         },
-                          ),
-                        ],
                       );
                     },
                   ),
@@ -5231,13 +4894,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 );
               }),
               actions: [
-                // 对话流样式切换（与移动端 AppBar 同一组件，复用 _onStyleSelected）。
-                // 标题区已用 Flexible 自动收窄/省略，新增此按钮只会让标题收缩，
-                // 不会挤压右侧既有按钮；平板起始宽度已 >=900，空间充足。
-                StyleSwitcherButton(
-                  currentStyle: _currentStyle,
-                  onStyleSelected: _onStyleSelected,
-                ),
                 // Right topics sidebar toggle (desktop + topics on right)
                 Builder(builder: (context) {
                   final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
@@ -6180,10 +5836,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
     _conversationStreams.clear();
     _userScrollTimer?.cancel();
-    // 释放对话流样式系统资源
-    _conversationDataSource?.dispose();
-    _styleRegistry.disposeAll();
-    _styleSettingsService.dispose();
     routeObserver.unsubscribe(this);
     super.dispose();
   }

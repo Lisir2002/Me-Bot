@@ -152,5 +152,4 @@ class Lucide {
   static const IconData List = lucide.LucideIcons.list;
   static const IconData Clock = lucide.LucideIcons.clock;
   static const IconData Users = lucide.LucideIcons.users;
-  static const IconData LayoutGrid = lucide.LucideIcons.layoutGrid;
 }

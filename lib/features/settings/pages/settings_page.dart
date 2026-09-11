@@ -19,7 +19,6 @@ import '../../storage/pages/storage_page.dart';
 import '../../quick_phrase/pages/quick_phrases_page.dart';
 import 'network_proxy_page.dart';
 import 'usage_stats_page.dart';
-import '../../conversation_style/widgets/style_settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/haptics.dart';
 import '../../../shared/widgets/app_section.dart';
@@ -132,18 +131,6 @@ class SettingsPage extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const DisplaySettingsPage()),
-                );
-              },
-            ),
-            _iosDivider(context),
-            _iosNavRow(
-              context,
-              icon: Lucide.LayoutGrid,
-              label: '对话样式',
-              detailText: '自动 / 手动',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const StyleSettingsPage()),
                 );
               },
             ),

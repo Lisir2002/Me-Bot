@@ -5,6 +5,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.57] - 2026-09-12
+
+### 📣 For Users
+- **回退对话流样式重构**：v0.0.55 / v0.0.56 引入的「对话流样式系统」整体移除——包括 15 种（后精简为 9 种）可切换对话样式、样式选择器、样式自动推荐及相关 Agent 交互组件；对话界面恢复为重构前的稳定形态，使用更顺手，不再出现样式切换带来的布局与交互问题；
+- **其余功能保持不变**：MCP 三服务器（MiniMe-Chat / MiniMe-Data / MiniMe-Code）、安全中心、统计、日志、备份等此前已上线能力全部保留。
+
+### 🔧 For Developers
+- **Removed**：
+  - 整目录删除 `lib/features/conversation_style/`（data / framework / models / styles / widgets 全部 30 个文件）；
+  - 删除测试 `test/conversation_style/` 与 `test/fixtures/conversation_style_golden.json`；
+  - 回退集成点至 v0.0.54 状态：`home_page.dart`、`settings_page.dart`、`lucide_adapter.dart`、`tool_approval_dialog.dart`、三个 ARB（移除全部 convStyle* 键）、`docs/design/conversation-style-system.md`。
+- **Changed**：版本号 `0.0.56+56` → `0.0.57+57`。
+- **说明**：本次为纯回退版本，代码内容（除版本号 / CHANGELOG 外）与 v0.0.54 一致；采用「新增一个回退提交」而非 force push，主干历史与已发布 tag v0.0.55 / v0.0.56 均保留可追溯。
+
+### 🤖 For Agents
+- **禁止重新引入对话流样式系统**：`lib/features/conversation_style/` 目录、`convStyle*` l10n 键、StyleRenderer / StyleResolver / ConversationView / StyleSettings 等符号已全部移除，后续任何任务不得恢复或变相重建该体系；
+- **当前稳定基线**：对话渲染以 `home_page.dart` 现有消息列表为唯一实现，改动对话 UI 直接在该链路上进行，不要再抽象可切换样式层；
+- **历史追溯**：v0.0.55 / v0.0.56 tag 仍指向含对话流代码的历史提交，仅作回溯参考，严禁作为新功能的合并基线。
+
 ## [0.0.56] - 2026-09-11
 
 ### 📣 For Users

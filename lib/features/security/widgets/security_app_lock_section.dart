@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/security/app_lock_service.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
@@ -182,6 +183,13 @@ class _SecurityAppLockSectionState extends State<SecurityAppLockSection> {
     final ok = await lock.setEnabled(
       v,
       verify: () => lock.verifyWith(l10n.appLockVerifyToEnable),
+    );
+    // 审计：门禁开关结果（enabled 仅描述目标状态，不含任何凭证）
+    CredentialAuditLogger.record(
+      'toggleLock',
+      'lock:appLock',
+      ok: ok,
+      detail: 'enabled=$v',
     );
     if (!mounted) return;
     if (!ok) {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/logging/log_level.dart';
+import '../../../core/services/logging/logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
@@ -20,6 +22,7 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
   bool _omitLarge = true;
   int _autoDeleteDays = 0; // 0 = 不启用
   int _sizeLimitMB = 50;
+  LogLevel _level = Logger.minLevel;
 
   @override
   void initState() {
@@ -35,7 +38,18 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
       _omitLarge = prefs.getBool('log_omit_large') ?? true;
       _autoDeleteDays = prefs.getInt('log_auto_delete_days') ?? 0;
       _sizeLimitMB = prefs.getInt('log_size_limit_mb') ?? 50;
+      // 运行时日志级别（P3-33）：未存过则沿用当前 Logger.minLevel
+      _level = _levelByName(prefs.getString('log_level'));
     });
+  }
+
+  /// 把持久化的枚举名还原成 LogLevel；非法值回落 verbose。
+  static LogLevel _levelByName(String? name) {
+    if (name == null) return LogLevel.verbose;
+    return LogLevel.values.firstWhere(
+      (l) => l.name == name,
+      orElse: () => LogLevel.verbose,
+    );
   }
 
   Future<void> _setBool(String key, bool v) async {
@@ -192,6 +206,16 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
                     value: l10n.logSettingSizeText(_sizeLimitMB),
                     onTap: () => _pickSize(l10n),
                   ),
+                  Divider(height: 6, thickness: 0.6, indent: 48, endIndent: 12,
+                      color: cs.outlineVariant.withOpacity(0.18)),
+                  // 运行时日志级别（P3-33）
+                  _navRow(
+                    context,
+                    icon: Lucide.Activity,
+                    label: '日志级别',
+                    value: _level.zh,
+                    onTap: _pickLevel,
+                  ),
                 ],
               ),
             ),
@@ -230,6 +254,35 @@ class _LogSettingsSheetState extends State<LogSettingsSheet> {
             l10n.logSettingSizeText(s),
             s == _sizeLimitMB,
             () { setState(() => _sizeLimitMB = s); prefs.setInt('log_size_limit_mb', s); },
+          ),
+      ],
+    );
+  }
+
+  /// 运行时切换日志级别（P3-33）：立即生效并持久化到 SharedPreferences。
+  Future<void> _pickLevel() async {
+    // 不含 none（关闭一切），避免用户误操作后彻底看不到日志
+    const opts = [
+      LogLevel.verbose,
+      LogLevel.debug,
+      LogLevel.info,
+      LogLevel.warn,
+      LogLevel.error,
+    ];
+    final prefs = await SharedPreferences.getInstance();
+    await _sheetPicker(
+      context,
+      title: '日志级别',
+      options: [
+        for (final l in opts)
+          (
+            l.zh,
+            l == _level,
+            () {
+              setState(() => _level = l);
+              Logger.setLevel(l); // 立即生效
+              prefs.setString('log_level', l.name); // 下次启动沿用
+            },
           ),
       ],
     );

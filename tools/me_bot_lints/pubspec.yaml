@@ -1,0 +1,11 @@
+name: me_bot_lints
+description: Me-Bot 自定义 lint 规则（禁止空 catch / 禁止 print / 样式渲染器数据访问约束等）。
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  analyzer: ">=6.4.0 <8.0.0"
+  custom_lint_builder: ^0.6.4

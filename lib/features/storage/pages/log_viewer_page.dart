@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/services/storage/log_store.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
+import '../../../core/services/logging/log_exporter.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_list_view.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../widgets/log_settings_sheet.dart';
 import '../widgets/storage_ios_widgets.dart';
@@ -29,6 +34,7 @@ class _LogViewerPageState extends State<LogViewerPage> {
   @override
   void initState() {
     super.initState();
+    Logger.d(LogTags.storage, 'page init: log viewer');
     _load();
   }
 
@@ -49,6 +55,28 @@ class _LogViewerPageState extends State<LogViewerPage> {
     await _load();
   }
 
+  /// 导出全部日志文件为 zip 并调系统分享（P3-32）。
+  Future<void> _exportLogs() async {
+    try {
+      final path = await LogExporter.exportLogs();
+      if (!mounted) return;
+      // iPad/大屏需要分享锚点；这里用屏幕中心兜底
+      final size = MediaQuery.of(context).size;
+      await Share.shareXFiles(
+        [XFile(path)],
+        sharePositionOrigin: Rect.fromCenter(
+          center: Offset(size.width / 2, size.height / 2),
+          width: 1,
+          height: 1,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      // ignore: hardcoded_ui_string
+      showAppSnackBar(context, message: '导出失败: $e', type: NotificationType.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -60,6 +88,19 @@ class _LogViewerPageState extends State<LogViewerPage> {
     return AppPage.selfScrolling(
       title: l10n.storageCateLogs,
       actions: [
+        Tooltip(
+          // ignore: hardcoded_ui_string
+          message: '导出日志',
+          child: IosIconButton(
+            icon: Lucide.Share,
+            size: 20,
+            minSize: 44,
+            // ignore: hardcoded_ui_string
+            semanticLabel: '导出日志',
+            onTap: _exportLogs,
+          ),
+        ),
+        const SizedBox(width: 12),
         Tooltip(
           message: l10n.logSettingsTitle,
           child: IosIconButton(

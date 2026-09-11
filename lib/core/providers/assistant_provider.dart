@@ -9,6 +9,8 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/build_context_l10n.dart';
 import '../../utils/avatar_cache.dart';
 import '../../utils/app_directories.dart';
+import '../services/logging/logger.dart';
+import '../services/logging/log_tags.dart';
 
 class AssistantProvider extends ChangeNotifier {
   static const String _assistantsKey = 'assistants_v1';
@@ -155,23 +157,34 @@ class AssistantProvider extends ChangeNotifier {
   }
 
   Future<String> addAssistant({String? name, BuildContext? context}) async {
-    final a = Assistant(
-      id: const Uuid().v4(),
-      name: (name ?? (context != null
-          ? context.l10n.assistantProviderNewAssistantName
-          : 'New Assistant')),
-      temperature: 0.6,
-      topP: 1.0,
-    );
-    _assistants.add(a);
-    await _persist();
-    notifyListeners();
-    return a.id;
+    Logger.i(LogTags.assistant, 'action=create name=${name ?? 'default'}');
+    try {
+      final a = Assistant(
+        id: const Uuid().v4(),
+        name: (name ?? (context != null
+            ? context.l10n.assistantProviderNewAssistantName
+            : 'New Assistant')),
+        temperature: 0.6,
+        topP: 1.0,
+      );
+      _assistants.add(a);
+      await _persist();
+      notifyListeners();
+      Logger.i(LogTags.assistant, 'action=create ok id=${a.id} name=${a.name}');
+      return a.id;
+    } catch (e, st) {
+      Logger.e(LogTags.assistant, 'action=create failed', e, st);
+      rethrow;
+    }
   }
 
   Future<void> updateAssistant(Assistant updated) async {
     final idx = _assistants.indexWhere((a) => a.id == updated.id);
-    if (idx == -1) return;
+    if (idx == -1) {
+      Logger.d(LogTags.assistant, 'action=update skip(not found) id=${updated.id}');
+      return;
+    }
+    Logger.i(LogTags.assistant, 'action=update begin id=${updated.id} name=${updated.name}');
 
     var next = updated;
 
@@ -269,34 +282,55 @@ class AssistantProvider extends ChangeNotifier {
           }
         } catch (_) {}
       }
-    } catch (_) {
-      // On any failure, fall back to the provided value unchanged.
+    } catch (e, st) {
+      // 头像/背景文件拷贝失败属 best-effort，回退为原值，仅记 debug
+      Logger.d(LogTags.assistant, 'action=update asset copy failed id=${updated.id}', e, st);
     }
 
-    _assistants[idx] = next;
-    await _persist();
-    notifyListeners();
+    try {
+      _assistants[idx] = next;
+      await _persist();
+      notifyListeners();
+      Logger.i(LogTags.assistant, 'action=update ok id=${updated.id}');
+    } catch (e, st) {
+      Logger.e(LogTags.assistant, 'action=update persist failed id=${updated.id}', e, st);
+      rethrow;
+    }
   }
 
   Future<bool> deleteAssistant(String id) async {
-    final idx = _assistants.indexWhere((a) => a.id == id);
-    if (idx == -1) return false;
-    // Do not allow deleting the last remaining assistant
-    if (_assistants.length <= 1) return false;
-    final removingCurrent = _assistants[idx].id == _currentAssistantId;
-    _assistants.removeAt(idx);
-    if (removingCurrent) {
-      _currentAssistantId = _assistants.isNotEmpty ? _assistants.first.id : null;
+    Logger.i(LogTags.assistant, 'action=delete begin id=$id');
+    try {
+      final idx = _assistants.indexWhere((a) => a.id == id);
+      if (idx == -1) {
+        Logger.d(LogTags.assistant, 'action=delete skip(not found) id=$id');
+        return false;
+      }
+      // Do not allow deleting the last remaining assistant
+      if (_assistants.length <= 1) {
+        Logger.d(LogTags.assistant, 'action=delete skip(last remaining) id=$id');
+        return false;
+      }
+      final removingCurrent = _assistants[idx].id == _currentAssistantId;
+      final name = _assistants[idx].name;
+      _assistants.removeAt(idx);
+      if (removingCurrent) {
+        _currentAssistantId = _assistants.isNotEmpty ? _assistants.first.id : null;
+      }
+      await _persist();
+      final prefs = await SharedPreferences.getInstance();
+      if (_currentAssistantId != null) {
+        await prefs.setString(_currentAssistantKey, _currentAssistantId!);
+      } else {
+        await prefs.remove(_currentAssistantKey);
+      }
+      notifyListeners();
+      Logger.i(LogTags.assistant, 'action=delete ok id=$id name=$name');
+      return true;
+    } catch (e, st) {
+      Logger.e(LogTags.assistant, 'action=delete failed id=$id', e, st);
+      rethrow;
     }
-    await _persist();
-    final prefs = await SharedPreferences.getInstance();
-    if (_currentAssistantId != null) {
-      await prefs.setString(_currentAssistantKey, _currentAssistantId!);
-    } else {
-      await prefs.remove(_currentAssistantKey);
-    }
-    notifyListeners();
-    return true;
   }
 
   Future<void> reorderAssistants(int oldIndex, int newIndex) async {

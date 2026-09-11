@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/models/backup.dart';
 import '../../../core/services/backup/data_sync.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
@@ -78,6 +80,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
   @override
   void initState() {
     super.initState();
+    Logger.d(LogTags.storage, 'page init: local snapshot page');
     _load();
   }
 
@@ -140,6 +143,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
   Future<void> _backupNow() async {
     if (_busy) return;
     setState(() => _busy = true);
+    Logger.i(LogTags.storage, 'backup: creating local snapshot');
     try {
       final dir = await _snapDir();
       await dir.create(recursive: true);
@@ -247,6 +251,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
     final mode = await _chooseMode();
     if (mode == null || !mounted) return;
     setState(() => _busy = true);
+    Logger.i(LogTags.storage, 'restore: from snapshot ${snap.name} (mode: $mode)');
     try {
       await _sync.restoreFromLocalFile(File(snap.path), const WebDavConfig(), mode: mode);
       if (mounted) {
@@ -268,6 +273,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
 
   Future<void> _export(SnapshotInfo snap) async {
     final rect = _shareOrigin();
+    Logger.i(LogTags.storage, 'export: sharing snapshot ${snap.name}');
     try {
       await Share.shareXFiles([XFile(snap.path)], sharePositionOrigin: rect);
     } catch (_) {}
@@ -289,6 +295,7 @@ class _LocalSnapshotPageState extends State<LocalSnapshotPage> {
   Future<void> _delete(SnapshotInfo snap) async {
     final ok = await _confirmDelete(snap);
     if (ok != true || !mounted) return;
+    Logger.i(LogTags.storage, 'delete: removing snapshot ${snap.name}');
     try {
       final f = File(snap.path);
       if (await f.exists()) await f.delete();

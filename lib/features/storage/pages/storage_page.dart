@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_page.dart';
@@ -28,6 +30,7 @@ class _StoragePageState extends State<StoragePage> {
   @override
   void initState() {
     super.initState();
+    Logger.d(LogTags.storage, 'page init: storage main page');
     final provider = context.read<StorageProvider>();
     if (!provider.initialized) {
       Future.microtask(() => provider.refresh());
@@ -38,12 +41,15 @@ class _StoragePageState extends State<StoragePage> {
 
   @override
   void dispose() {
+    Logger.d(LogTags.storage, 'page dispose: stop polling');
     context.read<StorageProvider>().stopPolling();
     super.dispose();
   }
 
-  Future<void> _refresh() async =>
-      context.read<StorageProvider>().refresh();
+  Future<void> _refresh() async {
+    Logger.i(LogTags.storage, 'manual refresh triggered');
+    await context.read<StorageProvider>().refresh();
+  }
 
   Widget _subPage(StorageCategoryConfig config) {
     switch (config.type) {

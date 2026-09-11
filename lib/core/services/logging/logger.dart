@@ -131,6 +131,7 @@ class Logger {
     int fileMaxBytes = 5 * 1024 * 1024,
     int fileMaxAgeDays = 7,
     int fileFlushIntervalMs = 500,
+    Directory? fileLogDirOverride,
   }) async {
     if (_initialized) return;
 
@@ -143,6 +144,7 @@ class Logger {
         maxFileBytes: fileMaxBytes,
         maxAgeDays: fileMaxAgeDays,
         flushIntervalMs: fileFlushIntervalMs,
+        logDirOverride: fileLogDirOverride,
       );
       await fileApp.init(); // ← 这里可能抛（目录创建失败）
 
@@ -169,7 +171,7 @@ class Logger {
     _initialized = true;
 
     _log(LogLevel.info, _tag,
-        'Logger 初始化完成（appenders=${_appenders.length}, dir=${_lazyLogDir?.path ?? 'N/A'}）',
+        'init done appenders=${_appenders.length} dir=${_lazyLogDir?.path ?? 'N/A'}',
         null, null);
   }
 
@@ -188,6 +190,17 @@ class Logger {
   }
 
   // ── 日志入口（静态 API，签名保持不变）──
+
+  /// 运行时动态调整日志级别（P3-33 铺垫）。
+  /// 立即生效：低于 [level] 的后续日志一律跳过。
+  static void setLevel(LogLevel level) {
+    final old = minLevel;
+    minLevel = level;
+    // 级别切换本身值得留痕；用 info 级，确保调到 warn/error 也能看到切换点。
+    if (_initialized) {
+      _log(LogLevel.info, _tag, 'setLevel old=$old new=$level', null, null);
+    }
+  }
 
   static void v(String tag, String message, [Object? error, StackTrace? stack]) =>
       _log(LogLevel.verbose, tag, message, error, stack);

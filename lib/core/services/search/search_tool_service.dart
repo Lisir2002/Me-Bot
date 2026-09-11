@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'search_service.dart';
 import '../../providers/settings_provider.dart';
+import '../logging/logger.dart';
+import '../logging/log_tags.dart';
 
 class SearchToolService {
   static const String toolName = 'search_web';
@@ -31,6 +33,7 @@ class SearchToolService {
     String query,
     SettingsProvider settings,
   ) async {
+    final sw = Stopwatch()..start();
     try {
       // Get selected search service
       final services = settings.searchServices;
@@ -42,13 +45,19 @@ class SearchToolService {
       
       final selectedIndex = settings.searchServiceSelected.clamp(0, services.length - 1);
       final service = SearchService.getService(services[selectedIndex]);
-      
+      // query 截断到 50 字符，避免日志过长
+      final truncatedQuery = query.length > 50 ? '${query.substring(0, 50)}…' : query;
+      Logger.d(LogTags.search, 'search begin: query=$truncatedQuery provider=${service.name}');
+
       // Execute search
       final result = await service.search(
         query: query,
         commonOptions: settings.searchCommonOptions,
         serviceOptions: services[selectedIndex],
       );
+      sw.stop();
+      Logger.d(LogTags.search,
+          'search done: results=${result.items.length} ms=${sw.elapsedMilliseconds}');
       
       // Add unique IDs to each result item
       final itemsWithIds = result.items.asMap().entries.map((entry) {
@@ -63,7 +72,9 @@ class SearchToolService {
         if (result.answer != null) 'answer': result.answer,
         'items': itemsWithIds.map((item) => item.toJson()).toList(),
       });
-    } catch (e) {
+    } catch (e, st) {
+      sw.stop();
+      Logger.w(LogTags.search, 'search failed: elapsed=${sw.elapsedMilliseconds}ms', e, st);
       return jsonEncode({
         'error': 'Search failed: $e',
       });

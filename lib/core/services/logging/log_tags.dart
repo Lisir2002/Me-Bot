@@ -18,6 +18,7 @@ class LogTags {
   static const String model = 'Model';
   static const String assistant = 'Assistant';
   static const String mcp = 'Mcp';
+  static const String mcpConn = 'McpConn'; // MCP 连接生命周期（区别于 mcpTool 调用）
   static const String backup = 'Backup';
   static const String memory = 'Memory';
   static const String quickPhrase = 'QuickPhrase';
@@ -26,6 +27,7 @@ class LogTags {
   static const String tts = 'Tts';
   static const String update = 'Update';
   static const String user = 'User';
+  static const String migration = 'Migration'; // 数据迁移 / 版本升级迁移
 
   // ── Service ──
   static const String api = 'Api';
@@ -41,6 +43,7 @@ class LogTags {
   static const String search = 'Search';
   static const String apiKey = 'ApiKey';
   static const String provider = 'Provider';
+  static const String network = 'Network'; // 网络 / 代理 / 连接状态
 
   // ── Feature ──
   static const String home = 'Home';
@@ -50,6 +53,8 @@ class LogTags {
   static const String translate = 'Translate';
   static const String qr = 'Qr';
   static const String settingsUi = 'SettingsUi';
+  static const String theme = 'Theme'; // 主题 / 外观切换
+  static const String export = 'Export'; // 导出 / 分享
 
   // ── Desktop ──
   static const String desktop = 'Desktop';
@@ -59,6 +64,8 @@ class LogTags {
   static const String auth = 'Auth';
   static const String token = 'Token';
   static const String security = 'Security'; // 安全体检 / 凭证审计（PR-5）
+  static const String biometric = 'Biometric'; // 生物识别解锁
+  static const String audit = 'Audit'; // 审计事件独立通道（区别于 security）
   static const String lock = 'Lock'; // 隐私门禁（PR-6）
   static const String policy = 'Policy'; // 白名单策略（PR-8）
 }

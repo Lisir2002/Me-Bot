@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_dialog.dart';
@@ -36,6 +37,12 @@ class StorageCachePage extends StatefulWidget {
 }
 
 class _StorageCachePageState extends State<StorageCachePage> {
+  @override
+  void initState() {
+    super.initState();
+    Logger.d(LogTags.storage, 'page init: cache detail page');
+  }
+
   Future<void> _refresh() async =>
       Provider.of<StorageProvider>(context, listen: false).refresh();
 
@@ -73,6 +80,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
     try {
       if (!await _confirmClear() || !mounted) return;
       await _clearDirectories([(await AppDirectories.getAvatarCacheDirectory()).path]);
+      Logger.i(LogTags.storage, 'delete: avatar cache cleared');
       await _refresh();
     } catch (e, s) {
       Logger.e('StorageCache', 'clear avatar cache failed', e, s);
@@ -87,6 +95,7 @@ class _StorageCachePageState extends State<StorageCachePage> {
     try {
       if (!await _confirmClear() || !mounted) return;
       await _clearDirectories([(await AppDirectories.getCacheDirectory()).path]);
+      Logger.i(LogTags.storage, 'delete: app cache cleared');
       await _refresh();
     } catch (e, s) {
       Logger.e('StorageCache', 'clear app cache failed', e, s);

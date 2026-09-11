@@ -82,6 +82,8 @@ import '../../../shared/widgets/ios_checkbox.dart';
 import '../../../desktop/quick_phrase_popover.dart';
 import '../../../utils/app_directories.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -261,7 +263,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           if (f.existsSync()) {
             bg = Image(image: FileImage(f), fit: BoxFit.cover);
           }
-        } catch (_) {}
+        } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: file operation', e, st); }
       }
     }
     return IgnorePointer(
@@ -590,7 +592,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ))
                 .toList();
           }
-        } catch (_) {}
+        } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: UI state restore', e, st); }
 
         // Restore reasoning segments
         final segments = _deserializeReasoningSegments(m.reasoningSegmentsJson);
@@ -739,13 +741,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _inputFocus.unfocus();
     FocusManager.instance.primaryFocus?.unfocus();
     FocusScope.of(context).unfocus();
-    try { SystemChannels.textInput.invokeMethod('TextInput.hide'); } catch (_) {}
+    try { SystemChannels.textInput.invokeMethod('TextInput.hide'); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: TextInput.hide', e, st); }
   }
 
   @override
   void initState() {
     super.initState();
-    try { WidgetsBinding.instance.addObserver(this); } catch (_) {}
+    try { WidgetsBinding.instance.addObserver(this); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: addObserver', e, st); }
     _convoFadeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
     _convoFade = CurvedAnimation(parent: _convoFadeController, curve: Curves.easeOutCubic);
     _convoFadeController.value = 1.0;
@@ -764,7 +766,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     Future.microtask(() async {
       try {
         await context.read<QuickPhraseProvider>().initialize();
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
     });
 
     // Attach MCP provider listener to auto-join new connected servers
@@ -772,7 +774,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _mcpProvider = context.read<McpProvider>();
       _connectedMcpIds = _mcpProvider!.connectedServers.map((s) => s.id).toSet();
       _mcpProvider!.addListener(_onMcpChanged);
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: provider init', e, st); }
 
     // 监听键盘弹出
     _inputFocus.addListener(() {
@@ -800,7 +802,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         if (context.read<SettingsProvider>().hapticsOnDrawer) {
           Haptics.drawerPulse();
         }
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: haptic feedback', e, st); }
     }
     // Fire haptic when drawer becomes sufficiently closed (cancellation)
     if (_lastDrawerValue > 0.05 && v <= 0.05) {
@@ -808,7 +810,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         if (context.read<SettingsProvider>().hapticsOnDrawer) {
           Haptics.drawerPulse();
         }
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: haptic feedback', e, st); }
     }
     // When transitioning from open to closing, close assistant picker overlay
     if (_lastDrawerValue >= 0.95 && v < 0.95) {
@@ -824,11 +826,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (context.read<SettingsProvider>().hapticsOnDrawer) {
         Haptics.drawerPulse();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: haptic feedback', e, st); }
     setState(() {
       _tabletSidebarOpen = !_tabletSidebarOpen;
     });
-    try { context.read<SettingsProvider>().setDesktopSidebarOpen(_tabletSidebarOpen); } catch (_) {}
+    try { context.read<SettingsProvider>().setDesktopSidebarOpen(_tabletSidebarOpen); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: settings write', e, st); }
   }
 
   void _toggleRightSidebar() {
@@ -837,11 +839,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (context.read<SettingsProvider>().hapticsOnDrawer) {
         Haptics.drawerPulse();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: haptic feedback', e, st); }
     setState(() {
       _rightSidebarOpen = !_rightSidebarOpen;
     });
-    try { context.read<SettingsProvider>().setDesktopRightSidebarOpen(_rightSidebarOpen); } catch (_) {}
+    try { context.read<SettingsProvider>().setDesktopRightSidebarOpen(_rightSidebarOpen); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: settings write', e, st); }
   }
 
   Widget _buildTabletSidebar(BuildContext context) {
@@ -919,7 +921,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (_showJumpToBottom != shouldShow) {
         setState(() => _showJumpToBottom = shouldShow);
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
   Future<void> _initChat() async {
@@ -948,15 +950,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _switchConversationAnimated(String id) async {
     // Before switching, persist any in-flight reasoning/content of current conversation
-    try { await _flushCurrentConversationProgress(); } catch (_) {}
+    try { await _flushCurrentConversationProgress(); } catch (e, st) { Logger.w(LogTags.home, 'flushCurrentConversationProgress failed', e, st); }
     if (_currentConversation?.id == id) return;
     if (!_isDesktopPlatform) {
       try {
         await _convoFadeController.reverse();
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: UI state restore', e, st); }
     } else {
       // Desktop: skip fade-out to switch instantly
-      try { _convoFadeController.stop(); _convoFadeController.value = 1.0; } catch (_) {}
+      try { _convoFadeController.stop(); _convoFadeController.value = 1.0; } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: animation controller', e, st); }
     }
     _chatService.setCurrentConversation(id);
     final convo = _chatService.getConversation(id);
@@ -970,25 +972,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _restoreMessageUiState();
         });
         // Ensure list lays out, then jump to bottom while hidden
-        try { await WidgetsBinding.instance.endOfFrame; } catch (_) {}
+        try { await WidgetsBinding.instance.endOfFrame; } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: endOfFrame', e, st); }
         _scrollToBottom();
       }
     }
     if (mounted && !_isDesktopPlatform) {
-      try { await _convoFadeController.forward(); } catch (_) {}
+      try { await _convoFadeController.forward(); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: animation forward', e, st); }
     }
   }
 
   Future<void> _createNewConversationAnimated() async {
     // Flush current conversation progress before creating a new one
-    try { await _flushCurrentConversationProgress(); } catch (_) {}
+    try { await _flushCurrentConversationProgress(); } catch (e, st) { Logger.w(LogTags.home, 'flushCurrentConversationProgress failed', e, st); }
     if (!_isDesktopPlatform) {
-      try { await _convoFadeController.reverse(); } catch (_) {}
+      try { await _convoFadeController.reverse(); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: animation reverse', e, st); }
     }
     await _createNewConversation();
     if (mounted && !_isDesktopPlatform) {
       // Mobile: keep smooth fade for new conversation
-      try { await _convoFadeController.forward(); } catch (_) {}
+      try { await _convoFadeController.forward(); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: animation forward', e, st); }
     }
   }
 
@@ -1015,7 +1017,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         final dest = File("${dir.path}/$name");
         await dest.writeAsBytes(await f.readAsBytes());
         out.add(dest.path);
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: file operation', e, st); }
     }
     return out;
   }
@@ -1057,7 +1059,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _mediaController.addImages(paths);
         _scrollToBottomSoon();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: file operation', e, st); }
   }
 
   Future<void> _onPickCamera() async {
@@ -1078,7 +1080,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             duration: const Duration(seconds: 4),
             actionLabel: l10n.openSystemSettings,
             onAction: () {
-              try { openAppSettings(); } catch (_) {}
+              try { openAppSettings(); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: openAppSettings', e, st); }
             },
           );
           return;
@@ -1101,7 +1103,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           type: NotificationType.error,
           duration: const Duration(seconds: 3),
         );
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: file operation', e, st); }
     }
   }
 
@@ -1177,7 +1179,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (images.isNotEmpty || docs.isNotEmpty) {
         _scrollToBottomSoon();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored', e, st); }
   }
 
   // Handle files dropped on desktop (macOS/Windows/Linux)
@@ -1212,7 +1214,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (images.isNotEmpty) _mediaController.addImages(images);
       if (docs.isNotEmpty) _mediaController.addFiles(docs);
       if (images.isNotEmpty || docs.isNotEmpty) _scrollToBottomSoon();
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: file operation', e, st); }
   }
 
   // Wraps a widget with desktop DropTarget to accept drag-and-drop files
@@ -1230,7 +1232,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         try {
           final files = details.files; // List<XFile>
           await _onFilesDroppedDesktop(files);
-        } catch (_) {}
+        } catch (e, st) { Logger.w(LogTags.home, 'file picker/drop failed', e, st); }
       },
       child: Stack(
         fit: StackFit.expand,
@@ -1263,7 +1265,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _createNewConversation() async {
     // Flush any ongoing generation progress for the current conversation
-    try { await _flushCurrentConversationProgress(); } catch (_) {}
+    try { await _flushCurrentConversationProgress(); } catch (e, st) { Logger.w(LogTags.home, 'flushCurrentConversationProgress failed', e, st); }
     final ap = context.read<AssistantProvider>();
     final assistantId = ap.currentAssistantId;
     // Don't change global default model - just use assistant's model if set
@@ -1299,7 +1301,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored', e, st); }
     _scrollToBottomSoon();
   }
 
@@ -1343,7 +1345,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           reasoningSegmentsJson: _serializeReasoningSegments(segs),
         );
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
   }
 
   Future<void> _sendMessage(ChatInputData input) async {
@@ -1407,7 +1409,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (context.read<SettingsProvider>().hapticsOnGenerate) {
         Haptics.light();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: haptic feedback', e, st); }
 
     // Reset tool parts for this new assistant message
     _toolParts.remove(assistantMessage.id);
@@ -1469,7 +1471,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             filePrompts.writeln('```');
             filePrompts.writeln('</content>');
             filePrompts.writeln();
-          } catch (_) {}
+          } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: parse/extract', e, st); }
         }
         final merged = (filePrompts.toString() + cleaned).trim();
         final userText = merged.isEmpty ? cleaned : merged;
@@ -1572,7 +1574,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: prompt building', e, st); }
 
     // Determine tool support and built-in Gemini search status
     final supportsTools = _isToolModel(providerKey, modelId);
@@ -1610,7 +1612,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           apiMessages.insert(0, {'role': 'system', 'content': lp});
         }
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: prompt building', e, st); }
 
     // Limit context length according to assistant settings
     if ((assistant?.limitContextMessages ?? true) && (assistant?.contextMessageSize ?? 0) > 0) {
@@ -1774,7 +1776,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 final ok = await mp.delete(id: id);
                 return ok ? 'deleted' : '';
               }
-            } catch (_) {}
+            } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: tool execution', e, st); }
           }
           // Fallback to MCP tools
           final text = await toolSvc.callToolTextForAssistant(
@@ -2023,7 +2025,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   },
               ];
               await _chatService.setToolEvents(assistantMessage.id, _dedupeToolEvents(newEvents));
-            } catch (_) {}
+            } catch (e, st) { Logger.w(LogTags.home, 'setToolEvents persist failed', e, st); }
           }
 
           // MCP tool results -> hydrate placeholders in-place (avoid extra tool message cards)
@@ -2069,7 +2071,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   arguments: r.arguments,
                   content: r.content,
                 );
-              } catch (_) {}
+              } catch (e, st) { Logger.w(LogTags.home, 'upsertToolEvent persist failed', e, st); }
             }
             if (mounted && _currentConversation?.id == _cidForStream) setState(() {
               _toolParts[assistantMessage.id] = _dedupeToolPartsList(parts);
@@ -2104,7 +2106,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   body: context.l10n.notificationChatCompletedBody,
                 );
               }
-            } catch (_) {}
+            } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: notification', e, st); }
             // If non-streaming, persist buffered reasoning once at the end
             if (!streamOutput && _bufferedReasoning.isNotEmpty) {
               final now = DateTime.now();
@@ -2268,7 +2270,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 assistantMessage.id,
                 reasoningSegmentsJson: _serializeReasoningSegments(segments),
               );
-            } catch (_) {}
+            } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
           }
 
           await _conversationStreams.remove(_cidForStream)?.cancel();
@@ -2292,7 +2294,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 body: context.l10n.notificationChatCompletedBody,
               );
             }
-          } catch (_) {}
+          } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: notification', e, st); }
           await _conversationStreams.remove(_cidForStream)?.cancel();
         },
         cancelOnError: true,
@@ -2353,7 +2355,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             assistantMessage.id,
             reasoningSegmentsJson: _serializeReasoningSegments(segments),
           );
-        } catch (_) {}
+        } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
       }
 
       await _conversationStreams.remove(assistantMessage.conversationId)?.cancel();
@@ -2443,7 +2445,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         if (!shouldKeep) removeIds.add(m.id);
       }
       for (final id in removeIds) {
-        try { await _chatService.deleteMessage(id); } catch (_) {}
+        try { await _chatService.deleteMessage(id); } catch (e, st) { Logger.w(LogTags.home, 'deleteMessage failed', e, st); }
         _reasoning.remove(id);
         _translations.remove(id);
         _toolParts.remove(id);
@@ -2501,7 +2503,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (context.read<SettingsProvider>().hapticsOnGenerate) {
         Haptics.light();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
 
     // Initialize reasoning state only when enabled and model supports it
     final supportsReasoning = _isReasoningModel(providerKey, modelId);
@@ -2606,7 +2608,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: prompt building', e, st); }
     // Inject search tool usage guide when enabled
     if (settings.searchEnabled) {
       final prompt = SearchToolService.getSystemPrompt();
@@ -2627,7 +2629,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           apiMessages.insert(0, {'role': 'system', 'content': lp});
         }
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: prompt building', e, st); }
 
     // Limit context length
     if ((assistant?.limitContextMessages ?? true) && (assistant?.contextMessageSize ?? 0) > 0) {
@@ -2759,7 +2761,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 final ok = await mp.delete(id: id);
                 return ok ? 'deleted' : '';
               }
-            } catch (_) {}
+            } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: tool execution', e, st); }
           }
           final text = await toolSvc.callToolTextForAssistant(
             mcp,
@@ -2780,7 +2782,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           return text;
         };
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored', e, st); }
 
     // Build assistant-level custom request overrides
     Map<String, String>? aHeaders;
@@ -2922,7 +2924,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               assistantMessage.id,
               reasoningSegmentsJson: _serializeReasoningSegments(segments),
             );
-          } catch (_) {}
+          } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
         }
 
         final existing = List<ToolUIPart>.of(_toolParts[assistantMessage.id] ?? const []);
@@ -2937,7 +2939,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             for (final c in chunk.toolCalls!) {'id': c.id, 'name': c.name, 'arguments': c.arguments, 'content': null},
           ];
           await _chatService.setToolEvents(assistantMessage.id, _dedupeToolEvents(newEvents));
-        } catch (_) {}
+        } catch (e, st) { Logger.w(LogTags.home, 'setToolEvents persist failed', e, st); }
       }
 
       if ((chunk.toolResults ?? const []).isNotEmpty) {
@@ -2954,7 +2956,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           } else {
             parts.add(ToolUIPart(id: r.id, toolName: r.name, arguments: r.arguments, content: r.content, loading: false));
           }
-          try { await _chatService.upsertToolEvent(assistantMessage.id, id: r.id, name: r.name, arguments: r.arguments, content: r.content); } catch (_) {}
+          try { await _chatService.upsertToolEvent(assistantMessage.id, id: r.id, name: r.name, arguments: r.arguments, content: r.content); } catch (e, st) { Logger.w(LogTags.home, 'upsertToolEvent failed', e, st); }
         }
         setState(() => _toolParts[assistantMessage.id] = _dedupeToolPartsList(parts));
         if (!_isUserScrolling) {
@@ -2978,7 +2980,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               reasoningText: rd.text,
               reasoningFinishedAt: rd.finishedAt,
             );
-          } catch (_) {}
+          } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
           if (mounted) setState(() {});
         }
         final segs = _reasoningSegments[assistantMessage.id];
@@ -2992,7 +2994,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               assistantMessage.id,
               reasoningSegmentsJson: _serializeReasoningSegments(segs),
             );
-          } catch (_) {}
+          } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
           if (mounted) setState(() {});
         }
 
@@ -3003,7 +3005,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             content: fullContent,
             totalTokens: totalTokens,
           );
-        } catch (_) {}
+        } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
 
         if (streamOutput) {
           setState(() {
@@ -3030,7 +3032,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               body: context.l10n.notificationChatCompletedBody,
             );
           }
-        } catch (_) {}
+        } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: notification', e, st); }
         // If non-streaming, write buffered reasoning once
         if (!streamOutput && _bufferedReasoning2.isNotEmpty) {
           final now = DateTime.now();
@@ -3094,7 +3096,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               reasoningText: r.text,
               reasoningFinishedAt: r.finishedAt,
             );
-          } catch (_) {}
+          } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
         }
         final autoCollapse = context.read<SettingsProvider>().autoCollapseThinking;
         if (autoCollapse) r.expanded = false;
@@ -3113,7 +3115,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             assistantMessage.id,
             reasoningSegmentsJson: _serializeReasoningSegments(segments),
           );
-        } catch (_) {}
+        } catch (e, st) { Logger.w(LogTags.home, 'message persist failed', e, st); }
       }
 
       await _conversationStreams.remove(_cid)?.cancel();
@@ -3133,7 +3135,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             body: context.l10n.notificationChatCompletedBody,
           );
         }
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: notification', e, st); }
       await _conversationStreams.remove(_cid)?.cancel();
     },
     cancelOnError: true,
@@ -3241,7 +3243,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if ((_inputBarHeight - h).abs() > 1.0) {
         setState(() => _inputBarHeight = h);
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
   // Ensure scroll reaches bottom even after widget tree transitions
@@ -3399,7 +3401,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _scrollController.jumpTo(newOffset);
         await WidgetsBinding.instance.endOfFrame;
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
   // Jump to the previous user message (question) above the current viewport
@@ -3477,7 +3479,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       // Final fallback: go to top if still not found
       _scrollController.jumpTo(0.0);
       _lastJumpUserMessageId = null;
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
   // Translate message functionality
@@ -4062,7 +4064,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                           final gid2 = (newMsg.groupId ?? newMsg.id);
                                           await _chatService.setSelectedVersion(_currentConversation!.id, gid2, newMsg.version);
                                         }
-                                      } catch (_) {}
+                                      } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                     }
                                   } : null,
                                   onDelete: message.role == 'user' ? () async {
@@ -4106,7 +4108,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       // Persist updated selection if group still exists
                                       final sel = _versionSelections[gid];
                                       if (sel != null && _currentConversation != null) {
-                                        try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (_) {}
+                                        try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                       }
                                       await _chatService.deleteMessage(id);
                                     }
@@ -4152,7 +4154,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     });
                                     final sel = _versionSelections[gid];
                                     if (sel != null && _currentConversation != null) {
-                                      try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (_) {}
+                                      try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                     }
                                     await _chatService.deleteMessage(id);
                                   }
@@ -4178,7 +4180,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                         final gid = (newMsg.groupId ?? newMsg.id);
                                         await _chatService.setSelectedVersion(_currentConversation!.id, gid, newMsg.version);
                                       }
-                                    } catch (_) {}
+                                    } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                   }
                                 } else if (action == MessageMoreAction.fork) {
                                   // Determine included groups up to the message's group (inclusive)
@@ -4225,7 +4227,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       _loadVersionSelections();
                                       _restoreMessageUiState();
                                     });
-                                    try { await WidgetsBinding.instance.endOfFrame; } catch (_) {}
+                                    try { await WidgetsBinding.instance.endOfFrame; } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: endOfFrame', e, st); }
                                     _scrollToBottom();
                                     if (!_isDesktopPlatform) {
                                       await _convoFadeController.forward();
@@ -4693,7 +4695,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _tabletSidebarOpen = sp.desktopSidebarOpen;
         _rightSidebarOpen = sp.desktopRightSidebarOpen;
         _rightSidebarWidth = sp.desktopRightSidebarWidth.clamp(_sidebarMinWidth, _sidebarMaxWidth);
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: desktop UI init', e, st); }
     }
     return Stack(
       children: [
@@ -4711,7 +4713,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               });
             },
             onDragEnd: () {
-              try { context.read<SettingsProvider>().setDesktopSidebarWidth(_embeddedSidebarWidth); } catch (_) {}
+              try { context.read<SettingsProvider>().setDesktopSidebarWidth(_embeddedSidebarWidth); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: settings write', e, st); }
             },
           )
         else
@@ -5124,7 +5126,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                                   final gid2 = (newMsg.groupId ?? newMsg.id);
                                                                   await _chatService.setSelectedVersion(_currentConversation!.id, gid2, newMsg.version);
                                                                 }
-                                                              } catch (_) {}
+                                                              } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                                             }
                                                           }
                                                         : null,
@@ -5167,7 +5169,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                               });
                                                               final sel = _versionSelections[gid];
                                                               if (sel != null && _currentConversation != null) {
-                                                                try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (_) {}
+                                                                try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                                               }
                                                               await _chatService.deleteMessage(id);
                                                             }
@@ -5214,7 +5216,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                           });
                                                           final sel = _versionSelections[gid];
                                                           if (sel != null && _currentConversation != null) {
-                                                            try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (_) {}
+                                                            try { await _chatService.setSelectedVersion(_currentConversation!.id, gid, sel); } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                                           }
                                                           await _chatService.deleteMessage(id);
                                                         }
@@ -5240,7 +5242,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                               final gid = (newMsg.groupId ?? newMsg.id);
                                                               await _chatService.setSelectedVersion(_currentConversation!.id, gid, newMsg.version);
                                                             }
-                                                          } catch (_) {}
+                                                          } catch (e, st) { Logger.w(LogTags.home, 'setSelectedVersion failed', e, st); }
                                                         }
                                                       } else if (action == MessageMoreAction.fork) {
                                                         // Determine included groups up to the message's group (inclusive)
@@ -5287,7 +5289,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       _loadVersionSelections();
                                       _restoreMessageUiState();
                                     });
-                                    try { await WidgetsBinding.instance.endOfFrame; } catch (_) {}
+                                    try { await WidgetsBinding.instance.endOfFrame; } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: endOfFrame', e, st); }
                                     _scrollToBottom();
                                     if (!_isDesktopPlatform) {
                                       await _convoFadeController.forward();
@@ -5760,7 +5762,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     });
                   },
                   onDragEnd: () {
-                    try { context.read<SettingsProvider>().setDesktopRightSidebarWidth(_rightSidebarWidth); } catch (_) {}
+                    try { context.read<SettingsProvider>().setDesktopRightSidebarWidth(_rightSidebarWidth); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: settings write', e, st); }
                   },
                 ),
               AnimatedContainer(
@@ -5820,7 +5822,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
-    try { WidgetsBinding.instance.removeObserver(this); } catch (_) {}
+    try { WidgetsBinding.instance.removeObserver(this); } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: removeObserver in dispose', e, st); }
     _convoFadeController.dispose();
     _mcpProvider?.removeListener(_onMcpChanged);
     // Remove drawer value listener
@@ -5831,7 +5833,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _scrollController.dispose();
     try {
       for (final s in _conversationStreams.values) { s.cancel(); }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
     _conversationStreams.clear();
     _userScrollTimer?.cancel();
     routeObserver.unsubscribe(this);

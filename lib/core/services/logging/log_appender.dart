@@ -70,10 +70,18 @@ class FileAppender extends LogAppender {
   final int maxAgeDays;
   final int flushIntervalMs;
 
+  /// 轮转归档保留份数（当前文件超限时归档为 .1，旧的 .1→.2 …）。
+  final int maxRotatedFiles;
+
+  /// 测试可注入的日志目录；为 null 时走 AppDirectories 默认目录。
+  final Directory? logDirOverride;
+
   FileAppender({
     this.maxFileBytes = 5 * 1024 * 1024,
     this.maxAgeDays = 7,
     this.flushIntervalMs = 500,
+    this.maxRotatedFiles = 5,
+    this.logDirOverride,
   });
 
   @override
@@ -81,7 +89,13 @@ class FileAppender extends LogAppender {
 
   @override
   Future<void> init() async {
-    _logDir = Directory('${(await AppDirectories.getAppDataDirectory()).path}/logs');
+    // 允许注入目录（测试用），否则走平台默认 App 数据目录
+    final override = logDirOverride;
+    if (override != null) {
+      _logDir = override;
+    } else {
+      _logDir = Directory('${(await AppDirectories.getAppDataDirectory()).path}/logs');
+    }
     if (!await _logDir!.exists()) await _logDir!.create(recursive: true);
     _currentDay = DateTime.now();
     unawaited(_cleanupOldLogs());
@@ -139,11 +153,8 @@ class FileAppender extends LogAppender {
     }
     final file = File('${dir.path}/log-${_formatDate(now)}.log');
     try {
-      if (await file.exists() && await file.length() > maxFileBytes) {
-        await file.writeAsString(
-          '--- 日志超过 ${maxFileBytes ~/ 1024 ~/ 1024}MB 已重置 ---\n',
-        );
-      }
+      // 超限先轮转归档（当前文件 → .1，旧的依次后移），不再直接覆盖丢历史
+      await _rotateIfNeeded(file);
       await file.writeAsString(text, mode: FileMode.append);
     } catch (e) {
       // FileAppender 自己兜底，不向上抛（避免 Logger 崩溃）
@@ -152,12 +163,54 @@ class FileAppender extends LogAppender {
     }
   }
 
+  /// 当前文件超过 [maxFileBytes] 时执行轮转归档。
+  ///
+  /// 文件名：`log-YYYY-MM-DD.log` → 归档为 `log-YYYY-MM-DD.log.1`，
+  /// 已有的 `.1` 变 `.2`，……，最老的 `.maxRotatedFiles` 被删除。
+  /// 轮转失败时 fallback 到直接覆盖，绝不抛到上层。
+  Future<void> _rotateIfNeeded(File file) async {
+    try {
+      if (!await file.exists()) return;
+      if (await file.length() <= maxFileBytes) return;
+
+      final base = file.path; // .../log-YYYY-MM-DD.log
+      // 1) 删掉最老的一份，给滚动腾位置
+      final oldest = File('$base.$maxRotatedFiles');
+      if (await oldest.exists()) await oldest.delete();
+      // 2) 从大到小依次后移：.1→.2、.2→.3 … 这样 .1 的槽位被空出
+      for (int i = maxRotatedFiles - 1; i >= 1; i--) {
+        final src = File('$base.$i');
+        if (await src.exists()) {
+          await src.rename('$base.${i + 1}');
+        }
+      }
+      // 3) 当前文件归档为 .1
+      await file.rename('$base.1');
+    } catch (e) {
+      // 边界/IO 异常兜底：轮转失败就退化成覆盖，不能让日志链路崩溃
+      debugPrint('[FileAppender] rotate failed, fallback to overwrite: $e');
+      try {
+        await file.writeAsString(
+          '--- 轮转失败，日志已重置 ---\n',
+          mode: FileMode.write,
+        );
+      } catch (_) {
+        // 连覆盖都失败就静默，避免影响主流程
+      }
+    }
+  }
+
   Future<void> _cleanupOldLogs() async {
     final dir = _logDir;
     if (dir == null || !await dir.exists()) return;
     final cutoff = DateTime.now().subtract(Duration(days: maxAgeDays));
+    final rotatedRe = RegExp(r'\.log\.\d+$'); // 匹配 .log.1 / .log.2 …
     await for (final ent in dir.list(followLinks: false)) {
-      if (ent is! File || !ent.path.endsWith('.log')) continue;
+      if (ent is! File) continue;
+      // 主文件以 .log 结尾；轮转归档是 .log.N；其余（如临时文件）忽略
+      final isMain = ent.path.endsWith('.log');
+      final isRotated = rotatedRe.hasMatch(ent.path);
+      if (!isMain && !isRotated) continue;
       try {
         if ((await ent.stat()).modified.isBefore(cutoff)) await ent.delete();
       } catch (_) {}

@@ -27,6 +27,7 @@ import 'core/providers/memory_provider.dart';
 import 'core/providers/backup_provider.dart';
 import 'core/providers/storage_provider.dart';
 import 'core/services/logging/logger.dart';
+import 'core/services/logging/log_level.dart';
 import 'core/services/logging/log_tags.dart';
 import 'core/providers/log_settings_provider.dart';
 import 'core/services/chat/chat_service.dart';
@@ -59,6 +60,8 @@ Future<void> main() async {
   // Cache current Documents directory to fix sandboxed absolute paths on iOS
   await SandboxPathResolver.init();
   await Logger.init();
+  // 应用用户上次选择的日志级别（P3-33）；未存过则保持 verbose。
+  await _applyPersistedLogLevel();
   Logger.i(LogTags.boot, 'App boot complete, ready to run');
 
   // ── 安全存储 + 数据迁移：必须早于任何 provider 构造 ──
@@ -78,19 +81,38 @@ Future<void> main() async {
   await _incrementAppLaunchCount();
   // Enable edge-to-edge to allow content under system bars (Android)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  // Start app (no extra guarded zone logging)
-runApp(const MyApp());
+  // Provider 初始化阶段：MultiProvider 在 build 时惰性创建，此处标记进入 UI 阶段
+  Logger.i(LogTags.boot, 'provider setup begin, entering runApp');
+  runApp(const MyApp());
+}
+
+/// 应用用户持久化的日志级别（P3-33）。读取失败/非法值时静默回落，不阻塞启动。
+Future<void> _applyPersistedLogLevel() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('log_level');
+    if (name == null) return;
+    final level = LogLevel.values.firstWhere(
+      (l) => l.name == name,
+      orElse: () => LogLevel.verbose,
+    );
+    Logger.setLevel(level);
+  } catch (_) {
+    // Best-effort：级别读不出来不影响启动
+  }
 }
 
 /// 初始化安全存储。失败不阻塞启动：后续 provider 会检测到未初始化并退回明文路径。
 Future<void> _initSecureStorage() async {
+  Logger.i(LogTags.boot, 'secure storage init begin');
   try {
     await SecureStorage.init(
       onError: (message, error, stack) =>
           Logger.w(LogTags.storage, message, error, stack),
     );
+    Logger.i(LogTags.boot, 'secure storage init success');
   } catch (e, s) {
-    Logger.e(LogTags.storage, 'secure storage init failed', e, s);
+    Logger.e(LogTags.boot, 'secure storage init failed', e, s);
   }
 }
 
@@ -99,6 +121,7 @@ Future<void> _initSecureStorage() async {
 /// 整体 try/catch：迁移属于「尽力而为」，任何失败都不得阻塞启动——
 /// 未迁移成功的明文会在下次启动时重试。
 Future<void> _runMigrations() async {
+  Logger.i(LogTags.boot, 'migrations begin');
   try {
     if (!SecureStorage.isInitialized) {
       Logger.w(LogTags.storage, 'skip migrations: secure storage unavailable');
@@ -108,6 +131,7 @@ Future<void> _runMigrations() async {
     final runner = MigrationRunner()
       ..register(CredentialMigrationV1Step())
       ..register(CredentialMigrationV2Step());
+    Logger.i(LogTags.boot, 'migrations registered steps=${runner.steps.length}');
     final report = await runner.run(
       MigrationContext(
         prefs: prefs,
@@ -140,6 +164,7 @@ Future<void> _incrementAppLaunchCount() async {
     const countKey = 'app_launch_count';
     final prev = prefs.getInt(countKey) ?? 0;
     await prefs.setInt(countKey, prev + 1);
+    Logger.d(LogTags.boot, 'app launch count: ${prev + 1}');
 
     // 记录启动日期：读取现有串 → 追加今天（去重）→ 写回。
     const datesKey = 'app_launch_dates';

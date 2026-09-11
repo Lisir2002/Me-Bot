@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/api_keys.dart';
 import '../../../core/providers/model_provider.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_dialog.dart';
@@ -378,7 +379,14 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     final idx = list.indexWhere((e) => e.id == k.id);
     if (idx < 0) return;
     final removed = list.removeAt(idx);
-    await settings.setProviderConfig(widget.providerKey, old.copyWith(apiKeys: list));
+    try {
+      await settings.setProviderConfig(widget.providerKey, old.copyWith(apiKeys: list));
+      // 审计：删除单个 API Key（不含 key 明文）
+      CredentialAuditLogger.record('removeKey', 'provider:${widget.providerKey}');
+    } catch (e, st) {
+      CredentialAuditLogger.record('removeKey', 'provider:${widget.providerKey}', ok: false, error: e, stack: st);
+      rethrow;
+    }
     if (!mounted) return;
     showAppSnackBar(
       context,
@@ -415,7 +423,14 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
       showAppSnackBar(context, message: context.l10n.multiKeyPageDuplicateKeyWarning, type: NotificationType.warning);
       return;
     }
-    await _updateKey(updated);
+    try {
+      await _updateKey(updated);
+      // 审计：编辑 API Key 成功（不含 key 明文）
+      CredentialAuditLogger.record('updateKey', 'provider:${widget.providerKey}');
+    } catch (e, st) {
+      CredentialAuditLogger.record('updateKey', 'provider:${widget.providerKey}', ok: false, error: e, stack: st);
+      rethrow;
+    }
   }
 
   Future<void> _onAddKeys() async {
@@ -439,7 +454,14 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
       ...existing,
       for (final s in unique) ApiKeyConfig.create(s),
     ];
-    await settings.setProviderConfig(widget.providerKey, cfg.copyWith(apiKeys: newKeys, multiKeyEnabled: true));
+    // 审计：新增 API Key（target 仅用 providerKey，不含 key 明文）
+    try {
+      await settings.setProviderConfig(widget.providerKey, cfg.copyWith(apiKeys: newKeys, multiKeyEnabled: true));
+      CredentialAuditLogger.record('addKey', 'provider:${widget.providerKey}', detail: 'count=${unique.length}');
+    } catch (e, st) {
+      CredentialAuditLogger.record('addKey', 'provider:${widget.providerKey}', ok: false, detail: 'count=${unique.length}', error: e, stack: st);
+      rethrow;
+    }
     if (!mounted) return;
     showAppSnackBar(context, message: l10n.multiKeyPageImportedSnackbar(unique.length), type: NotificationType.success);
 
@@ -499,7 +521,14 @@ class _MultiKeyManagerPageState extends State<MultiKeyManagerPage> {
     );
     if (!ok) return;
     final remain = keys.where((e) => e.status != ApiKeyStatus.error).toList();
-    await settings.setProviderConfig(widget.providerKey, cfg.copyWith(apiKeys: remain));
+    try {
+      await settings.setProviderConfig(widget.providerKey, cfg.copyWith(apiKeys: remain));
+      // 审计：批量删除错误态 API Key（仅记数量，不含 key 明文）
+      CredentialAuditLogger.record('removeKey', 'provider:${widget.providerKey}', detail: 'batchError count=${errorKeys.length}');
+    } catch (e, st) {
+      CredentialAuditLogger.record('removeKey', 'provider:${widget.providerKey}', ok: false, detail: 'batchError count=${errorKeys.length}', error: e, stack: st);
+      rethrow;
+    }
     if (!mounted) return;
     showAppSnackBar(
       context,

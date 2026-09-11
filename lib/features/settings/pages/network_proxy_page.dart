@@ -9,6 +9,8 @@ import 'package:socks5_proxy/socks_client.dart' as socks;
 import '../../../l10n/build_context_l10n.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/ios_switch.dart';
@@ -62,10 +64,16 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
     _portCtl = TextEditingController(text: sp.globalProxyPort);
     _userCtl = TextEditingController(text: sp.globalProxyUsername);
     _passCtl = TextEditingController(text: sp.globalProxyPassword);
-    _hostFn.addListener(() { if (!_hostFn.hasFocus) sp.setGlobalProxyHost(_hostCtl.text); });
-    _portFn.addListener(() { if (!_portFn.hasFocus) sp.setGlobalProxyPort(_portCtl.text); });
-    _userFn.addListener(() { if (!_userFn.hasFocus) sp.setGlobalProxyUsername(_userCtl.text); });
-    _passFn.addListener(() { if (!_passFn.hasFocus) sp.setGlobalProxyPassword(_passCtl.text); });
+    _hostFn.addListener(() { if (!_hostFn.hasFocus) { sp.setGlobalProxyHost(_hostCtl.text); _logProxyChanged('host'); } });
+    _portFn.addListener(() { if (!_portFn.hasFocus) { sp.setGlobalProxyPort(_portCtl.text); _logProxyChanged('port'); } });
+    _userFn.addListener(() { if (!_userFn.hasFocus) { sp.setGlobalProxyUsername(_userCtl.text); _logProxyChanged('username'); } });
+    _passFn.addListener(() { if (!_passFn.hasFocus) { sp.setGlobalProxyPassword(_passCtl.text); _logProxyChanged('password'); } });
+  }
+
+  /// 记录代理变更。出于安全考虑不打印密码，认证用户名仅在非空时记录非敏感部分。
+  void _logProxyChanged(String reason) {
+    Logger.i(LogTags.settings,
+        'proxy changed: reason=$reason type=$_type host=${_hostCtl.text.trim()} port=${_portCtl.text.trim()} enabled=$_enabled auth=${_userCtl.text.trim().isNotEmpty ? '[set]' : '[none]'}');
   }
 
   @override
@@ -116,6 +124,7 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
                     onChanged: (v) async {
                       setState(() => _enabled = v);
                       await context.read<SettingsProvider>().setGlobalProxyEnabled(v);
+                      _logProxyChanged('enabled');
                     },
                   ),
                 ],
@@ -130,6 +139,7 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
                   if (v == null) return;
                   setState(() => _type = v);
                   await context.read<SettingsProvider>().setGlobalProxyType(v);
+                  _logProxyChanged('type');
                 },
               ),
             ),
@@ -241,7 +251,7 @@ class _NetworkProxyPageState extends State<NetworkProxyPage> {
                 username: user.isNotEmpty ? user : null, password: pass),
           ];
           socks.SocksTCPClient.assignToHttpClient(io, proxies);
-        } catch (_) {}
+        } catch (e, st) { Logger.w(LogTags.settings, 'SOCKS5 proxy setup failed', e, st); }
       } else {
         io.findProxy = (_) => 'PROXY $host:$port';
         if (user.isNotEmpty) {

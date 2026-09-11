@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
 import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/app_dialog.dart';
@@ -52,6 +53,12 @@ class StorageMediaPage extends StatefulWidget {
 }
 
 class _StorageMediaPageState extends State<StorageMediaPage> {
+  @override
+  void initState() {
+    super.initState();
+    Logger.d(LogTags.storage, 'page init: media page (${widget.config.id})');
+  }
+
   StorageSource _source = StorageSource.all;
   bool _newest = true;
   bool _largest = false;
@@ -107,6 +114,7 @@ class _StorageMediaPageState extends State<StorageMediaPage> {
       if (ok != true || !mounted) return;
       await Provider.of<StorageProvider>(context, listen: false)
           .deletePaths(_selected.toList());
+      Logger.i(LogTags.storage, 'delete: ${_selected.length} media files removed');
       if (!mounted) return;
       setState(() => _selected.clear());
     } catch (e, s) {

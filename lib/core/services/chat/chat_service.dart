@@ -6,6 +6,8 @@ import '../../models/chat_message.dart';
 import '../../models/conversation.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../utils/app_directories.dart';
+import '../logging/logger.dart';
+import '../logging/log_tags.dart';
 
 class ChatService extends ChangeNotifier {
   static const String _conversationsBoxName = 'conversations';
@@ -125,68 +127,81 @@ class ChatService extends ChangeNotifier {
 
   Future<void> deleteConversation(String id) async {
     if (!_initialized) return;
+    Logger.i(LogTags.chat, 'deleteConversation begin id=$id');
 
-    // If it's a draft and never persisted, just drop it.
-    if (_draftConversations.containsKey(id)) {
-      _draftConversations.remove(id);
+    try {
+      // If it's a draft and never persisted, just drop it.
+      if (_draftConversations.containsKey(id)) {
+        _draftConversations.remove(id);
+        if (_currentConversationId == id) {
+          _currentConversationId = null;
+        }
+        notifyListeners();
+        Logger.i(LogTags.chat, 'deleteConversation ok(draft) id=$id');
+        return;
+      }
+
+      final conversation = _conversationsBox.get(id);
+      if (conversation == null) {
+        Logger.d(LogTags.chat, 'deleteConversation skip(not found) id=$id');
+        return;
+      }
+
+      // Collect local file paths referenced by messages in this conversation
+      final Set<String> pathsToMaybeDelete = <String>{};
+      for (final messageId in conversation.messageIds) {
+        final message = _messagesBox.get(messageId);
+        if (message == null) continue;
+        final content = message.content;
+        // [image:/abs/path]
+        final imgRe = RegExp(r"\[image:(.+?)\]");
+        for (final m in imgRe.allMatches(content)) {
+          final pth = m.group(1)?.trim();
+          if (pth != null && pth.isNotEmpty && !pth.startsWith('http') && !pth.startsWith('data:')) {
+            pathsToMaybeDelete.add(pth);
+          }
+        }
+        // [file:/abs/path|filename|mime]
+        final fileRe = RegExp(r"\[file:(.+?)\|(.+?)\|(.+?)\]");
+        for (final m in fileRe.allMatches(content)) {
+          final pth = m.group(1)?.trim();
+          if (pth != null && pth.isNotEmpty && !pth.startsWith('http') && !pth.startsWith('data:')) {
+            pathsToMaybeDelete.add(pth);
+          }
+        }
+      }
+
+      // Delete all messages
+      for (final messageId in conversation.messageIds) {
+        final msg = _messagesBox.get(messageId);
+        if (msg != null && msg.role == 'assistant') {
+          try { await _toolEventsBox.delete(msg.id); } catch (e, st) {
+            Logger.d(LogTags.chat, 'deleteConversation toolEvents cleanup failed msgId=${msg.id}', e, st);
+          }
+        }
+        await _messagesBox.delete(messageId);
+      }
+
+      // Delete conversation
+      await _conversationsBox.delete(id);
+
+      // Remove cached messages
+      // Clear cache
+      _messagesCache.remove(id);
+
+      // Delete orphaned files (not referenced by any remaining conversation)
+      await _cleanupOrphanUploads();
+
       if (_currentConversationId == id) {
         _currentConversationId = null;
       }
+
       notifyListeners();
-      return;
+      Logger.i(LogTags.chat, 'deleteConversation ok id=$id msgs=${conversation.messageIds.length} files=${pathsToMaybeDelete.length}');
+    } catch (e, st) {
+      Logger.e(LogTags.chat, 'deleteConversation failed id=$id', e, st);
+      rethrow;
     }
-
-    final conversation = _conversationsBox.get(id);
-    if (conversation == null) return;
-
-    // Collect local file paths referenced by messages in this conversation
-    final Set<String> pathsToMaybeDelete = <String>{};
-    for (final messageId in conversation.messageIds) {
-      final message = _messagesBox.get(messageId);
-      if (message == null) continue;
-      final content = message.content;
-      // [image:/abs/path]
-      final imgRe = RegExp(r"\[image:(.+?)\]");
-      for (final m in imgRe.allMatches(content)) {
-        final pth = m.group(1)?.trim();
-        if (pth != null && pth.isNotEmpty && !pth.startsWith('http') && !pth.startsWith('data:')) {
-          pathsToMaybeDelete.add(pth);
-        }
-      }
-      // [file:/abs/path|filename|mime]
-      final fileRe = RegExp(r"\[file:(.+?)\|(.+?)\|(.+?)\]");
-      for (final m in fileRe.allMatches(content)) {
-        final pth = m.group(1)?.trim();
-        if (pth != null && pth.isNotEmpty && !pth.startsWith('http') && !pth.startsWith('data:')) {
-          pathsToMaybeDelete.add(pth);
-        }
-      }
-    }
-
-    // Delete all messages
-    for (final messageId in conversation.messageIds) {
-      final msg = _messagesBox.get(messageId);
-      if (msg != null && msg.role == 'assistant') {
-        try { await _toolEventsBox.delete(msg.id); } catch (_) {}
-      }
-      await _messagesBox.delete(messageId);
-    }
-
-    // Delete conversation
-    await _conversationsBox.delete(id);
-
-    // Remove cached messages
-    // Clear cache
-    _messagesCache.remove(id);
-
-    // Delete orphaned files (not referenced by any remaining conversation)
-    await _cleanupOrphanUploads();
-
-    if (_currentConversationId == id) {
-      _currentConversationId = null;
-    }
-
-    notifyListeners();
   }
 
   Set<String> _extractAttachmentPaths(String content) {
@@ -756,31 +771,43 @@ class ChatService extends ChangeNotifier {
 
   Future<void> deleteMessage(String messageId) async {
     if (!_initialized) return;
+    Logger.i(LogTags.chat, 'deleteMessage begin messageId=$messageId');
 
-    final message = _messagesBox.get(messageId);
-    if (message == null) return;
+    try {
+      final message = _messagesBox.get(messageId);
+      if (message == null) {
+        Logger.d(LogTags.chat, 'deleteMessage skip(not found) messageId=$messageId');
+        return;
+      }
 
-    final conversation = _conversationsBox.get(message.conversationId);
-    if (conversation != null) {
-      conversation.messageIds.remove(messageId);
-      await conversation.save();
+      final conversation = _conversationsBox.get(message.conversationId);
+      if (conversation != null) {
+        conversation.messageIds.remove(messageId);
+        await conversation.save();
+      }
+
+      await _messagesBox.delete(messageId);
+      // Remove any tool events linked to this assistant message
+      if (message.role == 'assistant') {
+        try { await _toolEventsBox.delete(message.id); } catch (e, st) {
+          Logger.d(LogTags.chat, 'deleteMessage toolEvents cleanup failed messageId=$messageId', e, st);
+        }
+      }
+
+      // Update cache
+      if (_messagesCache.containsKey(message.conversationId)) {
+        _messagesCache[message.conversationId]!.removeWhere((m) => m.id == messageId);
+      }
+
+      // Clean up orphaned upload files that are no longer referenced by any message
+      await _cleanupOrphanUploads();
+
+      notifyListeners();
+      Logger.i(LogTags.chat, 'deleteMessage ok messageId=$messageId role=${message.role}');
+    } catch (e, st) {
+      Logger.e(LogTags.chat, 'deleteMessage failed messageId=$messageId', e, st);
+      rethrow;
     }
-
-    await _messagesBox.delete(messageId);
-    // Remove any tool events linked to this assistant message
-    if (message.role == 'assistant') {
-      try { await _toolEventsBox.delete(message.id); } catch (_) {}
-    }
-
-    // Update cache
-    if (_messagesCache.containsKey(message.conversationId)) {
-      _messagesCache[message.conversationId]!.removeWhere((m) => m.id == messageId);
-    }
-
-    // Clean up orphaned upload files that are no longer referenced by any message
-    await _cleanupOrphanUploads();
-
-    notifyListeners();
   }
 
   void setCurrentConversation(String? id) {

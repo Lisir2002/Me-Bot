@@ -9,6 +9,7 @@ import '../services/mcp/minime_code/minime_code_server.dart';
 import '../services/mcp/minime_data/minime_data_server.dart';
 import '../services/logging/logger.dart';
 import '../services/logging/log_tags.dart';
+import '../services/logging/log_context.dart';
 import '../services/security/mcp_command_policy.dart';
 import '../services/security/policy_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -722,6 +723,18 @@ class McpProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    // 连接链路接入 traceId：本次连接流程内的所有日志自动带 traceId
+    final traceId = 'mcp-conn-${LogContext.shortId()}';
+    Logger.i(LogTags.mcp,
+        'connect: begin server=${server.name} id=$id transport=${server.transport}');
+    await LogContext.zone(
+      traceId: traceId,
+      fn: () => _connectInner(id, server),
+    );
+  }
+
+  /// 实际连接流程（由 [connect] 用 traceId zone 包裹调用）。
+  Future<void> _connectInner(String id, McpServerConfig server) async {
     _status[id] = McpStatus.connecting;
     _errors.remove(id);
     notifyListeners();
@@ -755,6 +768,7 @@ class McpProvider extends ChangeNotifier {
         _status[id] = McpStatus.connected;
         _errors.remove(id);
         notifyListeners();
+        Logger.i(LogTags.mcp, 'connect: OK server=${server.name} id=$id transport=inmemory');
         await refreshTools(id);
         _startHeartbeat(id);
         return;
@@ -810,14 +824,15 @@ class McpProvider extends ChangeNotifier {
       _status[id] = McpStatus.connected;
       _errors.remove(id);
       notifyListeners();
+      Logger.i(LogTags.mcp, 'connect: OK server=${server.name} id=$id');
 
       // Try to refresh tools once connected
       await refreshTools(id);
 
       // Start/refresh heartbeat for this connection
       _startHeartbeat(id);
-    } catch (e) {
-      // _logMcpException('connect', serverId: id, error: e, stack: st);
+    } catch (e, st) {
+      Logger.w(LogTags.mcp, 'connect: failed server=${server.name} id=$id', e, st);
       _status[id] = McpStatus.error;
       _errors[id] = e.toString();
       notifyListeners();
@@ -843,16 +858,26 @@ class McpProvider extends ChangeNotifier {
   }
 
   Future<void> disconnect(String id) async {
+    // 断开链路同样接入 traceId，便于和连接日志对齐排查
+    await LogContext.zone(
+      traceId: 'mcp-conn-${LogContext.shortId()}',
+      fn: () => _disconnectInner(id),
+    );
+  }
+
+  Future<void> _disconnectInner(String id) async {
+    Logger.d(LogTags.mcp, 'disconnect: begin id=$id');
     final client = _clients.remove(id);
     try {
       client?.disconnect();
-    } catch (e) {
-      // _logMcpException('disconnect', serverId: id, error: e, stack: st);
+    } catch (e, st) {
+      Logger.w(LogTags.mcp, 'disconnect: error id=$id', e, st);
     }
     _status[id] = McpStatus.idle;
     _errors.remove(id);
     _stopHeartbeat(id);
     notifyListeners();
+    Logger.d(LogTags.mcp, 'disconnect: done id=$id');
   }
 
   Future<void> reconnect(String id) async {

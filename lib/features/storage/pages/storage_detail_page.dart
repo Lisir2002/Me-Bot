@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/storage.dart';
 import '../../../core/providers/storage_provider.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/build_context_l10n.dart';
@@ -38,12 +40,14 @@ class _StorageDetailPageState extends State<StorageDetailPage> {
   @override
   void initState() {
     super.initState();
+    Logger.d(LogTags.storage, 'page init: detail page (${widget.config.id})');
     _loadRoot();
   }
 
   Future<void> _loadRoot() async {
     final dir = await AppDirectories.getAppDataDirectory();
     if (!mounted) return;
+    Logger.d(LogTags.storage, 'detail page root: ${dir.path}');
     setState(() => _rootPath = dir.path);
   }
 

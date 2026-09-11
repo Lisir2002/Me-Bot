@@ -25,6 +25,9 @@ import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
+import '../../../core/services/security/credential_audit_logger.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/markdown_with_highlight.dart';
@@ -176,7 +179,7 @@ Future<File?> _renderAndSaveMessageImage(
   try {
     final codes = extractMermaidCodes(message.content);
     await preRenderMermaidCodesForExport(context, codes);
-  } catch (_) {}
+  } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: mermaid pre-render failed', e, st); }
 
   final content = ExportCaptureScope(
     enabled: true,
@@ -199,7 +202,7 @@ Rect _shareAnchorRect(BuildContext context) {
       final offset = box.localToGlobal(Offset.zero);
       return offset & box.size;
     }
-  } catch (_) {}
+  } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: findRenderObject for share anchor', e, st); }
   final size = MediaQuery.of(context).size;
   final center = Offset(size.width / 2, size.height / 2);
   return Rect.fromCenter(center: center, width: 1, height: 1);
@@ -222,7 +225,7 @@ Future<File?> _renderAndSaveChatImage(
         .expand((e) => e)
         .toList();
     await preRenderMermaidCodesForExport(context, codes);
-  } catch (_) {}
+  } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: mermaid pre-render failed', e, st); }
 
   final content = ExportCaptureScope(
     enabled: true,
@@ -1149,6 +1152,8 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
           return;
         }
         if (mounted) {
+          // P2-26：文件导出操作记普通日志（tag=Chat）
+          Logger.i(LogTags.chat, 'Export conversation markdown to file: ${p.basename(savePath)}');
           showAppSnackBar(
             context,
             message: l10n.messageExportSheetExportedAs(p.basename(savePath)),
@@ -1160,6 +1165,8 @@ class _BatchExportSheetState extends State<_BatchExportSheet> {
         final tmp = await getTemporaryDirectory();
         final file = File('${tmp.path}/$filename');
         await file.writeAsString(buf.toString());
+        // 审计：系统分享聊天导出（仅记文件名/范围，不含对话内容）
+        CredentialAuditLogger.record('share', 'chat:export', detail: 'scope=conversation file=$filename');
         await Share.shareXFiles(
           [XFile(file.path, mimeType: 'text/markdown', name: filename)],
           text: title,
@@ -1409,6 +1416,8 @@ class _ExportSheetState extends State<_ExportSheet> {
         if (savePath != null) {
           await File(savePath).parent.create(recursive: true);
           await File(savePath).writeAsString(buf.toString());
+          // P2-26：文件导出操作记普通日志（tag=Chat）
+          Logger.i(LogTags.chat, 'Export message markdown to file: ${p.basename(savePath)}');
           if (mounted) {
             final l10n = context.l10n;
             showAppSnackBar(
@@ -1423,6 +1432,8 @@ class _ExportSheetState extends State<_ExportSheet> {
         final tmp = await getTemporaryDirectory();
         final file = File('${tmp.path}/$filename');
         await file.writeAsString(buf.toString());
+        // 审计：系统分享单条消息导出（仅记文件名/范围，不含消息内容）
+        CredentialAuditLogger.record('share', 'chat:export', detail: 'scope=message file=$filename');
         await Share.shareXFiles(
           [XFile(file.path, mimeType: 'text/markdown', name: filename)],
           text: title,
@@ -1640,14 +1651,14 @@ class _ExportedMessageCard extends StatelessWidget {
                   ))
               .toList();
         }
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: deserialize tool parts', e, st); }
 
       // Check if message has reasoningSegmentsJson (multiple thinking segments with toolStartIndex)
       if (message.reasoningSegmentsJson != null && message.reasoningSegmentsJson!.isNotEmpty) {
         try {
           final segments = _deserializeReasoningSegments(message.reasoningSegmentsJson!);
           reasoningSegments = segments;
-        } catch (_) {}
+        } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: deserialize reasoning segments', e, st); }
       }
 
       // If no segments, fall back to extracting from content or reasoningText
@@ -1806,7 +1817,7 @@ class _ExportedMessageCard extends StatelessWidget {
       if (decoded is List) {
         return decoded.cast<Map<String, dynamic>>();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: deserialize reasoning segments', e, st); }
     return [];
   }
 }
@@ -1920,14 +1931,14 @@ class _ExportedBubble extends StatelessWidget {
                   ))
               .toList();
         }
-      } catch (_) {}
+      } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: deserialize tool parts', e, st); }
 
       // Check if message has reasoningSegmentsJson (multiple thinking segments with toolStartIndex)
       if (message.reasoningSegmentsJson != null && message.reasoningSegmentsJson!.isNotEmpty) {
         try {
           final segments = _deserializeReasoningSegments(message.reasoningSegmentsJson!);
           reasoningSegments = segments;
-        } catch (_) {}
+        } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: deserialize reasoning segments', e, st); }
       }
 
       // If no segments, fall back to extracting from content or reasoningText
@@ -2060,7 +2071,7 @@ class _ExportedBubble extends StatelessWidget {
       if (decoded is List) {
         return decoded.cast<Map<String, dynamic>>();
       }
-    } catch (_) {}
+    } catch (e, st) { Logger.d(LogTags.chat, 'intentionally ignored: deserialize reasoning segments', e, st); }
     return [];
   }
 }

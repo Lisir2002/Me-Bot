@@ -12,6 +12,7 @@ import '../../services/api_key_manager.dart';
 import '../logging/logger.dart';
 import '../logging/api_logger.dart';
 import '../logging/log_tags.dart';
+import '../logging/log_context.dart';
 import 'package:minime_core/secrets/fallback.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
@@ -277,63 +278,108 @@ class ChatApiService {
     Future<String> Function(String name, Map<String, dynamic> args)? onToolCall,
     Map<String, String>? extraHeaders,
     Map<String, dynamic>? extraBody,
-  }) async* {
-    final kind = ProviderConfig.classify(config.id, explicitType: config.providerType);
-    final client = _clientFor(config);
+  }) {
+    // 为本次发送生成链路 traceId，用 LogContext.zone 包裹整个发送流程（含 API 调用），
+    // 使 ApiLogger 日志自动带上 traceId，便于在日志查看器中串联一次对话请求。
+    final traceId = 'chat-${LogContext.shortId()}';
+    Logger.d(LogTags.chat,
+        'send begin model=$modelId provider=${config.id} msgs=${messages.length} traceId=$traceId');
 
-    try {
-      if (kind == ProviderKind.openai) {
-        yield* _sendOpenAIStream(
-          client,
-          config,
-          modelId,
-          messages,
-          userImagePaths: userImagePaths,
-          thinkingBudget: thinkingBudget,
-          temperature: temperature,
-          topP: topP,
-          maxTokens: maxTokens,
-          tools: tools,
-          onToolCall: onToolCall,
-          extraHeaders: extraHeaders,
-          extraBody: extraBody,
+    late final StreamController<ChatStreamChunk> controller;
+    var cancelled = false;
+
+    controller = StreamController<ChatStreamChunk>(
+      onListen: () {
+        LogContext.zone(
+          traceId: traceId,
+          context: {'model': modelId, 'provider': config.id},
+          fn: () async {
+            final kind =
+                ProviderConfig.classify(config.id, explicitType: config.providerType);
+            final client = _clientFor(config);
+            try {
+              Stream<ChatStreamChunk>? inner;
+              if (kind == ProviderKind.openai) {
+                inner = _sendOpenAIStream(
+                  client,
+                  config,
+                  modelId,
+                  messages,
+                  userImagePaths: userImagePaths,
+                  thinkingBudget: thinkingBudget,
+                  temperature: temperature,
+                  topP: topP,
+                  maxTokens: maxTokens,
+                  tools: tools,
+                  onToolCall: onToolCall,
+                  extraHeaders: extraHeaders,
+                  extraBody: extraBody,
+                );
+              } else if (kind == ProviderKind.claude) {
+                inner = _sendClaudeStream(
+                  client,
+                  config,
+                  modelId,
+                  messages,
+                  userImagePaths: userImagePaths,
+                  thinkingBudget: thinkingBudget,
+                  temperature: temperature,
+                  topP: topP,
+                  maxTokens: maxTokens,
+                  tools: tools,
+                  onToolCall: onToolCall,
+                  extraHeaders: extraHeaders,
+                  extraBody: extraBody,
+                );
+              } else if (kind == ProviderKind.google) {
+                inner = _sendGoogleStream(
+                  client,
+                  config,
+                  modelId,
+                  messages,
+                  userImagePaths: userImagePaths,
+                  thinkingBudget: thinkingBudget,
+                  temperature: temperature,
+                  topP: topP,
+                  maxTokens: maxTokens,
+                  tools: tools,
+                  onToolCall: onToolCall,
+                  extraHeaders: extraHeaders,
+                  extraBody: extraBody,
+                );
+              }
+
+              if (inner == null) {
+                Logger.w(LogTags.chat,
+                    'send unknown provider kind=$kind traceId=$traceId');
+                if (!cancelled) controller.close();
+                return;
+              }
+
+              await for (final chunk in inner) {
+                if (cancelled) break;
+                controller.add(chunk);
+              }
+              if (cancelled) return;
+              Logger.d(LogTags.chat, 'send done traceId=$traceId');
+              controller.close();
+            } catch (e, st) {
+              if (cancelled) return;
+              Logger.e(LogTags.chat, 'send failed traceId=$traceId', e, st);
+              controller.addError(e, st);
+              controller.close();
+            } finally {
+              client.close();
+            }
+          },
         );
-      } else if (kind == ProviderKind.claude) {
-        yield* _sendClaudeStream(
-          client,
-          config,
-          modelId,
-          messages,
-          userImagePaths: userImagePaths,
-          thinkingBudget: thinkingBudget,
-          temperature: temperature,
-          topP: topP,
-          maxTokens: maxTokens,
-          tools: tools,
-          onToolCall: onToolCall,
-          extraHeaders: extraHeaders,
-          extraBody: extraBody,
-        );
-      } else if (kind == ProviderKind.google) {
-        yield* _sendGoogleStream(
-          client,
-          config,
-          modelId,
-          messages,
-          userImagePaths: userImagePaths,
-          thinkingBudget: thinkingBudget,
-          temperature: temperature,
-          topP: topP,
-          maxTokens: maxTokens,
-          tools: tools,
-          onToolCall: onToolCall,
-          extraHeaders: extraHeaders,
-          extraBody: extraBody,
-        );
-      }
-    } finally {
-      client.close();
-    }
+      },
+      onCancel: () async {
+        cancelled = true;
+      },
+    );
+
+    return controller.stream;
   }
 
   // Non-streaming text generation for utilities like title summarization

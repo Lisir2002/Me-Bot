@@ -4,6 +4,7 @@ import '../../models/provider_credentials.dart';
 import '../../models/service_credentials.dart';
 import '../secure_storage/credential_keys.dart';
 import '../secure_storage/secure_storage_service.dart';
+import '../security/credential_audit_logger.dart';
 
 /// 备份导出 / 恢复时的凭证处理策略。
 enum BackupCredentialPolicy {
@@ -55,6 +56,12 @@ class BackupCredentialBridge {
         await _inject(out);
         break;
     }
+    // 审计：凭证是否随导出被注入（redacted=不含 / include|encrypted=含，不含明文）
+    CredentialAuditLogger.record(
+      'export',
+      'backup:credentialBridge',
+      detail: 'prepareForExport policy=$policy',
+    );
     return out;
   }
 
@@ -111,6 +118,12 @@ class BackupCredentialBridge {
     await _absorbWebDav(out);
     await _absorbProxy(out);
 
+    // 审计：从备份中抽取凭证写入安全存储（不含明文，仅记动作）
+    CredentialAuditLogger.record(
+      'restore',
+      'backup:credentialBridge',
+      detail: 'absorbOnRestore',
+    );
     return out;
   }
 

@@ -1,5 +1,8 @@
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../logging/logger.dart';
+import '../logging/log_tags.dart';
 import 'app_lock_gate.dart';
 
 /// local_auth 实现的身份校验器（预留接口⑤ 首个实现，PR-6）。
@@ -30,9 +33,22 @@ class LocalIdentityVerifier implements IdentityVerifier {
           stickyAuth: true,
         ),
       );
+      if (ok) {
+        Logger.i(LogTags.lock, 'biometric auth success');
+      } else {
+        Logger.w(LogTags.lock, 'biometric auth failed: reason=returned_false');
+      }
       return ok;
-    } catch (_) {
-      // 认证被系统取消 / 异常 → 视为未通过，不阻塞主流程由调用方决定
+    } on PlatformException catch (e) {
+      // 用户取消 / 系统取消 → debug 级，其他异常 → warn 级
+      if (e.code == 'user_cancelled' || e.code == 'auth_cancelled') {
+        Logger.d(LogTags.lock, 'biometric auth cancelled');
+      } else {
+        Logger.w(LogTags.lock, 'biometric auth failed: reason=${e.code}', e);
+      }
+      return false;
+    } catch (e) {
+      Logger.w(LogTags.lock, 'biometric auth failed: reason=unknown', e);
       return false;
     }
   }

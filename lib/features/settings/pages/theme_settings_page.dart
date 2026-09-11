@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../theme/palettes.dart';
 import '../../../l10n/build_context_l10n.dart';
@@ -92,7 +94,16 @@ class ThemeSettingsPage extends StatelessWidget {
                 context,
                 palette: ThemePalettes.all[i],
                 selected: settings.themePaletteId == ThemePalettes.all[i].id,
-                onTap: () => context.read<SettingsProvider>().setThemePalette(ThemePalettes.all[i].id),
+                onTap: () {
+                  final mode = settings.themeMode == ThemeMode.light
+                      ? 'light'
+                      : settings.themeMode == ThemeMode.dark
+                          ? 'dark'
+                          : 'system';
+                  Logger.i(LogTags.settings,
+                      'theme changed: mode=$mode palette=${ThemePalettes.all[i].id}');
+                  context.read<SettingsProvider>().setThemePalette(ThemePalettes.all[i].id);
+                },
               ),
               if (i != ThemePalettes.all.length - 1) const SettingsDivider(indent: AppGap.sm),
             ],

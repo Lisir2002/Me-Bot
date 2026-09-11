@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 
+import 'log_context.dart';
 import 'log_tags.dart';
 import 'logger.dart';
 
@@ -37,9 +38,14 @@ class ApiLogger {
   }) {
     final start = DateTime.now();
     final sid = sessionId ?? _shortId();
+    // 接入全局 traceId：在请求发生时快照下来，
+    // 即使后续 zone 已退出，logResponse/logError 仍能据此关联同一条调用链
+    final traceId = LogContext.traceId;
 
     final buf = StringBuffer();
-    buf.writeln('REQUEST $sid  [$provider/$model] $method $url');
+    buf.write('REQUEST $sid  [$provider/$model] $method $url');
+    if (traceId != null && traceId.isNotEmpty) buf.write(' (traceId=$traceId)');
+    buf.writeln();
     if (headers != null && headers.isNotEmpty) {
       buf.writeln('  headers: ${_redactMap(headers)}');
     }
@@ -48,6 +54,7 @@ class ApiLogger {
 
     return ApiRequest(
       sessionId: sid,
+      traceId: traceId,
       provider: provider,
       model: model,
       method: method,
@@ -65,8 +72,10 @@ class ApiLogger {
   }) {
     final elapsedMs = DateTime.now().difference(req.startedAt).inMilliseconds;
     final buf = StringBuffer();
-    buf.writeln('RESPONSE ${req.sessionId}  [$req.provider/${req.model}] '
+    buf.write('RESPONSE ${req.sessionId}  [$req.provider/${req.model}] '
         '${req.statusLabel} status=${statusCode ?? '-'} took=${elapsedMs}ms');
+    buf.write(_traceSuffix(req.traceId));
+    buf.writeln();
     if (rawSse != null) {
       buf.writeln('  raw SSE:\n${_truncate(_redactString(rawSse))}');
     } else {
@@ -85,8 +94,10 @@ class ApiLogger {
   }) {
     final elapsedMs = DateTime.now().difference(req.startedAt).inMilliseconds;
     final buf = StringBuffer();
-    buf.writeln('ERROR ${req.sessionId}  [${req.provider}/${req.model}] '
+    buf.write('ERROR ${req.sessionId}  [${req.provider}/${req.model}] '
         '${req.method} ${req.url} status=${statusCode ?? '-'} took=${elapsedMs}ms');
+    buf.write(_traceSuffix(req.traceId));
+    buf.writeln();
     if (message != null) buf.writeln('  message: $message');
     Logger.e(LogTags.apiErr, buf.toString(), error, stack);
   }
@@ -175,11 +186,18 @@ class ApiLogger {
     final t = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
     return t.substring(t.length - 6);
   }
+
+  /// 把 traceId 拼成消息后缀：traceId 为空时返回空串。
+  static String _traceSuffix(String? traceId) =>
+      (traceId != null && traceId.isNotEmpty) ? ' (traceId=$traceId)' : '';
 }
 
 /// 一次 API 请求的上下文句柄，用来把请求/响应/错误串起来。
 class ApiRequest {
   final String sessionId;
+
+  /// 请求发生时快照下来的 traceId（即便 zone 已退出也能关联调用链）。
+  final String? traceId;
   final String provider;
   final String model;
   final String method;
@@ -188,6 +206,7 @@ class ApiRequest {
 
   const ApiRequest({
     required this.sessionId,
+    this.traceId,
     required this.provider,
     required this.model,
     required this.method,

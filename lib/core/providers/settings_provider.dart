@@ -1012,6 +1012,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setAppLocale(Locale locale) async {
     final tag = _localeToTag(locale);
     if (_appLocaleTag == tag) return;
+    Logger.d(LogTags.settings, 'setting changed: key=locale value=$tag (was=$_appLocaleTag)');
     _appLocaleTag = tag;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
@@ -1020,6 +1021,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> setAppLocaleFollowSystem() async {
     if (_appLocaleTag == 'system') return;
+    Logger.d(LogTags.settings, 'setting changed: key=locale value=system (was=$_appLocaleTag)');
     _appLocaleTag = 'system';
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
@@ -1105,19 +1107,21 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    _themeMode = mode;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
     final v = mode == ThemeMode.light
         ? 'light'
         : mode == ThemeMode.dark
             ? 'dark'
             : 'system';
+    Logger.d(LogTags.settings, 'setting changed: key=themeMode value=$v');
+    _themeMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeModeKey, v);
   }
 
   Future<void> setThemePalette(String id) async {
     if (_themePaletteId == id) return;
+    Logger.d(LogTags.settings, 'setting changed: key=themePalette value=$id');
     _themePaletteId = id;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
@@ -1194,6 +1198,9 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> followSystem() => setThemeMode(ThemeMode.system);
 
   Future<void> setProviderConfig(String key, ProviderConfig config) async {
+    // 只记录 key 与类型，不落 baseUrl / API key 等敏感值
+    Logger.d(LogTags.settings,
+        'setting changed: key=providerConfig value=[upsert] id=$key type=${config.providerType}');
     _providerConfigs[key] = config;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
@@ -1206,6 +1213,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> removeProviderConfig(String key) async {
     if (!_providerConfigs.containsKey(key)) return;
+    Logger.d(LogTags.settings, 'setting changed: key=providerConfig value=[remove] id=$key');
     _providerConfigs.remove(key);
     // 同步清理该 provider 的凭证，避免安全存储里留下孤儿条目
     await _deleteProviderCredentials(key);
@@ -1268,6 +1276,8 @@ class SettingsProvider extends ChangeNotifier {
       ? '${_currentModelProvider!}::${_currentModelId!}'
       : null;
   Future<void> setCurrentModel(String providerKey, String modelId) async {
+    Logger.d(LogTags.settings,
+        'setting changed: key=currentModel value=$providerKey::$modelId');
     _currentModelProvider = providerKey;
     _currentModelId = modelId;
     notifyListeners();
@@ -1539,6 +1549,7 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
   Future<void> setChatFontScale(double scale) async {
     final s = scale.clamp(0.8, 1.5);
     if (_chatFontScale == s) return;
+    Logger.d(LogTags.settings, 'setting changed: key=chatFontScale value=$s (was=$_chatFontScale)');
     _chatFontScale = s;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
@@ -1746,6 +1757,8 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     if (_searchServiceSelected >= _searchServices.length) {
       _searchServiceSelected = _searchServices.isNotEmpty ? _searchServices.length - 1 : 0;
     }
+    Logger.i(LogTags.search,
+        'search services configured: count=${_searchServices.length} selected=$_searchServiceSelected');
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     final stripped = await _stripServiceCredentials(
@@ -1763,7 +1776,12 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
   }
 
   Future<void> setSearchServiceSelected(int index) async {
+    final oldIndex = _searchServiceSelected;
     _searchServiceSelected = index.clamp(0, _searchServices.isNotEmpty ? _searchServices.length - 1 : 0);
+    if (oldIndex != _searchServiceSelected) {
+      Logger.i(LogTags.search,
+          'search provider changed: $oldIndex -> $_searchServiceSelected');
+    }
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_searchSelectedKey, _searchServiceSelected);

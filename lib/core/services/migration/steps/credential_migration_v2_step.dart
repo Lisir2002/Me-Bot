@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../models/service_credentials.dart';
+import '../../security/credential_audit_logger.dart';
 import '../../secure_storage/credential_keys.dart';
 import '../migration_context.dart';
 import '../migration_step.dart';
@@ -57,8 +58,23 @@ class CredentialMigrationV2Step extends MigrationStep {
 
   @override
   Future<void> run(MigrationContext ctx) async {
-    await _migrateServices(ctx, CredentialKeys.legacySearchServices);
-    await _migrateServices(ctx, CredentialKeys.legacyTtsServices);
+    // 审计：迁移开始（仅记录阶段，不含凭证明文）
+    CredentialAuditLogger.record('migrate', 'migration:v2', detail: 'start');
+    try {
+      await _migrateServices(ctx, CredentialKeys.legacySearchServices);
+      await _migrateServices(ctx, CredentialKeys.legacyTtsServices);
+      CredentialAuditLogger.record('migrate', 'migration:v2');
+    } catch (e, st) {
+      // 审计：迁移失败
+      CredentialAuditLogger.record(
+        'migrate',
+        'migration:v2',
+        ok: false,
+        error: e,
+        stack: st,
+      );
+      rethrow;
+    }
   }
 
   Future<void> _migrateServices(MigrationContext ctx, String key) async {

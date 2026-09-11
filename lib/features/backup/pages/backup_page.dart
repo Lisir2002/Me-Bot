@@ -47,6 +47,8 @@ import '../../../core/services/backup/credential_bridge.dart';
 import '../../../core/services/security/app_lock_gate.dart';
 import '../../../core/services/security/app_lock_service.dart';
 import '../../../core/services/security/credential_audit_logger.dart';
+import '../../../core/services/logging/logger.dart';
+import '../../../core/services/logging/log_tags.dart';
 import '../../../utils/app_directories.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -559,22 +561,30 @@ class _BackupPageState extends State<BackupPage> {
                         items: _remote,
                         loading: _loadingRemote,
                         onDelete: (item) async {
-                          final list = await vm.deleteAndReload(item);
-                          // 按时间倒序排列（最新的在前）
-                          list.sort((a, b) {
-                            // 优先使用 lastModified
-                            if (a.lastModified != null && b.lastModified != null) {
-                              return b.lastModified!.compareTo(a.lastModified!);
-                            }
-                            // 如果都没有 lastModified，按文件名倒序（文件名通常包含时间戳）
-                            if (a.lastModified == null && b.lastModified == null) {
-                              return b.displayName.compareTo(a.displayName);
-                            }
-                            // 有 lastModified 的排在前面
-                            if (a.lastModified == null) return 1;
-                            return -1;
-                          });
-                          setState(() => _remote = list);
+                          // 审计：删除远程备份开始
+                          CredentialAuditLogger.record('delete', 'backup:delete', detail: 'ui start');
+                          try {
+                            final list = await vm.deleteAndReload(item);
+                            // 按时间倒序排列（最新的在前）
+                            list.sort((a, b) {
+                              // 优先使用 lastModified
+                              if (a.lastModified != null && b.lastModified != null) {
+                                return b.lastModified!.compareTo(a.lastModified!);
+                              }
+                              // 如果都没有 lastModified，按文件名倒序（文件名通常包含时间戳）
+                              if (a.lastModified == null && b.lastModified == null) {
+                                return b.displayName.compareTo(a.displayName);
+                              }
+                              // 有 lastModified 的排在前面
+                              if (a.lastModified == null) return 1;
+                              return -1;
+                            });
+                            setState(() => _remote = list);
+                            CredentialAuditLogger.record('delete', 'backup:delete', detail: 'ui');
+                          } catch (e, st) {
+                            CredentialAuditLogger.record('delete', 'backup:delete', ok: false, error: e, stack: st);
+                            rethrow;
+                          }
                         },
                         onRestore: (item) async {
                           Navigator.of(context).pop();
@@ -584,6 +594,8 @@ class _BackupPageState extends State<BackupPage> {
 
                           if (mode == null) return;
 
+                          // 审计：从远程恢复开始
+                          CredentialAuditLogger.record('restore', 'backup:restore', detail: 'ui start mode=$mode');
                           final ok = await _restoreEncryptedAware(
                             context,
                             (p) => _runWithImportingOverlay(
@@ -591,7 +603,11 @@ class _BackupPageState extends State<BackupPage> {
                               () => vm.restoreFromItem(item, mode: mode, passphrase: p),
                             ),
                           );
-                          if (!mounted || !ok) return;
+                          if (!mounted || !ok) {
+                            CredentialAuditLogger.record('restore', 'backup:restore', ok: false, detail: 'ui');
+                            return;
+                          }
+                          CredentialAuditLogger.record('restore', 'backup:restore', detail: 'ui');
                           await AppDialog.alert(
                             context,
                             title: l10n.backupPageRestartRequired,
@@ -608,9 +624,20 @@ class _BackupPageState extends State<BackupPage> {
                   icon: Lucide.Upload,
                   label: l10n.backupPageBackupNow,
                   onTap: vm.busy ? null : () async {
+                    // 审计：WebDAV 立即备份开始
+                    CredentialAuditLogger.record('export', 'backup:export', detail: 'webdav ui start');
                     await _runWithExportingOverlay(context, () => vm.backup());
                     if (!mounted) return;
                     final rawMessage = vm.message;
+                    // Provider 成功时把 _message 置为 'Backup uploaded'，失败时置为错误串
+                    final ok = rawMessage == 'Backup uploaded';
+                    CredentialAuditLogger.record(
+                      'export',
+                      'backup:export',
+                      ok: ok,
+                      detail: 'webdav ui',
+                      error: ok ? null : rawMessage,
+                    );
                     final message = rawMessage ?? l10n.backupPageBackupUploaded;
                     showAppSnackBar(
                       context,
@@ -653,6 +680,8 @@ class _BackupPageState extends State<BackupPage> {
                     final mode = await _chooseImportModeDialog(context);
                     if (mode == null) return;
 
+                    // 审计：Cherry Studio 导入开始（仅记 mode，不含凭证）
+                    CredentialAuditLogger.record('import', 'backup:import', detail: 'cherry ui start mode=$mode');
                     await _runWithImportingOverlay(context, () async {
                       try {
                         final settings = context.read<SettingsProvider>();
@@ -666,6 +695,7 @@ class _BackupPageState extends State<BackupPage> {
                           chatService: cs,
                         );
                         if (!mounted) return;
+                        CredentialAuditLogger.record('import', 'backup:import', detail: 'cherry ui');
                         await AppDialog.alert(
                           context,
                           title: l10n.backupPageRestartRequired,
@@ -679,8 +709,9 @@ class _BackupPageState extends State<BackupPage> {
                               ' • Files: ${res.files}\n\n'
                               '${l10n.backupPageRestartContent}',
                         );
-                      } catch (e) {
+                      } catch (e, st) {
                         if (!mounted) return;
+                        CredentialAuditLogger.record('import', 'backup:import', ok: false, detail: 'cherry ui', error: e, stack: st);
                         showAppSnackBar(
                           context,
                           message: e.toString(),
@@ -706,30 +737,40 @@ class _BackupPageState extends State<BackupPage> {
       passphrase = await _promptPassphrase(context, confirm: true);
       if (passphrase == null) return;
     }
-    final file = await _runWithExportingOverlay(
-      context,
-      () => vm.exportToFile(policy: policy, passphrase: passphrase),
-    );
-    if (!mounted) return;
+    // 审计：本地文件导出开始（policy 仅描述是否含凭证，不含明文）
+    CredentialAuditLogger.record('export', 'backup:export', detail: 'local ui start policy=$policy');
+    try {
+      final file = await _runWithExportingOverlay(
+        context,
+        () => vm.exportToFile(policy: policy, passphrase: passphrase),
+      );
+      if (!mounted) return;
 
-    // iPad: anchor popover to the overlay's center
-    Rect rect;
-    final overlay = Overlay.of(context);
-    final ro = overlay.context.findRenderObject();
-    if (ro is RenderBox && ro.hasSize) {
-      final center = ro.size.center(Offset.zero);
-      final global = ro.localToGlobal(center);
-      rect = Rect.fromCenter(center: global, width: 1, height: 1);
-    } else {
-      final size = MediaQuery.of(context).size;
-      rect = Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: 1, height: 1);
+      // iPad: anchor popover to the overlay's center
+      Rect rect;
+      final overlay = Overlay.of(context);
+      final ro = overlay.context.findRenderObject();
+      if (ro is RenderBox && ro.hasSize) {
+        final center = ro.size.center(Offset.zero);
+        final global = ro.localToGlobal(center);
+        rect = Rect.fromCenter(center: global, width: 1, height: 1);
+      } else {
+        final size = MediaQuery.of(context).size;
+        rect = Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: 1, height: 1);
+      }
+
+      await Future.delayed(const Duration(milliseconds: 50));
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        sharePositionOrigin: rect,
+      );
+      // 审计：本地导出并分享成功
+      CredentialAuditLogger.record('export', 'backup:export', detail: 'local ui shared');
+    } catch (e, st) {
+      if (!mounted) return;
+      CredentialAuditLogger.record('export', 'backup:export', ok: false, detail: 'local ui', error: e, stack: st);
+      _showError(context, e.toString());
     }
-
-    await Future.delayed(const Duration(milliseconds: 50));
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      sharePositionOrigin: rect,
-    );
   }
 
   Future<void> _doImportLocal(BuildContext context, BackupProvider vm) async {
@@ -743,6 +784,8 @@ class _BackupPageState extends State<BackupPage> {
 
     if (mode == null) return;
 
+    // 审计：本地文件导入开始（仅记 mode，不含凭证/文件内容）
+    CredentialAuditLogger.record('import', 'backup:import', detail: 'local ui start mode=$mode');
     final ok = await _restoreEncryptedAware(
       context,
       (p) => _runWithImportingOverlay(
@@ -750,7 +793,11 @@ class _BackupPageState extends State<BackupPage> {
         () => vm.restoreFromLocalFile(File(path), mode: mode, passphrase: p),
       ),
     );
-    if (!mounted || !ok) return;
+    if (!mounted || !ok) {
+      CredentialAuditLogger.record('import', 'backup:import', ok: false, detail: 'local ui');
+      return;
+    }
+    CredentialAuditLogger.record('import', 'backup:import', detail: 'local ui');
     await AppDialog.alert(
       context,
       title: l10n.backupPageRestartRequired,
@@ -875,7 +922,7 @@ class _SnapshotNavRowState extends State<_SnapshotNavRow> {
           count += 1;
           try {
             bytes += ent.statSync().size;
-          } catch (_) {}
+          } catch (e, st) { Logger.d(LogTags.backup, 'intentionally ignored: statSync failed for ${ent.path}', e, st); }
         }
       }
     }

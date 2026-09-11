@@ -15,6 +15,7 @@ import '../../models/chat_message.dart';
 import '../../models/conversation.dart';
 import '../chat/chat_service.dart';
 import '../secure_storage/secure_storage_bootstrap.dart';
+import '../security/credential_audit_logger.dart';
 import '../../../utils/app_directories.dart';
 import 'credential_bridge.dart';
 import 'backup_encryptor.dart';
@@ -208,20 +209,28 @@ class DataSync {
     BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
     String? passphrase,
   }) async {
-    final file = await prepareBackupFile(
-      cfg,
-      policy: policy,
-      passphrase: passphrase,
-    );
-    await _ensureCollection(cfg);
-    final target = _fileUri(cfg, p.basename(file.path));
-    final bytes = await file.readAsBytes();
-    final res = await http.put(target, headers: {
-      'content-type': 'application/zip',
-      ..._authHeaders(cfg),
-    }, body: bytes);
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('Upload failed: ${res.statusCode}');
+    // 审计：WebDAV 导出开始（policy 仅描述是否含凭证，不含明文）
+    CredentialAuditLogger.record('export', 'backup:export', detail: 'webdav start policy=$policy');
+    try {
+      final file = await prepareBackupFile(
+        cfg,
+        policy: policy,
+        passphrase: passphrase,
+      );
+      await _ensureCollection(cfg);
+      final target = _fileUri(cfg, p.basename(file.path));
+      final bytes = await file.readAsBytes();
+      final res = await http.put(target, headers: {
+        'content-type': 'application/zip',
+        ..._authHeaders(cfg),
+      }, body: bytes);
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        throw Exception('Upload failed: ${res.statusCode}');
+      }
+      CredentialAuditLogger.record('export', 'backup:export', detail: 'webdav');
+    } catch (e, st) {
+      CredentialAuditLogger.record('export', 'backup:export', ok: false, detail: 'webdav', error: e, stack: st);
+      rethrow;
     }
   }
 
@@ -301,23 +310,39 @@ class DataSync {
     RestoreMode mode = RestoreMode.overwrite,
     String? passphrase,
   }) async {
-    final res = await http.get(item.href, headers: _authHeaders(cfg));
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('Download failed: ${res.statusCode}');
+    // 审计：从 WebDAV 恢复开始（仅记 mode，不含凭证/文件内容）
+    CredentialAuditLogger.record('restore', 'backup:restore', detail: 'webdav start mode=$mode');
+    try {
+      final res = await http.get(item.href, headers: _authHeaders(cfg));
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        throw Exception('Download failed: ${res.statusCode}');
+      }
+      final tmpDir = await getTemporaryDirectory();
+      final file = File(p.join(tmpDir.path, item.displayName));
+      await file.writeAsBytes(res.bodyBytes);
+      await _restoreFromBackupFile(file, cfg, mode: mode, passphrase: passphrase);
+      try { await file.delete(); } catch (_) {}
+      CredentialAuditLogger.record('restore', 'backup:restore', detail: 'webdav');
+    } catch (e, st) {
+      CredentialAuditLogger.record('restore', 'backup:restore', ok: false, detail: 'webdav', error: e, stack: st);
+      rethrow;
     }
-    final tmpDir = await getTemporaryDirectory();
-    final file = File(p.join(tmpDir.path, item.displayName));
-    await file.writeAsBytes(res.bodyBytes);
-    await _restoreFromBackupFile(file, cfg, mode: mode, passphrase: passphrase);
-    try { await file.delete(); } catch (_) {}
   }
 
   Future<void> deleteWebDavBackupFile(WebDavConfig cfg, BackupFileItem item) async {
-    final req = http.Request('DELETE', item.href);
-    req.headers.addAll(_authHeaders(cfg));
-    final res = await http.Client().send(req).then(http.Response.fromStream);
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('Delete failed: ${res.statusCode}');
+    // 审计：删除远程备份（仅记显示名，不含凭证）
+    CredentialAuditLogger.record('delete', 'backup:delete', detail: 'webdav start');
+    try {
+      final req = http.Request('DELETE', item.href);
+      req.headers.addAll(_authHeaders(cfg));
+      final res = await http.Client().send(req).then(http.Response.fromStream);
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        throw Exception('Delete failed: ${res.statusCode}');
+      }
+      CredentialAuditLogger.record('delete', 'backup:delete', detail: 'webdav');
+    } catch (e, st) {
+      CredentialAuditLogger.record('delete', 'backup:delete', ok: false, error: e, stack: st);
+      rethrow;
     }
   }
 
@@ -325,8 +350,18 @@ class DataSync {
     WebDavConfig cfg, {
     BackupCredentialPolicy policy = BackupCredentialPolicy.redacted,
     String? passphrase,
-  }) =>
-      prepareBackupFile(cfg, policy: policy, passphrase: passphrase);
+  }) async {
+    // 审计：本地文件导出开始（policy 仅描述是否含凭证，不含明文）
+    CredentialAuditLogger.record('export', 'backup:export', detail: 'local start policy=$policy');
+    try {
+      final file = await prepareBackupFile(cfg, policy: policy, passphrase: passphrase);
+      CredentialAuditLogger.record('export', 'backup:export', detail: 'local');
+      return file;
+    } catch (e, st) {
+      CredentialAuditLogger.record('export', 'backup:export', ok: false, detail: 'local', error: e, stack: st);
+      rethrow;
+    }
+  }
 
   Future<void> restoreFromLocalFile(
     File file,
@@ -334,8 +369,16 @@ class DataSync {
     RestoreMode mode = RestoreMode.overwrite,
     String? passphrase,
   }) async {
-    if (!await file.exists()) throw Exception('备份文件不存在');
-    await _restoreFromBackupFile(file, cfg, mode: mode, passphrase: passphrase);
+    // 审计：从本地文件恢复开始（仅记 mode，不含凭证/文件内容）
+    CredentialAuditLogger.record('restore', 'backup:restore', detail: 'local start mode=$mode');
+    try {
+      if (!await file.exists()) throw Exception('备份文件不存在');
+      await _restoreFromBackupFile(file, cfg, mode: mode, passphrase: passphrase);
+      CredentialAuditLogger.record('restore', 'backup:restore', detail: 'local');
+    } catch (e, st) {
+      CredentialAuditLogger.record('restore', 'backup:restore', ok: false, detail: 'local', error: e, stack: st);
+      rethrow;
+    }
   }
 
   // ===== Internal helpers =====

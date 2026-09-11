@@ -4,20 +4,16 @@ class LogSanitizer {
   LogSanitizer._();
 
   /// 脱敏长 base64 字符串、超长 JSON、API key 字段。
+  ///
+  /// 注意：密钥类正则（Bearer/Authorization/api_key/secret/token/sk- 裸 key）
+  /// 必须对**任意长度**文本生效，不能因为文本短就跳过 —— 否则 32 字符的
+  /// 裸 API key 会被明文落盘（P0）。base64 大字段的性能保护仍保留，
+  /// 只对长文本生效。
   static String redact(String text) {
-    if (text.length < 200) return text;
     var out = text;
-    // data:image/xxx;base64,AA...AA → 省略
-    out = out.replaceAllMapped(
-      RegExp(r'data:[a-zA-Z0-9._/-]+;base64,([A-Za-z0-9+/=]{200,})'),
-      (m) => 'data:${m.group(1)!.substring(0, 20)}[base64 omitted: ${m.group(1)!.length} chars]',
-    );
-    // JSON 里的 base64 大字段
-    out = out.replaceAllMapped(
-      RegExp(r'"([a-zA-Z_]+)"\s*:\s*"([A-Za-z0-9+/=]{200,})"'),
-      (m) => '"${m.group(1)}": "[base64 omitted: ${m.group(2)!.length} chars]"',
-    );
-    // Bearer / Authorization / api_key / secret
+
+    // ── ① 密钥类脱敏：对所有长度的文本都执行（短 key 也必须脱敏）──
+    // JSON 里的密钥字段："api_key": "sk-xxxx"
     out = out.replaceAllMapped(
       RegExp(
         r'"(?:Authorization|Bearer|api[_-]?key|apikey|x-api-key|secret|token)"\s*:\s*"([^"]{4,})"',
@@ -40,6 +36,28 @@ class LogSanitizer {
         return '${m.group(1)}$masked';
       },
     );
+    // 裸 sk- 前缀密钥（如 sk-abc123...，32 字符短 key 也能命中）
+    out = out.replaceAllMapped(
+      RegExp(r'\b(sk-[A-Za-z0-9][A-Za-z0-9_\-]{15,})'),
+      (m) {
+        final tok = m.group(1)!;
+        return '${tok.substring(0, 6)}[redacted len=${tok.length}]${tok.substring(tok.length - 4)}';
+      },
+    );
+
+    // ── ② base64 大字段：仅长文本才处理，避免短文本无谓开销 ──
+    if (out.length >= 200) {
+      // data:image/xxx;base64,AA...AA → 省略
+      out = out.replaceAllMapped(
+        RegExp(r'data:[a-zA-Z0-9._/-]+;base64,([A-Za-z0-9+/=]{200,})'),
+        (m) => 'data:${m.group(1)!.substring(0, 20)}[base64 omitted: ${m.group(1)!.length} chars]',
+      );
+      // JSON 里的 base64 大字段
+      out = out.replaceAllMapped(
+        RegExp(r'"([a-zA-Z_]+)"\s*:\s*"([A-Za-z0-9+/=]{200,})"'),
+        (m) => '"${m.group(1)}": "[base64 omitted: ${m.group(2)!.length} chars]"',
+      );
+    }
     return out;
   }
 

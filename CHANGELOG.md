@@ -5,6 +5,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.54] - 2026-09-11
+
+### 📣 For Users
+- **内置 MCP 三服务器架构定型**：MiniMe-Chat（网页抓取/对话增强）、MiniMe-Data（加密密钥派生与备份导入导出，共 8 个工具）、MiniMe-Code（代码能力占位，仅探测工具）三件套统一注册、按 id 精确连接，旧服务器自动迁移，无需用户手动重配；
+- **安全中心一键修复不再误删配置**：此前"一键修复"会把已配好的供应商/搜索/TTS 当成旧数据清掉，本版彻底修掉——只清真明文残留，删前逐条确认并落备份，删完留审计；
+- **日志层全量加固**：日志脱敏、轮转、导出、动态调级等 33 项问题一次性修完，现在可以一键把全部日志打包成 zip 分享给客服排查，且导出前已自动脱敏、不泄露密钥。
+
+### 🔧 For Developers
+- **Added**：
+  - `tools/me_bot_lints/`：custom_lint 规则拆为独立本地包（v0.1.0，`publish_to: none`），承载 `no_empty_catch`/禁止 print/样式渲染器数据访问约束等规则；`pubspec.yaml` dev_dependencies 改为 `me_bot_lints: { path: tools/me_bot_lints }` 引用，主包只留入口；
+  - `lib/core/services/logging/log_exporter.dart`（P3-32）：`LogExporter.exportLogs()` 先 `Logger.flush()` 再把全部 `.log` 打包 zip 到临时目录并记审计；Logger 写盘前已脱敏，导出不二次处理；
+  - `Logger.setLevel(LogLevel)`（P3-33 铺垫）：运行时动态调整 `minLevel`，立即生效，切换本身以 info 留痕；
+  - `LogTags` 扩充 8 个通道：`mcpConn`/`migration`/`network`/`theme`/`export`/`biometric`/`audit` 等，区分 MCP 连接生命周期与工具调用、安全事件与审计事件；
+  - `docs/design/conversation-style-system.md`：对话流样式系统设计文档 v1.0——可插拔 `StyleRenderer` 渲染策略，15 种样式共享 `MessagePart` 数据模型，经 `ConversationDataSource` 统一读写，覆盖 Android/iOS/Desktop/Web。
+- **Fixed**：
+  - 日志层全量修复 33 项（P3-1 ~ P3-33）：覆盖 `api_logger`/`log_appender`/`log_sanitizer`/`logger` 等，补齐轮转、脱敏、缓冲 flush、空 catch 静默吞异常等问题；新增回归测试 `api_logger_trace_test.dart`/`log_rotation_test.dart`/`log_sanitizer_test.dart`；
+  - 安全一键修复误删供应商 bug：白名单拦截 + v1→v2 迁移 + 删除前备份/审计/确认弹窗（延续 0.0.53 修复线，本版随包稳定发版）。
+- **Changed**：
+  - 内置 inmemory MCP 服务器统一收敛为 MiniMe-Chat / MiniMe-Data / MiniMe-Code 三服务器架构，旧 `minime_fetch` id 自动迁移；
+  - 版本号 `0.0.53+53` → `0.0.54+54`。
+
+### 🤖 For Agents
+- **新增自定义 lint 规则**：一律落在 `tools/me_bot_lints/lib/src/` 并在 `me_bot_lints.dart` 注册，不要在主包 lib 里散落 custom_lint 实现；主包仅经 dev_dependency path 引用；
+- **日志通道规范**：MCP 连接生命周期用 `LogTags.mcpConn`、工具调用用 `LogTags.mcp`；安全体检用 `LogTags.security`、审计事件用 `LogTags.audit`；新增模块先在 `LogTags` 登记常量再用，禁止裸字符串 tag；
+- **运行时调日志级别**：用 `Logger.setLevel(...)`，不要直接改 `minLevel` 字段（无留痕）；调低到 warn/error 后切换点仍以 info 保留；
+- **导出日志**：走 `LogExporter.exportLogs()`，不要自己遍历日志目录打包——漏 flush、漏脱敏、漏审计都是坑；
+- **对话流样式**：新增样式实现 `StyleRenderer` 接口并经 `ConversationDataSource` 读写，禁止样式直接操作底层存储；详见 `docs/design/conversation-style-system.md`。
+
 ## [0.0.53] - 2026-09-11
 
 ### 📣 For Users

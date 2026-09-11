@@ -11,6 +11,7 @@ import '../../providers/settings_provider.dart';
 import '../chat/chat_service.dart';
 import '../secure_storage/credential_keys.dart';
 import '../secure_storage/secure_storage_bootstrap.dart';
+import '../security/credential_audit_logger.dart';
 import '../../../utils/app_directories.dart';
 
 class CherryImportResult {
@@ -76,6 +77,9 @@ class CherryImporter {
     required SettingsProvider settings,
     required ChatService chatService,
   }) async {
+    // 审计：Cherry Studio 导入开始（仅记 mode，不含凭证/文件内容）
+    CredentialAuditLogger.record('import', 'backup:import', detail: 'cherry start mode=$mode');
+    try {
     // 1) Load JSON from ZIP/BAK (best-effort)
     final Map<String, dynamic> root = await _readCherryBackupFile(file);
 
@@ -271,13 +275,21 @@ class CherryImporter {
       pendingAttachmentsByMessage: pendingAttachmentsByMessage,
     );
 
-    return CherryImportResult(
+    final result = CherryImportResult(
       providers: importedProviders,
       assistants: importedAssistants,
       conversations: convCountAndMsgCount.$1,
       messages: convCountAndMsgCount.$2,
       files: pathsByFileId.length + convCountAndMsgCount.$3,
     );
+    // 审计：Cherry Studio 导入成功（仅记数量，不含凭证）
+    CredentialAuditLogger.record('import', 'backup:import', detail: 'cherry providers=${result.providers} convs=${result.conversations}');
+    return result;
+    } catch (e, st) {
+      // 审计：Cherry Studio 导入失败
+      CredentialAuditLogger.record('import', 'backup:import', ok: false, detail: 'cherry', error: e, stack: st);
+      rethrow;
+    }
   }
 
   // ---------- helpers ----------

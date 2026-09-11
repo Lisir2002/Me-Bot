@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:crypto/crypto.dart' show Hmac, sha256;
 import 'package:jose/jose.dart';
 
+import '../security/credential_audit_logger.dart';
+
 /// 备份加解密失败的错误类型。
 enum BackupCryptoErrorKind {
   /// 备份已加密，但调用方未提供口令。
@@ -95,6 +97,8 @@ class BackupEncryptor {
     final kek = _deriveKek(passphrase, salt);
     final payload = utf8.encode(jsonEncode(settings));
     final jwe = _encrypt(payload, kek);
+    // 审计：加密备份生成成功（仅记算法/迭代次数，不含口令与明文）
+    CredentialAuditLogger.record('export', 'backup:jwe', detail: 'seal alg=$contentAlg kdf=$kdf iters=$kdfIterations');
     return <String, dynamic>{
       'format': format,
       'version': version,
@@ -153,10 +157,15 @@ class BackupEncryptor {
     final salt = base64Decode(saltB64);
     final kek = _deriveKek(p, salt);
     try {
-      return await _decrypt(jwe, kek);
+      final decoded = await _decrypt(jwe, kek);
+      // 审计：加密备份解密成功（不含口令与明文）
+      CredentialAuditLogger.record('restore', 'backup:jwe', detail: 'open ok');
+      return decoded;
     } on BackupCryptoError {
       rethrow;
-    } on Exception {
+    } on Exception catch (e, st) {
+      // 审计：解密失败（口令错误或被篡改，不含口令）
+      CredentialAuditLogger.record('restore', 'backup:jwe', ok: false, detail: 'wrongPassphrase', error: e, stack: st);
       throw const BackupCryptoError('口令错误，无法解密备份', BackupCryptoErrorKind.wrongPassphrase);
     }
   }

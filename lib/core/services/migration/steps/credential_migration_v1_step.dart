@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../models/provider_credentials.dart';
+import '../../security/credential_audit_logger.dart';
 import '../../secure_storage/credential_keys.dart';
 import '../migration_context.dart';
 import '../migration_step.dart';
@@ -82,16 +83,31 @@ class CredentialMigrationV1Step extends MigrationStep {
 
   @override
   Future<void> run(MigrationContext ctx) async {
-    // ── A 阶段：明文 → 安全存储 ──
-    await _migrateProviderConfigs(ctx);
-    await _migrateGlobalProxy(ctx);
-    await _migrateWebDav(ctx);
+    // 审计：迁移开始（仅记录阶段，不含凭证明文）
+    CredentialAuditLogger.record('migrate', 'migration:v1', detail: 'start');
+    try {
+      // ── A 阶段：明文 → 安全存储 ──
+      await _migrateProviderConfigs(ctx);
+      await _migrateGlobalProxy(ctx);
+      await _migrateWebDav(ctx);
 
-    // ── B 阶段：清理明文（拍板①：立即删除）──
-    await _purgeLegacy(ctx);
+      // ── B 阶段：清理明文（拍板①：立即删除）──
+      await _purgeLegacy(ctx);
 
-    // 在安全存储里留一个审计锚点：PR-5 安全体检可用它判断「这台设备迁移过」。
-    await ctx.secureStorage.write(CredentialKeys.migrationV1Done, '1');
+      // 在安全存储里留一个审计锚点：PR-5 安全体检可用它判断「这台设备迁移过」。
+      await ctx.secureStorage.write(CredentialKeys.migrationV1Done, '1');
+      CredentialAuditLogger.record('migrate', 'migration:v1');
+    } catch (e, st) {
+      // 审计：迁移失败
+      CredentialAuditLogger.record(
+        'migrate',
+        'migration:v1',
+        ok: false,
+        error: e,
+        stack: st,
+      );
+      rethrow;
+    }
   }
 
   // ------------------------------------------------------------ provider 配置

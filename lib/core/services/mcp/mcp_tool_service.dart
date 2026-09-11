@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:mcp_client/mcp_client.dart' as mcp;
 import '../../providers/mcp_provider.dart';
 import '../chat/chat_service.dart';
+import '../logging/logger.dart';
+import '../logging/log_tags.dart';
+import '../logging/log_context.dart';
 import '../../providers/assistant_provider.dart';
 
 /// UI 提供的审批回调：返回 true 允许执行，false 拒绝。
@@ -64,6 +67,9 @@ class McpToolService extends ChangeNotifier {
     final selected = chat.getConversationMcpServers(conversationId).toSet();
     if (selected.isEmpty) return null;
 
+    Logger.d(LogTags.mcpTool,
+        'callToolForConversation: start tool=$toolName conversationId=$conversationId');
+
     // Find a server that has this tool enabled
     final connected = mcpProvider.connectedServers.where((s) => selected.contains(s.id)).toList();
     for (final s in connected) {
@@ -77,12 +83,27 @@ class McpToolService extends ChangeNotifier {
       if (tool != null) {
         final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
         if (!ok) {
+          Logger.w(LogTags.mcpTool,
+              'callToolForConversation: user denied approval server=${s.name} tool=$toolName conversationId=$conversationId');
           return mcp.CallToolResult(
             [mcp.TextContent(text: _deniedText(s.name, toolName))],
             isError: false,
           );
         }
-        return await mcpProvider.callTool(s.id, toolName, arguments);
+        Logger.d(LogTags.mcpTool,
+            'callToolForConversation: invoke server=${s.name} tool=$toolName conversationId=$conversationId');
+        try {
+          // 用 traceId 包裹实际调用，使调用链路上的日志自动带 traceId
+          return await LogContext.zone(
+            traceId: 'mcp-${LogContext.shortId()}',
+            fn: () => mcpProvider.callTool(s.id, toolName, arguments),
+          );
+        } catch (e, st) {
+          Logger.e(LogTags.mcpTool,
+              'callToolForConversation: call failed server=${s.name} tool=$toolName conversationId=$conversationId',
+              e, st);
+          return null;
+        }
       }
     }
     return null;
@@ -97,6 +118,8 @@ class McpToolService extends ChangeNotifier {
       Map<String, dynamic> arguments = const {},
       ToolApprovalGate? approvalGate,
   }) async {
+    Logger.d(LogTags.mcpTool,
+        'callToolTextForConversation: start tool=$toolName conversationId=$conversationId');
     // Attempt call via selected server
     final selected = chat.getConversationMcpServers(conversationId).toSet();
     final connected = mcpProvider.connectedServers.where((s) => selected.contains(s.id)).toList();
@@ -113,8 +136,25 @@ class McpToolService extends ChangeNotifier {
       if (tool == null) continue;
       usedServer = s;
       final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
-      if (!ok) return _deniedText(s.name, toolName);
-      res = await mcpProvider.callTool(s.id, toolName, arguments);
+      if (!ok) {
+        Logger.w(LogTags.mcpTool,
+            'callToolTextForConversation: user denied approval server=${s.name} tool=$toolName conversationId=$conversationId');
+        return _deniedText(s.name, toolName);
+      }
+      Logger.d(LogTags.mcpTool,
+          'callToolTextForConversation: invoke server=${s.name} tool=$toolName conversationId=$conversationId');
+      try {
+        // 用 traceId 包裹实际调用，使调用链路上的日志自动带 traceId
+        res = await LogContext.zone(
+          traceId: 'mcp-${LogContext.shortId()}',
+          fn: () => mcpProvider.callTool(s.id, toolName, arguments),
+        );
+      } catch (e, st) {
+        Logger.e(LogTags.mcpTool,
+            'callToolTextForConversation: call failed server=${s.name} tool=$toolName conversationId=$conversationId',
+            e, st);
+        res = null;
+      }
       break;
     }
     if (res == null) {
@@ -164,25 +204,33 @@ class McpToolService extends ChangeNotifier {
             buf.writeln(txt);
             continue;
           }
-        } catch (_) {}
+        } catch (_) {
+          // 单条内容动态探测失败，debug 级记录后继续
+          Logger.d(LogTags.mcpTool, 'content parse: dyn.text not present');
+        }
         try {
           final uri = (dyn.uri as String?);
           if (uri != null && uri.isNotEmpty) {
             buf.writeln('resource: $uri');
             continue;
           }
-        } catch (_) {}
+        } catch (_) {
+          Logger.d(LogTags.mcpTool, 'content parse: dyn.uri not present');
+        }
         // As a last resort, serialize to JSON if available
         try {
           final json = (dyn.toJson as dynamic).call();
           buf.writeln(const JsonEncoder.withIndent('  ').convert(json));
           continue;
-        } catch (_) {}
+        } catch (_) {
+          Logger.d(LogTags.mcpTool, 'content parse: dyn.toJson not available');
+        }
         // Fallback to a readable string (avoid Instance of ... when possible)
         final s = c.toString();
         if (!s.startsWith('Instance of')) buf.writeln(s);
-      } catch (_) {
+      } catch (e) {
         // ignore single content parse errors and continue
+        Logger.d(LogTags.mcpTool, 'content parse: single item failed', e);
       }
     }
     return buf.toString().trim();
@@ -196,6 +244,8 @@ class McpToolService extends ChangeNotifier {
       Map<String, dynamic> arguments = const {},
       ToolApprovalGate? approvalGate,
   }) async {
+    Logger.d(LogTags.mcpTool,
+        'callToolTextForAssistant: start tool=$toolName assistantId=$assistantId');
     // try servers selected for the assistant
     final a = (assistantId != null) ? assistants.getById(assistantId) : assistants.currentAssistant;
     final selected = (a?.mcpServerIds ?? const <String>[]).toSet();
@@ -210,8 +260,26 @@ class McpToolService extends ChangeNotifier {
       }
       if (tool == null) continue;
       final ok = await _checkApproval(tool, s.name, toolName, arguments, approvalGate);
-      if (!ok) return _deniedText(s.name, toolName);
-      final res = await mcpProvider.callTool(s.id, toolName, arguments);
+      if (!ok) {
+        Logger.w(LogTags.mcpTool,
+            'callToolTextForAssistant: user denied approval server=${s.name} tool=$toolName assistantId=$assistantId');
+        return _deniedText(s.name, toolName);
+      }
+      Logger.d(LogTags.mcpTool,
+          'callToolTextForAssistant: invoke server=${s.name} tool=$toolName assistantId=$assistantId');
+      mcp.CallToolResult? res;
+      try {
+        // 用 traceId 包裹实际调用，使调用链路上的日志自动带 traceId
+        res = await LogContext.zone(
+          traceId: 'mcp-${LogContext.shortId()}',
+          fn: () => mcpProvider.callTool(s.id, toolName, arguments),
+        );
+      } catch (e, st) {
+        Logger.e(LogTags.mcpTool,
+            'callToolTextForAssistant: call failed server=${s.name} tool=$toolName assistantId=$assistantId',
+            e, st);
+        res = null;
+      }
       if (res == null) {
         final errMsg = mcpProvider.errorFor(s.id) ?? 'Unknown error';
         final schema = s.tools.firstWhere((t) => t.name == toolName).schema;
@@ -253,22 +321,31 @@ class McpToolService extends ChangeNotifier {
               buf.writeln(txt);
               continue;
             }
-          } catch (_) {}
+          } catch (_) {
+            // 单条内容动态探测失败，debug 级记录后继续
+            Logger.d(LogTags.mcpTool, 'content parse: dyn.text not present');
+          }
           try {
             final uri = (dyn.uri as String?);
             if (uri != null && uri.isNotEmpty) {
               buf.writeln('resource: $uri');
               continue;
             }
-          } catch (_) {}
+          } catch (_) {
+            Logger.d(LogTags.mcpTool, 'content parse: dyn.uri not present');
+          }
           try {
             final json = (dyn.toJson as dynamic).call();
             buf.writeln(const JsonEncoder.withIndent('  ').convert(json));
             continue;
-          } catch (_) {}
+          } catch (_) {
+            Logger.d(LogTags.mcpTool, 'content parse: dyn.toJson not available');
+          }
           final s = c.toString();
           if (!s.startsWith('Instance of')) buf.writeln(s);
         } catch (e) {
+          // ignore single content parse errors and continue
+          Logger.d(LogTags.mcpTool, 'content parse: single item failed', e);
         }
       }
       return buf.toString().trim();

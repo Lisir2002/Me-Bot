@@ -1,4 +1,3 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
 import '../models/message_part.dart';
 

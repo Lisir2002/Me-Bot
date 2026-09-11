@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../../../../shared/widgets/snackbar.dart';
 import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
-import '../l10n/style_l10n.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
 import '../widgets/message_animations.dart';
@@ -188,11 +188,12 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
     );
 
     final timeStr = _formatTime(message.timestamp);
+    final l10n = context.l10n;
     return Semantics(
       container: true,
       label: isUser
-          ? StyleL10n.userMessageSemantic(timeStr)
-          : StyleL10n.assistantMessageSemantic(timeStr),
+          ? l10n.convStyleUserMessageSemantic(timeStr)
+          : l10n.convStyleAssistantMessageSemantic(timeStr),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -208,6 +209,7 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
   /// 发送失败条：错误图标 + 重试按钮
   Widget _buildFailedBar(BuildContext context, Message message) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(
@@ -215,7 +217,7 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
         children: [
           Icon(Icons.error_outline, size: 14, color: theme.colorScheme.error),
           const SizedBox(width: 4),
-          Text(StyleL10n.sendFailed,
+          Text(l10n.convStyleSendFailed,
               style: theme.textTheme.labelSmall
                   ?.copyWith(color: theme.colorScheme.error)),
           const SizedBox(width: 8),
@@ -226,7 +228,7 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
               minimumSize: const Size(0, 28),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text(StyleL10n.retrySend),
+            child: Text(l10n.commonRetry),
           ),
         ],
       ),
@@ -236,6 +238,7 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
   /// 弹出长按上下文菜单；复制自包含，其余动作经 dataSource 回调交宿主处理
   void _showContextMenu(BuildContext context, Message message) {
     final text = message.textContent;
+    final l10n = context.l10n;
     showMessageContextMenu(
       context,
       message,
@@ -243,7 +246,7 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
         Clipboard.setData(ClipboardData(text: text));
         showAppSnackBar(
           context,
-          message: '已复制',
+          message: l10n.convStyleCopied,
           type: NotificationType.success,
         );
       },
@@ -258,7 +261,7 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
         if (context.mounted) {
           showAppSnackBar(
             context,
-            message: '已删除',
+            message: l10n.convStyleDeleted,
             type: NotificationType.success,
           );
         }
@@ -288,7 +291,9 @@ class ClassicBubbleRenderer extends BaseStyleRenderer {
     if (preview.isEmpty) return null;
 
     final senderName = ref.assistantName ??
-        (ref.role == MessageRole.user ? '你' : '助手');
+        (ref.role == MessageRole.user
+            ? context.l10n.convStyleSenderYou
+            : context.l10n.convStyleSenderAssistant);
     return QuoteRefWidget(
       senderName: senderName,
       contentPreview: preview,
@@ -468,7 +473,7 @@ class _LazyLongTextState extends State<_LazyLongText> {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              '展开全文（共 ${widget.text.length} 字）',
+              context.l10n.convStyleExpandFullTextWithCount(widget.text.length),
               style: theme.textTheme.labelMedium
                   ?.copyWith(color: theme.colorScheme.primary),
             ),

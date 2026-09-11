@@ -1,13 +1,16 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../l10n/build_context_l10n.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
 import '../models/style_settings.dart';
+import '../widgets/message_animations.dart';
+import '../widgets/message_context_menu.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// no_raw_alert_dialog 白名单：全屏看图用黑底 Dialog + InteractiveViewer（非卡片式居中弹窗，AppDialog 语义不符）。
@@ -29,9 +32,25 @@ class RichContentRenderer extends BaseStyleRenderer {
   @override
   ConversationStyle get style => ConversationStyle.richContent;
 
+  /// 智能滚动控制器（懒初始化，随渲染器 onDetach 释放）
+  SmartScrollController? _scrollCtrl;
+  /// 是否显示"跳转到底部"按钮
+  final ValueNotifier<bool> _showJump = ValueNotifier<bool>(false);
+
+  @override
+  void onDetach() {
+    _scrollCtrl?.dispose();
+    _scrollCtrl = null;
+    super.onDetach();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _scrollCtrl ??= SmartScrollController()
+      ..onUserScrolledAway = (away) => _showJump.value = away;
     return _RichContentView(
+      scrollCtrl: _scrollCtrl!,
+      showJump: _showJump,
       dataSource: dataSource,
       initialUiState: uiState,
       onUIStateChanged: updateUIState,
@@ -40,11 +59,15 @@ class RichContentRenderer extends BaseStyleRenderer {
 }
 
 class _RichContentView extends StatefulWidget {
+  final SmartScrollController scrollCtrl;
+  final ValueNotifier<bool> showJump;
   final ConversationDataSource dataSource;
   final ConversationUIState initialUiState;
   final void Function(ConversationUIState) onUIStateChanged;
 
   const _RichContentView({
+    required this.scrollCtrl,
+    required this.showJump,
     required this.dataSource,
     required this.initialUiState,
     required this.onUIStateChanged,
@@ -75,19 +98,78 @@ class _RichContentViewState extends State<_RichContentView> {
       initialData: widget.dataSource.currentMessages,
       builder: (context, snapshot) {
         final messages = snapshot.data ?? const [];
-        if (messages.isEmpty) return const Center(child: Text('暂无内容'));
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          itemCount: messages.length,
-          itemBuilder: (context, index) =>
-              _buildMessageCard(context, messages[index], messages),
+        // 新消息到达且用户在底部附近时，自动平滑跟随到底部
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctrl = widget.scrollCtrl;
+          if (ctrl.hasClients && ctrl.shouldAutoScroll) {
+            ctrl.animateTo(
+              ctrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+        if (messages.isEmpty) {
+          return Center(child: Text(context.l10n.storageEmpty));
+        }
+        return Stack(
+          children: [
+            ListView.builder(
+              controller: widget.scrollCtrl,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final w =
+                    _buildMessageCard(context, messages[index], messages);
+                // 仅最新一条消息播放底部滑入 + 淡入
+                final isLast = index == messages.length - 1;
+                return isLast ? MessageSlideIn(child: w) : w;
+              },
+            ),
+            // 上翻后显示"跳转到底部"悬浮按钮
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: widget.showJump,
+                builder: (context, show, _) => show
+                    ? FloatingActionButton.small(
+                        onPressed: widget.scrollCtrl.smartJumpToBottom,
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  /// 消息卡片：消息间用卡片分隔
+  /// 统一包裹：消息容器语义 label（用户/助手+时间）+ 长按弹出统一菜单
   Widget _buildMessageCard(
+      BuildContext context, Message message, List<Message> allMessages) {
+    final body = _buildMessageCardBody(context, message, allMessages);
+    final timeStr = _formatTime(message.timestamp);
+    final l10n = context.l10n;
+    final String? label = switch (message.role) {
+      MessageRole.user => l10n.convStyleUserMessageSemantic(timeStr),
+      MessageRole.assistant => l10n.convStyleAssistantMessageSemantic(timeStr),
+      _ => null,
+    };
+    return Semantics(
+      container: true,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: () => _showContextMenu(context, message),
+        child: body,
+      ),
+    );
+  }
+
+  /// 消息卡片：消息间用卡片分隔
+  Widget _buildMessageCardBody(
       BuildContext context, Message message, List<Message> allMessages) {
     final theme = Theme.of(context);
     if (message.role == MessageRole.user) {
@@ -99,7 +181,7 @@ class _RichContentViewState extends State<_RichContentView> {
           children: [
             // 用户引用回复：气泡上方显示 QuoteRefWidget
             if (message.referencedMessageId != null)
-              _buildQuoteRef(message, allMessages) ??
+              _buildQuoteRef(context, message, allMessages) ??
                   const SizedBox.shrink(),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 6),
@@ -154,7 +236,8 @@ class _RichContentViewState extends State<_RichContentView> {
   }
 
   /// 构建用户引用回复组件：从 allMessages 查找被引用消息，取 textContent 前50字预览
-  Widget? _buildQuoteRef(Message message, List<Message> allMessages) {
+  Widget? _buildQuoteRef(
+      BuildContext context, Message message, List<Message> allMessages) {
     Message? refMsg;
     for (final m in allMessages) {
       if (m.id == message.referencedMessageId) {
@@ -165,8 +248,8 @@ class _RichContentViewState extends State<_RichContentView> {
     if (refMsg == null) return null;
     return QuoteRefWidget(
       senderName: refMsg.role == MessageRole.user
-          ? '用户'
-          : (refMsg.assistantName ?? '助手'),
+          ? context.l10n.convStyleSenderYou
+          : (refMsg.assistantName ?? context.l10n.convStyleSenderAssistant),
       contentPreview: refMsg.textContent,
       timestamp: refMsg.timestamp,
     );
@@ -339,6 +422,47 @@ class _RichContentViewState extends State<_RichContentView> {
         return Text('📋 ${part.title}');
     }
   }
+
+  /// 弹出长按上下文菜单；复制自包含，其余动作经 dataSource 回调交宿主处理
+  void _showContextMenu(BuildContext context, Message message) {
+    final text = message.textContent;
+    final l10n = context.l10n;
+    showMessageContextMenu(
+      context,
+      message,
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: text));
+        showAppSnackBar(
+          context,
+          message: l10n.convStyleCopied,
+          type: NotificationType.success,
+        );
+      },
+      onQuote: () =>
+          widget.dataSource.onMessageAction?.call(message, MessageAction.quote),
+      onRetry: () =>
+          widget.dataSource.onMessageAction?.call(message, MessageAction.retry),
+      onShare: () =>
+          widget.dataSource.onMessageAction?.call(message, MessageAction.share),
+      onDelete: () async {
+        await widget.dataSource.deleteMessage(message.id);
+        if (context.mounted) {
+          showAppSnackBar(
+            context,
+            message: l10n.convStyleDeleted,
+            type: NotificationType.success,
+          );
+        }
+      },
+    );
+  }
+
+  /// 格式化时间戳（语义 label 用）
+  String _formatTime(DateTime time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }
 
 /// 富文本块：把 Markdown 表格抽出来用 DataTable 渲染，其余段落渲染可点击链接
@@ -497,7 +621,8 @@ class _ClickableText extends StatelessWidget {
         recognizer: TapGestureRecognizer()
           ..onTap = () {
             // 简单打开：实际项目可用 url_launcher
-            showAppSnackBar(context, message: '打开链接: $url');
+            showAppSnackBar(context,
+                message: context.l10n.chatMessageWidgetCannotOpenUrl(url));
           },
       ));
       last = match.end;

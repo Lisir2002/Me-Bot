@@ -1,8 +1,13 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/snackbar.dart';
+import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
+import '../widgets/message_animations.dart';
+import '../widgets/message_context_menu.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// Style 04: 卡片堆叠式渲染器
@@ -24,37 +29,118 @@ class CardStackRenderer extends BaseStyleRenderer {
   @override
   ConversationStyle get style => ConversationStyle.cardStack;
 
+  /// 智能滚动控制器（懒初始化，随渲染器生命周期释放）
+  SmartScrollController? _scrollCtrl;
+  /// 是否显示"跳转到底部"按钮
+  final ValueNotifier<bool> _showJump = ValueNotifier<bool>(false);
+
+  @override
+  void onDetach() {
+    _scrollCtrl?.dispose();
+    _scrollCtrl = null;
+    super.onDetach();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _scrollCtrl ??= SmartScrollController()
+      ..onUserScrolledAway = (away) => _showJump.value = away;
+    final ctrl = _scrollCtrl!;
     return StreamBuilder<List<Message>>(
       stream: dataSource.messageStream,
       initialData: dataSource.currentMessages,
       builder: (context, snapshot) {
         final messages = snapshot.data ?? const [];
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: messages.length,
-          itemBuilder: (context, index) {
-            final message = messages[index];
-            // 上一条是否同角色（决定卡片间距是否收紧）
-            final prevSameRole =
-                index > 0 && messages[index - 1].role == message.role;
-            // 计算同角色连续层数，用于阴影逐层微增
-            int layer = 0;
-            for (int j = index - 1;
-                j >= 0 && messages[j].role == message.role;
-                j--) {
-              layer++;
-            }
-            return _buildMessageCard(
-              context,
-              message,
-              messages,
-              prevSameRole: prevSameRole,
-              layer: layer,
+        // 新消息到达且用户在底部附近时，自动平滑跟随到底部
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (ctrl.hasClients && ctrl.shouldAutoScroll) {
+            ctrl.animateTo(
+              ctrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
             );
-          },
+          }
+        });
+        return Stack(
+          children: [
+            ListView.builder(
+              controller: ctrl,
+              padding: const EdgeInsets.all(8),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                // 上一条是否同角色（决定卡片间距是否收紧）
+                final prevSameRole =
+                    index > 0 && messages[index - 1].role == message.role;
+                // 计算同角色连续层数，用于阴影逐层微增
+                int layer = 0;
+                for (int j = index - 1;
+                    j >= 0 && messages[j].role == message.role;
+                    j--) {
+                  layer++;
+                }
+                final w = _buildMessageCard(
+                  context,
+                  message,
+                  messages,
+                  prevSameRole: prevSameRole,
+                  layer: layer,
+                );
+                // 仅最新一条消息播放底部滑入 + 淡入
+                final isLast = index == messages.length - 1;
+                return isLast ? MessageSlideIn(child: w) : w;
+              },
+            ),
+            // 上翻后显示"跳转到底部"悬浮按钮
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _showJump,
+                builder: (context, show, _) => show
+                    ? FloatingActionButton.small(
+                        onPressed: ctrl.smartJumpToBottom,
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ],
         );
+      },
+    );
+  }
+
+  /// 弹出长按上下文菜单；复制自包含，其余动作经 dataSource 回调交宿主处理
+  void _showContextMenu(BuildContext context, Message message) {
+    final text = message.textContent;
+    final l10n = context.l10n;
+    showMessageContextMenu(
+      context,
+      message,
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: text));
+        showAppSnackBar(
+          context,
+          message: l10n.convStyleCopied,
+          type: NotificationType.success,
+        );
+      },
+      onQuote: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.quote),
+      onRetry: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.retry),
+      onShare: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.share),
+      onDelete: () async {
+        await dataSource.deleteMessage(message.id);
+        if (context.mounted) {
+          showAppSnackBar(
+            context,
+            message: l10n.convStyleDeleted,
+            type: NotificationType.success,
+          );
+        }
       },
     );
   }
@@ -79,7 +165,7 @@ class CardStackRenderer extends BaseStyleRenderer {
     // 阴影逐层微增：基础 2 + 每层 0.5，封顶 4
     final elevation = (2.0 + layer * 0.5).clamp(2.0, 4.0);
 
-    return Container(
+    final card = Container(
       margin: EdgeInsets.symmetric(vertical: vMargin, horizontal: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -115,24 +201,47 @@ class CardStackRenderer extends BaseStyleRenderer {
         ),
       ),
     );
+
+    // 长按弹出统一上下文菜单（复制/引用/重新生成/分享/删除）
+    final tappable = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _showContextMenu(context, message),
+      child: card,
+    );
+
+    final l10n = context.l10n;
+    final timeStr = _formatDateTime(message.timestamp);
+    return Semantics(
+      container: true,
+      label: isUser
+          ? l10n.convStyleUserMessageSemantic(timeStr)
+          : l10n.convStyleAssistantMessageSemantic(timeStr),
+      child: tappable,
+    );
   }
 
   /// 卡片头部 —— 头像 + 角色名 + 时间戳
   Widget _buildCardHeader(
       BuildContext context, Message message, bool isUser, ThemeData theme) {
     final accentColor = isUser ? Colors.blue : Colors.green;
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: accentColor.withValues(alpha: 0.15),
-            child: Icon(
-              isUser ? Icons.person : Icons.smart_toy,
-              size: 18,
-              color: accentColor,
+          Semantics(
+            label: isUser
+                ? l10n.convStyleUserAvatarSemantic
+                : l10n.convStyleAssistantAvatarSemantic,
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: accentColor.withValues(alpha: 0.15),
+              child: Icon(
+                isUser ? Icons.person : Icons.smart_toy,
+                size: 18,
+                color: accentColor,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -142,7 +251,9 @@ class CardStackRenderer extends BaseStyleRenderer {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isUser ? '用户' : (message.assistantName ?? '助手'),
+                  isUser
+                      ? l10n.convStyleSenderYou
+                      : (message.assistantName ?? l10n.convStyleSenderAssistant),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -186,8 +297,8 @@ class CardStackRenderer extends BaseStyleRenderer {
       if (refMsg != null) {
         children.add(QuoteRefWidget(
           senderName: refMsg.role == MessageRole.user
-              ? '用户'
-              : (refMsg.assistantName ?? '助手'),
+              ? context.l10n.convStyleSenderYou
+              : (refMsg.assistantName ?? context.l10n.convStyleSenderAssistant),
           contentPreview: refMsg.textContent,
           timestamp: refMsg.timestamp,
         ));

@@ -6,6 +6,39 @@ import '../models/message_part.dart';
 /// 长按消息的交互动作类型（渲染器只触发，业务由宿主处理）
 enum MessageAction { copy, quote, retry, share, delete }
 
+/// 一个版本分组的快照 —— 同一 groupId 下的全部消息版本与当前选中版本。
+///
+/// 容器层版本导航据此判断「该组是否存在多版本可切换」，并渲染
+/// 上一版 / 下一版 + "版本 i/total"。渲染器无需感知版本概念。
+class ConversationVersionGroup {
+  /// 分组 ID（对应 Message.groupId；为空时以消息自身 id 分组）
+  final String groupId;
+
+  /// 该组全部版本，按 Message.version 升序
+  final List<Message> versions;
+
+  /// 当前选中版本在 [versions] 中的下标
+  final int selectedIndex;
+
+  const ConversationVersionGroup({
+    required this.groupId,
+    required this.versions,
+    required this.selectedIndex,
+  });
+
+  /// 版本总数
+  int get total => versions.length;
+
+  /// 是否存在多版本（需要显示版本导航）
+  bool get hasMultiple => total > 1;
+
+  /// 当前选中版本消息（越界时为 null）
+  Message? get selectedMessage =>
+      (selectedIndex >= 0 && selectedIndex < versions.length)
+          ? versions[selectedIndex]
+          : null;
+}
+
 /// 附件数据（发送消息时使用）
 class Attachment {
   final String name;
@@ -116,6 +149,47 @@ abstract class ConversationDataSource {
 
   /// 样式切换完成
   Future<void> onStyleDidChange(ConversationStyle style);
+
+  /// 当前会话的全部版本分组（按展示顺序）。
+  ///
+  /// 容器层据此渲染版本导航；单版本分组也会出现在列表中（hasMultiple=false）。
+  /// 未启用版本折叠（宿主未接入全量同步）时返回空列表。
+  List<ConversationVersionGroup> get versionGroups;
+
+  /// 上下文截断位置（折叠视图下标）。
+  ///
+  /// 容器层据此在消息流顶部渲染"此处之前为已截断上下文"分隔提示；
+  /// null 表示当前无截断。
+  int? get truncatePositionIndex;
+
+  /// 切换某分组的选中版本（容器层"上一版 / 下一版"调用）。
+  ///
+  /// 实现方需更新折叠视图并重新广播消息流；同时通过 [onSelectedVersionChanged]
+  /// 通知宿主持久化选中版本。versionIndex 越界时实现方自行钳制。
+  Future<void> setSelectedVersion(String groupId, int versionIndex);
+
+  /// 批量删除消息（选择模式"删除所选"）。
+  ///
+  /// 实现方从渲染视图中移除并重新广播；真实持久化由宿主经现有删除路径完成。
+  Future<void> deleteMessages(List<String> messageIds);
+
+  /// 分享所选消息（选择模式"分享所选"）。
+  ///
+  /// 实现方按 ID 解析出消息后触发 [onShareMessages] 交宿主展示分享面板；
+  /// 未注入回调时静默忽略。
+  Future<void> shareSelectedMessages(List<String> messageIds);
+
+  /// 选中版本变更回调（宿主持久化，可空，默认 null）。
+  ///
+  /// 容器调用 [setSelectedVersion] 时触发，宿主据此把选中版本写回 Hive / 服务层。
+  /// 未接线时为 null，不影响容器内的版本切换本身。
+  void Function(String groupId, int versionIndex)? get onSelectedVersionChanged;
+  set onSelectedVersionChanged(
+      void Function(String groupId, int versionIndex)? cb);
+
+  /// 分享所选消息回调（宿主展示分享面板，可空，默认 null）。
+  void Function(List<Message> messages)? get onShareMessages;
+  set onShareMessages(void Function(List<Message> messages)? cb);
 
   /// 释放资源（会话关闭时调用）
   void dispose();

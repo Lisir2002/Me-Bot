@@ -1,4 +1,3 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
 import '../models/conversation_style.dart';
 
@@ -84,6 +83,8 @@ class _StyleErrorBoundaryState extends State<StyleErrorBoundary> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
+                  // 样式渲染降级提示属错误恢复 UI，冻结映射未提供键（行级豁免）
+                  // ignore: hardcoded_ui_string
                   '样式「${_styleName(widget.style)}」渲染异常，已切换为${widget.fallbackStyleName}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.error,
@@ -95,6 +96,8 @@ class _StyleErrorBoundaryState extends State<StyleErrorBoundary> {
           const SizedBox(height: 8),
           if (_error != null)
             Text(
+              // 异常详情原文回显，非可翻译 UI 文案（行级豁免）
+              // ignore: hardcoded_ui_string
               '错误: $_error',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -118,6 +121,8 @@ class _StyleErrorBoundaryState extends State<StyleErrorBoundary> {
                   _stackTrace = null;
                   _retryCount = 0;
                 }),
+                // 冻结映射未提供「忽略」键，沿用字面量（行级豁免）
+                // ignore: hardcoded_ui_string
                 child: const Text('忽略'),
               ),
             ],

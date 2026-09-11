@@ -26,8 +26,25 @@ class HiveConversationDataSource extends ChangeNotifier
   @override
   void Function(ApprovalPart approval)? onApprovalRequired;
 
-  /// 内部消息列表（新模型）
+  /// 选中版本变更回调（宿主持久化，可空）
+  @override
+  void Function(String groupId, int versionIndex)? onSelectedVersionChanged;
+
+  /// 分享所选消息回调（宿主展示分享面板，可空）
+  @override
+  void Function(List<Message> messages)? onShareMessages;
+
+  /// 内部消息列表（新模型，折叠后：每个版本组只占一条）
   final List<Message> _messages = [];
+
+  /// 版本分组（展示顺序）；由 syncConversationFull / syncFromMessages 维护
+  final List<_VersionEntry> _versionEntries = [];
+
+  /// groupId -> 版本条目，便于按组快速定位
+  final Map<String, _VersionEntry> _entryByGroup = {};
+
+  /// 上下文截断位置（折叠视图下标；null 表示无截断）
+  int? _truncatePositionIndex;
 
   /// 会话状态
   ConversationState _state = ConversationState.idle;
@@ -127,6 +144,72 @@ class HiveConversationDataSource extends ChangeNotifier
 
   @override
   List<Message> get currentMessages => List.unmodifiable(_messages);
+
+  @override
+  List<ConversationVersionGroup> get versionGroups => List.unmodifiable(
+        _versionEntries.map(
+          (e) => ConversationVersionGroup(
+            groupId: e.groupId,
+            versions: List.unmodifiable(e.versions),
+            selectedIndex: e.selectedIndex,
+          ),
+        ),
+      );
+
+  @override
+  int? get truncatePositionIndex => _truncatePositionIndex;
+
+  @override
+  Future<void> setSelectedVersion(String groupId, int versionIndex) async {
+    final entry = _entryByGroup[groupId];
+    if (entry == null || entry.versions.isEmpty) return;
+    final idx = versionIndex.clamp(0, entry.versions.length - 1);
+    if (idx == entry.selectedIndex) return;
+    entry.selectedIndex = idx;
+
+    // 折叠视图：用新选中版本替换该组当前占位消息（按 groupId 定位）
+    final newMsg = entry.versions[idx];
+    final pos = _messages.indexWhere((m) => (m.groupId ?? m.id) == groupId);
+    if (pos != -1) {
+      _messages[pos] = newMsg;
+    }
+    _emitMessages();
+    // 通知宿主持久化选中版本
+    onSelectedVersionChanged?.call(groupId, idx);
+  }
+
+  @override
+  Future<void> deleteMessages(List<String> messageIds) async {
+    if (messageIds.isEmpty) return;
+    final ids = messageIds.toSet();
+    final before = _messages.length;
+    _messages.removeWhere((m) => ids.contains(m.id));
+
+    // 同步从版本分组中移除对应版本，清理空组并修正越界下标
+    for (final e in _versionEntries) {
+      e.versions.removeWhere((v) => ids.contains(v.id));
+      if (e.versions.isNotEmpty &&
+          e.selectedIndex >= e.versions.length) {
+        e.selectedIndex = e.versions.length - 1;
+      }
+    }
+    _versionEntries.removeWhere((e) => e.versions.isEmpty);
+    _entryByGroup
+      ..clear()
+      ..addEntries(_versionEntries.map((e) => MapEntry(e.groupId, e)));
+
+    if (_messages.length != before) _emitMessages();
+  }
+
+  @override
+  Future<void> shareSelectedMessages(List<String> messageIds) async {
+    if (messageIds.isEmpty) return;
+    final ids = messageIds.toSet();
+    final selected =
+        _messages.where((m) => ids.contains(m.id)).toList(growable: false);
+    if (selected.isEmpty) return;
+    onShareMessages?.call(List.unmodifiable(selected));
+  }
 
   @override
   Future<Message?> getMessage(String messageId) async {
@@ -313,11 +396,96 @@ class HiveConversationDataSource extends ChangeNotifier
   ///
   /// 用于会话初始加载、会话切换、以及任意结构性变更（编辑/删除/版本切换）。
   /// 幂等且会清空旧状态，因此调用方在切换会话时应重建本实例或先调用本方法。
+  ///
+  /// 兼容旧调用方：当传入的是**已折叠**消息（每分组一条）时，每组按单版本处理，
+  /// 容器层不显示版本导航。需要多版本切换时，请改用 [syncConversationFull]
+  /// 传入未折叠的全部消息。
   void syncFromMessages(List<hive.ChatMessage> messages) {
     _messages
       ..clear()
       ..addAll(messages.map(_convertFromHive));
+    // 折叠视图即最终视图：每条消息自成单版本分组
+    _versionEntries
+      ..clear()
+      ..addAll(_messages.map((m) => _VersionEntry(
+            groupId: m.groupId ?? m.id,
+            versions: [m],
+            selectedIndex: 0,
+          )));
+    _entryByGroup
+      ..clear()
+      ..addEntries(_versionEntries.map((e) => MapEntry(e.groupId, e)));
+    _truncatePositionIndex = null;
     _emitMessages();
+  }
+
+  /// 全量同步会话（含全部版本 + 选中版本 + 截断位置）—— 供宿主集成阶段调用。
+  ///
+  /// 传入**未折叠**的全部消息，本数据源按 groupId 分组、按 version 升序，
+  /// 并折叠为渲染视图（每分组取 [selectedVersions] 指定的版本，缺省取最新）。
+  /// - [selectedVersions]：groupId -> 选中版本下标；
+  /// - [truncateIndexRaw]：按原始消息数计的截断位置（与宿主 truncateIndex 语义一致）。
+  void syncConversationFull(
+    List<hive.ChatMessage> allMessages, {
+    Map<String, int>? selectedVersions,
+    int? truncateIndexRaw,
+  }) {
+    // 1. 全量转换为新模型
+    final raw = allMessages.map(_convertFromHive).toList();
+
+    // 2. 按 groupId 分组（保持首次出现顺序）
+    final order = <String>[];
+    final byGroup = <String, List<Message>>{};
+    for (final m in raw) {
+      final gid = m.groupId ?? m.id;
+      byGroup.putIfAbsent(gid, () {
+        order.add(gid);
+        return <Message>[];
+      }).add(m);
+    }
+    for (final list in byGroup.values) {
+      list.sort((a, b) => a.version.compareTo(b.version));
+    }
+
+    // 3. 构建版本条目 + 折叠视图
+    _versionEntries
+      ..clear()
+      ..addAll(order.map((gid) {
+        final vers = byGroup[gid]!;
+        final sel = selectedVersions?[gid];
+        final idx = (sel != null && sel >= 0 && sel < vers.length)
+            ? sel
+            : vers.length - 1;
+        return _VersionEntry(groupId: gid, versions: vers, selectedIndex: idx);
+      }));
+    _entryByGroup
+      ..clear()
+      ..addEntries(_versionEntries.map((e) => MapEntry(e.groupId, e)));
+
+    _messages
+      ..clear()
+      ..addAll(_versionEntries.map((e) => e.versions[e.selectedIndex]));
+
+    // 4. 映射截断位置（原始消息数 -> 折叠视图下标）
+    _truncatePositionIndex = _mapTruncateToCollapsed(raw, truncateIndexRaw);
+
+    _emitMessages();
+  }
+
+  /// 与宿主 home_page 一致的映射：原始 truncateIndex（消息条数）-> 折叠视图下标。
+  ///
+  /// 取原始列表前 [rawIndex] 条中首次出现的 groupId 去重计数，
+  /// 分隔线落在该计数 - 1 的折叠下标（其上方即"已截断上下文"）。
+  int? _mapTruncateToCollapsed(List<Message> raw, int? rawIndex) {
+    if (rawIndex == null || rawIndex <= 0) return null;
+    final seen = <String>{};
+    final limit = rawIndex < raw.length ? rawIndex : raw.length;
+    var count = 0;
+    for (var i = 0; i < limit; i++) {
+      final gid = raw[i].groupId ?? raw[i].id;
+      if (seen.add(gid)) count++;
+    }
+    return count - 1;
   }
 
   /// 流式增量更新：把 contentDelta 追加到最后一个 TextPart，
@@ -465,6 +633,18 @@ class HiveConversationDataSource extends ChangeNotifier
   }
 
   void _emitMessages() {
+    // 流式/增量变更后，让各分组"当前选中版本"对象与折叠视图保持一致，
+    // 保证版本切换时立即拿到最新内容（O(消息数)，典型量级可接受）。
+    if (_versionEntries.isNotEmpty) {
+      for (final m in _messages) {
+        final entry = _entryByGroup[m.groupId ?? m.id];
+        if (entry != null &&
+            entry.selectedIndex >= 0 &&
+            entry.selectedIndex < entry.versions.length) {
+          entry.versions[entry.selectedIndex] = m;
+        }
+      }
+    }
     if (!_messageController.isClosed) {
       _messageController.add(List.unmodifiable(_messages));
     }
@@ -483,4 +663,20 @@ class HiveConversationDataSource extends ChangeNotifier
     _stateController.close();
     super.dispose();
   }
+}
+
+/// 内部版本分组条目（可变，供 Hive 实现维护）。
+///
+/// [versions] 元素引用会在流式增量时被 _emitMessages 刷新为折叠视图中的最新对象，
+/// 因此版本切换可即时取到最新内容。
+class _VersionEntry {
+  final String groupId;
+  final List<Message> versions;
+  int selectedIndex;
+
+  _VersionEntry({
+    required this.groupId,
+    required this.versions,
+    required this.selectedIndex,
+  });
 }

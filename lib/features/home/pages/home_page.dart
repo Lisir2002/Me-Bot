@@ -62,6 +62,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'dart:ui' as ui;
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:desktop_drop/desktop_drop.dart';
 import '../../../core/services/search/search_tool_service.dart';
@@ -152,6 +153,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final GlobalKey<ConversationViewState> _conversationViewKey = GlobalKey();
   /// 当前被引用回复的消息（非经典样式长按"引用回复"时设置）
   ChatMessage? _quotedMessage;
+
+  /// 会话级"始终允许"的审批操作标识集合（按 ApprovalPart.action）。
+  /// 用户在审批弹窗选择"本会话始终允许"后记录；后续同类操作自动 approve，不再弹窗。
+  final Set<String> _sessionAutoAllowedActions = <String>{};
 
   // Sanitize/translate JSON Schema to each provider's accepted subset
   static Map<String, dynamic> _sanitizeToolParametersForProvider(Map<String, dynamic> schema, ProviderKind kind) {
@@ -970,36 +975,56 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _conversationDataSource!
       ..onMessageAction = _handleStyleMessageAction
       ..onApprovalRequired = _handleApprovalRequired
-      ..syncFromMessages(_collapseVersions(_messages));
+      // 选中版本变更回调：对齐经典列表写法，更新宿主内存映射并写回服务层持久化。
+      // 容器内部 setSelectedVersion 已完成折叠视图重渲染并广播，此处只负责落盘。
+      ..onSelectedVersionChanged = (gid, idx) {
+        _versionSelections[gid] = idx;
+        final cid = _currentConversation?.id;
+        if (cid != null) {
+          _chatService.setSelectedVersion(cid, gid, idx);
+        }
+      }
+      // 多消息分享回调：选择模式"分享所选"触发，复用分享面板实现
+      ..onShareMessages = _shareStyleMessages
+      // 喂入【未折叠的原始 _messages】，由数据源按 groupId 分组、按选中版本折叠发射；
+      // 同时透传宿主持久化的截断位置，使版本导航 ◀▶ 与"已截断上下文"分隔线
+      // 在非经典样式下真正可用，而渲染仍只展示每个分组的当前选中版本。
+      ..syncConversationFull(
+        _messages,
+        selectedVersions: _versionSelections,
+        truncateIndexRaw: _currentConversation?.truncateIndex,
+      );
   }
 
-  /// 非经典样式下，dataSource 检测到新审批请求时弹出审批对话框
+  /// 非经典样式下，dataSource 检测到新审批请求时弹出完整审批对话框
   void _handleApprovalRequired(ApprovalPart approval) {
     if (!mounted) return;
-    // 复用项目既有审批弹窗（ToolApprovalDialog）
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(approval.description),
-        content: const Text('需要审批此操作'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _conversationDataSource?.approveAction(approval.id);
-            },
-            child: const Text('批准'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _conversationDataSource?.rejectAction(approval.id);
-            },
-            child: const Text('拒绝'),
-          ),
-        ],
-      ),
-    );
+    // 本会话已"始终允许"同类操作：直接放行，不再打扰用户
+    if (_sessionAutoAllowedActions.contains(approval.action)) {
+      _conversationDataSource?.approveAction(approval.id);
+      return;
+    }
+    // 复用项目完整 ToolApprovalDialog 视觉（AppDialog）的三选项审批流程
+    showRichToolApprovalDialog(
+      context,
+      toolName: approval.action,
+      description: approval.description,
+      details: approval.details,
+    ).then((decision) {
+      if (decision == null || !mounted) return;
+      switch (decision) {
+        case ToolApprovalAllowOnce():
+          // 允许一次：本次放行，不加入会话级白名单
+          _conversationDataSource?.approveAction(approval.id);
+        case ToolApprovalAlwaysAllow():
+          // 本会话始终允许：本次放行并记录，后续同类自动通过
+          _sessionAutoAllowedActions.add(approval.action);
+          _conversationDataSource?.approveAction(approval.id);
+        case ToolApprovalRejected(:final reason):
+          // 拒绝（可附原因，原因会反馈给模型）
+          _conversationDataSource?.rejectAction(approval.id, reason: reason);
+      }
+    });
   }
 
   /// 非经典样式下，渲染器长按菜单动作的宿主处理
@@ -1024,9 +1049,74 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _regenerateAtMessage(orig.first);
         }
       case MessageAction.share:
+        // 分享消息文本；若含本地文件则一并通过系统分享面板分享
+        _shareStyleMessage(m);
       case MessageAction.copy:
-        // copy 已由渲染器自处理；share 暂不在宿主实现
+        // copy 已由渲染器自处理，宿主无需介入
         break;
+    }
+  }
+
+  /// 分享单条消息（长按"分享"）—— 委托到多消息分享实现，保持既有单条行为不变。
+  Future<void> _shareStyleMessage(Message m) => _shareStyleMessages([m]);
+
+  /// 分享多条消息：文本合并后走 Share.share；本地真实存在文件走 Share.shareXFiles，
+  /// 网络/远程文件地址附加到文本中。选择模式"分享所选"与长按单条分享共用本实现。
+  Future<void> _shareStyleMessages(List<Message> messages) async {
+    if (messages.isEmpty) return;
+    try {
+      final l10n = context.l10n;
+      // iPad / 大屏需要分享锚点，这里用屏幕中心兜底；提前捕获避免跨 async gap 使用 context
+      final size = MediaQuery.of(context).size;
+      final origin = Rect.fromCenter(
+        center: Offset(size.width / 2, size.height / 2),
+        width: 1,
+        height: 1,
+      );
+      final buffer = StringBuffer();
+      // 收集本地真实存在的文件，其余（远程/不存在）以文本形式附在分享内容后
+      final localFiles = <String>[];
+      final remoteRefs = <String>[];
+      for (final m in messages) {
+        final text = m.textContent.trim();
+        if (text.isNotEmpty) {
+          if (buffer.isNotEmpty) buffer.writeln();
+          buffer.write(text);
+        }
+        for (final f in m.files) {
+          final url = f.url.trim();
+          if (url.isEmpty) continue;
+          final isRemote = url.startsWith('http://') || url.startsWith('https://');
+          if (!isRemote && await File(url).exists()) {
+            localFiles.add(url);
+          } else {
+            remoteRefs.add('${f.name}: $url');
+          }
+        }
+      }
+      if (!mounted) return;
+      if (remoteRefs.isNotEmpty) {
+        if (buffer.isNotEmpty) buffer.writeln();
+        buffer.write(remoteRefs.join('\n'));
+      }
+      final combined = buffer.toString().trim();
+
+      if (localFiles.isNotEmpty) {
+        await Share.shareXFiles(
+          [for (final p in localFiles) XFile(p)],
+          text: combined.isEmpty ? null : combined,
+          subject: l10n.convStyleShareSheetTitle,
+          sharePositionOrigin: origin,
+        );
+      } else if (combined.isNotEmpty) {
+        await Share.share(
+          combined,
+          subject: l10n.convStyleShareSheetTitle,
+          sharePositionOrigin: origin,
+        );
+      }
+    } catch (e, st) {
+      Logger.w(LogTags.home, 'share style messages failed', e, st);
     }
   }
 
@@ -1086,7 +1176,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (mounted) {
       showAppSnackBar(
         context,
-        message: '已切换为 ${StyleMetaRegistry.get(style).displayName}',
+        message: '已切换为 ${style.l10nName(context.l10n)}',
         type: NotificationType.info,
       );
     }
@@ -5141,6 +5231,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 );
               }),
               actions: [
+                // 对话流样式切换（与移动端 AppBar 同一组件，复用 _onStyleSelected）。
+                // 标题区已用 Flexible 自动收窄/省略，新增此按钮只会让标题收缩，
+                // 不会挤压右侧既有按钮；平板起始宽度已 >=900，空间充足。
+                StyleSwitcherButton(
+                  currentStyle: _currentStyle,
+                  onStyleSelected: _onStyleSelected,
+                ),
                 // Right topics sidebar toggle (desktop + topics on right)
                 Builder(builder: (context) {
                   final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||

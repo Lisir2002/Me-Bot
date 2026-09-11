@@ -1,10 +1,15 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/snackbar.dart';
+import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/conversation_state.dart';
 import '../models/message_part.dart';
 import '../widgets/agent_enhanced_widgets.dart';
+import '../widgets/message_animations.dart';
+import '../widgets/message_context_menu.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// Style 05: Agent 三层级渲染器（⭐ 重点样式）
@@ -26,8 +31,23 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
   @override
   ConversationStyle get style => ConversationStyle.agentThreeTier;
 
+  /// 智能滚动控制器（懒初始化，随渲染器生命周期释放）
+  SmartScrollController? _scrollCtrl;
+  /// 是否显示"跳转到底部"按钮
+  final ValueNotifier<bool> _showJump = ValueNotifier<bool>(false);
+
+  @override
+  void onDetach() {
+    _scrollCtrl?.dispose();
+    _scrollCtrl = null;
+    super.onDetach();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _scrollCtrl ??= SmartScrollController()
+      ..onUserScrolledAway = (away) => _showJump.value = away;
+    final ctrl = _scrollCtrl!;
     return StreamBuilder<List<Message>>(
       stream: dataSource.messageStream,
       initialData: dataSource.currentMessages,
@@ -38,39 +58,74 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
           initialData: dataSource.currentState,
           builder: (context, stateSnapshot) {
             final state = stateSnapshot.data ?? ConversationState.idle;
-            return Column(
+            // 新消息到达且用户在底部附近时，自动平滑跟随到底部
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (ctrl.hasClients && ctrl.shouldAutoScroll) {
+                ctrl.animateTo(
+                  ctrl.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
+            return Stack(
               children: [
-                // 任务模式切换栏（Cline Plan/Act 双模式）
-                if (state.taskMode != TaskExecutionMode.auto ||
-                    state.totalSteps != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: Row(
-                      children: [
-                        TaskModeSwitcher(
-                          currentMode: state.taskMode,
+                Column(
+                  children: [
+                    // 任务模式切换栏（Cline Plan/Act 双模式）
+                    if (state.taskMode != TaskExecutionMode.auto ||
+                        state.totalSteps != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        child: Row(
+                          children: [
+                            TaskModeSwitcher(
+                              currentMode: state.taskMode,
+                            ),
+                            const Spacer(),
+                          ],
                         ),
-                        const Spacer(),
-                      ],
+                      ),
+                    // 流水线进度指示器（LangGraph GenUI PipelineProgress）
+                    if (state.totalSteps != null && state.totalSteps! > 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: PipelineProgress(
+                          totalSteps: state.totalSteps!,
+                          completedSteps: state.completedSteps ?? 0,
+                          currentStepName: state.currentStepName,
+                          hasError: state.error != null,
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: ctrl,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final w =
+                              _buildMessage(context, messages[index], state);
+                          // 仅最新一条消息播放底部滑入 + 淡入
+                          final isLast = index == messages.length - 1;
+                          return isLast ? MessageSlideIn(child: w) : w;
+                        },
+                      ),
                     ),
-                  ),
-                // 流水线进度指示器（LangGraph GenUI PipelineProgress）
-                if (state.totalSteps != null && state.totalSteps! > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: PipelineProgress(
-                      totalSteps: state.totalSteps!,
-                      completedSteps: state.completedSteps ?? 0,
-                      currentStepName: state.currentStepName,
-                      hasError: state.error != null,
-                    ),
-                  ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) =>
-                        _buildMessage(context, messages[index], state),
+                  ],
+                ),
+                // 上翻后显示"跳转到底部"悬浮按钮
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: _showJump,
+                    builder: (context, show, _) => show
+                        ? FloatingActionButton.small(
+                            onPressed: ctrl.smartJumpToBottom,
+                            child: const Icon(Icons.keyboard_arrow_down),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                 ),
               ],
@@ -79,6 +134,47 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
         );
       },
     );
+  }
+
+  /// 弹出长按上下文菜单；复制自包含，其余动作经 dataSource 回调交宿主处理
+  void _showContextMenu(BuildContext context, Message message) {
+    final text = message.textContent;
+    final l10n = context.l10n;
+    showMessageContextMenu(
+      context,
+      message,
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: text));
+        showAppSnackBar(
+          context,
+          message: l10n.convStyleCopied,
+          type: NotificationType.success,
+        );
+      },
+      onQuote: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.quote),
+      onRetry: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.retry),
+      onShare: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.share),
+      onDelete: () async {
+        await dataSource.deleteMessage(message.id);
+        if (context.mounted) {
+          showAppSnackBar(
+            context,
+            message: l10n.convStyleDeleted,
+            type: NotificationType.success,
+          );
+        }
+      },
+    );
+  }
+
+  /// 格式化时间戳（用于语义标签）
+  String _formatTime(DateTime time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
   /// 根据消息内容判断视觉层级
@@ -103,18 +199,37 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
   Widget _buildMessage(
       BuildContext context, Message message, ConversationState state) {
     final tier = _classifyTier(message);
+    final isUser = message.role == MessageRole.user;
     final isGeneratingThis =
         state.generatingMessageId != null &&
             state.generatingMessageId == message.id;
 
+    late final Widget content;
     switch (tier) {
       case _Tier.primary:
-        return _buildPrimaryTier(context, message, isGeneratingThis, state);
+        content = _buildPrimaryTier(context, message, isGeneratingThis, state);
       case _Tier.secondary:
-        return _buildSecondaryTier(context, message);
+        content = _buildSecondaryTier(context, message);
       case _Tier.tertiary:
-        return _buildTertiaryTier(context, message);
+        content = _buildTertiaryTier(context, message);
     }
+
+    // 长按弹出统一上下文菜单（复制/引用/重新生成/分享/删除）
+    final tappable = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _showContextMenu(context, message),
+      child: content,
+    );
+
+    final l10n = context.l10n;
+    final timeStr = _formatTime(message.timestamp);
+    return Semantics(
+      container: true,
+      label: isUser
+          ? l10n.convStyleUserMessageSemantic(timeStr)
+          : l10n.convStyleAssistantMessageSemantic(timeStr),
+      child: tappable,
+    );
   }
 
   // ==========================================================================
@@ -125,6 +240,7 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
       bool isGenerating, ConversationState state) {
     final isUser = message.role == MessageRole.user;
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -149,7 +265,9 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
               ),
               const SizedBox(width: 6),
               Text(
-                isUser ? '用户' : (message.assistantName ?? '助手'),
+                isUser
+                    ? l10n.convStyleSenderYou
+                    : (message.assistantName ?? l10n.convStyleSenderAssistant),
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: isUser
@@ -191,7 +309,8 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
     if (message.role == MessageRole.user &&
         message.referencedMessageId != null) {
       children.add(QuoteRefWidget(
-        senderName: message.assistantName ?? '助手',
+        senderName:
+            message.assistantName ?? context.l10n.convStyleSenderAssistant,
         contentPreview: message.textContent,
         timestamp: message.timestamp,
       ));

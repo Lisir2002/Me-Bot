@@ -5,6 +5,39 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.56] - 2026-09-11
+
+### 📣 For Users
+- **对话流样式精简化**：从 15 种精简到 9 种——淘汰 6 种体验重叠或视觉割裂的样式，保留 9 种各有特色的实用样式（默认气泡 / 紧凑气泡 / 极简列表 / 卡片堆叠 / 双栏杂志 / 代码优先 / 全屏文档 / 富内容 / 终端），选择不再困难；
+- **Agent 对话体验全面对标主流 AI 客户端**：新增 11 类智能交互模式——工具调用状态机（看得见每步工具在干什么）、思考过程折叠（长推理不再刷屏，点一下展开）、实时进度条（长任务有进度反馈）、错误智能建议（报错后直接给修复建议）、停滞自动检测（卡住了主动提醒）、信心徽章（模型对回答的置信度一目了然）、Todo 清单（Agent 自主拆任务并逐步完成）、三选项审批（危险操作让你选"允许一次 / 始终允许 / 拒绝"）、流水线进度（多步任务的流水线可视化）、追问芯片（答完推荐相关追问点一下继续聊）、Plan-Act 模式（先规划再执行，过程透明）；
+- **分享/桌面/审批等细节补齐**：消息分享能力接入 share_plus、桌面端样式切换按钮补齐、工具审批弹窗三选项落地、l10n 全量 103 键翻译补齐。
+
+### 🔧 For Developers
+- **Changed**：
+  - 对话流样式从 15 种精简到 9 种：淘汰 6 种（弹幕 / 未来感 / 手账 / 商务 / 哥特 / 萌系），保留 9 种 concrete style renderer；`StyleMetaRegistry.concreteStyles` 同步收敛；
+  - 版本号 `0.0.55+55` → `0.0.56+56`。
+- **Added**：
+  - Agent 对标优化 11 类设计模式三批全量落地：
+    - 第一批：工具状态机（tool call 各阶段状态可视化）、思考折叠（thinking block 可折叠展开）、进度条（长任务进度反馈）；
+    - 第二批：错误建议（tool error 附修复建议文案）、停滞检测（超时无响应自动提示）、信心徽章（response confidence 标签）；
+    - 第三批：Todo List（Agent 自主任务拆分清单）、三选项审批（ToolApprovalDialog 允许一次/始终/拒绝）、流水线进度（multi-step pipeline 阶段可视化）、追问芯片（follow-up suggestion chips）、Plan-Act 模式（plan 阶段与 act 阶段分开展示）；
+  - 8 个渲染器补齐四件套（l10n name / description / demo / meta 注册）；
+  - 版本导航选择模式截断线：样式选择在样式过多时自动截断显示并提示；
+  - l10n ARB 全量补齐至 103 键（app_en / app_zh / app_zh_Hant）；
+  - `ToolApprovalDialog` 三选项审批交互落地；
+  - `share_plus` 消息分享接入；
+  - 桌面端样式切换按钮补齐。
+- **Fixed**：
+  - custom_lint ERROR 级违规修复：`message_context_menu.dart` 裸 ListTile → InkWell 自定义行；`style_settings_page.dart` 裸 Scaffold → AppPage.selfScrolling、裸 ListView padding → AppListView、SwitchListTile → AppSwitchRow。
+
+### 🤖 For Agents
+- **样式注册表收敛**：`StyleMetaRegistry.concreteStyles` 现仅含 9 种渲染器；新增样式前先确认是否会与现有 9 种体验重叠，不重叠才允许新增；淘汰的 6 种 renderer 文件已删除，不要引用旧 id；
+- **Agent 设计模式落地位置**：11 类模式集中在 `lib/features/conversation_style/widgets/agent_enhanced_widgets.dart`，新增 Agent 交互模式先在该文件扩展，不要散落到各 renderer；
+- **三选项审批**：工具审批一律走 `ToolApprovalDialog`，返回三值（allowOnce / alwaysAllow / deny），不要自己写二元审批弹窗；
+- **l10n 键数**：当前 ARB 共 103 键，新增文案先在 app_en.arb 加键再同步 app_zh / app_zh_Hant，禁止硬编码中文 UI 字符串（`hardcoded_ui_string` lint 会拦）；
+- **样式选择截断**：手动模式下样式卡片网格用 `GridView.builder` + `shrinkWrap`，样式数量增长时通过截断线控制首屏展示量；
+- **桌面切换按钮**：桌面端样式切换入口在 `home_page.dart`，与移动端设置页入口共享同一 `StyleSettingsService`，不要写两套持久化。
+
 ## [0.0.55] - 2026-09-11
 
 ### 📣 For Users

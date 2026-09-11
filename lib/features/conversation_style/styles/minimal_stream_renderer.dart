@@ -1,8 +1,13 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/snackbar.dart';
+import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
+import '../widgets/message_animations.dart';
+import '../widgets/message_context_menu.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// Style 03: 极简流式渲染器
@@ -24,29 +29,119 @@ class MinimalStreamRenderer extends BaseStyleRenderer {
   @override
   ConversationStyle get style => ConversationStyle.minimalStream;
 
+  /// 智能滚动控制器（懒初始化，随渲染器生命周期释放）
+  SmartScrollController? _scrollCtrl;
+  /// 是否显示"跳转到底部"按钮
+  final ValueNotifier<bool> _showJump = ValueNotifier<bool>(false);
+
+  @override
+  void onDetach() {
+    _scrollCtrl?.dispose();
+    _scrollCtrl = null;
+    super.onDetach();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _scrollCtrl ??= SmartScrollController()
+      ..onUserScrolledAway = (away) => _showJump.value = away;
+    final ctrl = _scrollCtrl!;
     return StreamBuilder<List<Message>>(
       stream: dataSource.messageStream,
       initialData: dataSource.currentMessages,
       builder: (context, snapshot) {
         final messages = snapshot.data ?? [];
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          itemCount: messages.length,
-          itemBuilder: (context, index) =>
-              _buildMessage(context, messages[index]),
+        // 新消息到达且用户在底部附近时，自动平滑跟随到底部
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (ctrl.hasClients && ctrl.shouldAutoScroll) {
+            ctrl.animateTo(
+              ctrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+        return Stack(
+          children: [
+            ListView.builder(
+              controller: ctrl,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final w = _buildMessage(context, messages[index]);
+                // 仅最新一条消息播放底部滑入 + 淡入
+                final isLast = index == messages.length - 1;
+                return isLast ? MessageSlideIn(child: w) : w;
+              },
+            ),
+            // 上翻后显示"跳转到底部"悬浮按钮
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _showJump,
+                builder: (context, show, _) => show
+                    ? FloatingActionButton.small(
+                        onPressed: ctrl.smartJumpToBottom,
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ],
         );
       },
     );
+  }
+
+  /// 弹出长按上下文菜单；复制自包含，其余动作经 dataSource 回调交宿主处理
+  void _showContextMenu(BuildContext context, Message message) {
+    final text = message.textContent;
+    final l10n = context.l10n;
+    showMessageContextMenu(
+      context,
+      message,
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: text));
+        showAppSnackBar(
+          context,
+          message: l10n.convStyleCopied,
+          type: NotificationType.success,
+        );
+      },
+      onQuote: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.quote),
+      onRetry: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.retry),
+      onShare: () =>
+          dataSource.onMessageAction?.call(message, MessageAction.share),
+      onDelete: () async {
+        await dataSource.deleteMessage(message.id);
+        if (context.mounted) {
+          showAppSnackBar(
+            context,
+            message: l10n.convStyleDeleted,
+            type: NotificationType.success,
+          );
+        }
+      },
+    );
+  }
+
+  /// 格式化时间戳（用于语义标签）
+  String _formatTime(DateTime time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
   /// 构建单条消息 —— 极简纯文本流
   Widget _buildMessage(BuildContext context, Message message) {
     final isUser = message.role == MessageRole.user;
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
-    return Padding(
+    final body = Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         // 用户消息右对齐，助手消息左对齐
@@ -55,6 +150,22 @@ class MinimalStreamRenderer extends BaseStyleRenderer {
         mainAxisSize: MainAxisSize.min,
         children: _buildParts(context, message, isUser, theme),
       ),
+    );
+
+    // 长按弹出统一上下文菜单（复制/引用/重新生成/分享/删除）
+    final tappable = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _showContextMenu(context, message),
+      child: body,
+    );
+
+    final timeStr = _formatTime(message.timestamp);
+    return Semantics(
+      container: true,
+      label: isUser
+          ? l10n.convStyleUserMessageSemantic(timeStr)
+          : l10n.convStyleAssistantMessageSemantic(timeStr),
+      child: tappable,
     );
   }
 
@@ -68,6 +179,8 @@ class MinimalStreamRenderer extends BaseStyleRenderer {
       children.add(Padding(
         padding: const EdgeInsets.only(bottom: 2),
         child: Text(
+          // 极简引用提示语，冻结映射暂无对应键，按 lint 自带豁免保留
+          // ignore: hardcoded_ui_string
           '↩ 引用了消息',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,

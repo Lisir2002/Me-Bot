@@ -1,5 +1,8 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
+import '../../../l10n/build_context_l10n.dart';
+import '../../../shared/widgets/app_list_view.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_section.dart';
 import '../data/style_settings_service.dart';
 import '../framework/style_resolver.dart';
 import '../models/conversation_state.dart';
@@ -52,15 +55,9 @@ class _StyleSettingsPageState extends State<StyleSettingsPage> {
     final theme = Theme.of(context);
     final settings = _service.settings;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('对话样式'),
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+    return AppPage.selfScrolling(
+      title: context.l10n.convStyleSettingsTitle,
+      body: AppListView(
         children: [
           // 自动模式开关
           Card(
@@ -69,12 +66,27 @@ class _StyleSettingsPageState extends State<StyleSettingsPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            child: SwitchListTile(
-              title: const Text('自动选择样式'),
-              subtitle: const Text('根据对话内容特征自动推荐最合适的样式'),
-              value: settings.autoModeEnabled,
-              activeThumbColor: theme.colorScheme.primary,
-              onChanged: (v) => _service.setAutoMode(v),
+            child: Column(
+              children: [
+                AppSwitchRow(
+                  icon: Icons.auto_mode,
+                  label: context.l10n.convStyleAutoMode,
+                  value: settings.autoModeEnabled,
+                  onChanged: (v) => _service.setAutoMode(v),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      context.l10n.convStyleAutoModeDesc,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -88,7 +100,8 @@ class _StyleSettingsPageState extends State<StyleSettingsPage> {
               return _AutoHint(
                 recommended: recommended,
                 explain: resolver.getRecommendationReason(
-                    const ConversationIntent(), settings),
+                    const ConversationIntent(), settings,
+                    nameResolver: (s) => s.l10nName(context.l10n)),
               );
             }),
             const SizedBox(height: 12),
@@ -97,12 +110,12 @@ class _StyleSettingsPageState extends State<StyleSettingsPage> {
             // 手动模式：当前选中 + 9 种样式网格
             Row(
               children: [
-                Text('选择默认样式',
+                Text(context.l10n.convStyleChooseDefaultStyle,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600)),
                 const Spacer(),
                 Text(
-                  '当前：${StyleMetaRegistry.get(settings.globalStyle).displayName}',
+                  '${context.l10n.convStyleCurrent}：${settings.globalStyle.l10nName(context.l10n)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.primary,
                   ),
@@ -142,10 +155,10 @@ class _StyleSettingsPageState extends State<StyleSettingsPage> {
                   Icon(Icons.info_outline,
                       size: 18, color: theme.colorScheme.onSurfaceVariant),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      '也可以在对话页右上角随时切换，切换仅对当前会话生效。',
-                      style: TextStyle(fontSize: 12, height: 1.4),
+                      context.l10n.convStyleTipBottomBar,
+                      style: const TextStyle(fontSize: 12, height: 1.4),
                     ),
                   ),
                 ],
@@ -183,7 +196,9 @@ class _AutoHint extends StatelessWidget {
               Icon(Icons.auto_awesome,
                   size: 20, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
-              Text('推荐：${meta.number} ${meta.displayName}',
+              // 冻结映射未提供「推荐：」前缀键，沿用字面量（行级豁免）
+              // ignore: hardcoded_ui_string
+              Text('推荐：${meta.number} ${meta.style.l10nName(context.l10n)}',
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
             ],
@@ -195,7 +210,7 @@ class _AutoHint extends StatelessWidget {
                 height: 1.4,
               )),
           const SizedBox(height: 8),
-          Text(meta.description,
+          Text(meta.style.l10nDescription(context.l10n),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               )),
@@ -264,7 +279,7 @@ class _StyleCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              meta.displayName,
+              meta.style.l10nName(context.l10n),
               style: theme.textTheme.labelLarge
                   ?.copyWith(fontWeight: FontWeight.w600),
               maxLines: 1,
@@ -273,7 +288,7 @@ class _StyleCard extends StatelessWidget {
             const SizedBox(height: 4),
             Expanded(
               child: Text(
-                meta.description,
+                meta.style.l10nDescription(context.l10n),
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 maxLines: 3,
@@ -311,15 +326,15 @@ class _UsageStatsCard extends StatelessWidget {
           Expanded(
             child: Text(
               fav == null
-                  ? '暂无使用数据，切换行为将用于优化推荐'
-                  : '你最常使用：${StyleMetaRegistry.get(fav).displayName}'
-                      '（${(pct * 100).round()}%）',
+                  ? context.l10n.convStyleNoUsageData
+                  : context.l10n.convStyleMostUsed(
+                      fav.l10nName(context.l10n), (pct * 100).round()),
               style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
             ),
           ),
           TextButton(
             onPressed: () => service.resetUsageStats(),
-            child: const Text('重置学习数据'),
+            child: Text(context.l10n.convStyleResetLearning),
           ),
         ],
       ),

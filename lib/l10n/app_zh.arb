@@ -1695,5 +1695,168 @@
       }
     }
   },
-  "commonRetry": "重试"
+  "commonRetry": "重试",
+
+  "convStyleSwitchStyleTooltip": "切换对话样式",
+  "convStyleExpandFullText": "展开全文",
+  "convStyleExpandFullTextWithCount": "展开全文（共 {count} 字）",
+  "@convStyleExpandFullTextWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "convStyleCollapse": "收起",
+  "convStyleMenuCopy": "复制内容",
+  "convStyleMenuQuote": "引用回复",
+  "convStyleMenuRetry": "重新生成",
+  "convStyleMenuShare": "分享",
+  "convStyleMenuDelete": "删除",
+  "convStyleCopied": "已复制",
+  "convStyleDeleted": "已删除",
+  "convStyleSwitchedTo": "已切换为 {name}",
+  "@convStyleSwitchedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "convStyleSendFailed": "发送失败",
+  "convStyleContinueGenerating": "继续生成",
+  "convStyleToolFailed": "工具调用失败",
+  "convStyleWaitingApproval": "等待审批",
+  "convStyleApproved": "已批准",
+  "convStyleRejected": "已拒绝",
+  "convStyleSettingsTitle": "对话样式",
+  "convStyleAutoMode": "自动选择样式",
+  "convStyleAutoModeDesc": "根据对话内容特征自动推荐最合适的样式",
+  "convStyleChooseDefaultStyle": "选择默认样式",
+  "convStyleCurrent": "当前",
+  "convStyleTipBottomBar": "也可以在对话页右上角随时切换，切换仅对当前会话生效。",
+  "convStyleResetLearning": "重置学习数据",
+  "convStyleNoUsageData": "暂无使用数据，切换行为将用于优化推荐",
+  "convStyleMostUsed": "你最常使用：{name}（{pct}%）",
+  "@convStyleMostUsed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "convStyleUserMessageSemantic": "用户消息，时间：{time}",
+  "@convStyleUserMessageSemantic": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "convStyleAssistantMessageSemantic": "助手消息，时间：{time}",
+  "@convStyleAssistantMessageSemantic": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "convStyleUserAvatarSemantic": "用户头像",
+  "convStyleAssistantAvatarSemantic": "助手头像",
+  "convStyleCopyActionSemantic": "复制消息内容",
+  "convStyleQuoteActionSemantic": "引用回复此消息",
+  "convStyleRetryActionSemantic": "重新生成此消息",
+  "convStyleShareActionSemantic": "分享此消息",
+  "convStyleDeleteActionSemantic": "删除此消息",
+  "convStyleSenderYou": "你",
+  "convStyleSenderAssistant": "助手",
+
+  "convStyleClassicBubbleName": "经典气泡式",
+  "convStyleClassicBubbleDesc": "用户右对齐、助手左对齐的圆角气泡，日常聊天首选",
+  "convStyleFullWidthDocumentName": "全宽文档式",
+  "convStyleFullWidthDocumentDesc": "消息占满宽度、分隔线区分，适合长文本和代码密集场景",
+  "convStyleMinimalStreamName": "极简流式",
+  "convStyleMinimalStreamDesc": "纯文本流、无气泡无边框，最快的实时流式输出体验",
+  "convStyleCardStackName": "卡片堆叠式",
+  "convStyleCardStackDesc": "每条消息是带阴影的卡片，视觉层次分明",
+  "convStyleAgentThreeTierName": "Agent 三层级",
+  "convStyleAgentThreeTierDesc": "主回答/子助手结果/工具调用三级视觉层级，复杂任务首选",
+  "convStyleToolCardFlowName": "工具卡片流",
+  "convStyleToolCardFlowDesc": "每个工具调用是独立卡片，纵向时间线展示执行进度",
+  "convStyleThinkActObserveName": "思考-行动-观察闭环",
+  "convStyleThinkActObserveDesc": "左侧 rail 时间线，三阶段明确区分，深度推理可解释",
+  "convStyleTerminalName": "终端风格",
+  "convStyleTerminalDesc": "等宽字体、命令行风格，开发者和代码执行场景",
+  "convStyleRichContentName": "富内容渲染",
+  "convStyleRichContentDesc": "综合渲染，按内容类型自适应，代码/文件/表格原生渲染",
+  "convStyleDensityLowest": "最低",
+  "convStyleDensityLow": "低",
+  "convStyleDensityMedium": "中",
+  "convStyleDensityMediumHigh": "中高",
+  "convStyleDensityHigh": "高",
+  "convStyleDensityHighCollapsible": "高（可折叠）",
+  "convStyleDensityHighest": "最高",
+  "convStyleTagDailyChat": "日常聊天",
+  "convStyleTagShortChat": "短对话",
+  "convStyleTagGeneral": "通用场景",
+  "convStyleTagLongText": "长文本",
+  "convStyleTagCodeIntensive": "代码密集",
+  "convStyleTagDocGen": "文档生成",
+  "convStyleTagQuickQA": "快速问答",
+  "convStyleTagRealtimeStream": "实时流式输出",
+  "convStyleTagFocusRead": "专注阅读",
+  "convStyleTagFileShare": "文件分享",
+  "convStyleTagImageHeavy": "图片密集",
+  "convStyleTagVisual": "视觉驱动",
+  "convStyleTagAgentMultiTool": "Agent 多工具调用",
+  "convStyleTagComplexTask": "复杂任务",
+  "convStyleTagDeepReason": "深度推理",
+  "convStyleTagMultiStepWorkflow": "复杂多步骤工作流",
+  "convStyleTagHighObservability": "可观测性要求高",
+  "convStyleTagDebug": "调试",
+  "convStyleTagHighExplainability": "可解释性要求高",
+  "convStyleTagAnalysis": "分析任务",
+  "convStyleTagDeveloper": "开发者",
+  "convStyleTagCodeExec": "代码执行",
+  "convStyleTagCli": "CLI 集成",
+  "convStyleTagDiverseContent": "内容类型多样",
+  "convStyleTagComprehensive": "综合展示",
+  "convStyleTagRichMedia": "富媒体",
+
+  "convStylePrevVersion": "上一版本",
+  "convStyleNextVersion": "下一版本",
+  "convStyleVersionOf": "版本 {current}/{total}",
+  "@convStyleVersionOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "convStyleSelectMessages": "选择消息",
+  "convStyleSelectedCount": "已选 {n} 条",
+  "@convStyleSelectedCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "convStyleSelectAll": "全选",
+  "convStyleCancelSelection": "取消选择",
+  "convStyleShareSelected": "分享所选",
+  "convStyleDeleteSelected": "删除所选",
+
+  "convStyleApprovalAllowOnce": "允许一次",
+  "convStyleApprovalAlwaysAllow": "本会话始终允许",
+  "convStyleApprovalReasonLabel": "拒绝原因（可选）",
+  "convStyleApprovalReasonHint": "将反馈给模型",
+
+  "convStyleShareSheetTitle": "分享消息"
 }

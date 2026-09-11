@@ -229,8 +229,9 @@ void main() {
         if (style != ConversationStyle.auto) {
           final meta = StyleMetaRegistry.get(style);
           expect(meta.style, equals(style));
-          expect(meta.displayName.isNotEmpty, isTrue);
-          expect(meta.description.isNotEmpty, isTrue);
+          // 展示名/描述已迁移至 l10n 扩展（需 context.l10n 解析），
+          // 此处仅校验结构性字段 number 非空。
+          expect(meta.number.isNotEmpty, isTrue);
         }
       }
     });

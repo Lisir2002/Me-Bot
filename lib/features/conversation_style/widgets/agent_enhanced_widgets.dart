@@ -1,5 +1,5 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../models/conversation_state.dart';
 import '../models/message_part.dart';
 
@@ -480,6 +480,8 @@ class FollowUpChips extends StatelessWidget {
               Icon(Icons.lightbulb_outline, size: 14, color: theme.colorScheme.primary),
               const SizedBox(width: 4),
               Text(
+                // 冻结映射未提供「继续追问」键，沿用字面量（行级豁免）
+                // ignore: hardcoded_ui_string
                 '继续追问',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.primary,
@@ -588,6 +590,8 @@ class StalledToolWarning extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
+              // 冻结映射未提供停滞提示键，沿用字面量（行级豁免）
+              // ignore: hardcoded_ui_string
               '已运行 ${stalledSeconds}s 无更新，仍在运行？',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: Colors.orange,
@@ -603,6 +607,8 @@ class StalledToolWarning extends StatelessWidget {
                 minimumSize: const Size(0, 24),
                 foregroundColor: theme.colorScheme.error,
               ),
+              // 冻结映射未提供通用「取消」键，沿用字面量（行级豁免）
+              // ignore: hardcoded_ui_string
               child: const Text('取消', style: TextStyle(fontSize: 11)),
             ),
         ],
@@ -700,6 +706,8 @@ class ErrorRecoverySuggestions extends StatelessWidget {
               Icon(Icons.tips_and_updates_outlined, size: 14, color: theme.colorScheme.error),
               const SizedBox(width: 4),
               Text(
+                // 冻结映射未提供「恢复建议」键，沿用字面量（行级豁免）
+                // ignore: hardcoded_ui_string
                 '恢复建议',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.error,
@@ -731,7 +739,7 @@ class ErrorRecoverySuggestions extends StatelessWidget {
               child: FilledButton.tonalIcon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 14),
-                label: const Text('重试', style: TextStyle(fontSize: 11)),
+                label: Text(context.l10n.commonRetry, style: const TextStyle(fontSize: 11)),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   minimumSize: const Size(0, 28),

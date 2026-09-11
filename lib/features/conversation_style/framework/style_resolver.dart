@@ -218,16 +218,22 @@ class StyleResolver {
   }
 
   /// 综合推荐理由：对话特征 + 用户偏好
+  ///
+  /// [nameResolver] 用于把最常用样式枚举解析为本地化展示名（由调用方在
+  /// 有 BuildContext 时传入，如 `(s) => s.l10nName(context.l10n)`）；
+  /// 不传时退回到枚举名（纯服务层无 context 的兜底）。
   String getRecommendationReason(
     ConversationIntent intent,
-    StyleSettings settings,
-  ) {
+    StyleSettings settings, {
+    String Function(ConversationStyle style)? nameResolver,
+  }) {
     final parts = <String>[explainChoice(intent)];
     final fav = stats?.mostUsed;
     if (fav != null) {
       final pct = stats!.usagePercent(fav);
+      final name = nameResolver != null ? nameResolver(fav) : fav.name;
       parts.add(
-        '你最常使用「${StyleMetaRegistry.get(fav).displayName}」'
+        '你最常使用「$name'
         '（${(pct * 100).round()}%）',
       );
     }

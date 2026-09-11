@@ -1,11 +1,15 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../l10n/build_context_l10n.dart';
+import '../../../../shared/widgets/snackbar.dart';
 import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
 import '../models/style_settings.dart';
+import '../widgets/message_animations.dart';
+import '../widgets/message_context_menu.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// Style 07：思考-行动-观察闭环（Think-Act-Observe）
@@ -19,9 +23,25 @@ class ThinkActObserveRenderer extends BaseStyleRenderer {
   @override
   ConversationStyle get style => ConversationStyle.thinkActObserve;
 
+  /// 智能滚动控制器（懒初始化，随渲染器 onDetach 释放）
+  SmartScrollController? _scrollCtrl;
+  /// 是否显示"跳转到底部"按钮
+  final ValueNotifier<bool> _showJump = ValueNotifier<bool>(false);
+
+  @override
+  void onDetach() {
+    _scrollCtrl?.dispose();
+    _scrollCtrl = null;
+    super.onDetach();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _scrollCtrl ??= SmartScrollController()
+      ..onUserScrolledAway = (away) => _showJump.value = away;
     return _TaoView(
+      scrollCtrl: _scrollCtrl!,
+      showJump: _showJump,
       dataSource: dataSource,
       initialUiState: uiState,
       onUIStateChanged: updateUIState,
@@ -30,11 +50,15 @@ class ThinkActObserveRenderer extends BaseStyleRenderer {
 }
 
 class _TaoView extends StatefulWidget {
+  final SmartScrollController scrollCtrl;
+  final ValueNotifier<bool> showJump;
   final ConversationDataSource dataSource;
   final ConversationUIState initialUiState;
   final void Function(ConversationUIState) onUIStateChanged;
 
   const _TaoView({
+    required this.scrollCtrl,
+    required this.showJump,
     required this.dataSource,
     required this.initialUiState,
     required this.onUIStateChanged,
@@ -65,18 +89,78 @@ class _TaoViewState extends State<_TaoView> {
       initialData: widget.dataSource.currentMessages,
       builder: (context, snapshot) {
         final messages = snapshot.data ?? const [];
-        if (messages.isEmpty) return const Center(child: Text('暂无消息'));
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          itemCount: messages.length,
-          itemBuilder: (context, index) =>
-              _buildMessage(context, messages[index]),
+        // 新消息到达且用户在底部附近时，自动平滑跟随到底部
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctrl = widget.scrollCtrl;
+          if (ctrl.hasClients && ctrl.shouldAutoScroll) {
+            ctrl.animateTo(
+              ctrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+        if (messages.isEmpty) {
+          return const Center(
+            // ignore: hardcoded_ui_string —— 空态暂无 l10n 键，保留原文案
+            child: Text('暂无消息'),
+          );
+        }
+        return Stack(
+          children: [
+            ListView.builder(
+              controller: widget.scrollCtrl,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final w = _buildMessage(context, messages[index]);
+                // 仅最新一条消息播放底部滑入 + 淡入
+                final isLast = index == messages.length - 1;
+                return isLast ? MessageSlideIn(child: w) : w;
+              },
+            ),
+            // 上翻后显示"跳转到底部"悬浮按钮
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: widget.showJump,
+                builder: (context, show, _) => show
+                    ? FloatingActionButton.small(
+                        onPressed: widget.scrollCtrl.smartJumpToBottom,
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
+  /// 统一包裹：消息容器语义 label（用户/助手+时间）+ 长按弹出统一菜单
   Widget _buildMessage(BuildContext context, Message message) {
+    final body = _buildMessageBody(context, message);
+    final timeStr = _formatTime(message.timestamp);
+    final l10n = context.l10n;
+    final String? label = switch (message.role) {
+      MessageRole.user => l10n.convStyleUserMessageSemantic(timeStr),
+      MessageRole.assistant => l10n.convStyleAssistantMessageSemantic(timeStr),
+      _ => null,
+    };
+    return Semantics(
+      container: true,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: () => _showContextMenu(context, message),
+        child: body,
+      ),
+    );
+  }
+
+  Widget _buildMessageBody(BuildContext context, Message message) {
     if (message.role == MessageRole.user) {
       return _UserRow(
         message: message,
@@ -112,6 +196,7 @@ class _TaoViewState extends State<_TaoView> {
       stages.add(_StageRail(
         color: const Color(0xFF8E44AD),
         icon: Icons.psychology,
+        // ignore: hardcoded_ui_string —— 三阶段设计规范标签（中英混排）暂无 l10n 键，保留原文案
         label: '思考 Think',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,6 +233,7 @@ class _TaoViewState extends State<_TaoView> {
       stages.add(_StageRail(
         color: Colors.blue,
         icon: Icons.build,
+        // ignore: hardcoded_ui_string —— 三阶段设计规范标签（中英混排）暂无 l10n 键，保留原文案
         label: '行动 Act',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,6 +246,7 @@ class _TaoViewState extends State<_TaoView> {
       stages.add(_StageRail(
         color: Colors.green,
         icon: Icons.visibility,
+        // ignore: hardcoded_ui_string —— 三阶段设计规范标签（中英混排）暂无 l10n 键，保留原文案
         label: '观察 Observe',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,6 +290,47 @@ class _TaoViewState extends State<_TaoView> {
         children: stages,
       ),
     );
+  }
+
+  /// 弹出长按上下文菜单；复制自包含，其余动作经 dataSource 回调交宿主处理
+  void _showContextMenu(BuildContext context, Message message) {
+    final text = message.textContent;
+    final l10n = context.l10n;
+    showMessageContextMenu(
+      context,
+      message,
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: text));
+        showAppSnackBar(
+          context,
+          message: l10n.convStyleCopied,
+          type: NotificationType.success,
+        );
+      },
+      onQuote: () =>
+          widget.dataSource.onMessageAction?.call(message, MessageAction.quote),
+      onRetry: () =>
+          widget.dataSource.onMessageAction?.call(message, MessageAction.retry),
+      onShare: () =>
+          widget.dataSource.onMessageAction?.call(message, MessageAction.share),
+      onDelete: () async {
+        await widget.dataSource.deleteMessage(message.id);
+        if (context.mounted) {
+          showAppSnackBar(
+            context,
+            message: l10n.convStyleDeleted,
+            type: NotificationType.success,
+          );
+        }
+      },
+    );
+  }
+
+  /// 格式化时间戳（语义 label 用）
+  String _formatTime(DateTime time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 }
 
@@ -305,6 +433,7 @@ class _ObserveCard extends StatelessWidget {
               const Icon(Icons.insights, size: 14, color: Colors.green),
               const SizedBox(width: 6),
               Expanded(
+                // ignore: hardcoded_ui_string —— 观察阶段结果标题暂无 l10n 键，保留原文案
                 child: Text('结果分析 · ${part.toolName}',
                     style: theme.textTheme.labelMedium
                         ?.copyWith(fontWeight: FontWeight.w600)),
@@ -316,6 +445,7 @@ class _ObserveCard extends StatelessWidget {
                     color: Colors.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
+                  // ignore: hardcoded_ui_string —— 质量评分标签暂无 l10n 键，保留原文案
                   child: Text('评分 ${score.toStringAsFixed(1)}',
                       style: const TextStyle(
                           color: Colors.green,
@@ -363,7 +493,7 @@ class _UserRow extends StatelessWidget {
             // 引用回复
             if (message.referencedMessageId != null)
               QuoteRefWidget(
-                senderName: message.assistantName ?? '助手',
+                senderName: message.assistantName ?? context.l10n.convStyleSenderAssistant,
                 contentPreview: message.textContent,
                 timestamp: message.timestamp,
                 onTap: onQuoteTap,

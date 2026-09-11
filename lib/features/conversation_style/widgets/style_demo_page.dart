@@ -1,7 +1,7 @@
-// ignore_for_file: hardcoded_ui_string
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../../../l10n/build_context_l10n.dart';
 import '../conversation_style.dart';
 
 /// no_raw_scaffold 白名单：对话流样式内部调试演示页（带自定义 AppBar + 横向 chip 切换栏，非用户设置页）。
@@ -66,11 +66,15 @@ class _ConversationStyleDemoPageState extends State<ConversationStyleDemoPage> {
     final sampleMessages = [
       Message(
         role: MessageRole.user,
+        // 示例会话 fixture 数据，非产品 UI 文案，不进 ARB（行级豁免）
+        // ignore: hardcoded_ui_string
         parts: [TextPart(text: '你好，请帮我分析一下数据。')],
       ),
       Message(
         role: MessageRole.assistant,
         parts: [
+          // 示例会话 fixture 数据，非产品 UI 文案，不进 ARB（行级豁免）
+          // ignore: hardcoded_ui_string
           ThinkingPart(content: '用户需要数据分析，我先调用工具。'),
           ToolCallPart(
             toolName: 'data_analysis',
@@ -78,6 +82,8 @@ class _ConversationStyleDemoPageState extends State<ConversationStyleDemoPage> {
             status: ToolCallStatus.success,
             duration: const Duration(seconds: 2),
           ),
+          // 示例会话 fixture 数据，非产品 UI 文案，不进 ARB（行级豁免）
+          // ignore: hardcoded_ui_string
           TextPart(text: '分析完成！营收同比增长23%。'),
           CodePart(code: 'print("Hello")', language: 'python'),
         ],
@@ -117,6 +123,8 @@ class _ConversationStyleDemoPageState extends State<ConversationStyleDemoPage> {
 
     return Scaffold(
       appBar: AppBar(
+        // 调试演示页标题，冻结映射未提供键，沿用字面量（行级豁免）
+        // ignore: hardcoded_ui_string
         title: const Text('对话流样式演示'),
         actions: [
           StyleSwitcherButton(
@@ -151,13 +159,13 @@ class _ConversationStyleDemoPageState extends State<ConversationStyleDemoPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  meta.displayName,
+                  meta.style.l10nName(context.l10n),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    meta.description,
+                    meta.style.l10nDescription(context.l10n),
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -167,7 +175,9 @@ class _ConversationStyleDemoPageState extends State<ConversationStyleDemoPage> {
                   ),
                 ),
                 Text(
-                  '信息密度: ${meta.infoDensity}',
+                  // 冻结映射未提供「信息密度：」前缀键，沿用字面量（行级豁免）
+                  // ignore: hardcoded_ui_string
+                  '信息密度: ${meta.style.l10nInfoDensity(context.l10n)}',
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -189,7 +199,7 @@ class _ConversationStyleDemoPageState extends State<ConversationStyleDemoPage> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                   child: ChoiceChip(
-                    label: Text('${styleMeta.number} ${styleMeta.displayName}'),
+                    label: Text('${styleMeta.number} ${styleMeta.style.l10nName(context.l10n)}'),
                     selected: isSelected,
                     onSelected: (_) => _switchStyle(styleMeta.style),
                     labelStyle: TextStyle(

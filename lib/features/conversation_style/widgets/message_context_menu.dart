@@ -1,6 +1,5 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
-import '../l10n/style_l10n.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
 
@@ -29,6 +28,7 @@ class MessageContextMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -45,34 +45,34 @@ class MessageContextMenu extends StatelessWidget {
           const SizedBox(height: 8),
           _Tile(
             icon: Icons.copy,
-            label: StyleL10n.menuCopy,
-            semantics: StyleL10n.copyActionSemantic,
+            label: l10n.convStyleMenuCopy,
+            semantics: l10n.convStyleCopyActionSemantic,
             onTap: onCopy,
           ),
           _Tile(
             icon: Icons.format_quote,
-            label: StyleL10n.menuQuote,
-            semantics: StyleL10n.quoteActionSemantic,
+            label: l10n.convStyleMenuQuote,
+            semantics: l10n.convStyleQuoteActionSemantic,
             onTap: onQuote,
           ),
           // 仅助手消息提供重新生成
           if (message.role == MessageRole.assistant)
             _Tile(
               icon: Icons.refresh,
-              label: StyleL10n.menuRetry,
-              semantics: StyleL10n.retryActionSemantic,
+              label: l10n.convStyleMenuRetry,
+              semantics: l10n.convStyleRetryActionSemantic,
               onTap: onRetry,
             ),
           _Tile(
             icon: Icons.share,
-            label: StyleL10n.menuShare,
-            semantics: StyleL10n.shareActionSemantic,
+            label: l10n.convStyleMenuShare,
+            semantics: l10n.convStyleShareActionSemantic,
             onTap: onShare,
           ),
           _Tile(
             icon: Icons.delete_outline,
-            label: StyleL10n.menuDelete,
-            semantics: StyleL10n.deleteActionSemantic,
+            label: l10n.convStyleMenuDelete,
+            semantics: l10n.convStyleDeleteActionSemantic,
             destructive: true,
             onTap: onDelete,
           ),
@@ -106,13 +106,21 @@ class _Tile extends StatelessWidget {
     return Semantics(
       button: true,
       label: semantics,
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(label, style: TextStyle(color: color)),
+      child: InkWell(
         onTap: () {
           Navigator.of(context).pop();
           onTap();
         },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(width: 16),
+              Text(label, style: TextStyle(color: color)),
+            ],
+          ),
+        ),
       ),
     );
   }

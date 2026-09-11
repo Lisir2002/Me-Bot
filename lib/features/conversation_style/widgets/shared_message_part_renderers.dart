@@ -1,8 +1,8 @@
-// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import '../../../l10n/build_context_l10n.dart';
 import '../models/message_part.dart';
 import '../models/style_settings.dart';
 import 'agent_enhanced_widgets.dart';
@@ -104,7 +104,7 @@ class _CodePartRendererState extends State<CodePartRenderer> {
                   TextButton.icon(
                     onPressed: widget.onRun,
                     icon: const Icon(Icons.play_arrow, size: 14),
-                    label: const Text('运行'),
+                    label: Text(context.l10n.mcpToolTestRun),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       minimumSize: const Size(0, 28),
@@ -117,7 +117,7 @@ class _CodePartRendererState extends State<CodePartRenderer> {
                       size: 16,
                     ),
                     onPressed: _copyCode,
-                    tooltip: '复制代码',
+                    tooltip: context.l10n.convStyleMenuCopy,
                     style: IconButton.styleFrom(
                       padding: const EdgeInsets.all(4),
                       minimumSize: const Size(28, 28),
@@ -321,6 +321,8 @@ class ToolCallPartRenderer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (part.thinking != null) ...[
+                    // 冻结映射未提供「思考」小节标题键，沿用字面量（行级豁免）
+                    // ignore: hardcoded_ui_string
                     Text('思考',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -334,7 +336,7 @@ class ToolCallPartRenderer extends StatelessWidget {
                         )),
                     const SizedBox(height: 8),
                   ],
-                  Text('参数',
+                  Text(context.l10n.chatMessageWidgetArguments,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -357,7 +359,7 @@ class ToolCallPartRenderer extends StatelessWidget {
                   ),
                   if (part.result != null) ...[
                     const SizedBox(height: 8),
-                    Text('结果',
+                    Text(context.l10n.chatMessageWidgetResult,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -413,7 +415,7 @@ class ToolCallPartRenderer extends StatelessWidget {
                         child: TextButton.icon(
                           onPressed: onRetry,
                           icon: const Icon(Icons.refresh, size: 14),
-                          label: const Text('重试'),
+                          label: Text(context.l10n.commonRetry),
                         ),
                       ),
                   ],
@@ -804,6 +806,8 @@ class ApprovalPartRenderer extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
+                      // 冻结映射未提供「拒绝原因：」回显前缀键，沿用字面量（行级豁免）
+                      // ignore: hardcoded_ui_string
                       '拒绝原因：${part.rejectReason}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.error,
@@ -823,6 +827,8 @@ class ApprovalPartRenderer extends StatelessWidget {
                 Icon(Icons.rule_folder, size: 14, color: Colors.green),
                 const SizedBox(width: 4),
                 Text(
+                  // 冻结映射未提供该提示键，沿用字面量（行级豁免）
+                  // ignore: hardcoded_ui_string
                   '本会话已自动允许此类操作',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: Colors.green,
@@ -844,7 +850,7 @@ class ApprovalPartRenderer extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onReject,
                     icon: const Icon(Icons.close, size: 16),
-                    label: const Text('拒绝'),
+                    label: Text(context.l10n.toolApprovalDialogDeny),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.error,
                     ),
@@ -853,7 +859,7 @@ class ApprovalPartRenderer extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onAllowSession,
                     icon: const Icon(Icons.rule_folder, size: 16),
-                    label: const Text('始终允许'),
+                    label: Text(context.l10n.convStyleApprovalAlwaysAllow),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.green,
                     ),
@@ -862,7 +868,7 @@ class ApprovalPartRenderer extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: onApprove,
                     icon: const Icon(Icons.check, size: 16),
-                    label: const Text('允许一次'),
+                    label: Text(context.l10n.convStyleApprovalAllowOnce),
                   ),
               ],
             ),
@@ -1112,6 +1118,8 @@ class ArtifactPartRenderer extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
+                    // 冻结映射未提供「点击在画布中打开」键，沿用字面量（行级豁免）
+                    // ignore: hardcoded_ui_string
                     '${_typeLabel(part.type)} · 点击在画布中打开',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,

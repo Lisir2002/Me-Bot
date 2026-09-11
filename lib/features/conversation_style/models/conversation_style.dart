@@ -1,4 +1,4 @@
-// ignore_for_file: hardcoded_ui_string
+import '../../../l10n/app_localizations.dart';
 import 'message_part.dart';
 
 /// 对话样式枚举 —— 定义 9 种样式 + 自动模式
@@ -36,111 +36,36 @@ enum ConversationStyle {
   auto,
 }
 
-/// 样式元信息 —— 用于设置页面展示和样式选择
+/// 样式元信息（结构性字段）—— 仅保留枚举与编号。
+///
+/// 展示文案（名称 / 描述 / 信息密度 / 适用场景）不再硬编码在此，
+/// 统一由 [ConversationStyleL10nX] 扩展通过 context.l10n 解析，
+/// 供样式选择 Sheet 与设置页共同调用。
 class StyleMeta {
   /// 样式枚举
   final ConversationStyle style;
 
-  /// 显示名称
-  final String displayName;
-
-  /// 一句话描述
-  final String description;
-
   /// 编号（01-10，跳过已淘汰编号）
   final String number;
 
-  /// 信息密度等级
-  final String infoDensity;
-
-  /// 适用场景
-  final List<String> useCases;
-
   const StyleMeta({
     required this.style,
-    required this.displayName,
-    required this.description,
     required this.number,
-    required this.infoDensity,
-    required this.useCases,
   });
 }
 
 /// 所有样式的元信息注册表
 class StyleMetaRegistry {
   static const List<StyleMeta> all = [
-    StyleMeta(
-      style: ConversationStyle.classicBubble,
-      displayName: '经典气泡式',
-      description: '用户右对齐、助手左对齐的圆角气泡，日常聊天首选',
-      number: '01',
-      infoDensity: '低',
-      useCases: ['日常聊天', '短对话', '通用场景'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.fullWidthDocument,
-      displayName: '全宽文档式',
-      description: '消息占满宽度、分隔线区分，适合长文本和代码密集场景',
-      number: '02',
-      infoDensity: '中高',
-      useCases: ['长文本', '代码密集', '文档生成'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.minimalStream,
-      displayName: '极简流式',
-      description: '纯文本流、无气泡无边框，最快的实时流式输出体验',
-      number: '03',
-      infoDensity: '最低',
-      useCases: ['快速问答', '实时流式输出', '专注阅读'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.cardStack,
-      displayName: '卡片堆叠式',
-      description: '每条消息是带阴影的卡片，视觉层次分明',
-      number: '04',
-      infoDensity: '中',
-      useCases: ['文件分享', '图片密集', '视觉驱动'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.agentThreeTier,
-      displayName: 'Agent 三层级',
-      description: '主回答/子助手结果/工具调用三级视觉层级，复杂任务首选',
-      number: '05',
-      infoDensity: '高（可折叠）',
-      useCases: ['Agent 多工具调用', '复杂任务', '深度推理'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.toolCardFlow,
-      displayName: '工具卡片流',
-      description: '每个工具调用是独立卡片，纵向时间线展示执行进度',
-      number: '06',
-      infoDensity: '最高',
-      useCases: ['复杂多步骤工作流', '可观测性要求高', '调试'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.thinkActObserve,
-      displayName: '思考-行动-观察闭环',
-      description: '左侧 rail 时间线，三阶段明确区分，深度推理可解释',
-      number: '07',
-      infoDensity: '高',
-      useCases: ['深度推理', '可解释性要求高', '分析任务'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.terminal,
-      displayName: '终端风格',
-      description: '等宽字体、命令行风格，开发者和代码执行场景',
-      number: '08',
-      infoDensity: '中高',
-      useCases: ['开发者', '代码执行', 'CLI 集成'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.richContent,
-      displayName: '富内容渲染',
-      description: '综合渲染，按内容类型自适应，代码/文件/表格原生渲染',
-      number: '10',
-      infoDensity: '中高',
-      useCases: ['内容类型多样', '综合展示', '富媒体'],
-    ),
+    StyleMeta(style: ConversationStyle.classicBubble, number: '01'),
+    StyleMeta(style: ConversationStyle.fullWidthDocument, number: '02'),
+    StyleMeta(style: ConversationStyle.minimalStream, number: '03'),
+    StyleMeta(style: ConversationStyle.cardStack, number: '04'),
+    StyleMeta(style: ConversationStyle.agentThreeTier, number: '05'),
+    StyleMeta(style: ConversationStyle.toolCardFlow, number: '06'),
+    StyleMeta(style: ConversationStyle.thinkActObserve, number: '07'),
+    StyleMeta(style: ConversationStyle.terminal, number: '08'),
+    StyleMeta(style: ConversationStyle.richContent, number: '10'),
   ];
 
   /// 获取指定样式的元信息
@@ -154,6 +79,117 @@ class StyleMetaRegistry {
   /// 除自动模式外的所有样式
   static List<StyleMeta> get concreteStyles =>
       all.where((m) => m.style != ConversationStyle.auto).toList();
+}
+
+/// 样式展示文案的 l10n 解析扩展。
+///
+/// 用法（仅在 build / 回调执行时现取，禁止缓存到字段）：
+/// ```dart
+/// meta.style.l10nName(context.l10n)
+/// ```
+/// 由 context.l10n（BuildContextL10n）传入 AppLocalizations。
+extension ConversationStyleL10nX on ConversationStyle {
+  /// 展示名
+  String l10nName(AppLocalizations l10n) => switch (this) {
+        ConversationStyle.classicBubble => l10n.convStyleClassicBubbleName,
+        ConversationStyle.fullWidthDocument =>
+          l10n.convStyleFullWidthDocumentName,
+        ConversationStyle.minimalStream => l10n.convStyleMinimalStreamName,
+        ConversationStyle.cardStack => l10n.convStyleCardStackName,
+        ConversationStyle.agentThreeTier =>
+          l10n.convStyleAgentThreeTierName,
+        ConversationStyle.toolCardFlow => l10n.convStyleToolCardFlowName,
+        ConversationStyle.thinkActObserve =>
+          l10n.convStyleThinkActObserveName,
+        ConversationStyle.terminal => l10n.convStyleTerminalName,
+        ConversationStyle.richContent => l10n.convStyleRichContentName,
+        ConversationStyle.auto => '',
+      };
+
+  /// 一句话描述
+  String l10nDescription(AppLocalizations l10n) => switch (this) {
+        ConversationStyle.classicBubble =>
+          l10n.convStyleClassicBubbleDesc,
+        ConversationStyle.fullWidthDocument =>
+          l10n.convStyleFullWidthDocumentDesc,
+        ConversationStyle.minimalStream => l10n.convStyleMinimalStreamDesc,
+        ConversationStyle.cardStack => l10n.convStyleCardStackDesc,
+        ConversationStyle.agentThreeTier =>
+          l10n.convStyleAgentThreeTierDesc,
+        ConversationStyle.toolCardFlow =>
+          l10n.convStyleToolCardFlowDesc,
+        ConversationStyle.thinkActObserve =>
+          l10n.convStyleThinkActObserveDesc,
+        ConversationStyle.terminal => l10n.convStyleTerminalDesc,
+        ConversationStyle.richContent => l10n.convStyleRichContentDesc,
+        ConversationStyle.auto => '',
+      };
+
+  /// 信息密度等级
+  String l10nInfoDensity(AppLocalizations l10n) => switch (this) {
+        ConversationStyle.classicBubble => l10n.convStyleDensityLow,
+        ConversationStyle.fullWidthDocument =>
+          l10n.convStyleDensityMediumHigh,
+        ConversationStyle.minimalStream => l10n.convStyleDensityLowest,
+        ConversationStyle.cardStack => l10n.convStyleDensityMedium,
+        ConversationStyle.agentThreeTier =>
+          l10n.convStyleDensityHighCollapsible,
+        ConversationStyle.toolCardFlow => l10n.convStyleDensityHighest,
+        ConversationStyle.thinkActObserve => l10n.convStyleDensityHigh,
+        ConversationStyle.terminal => l10n.convStyleDensityMediumHigh,
+        ConversationStyle.richContent => l10n.convStyleDensityMediumHigh,
+        ConversationStyle.auto => '',
+      };
+
+  /// 适用场景标签
+  List<String> l10nUseCases(AppLocalizations l10n) => switch (this) {
+        ConversationStyle.classicBubble => [
+            l10n.convStyleTagDailyChat,
+            l10n.convStyleTagShortChat,
+            l10n.convStyleTagGeneral,
+          ],
+        ConversationStyle.fullWidthDocument => [
+            l10n.convStyleTagLongText,
+            l10n.convStyleTagCodeIntensive,
+            l10n.convStyleTagDocGen,
+          ],
+        ConversationStyle.minimalStream => [
+            l10n.convStyleTagQuickQA,
+            l10n.convStyleTagRealtimeStream,
+            l10n.convStyleTagFocusRead,
+          ],
+        ConversationStyle.cardStack => [
+            l10n.convStyleTagFileShare,
+            l10n.convStyleTagImageHeavy,
+            l10n.convStyleTagVisual,
+          ],
+        ConversationStyle.agentThreeTier => [
+            l10n.convStyleTagAgentMultiTool,
+            l10n.convStyleTagComplexTask,
+            l10n.convStyleTagDeepReason,
+          ],
+        ConversationStyle.toolCardFlow => [
+            l10n.convStyleTagMultiStepWorkflow,
+            l10n.convStyleTagHighObservability,
+            l10n.convStyleTagDebug,
+          ],
+        ConversationStyle.thinkActObserve => [
+            l10n.convStyleTagDeepReason,
+            l10n.convStyleTagHighExplainability,
+            l10n.convStyleTagAnalysis,
+          ],
+        ConversationStyle.terminal => [
+            l10n.convStyleTagDeveloper,
+            l10n.convStyleTagCodeExec,
+            l10n.convStyleTagCli,
+          ],
+        ConversationStyle.richContent => [
+            l10n.convStyleTagDiverseContent,
+            l10n.convStyleTagComprehensive,
+            l10n.convStyleTagRichMedia,
+          ],
+        ConversationStyle.auto => const [],
+      };
 }
 
 /// 统一消息模型 —— 一条消息包含角色、时间戳和多个 MessagePart

@@ -89,21 +89,6 @@ class StyleSettings {
       );
 }
 
-/// 上下文面板 Tab 枚举
-enum ContextPanelTab {
-  /// 文件
-  files,
-
-  /// 工具
-  tools,
-
-  /// 引用来源
-  sources,
-
-  /// 模型信息
-  model,
-}
-
 /// 对话 UI 状态 —— 独立于样式层，切换样式时完整保留
 ///
 /// 数据状态由 ConversationDataSource 管理，
@@ -118,58 +103,27 @@ class ConversationUIState {
   /// 已展开的代码块 ID 集合（默认折叠长代码）
   final Set<String> expandedCodeBlockIds;
 
-  /// 当前激活的产物 Tab（canvas 样式用）
-  final String? activeArtifactTab;
-
-  /// 当前激活的上下文面板 Tab（contextPanel 样式用）
-  final ContextPanelTab activeContextPanelTab;
-
-  /// 对话分支中当前选中的分支 ID（threadBranching 样式用）
-  final String? activeBranchId;
-
-  /// 执行计划是否已确认（planSurface 样式用）
-  final bool planConfirmed;
-
   /// 用户手动展开的消息 ID（默认折叠的子助手消息等）
   final Set<String> expandedMessageIds;
-
-  /// 生成式 UI 组件的交互状态（componentId -> state map）
-  final Map<String, Map<String, dynamic>> generativeUiStates;
 
   const ConversationUIState({
     this.expandedToolCallIds = const {},
     this.collapsedThinkingIds = const {},
     this.expandedCodeBlockIds = const {},
-    this.activeArtifactTab,
-    this.activeContextPanelTab = ContextPanelTab.files,
-    this.activeBranchId,
-    this.planConfirmed = false,
     this.expandedMessageIds = const {},
-    this.generativeUiStates = const {},
   });
 
   ConversationUIState copyWith({
     Set<String>? expandedToolCallIds,
     Set<String>? collapsedThinkingIds,
     Set<String>? expandedCodeBlockIds,
-    String? activeArtifactTab,
-    ContextPanelTab? activeContextPanelTab,
-    String? activeBranchId,
-    bool? planConfirmed,
     Set<String>? expandedMessageIds,
-    Map<String, Map<String, dynamic>>? generativeUiStates,
   }) {
     return ConversationUIState(
       expandedToolCallIds: expandedToolCallIds ?? this.expandedToolCallIds,
       collapsedThinkingIds: collapsedThinkingIds ?? this.collapsedThinkingIds,
       expandedCodeBlockIds: expandedCodeBlockIds ?? this.expandedCodeBlockIds,
-      activeArtifactTab: activeArtifactTab ?? this.activeArtifactTab,
-      activeContextPanelTab:
-          activeContextPanelTab ?? this.activeContextPanelTab,
-      activeBranchId: activeBranchId ?? this.activeBranchId,
-      planConfirmed: planConfirmed ?? this.planConfirmed,
       expandedMessageIds: expandedMessageIds ?? this.expandedMessageIds,
-      generativeUiStates: generativeUiStates ?? this.generativeUiStates,
     );
   }
 

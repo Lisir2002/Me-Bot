@@ -33,6 +33,41 @@ enum ToolCallStatus {
   cancelled,
 }
 
+/// 任务状态（Todo List 子任务）
+///
+/// 参考 Windsurf Cascade 的 Todo List 设计：
+/// ⬜ pending / ⏳ inProgress / ☑ completed / ✗ failed
+enum TaskStatus {
+  /// 待执行
+  pending,
+
+  /// 执行中
+  inProgress,
+
+  /// 已完成
+  completed,
+
+  /// 失败
+  failed,
+
+  /// 已跳过
+  skipped,
+}
+
+/// 信心等级（Devin 风格交通灯指示器）
+///
+/// Agent 在关键决策点自我评估信心，低信心时暂停等待用户确认。
+enum ConfidenceLevel {
+  /// 高信心 🟢
+  high,
+
+  /// 中信心 🟡
+  medium,
+
+  /// 低信心 🔴（建议暂停等待确认）
+  low,
+}
+
 /// 审批状态
 enum ApprovalStatus {
   /// 待审批
@@ -79,6 +114,21 @@ enum ConnectionStatus {
 
   /// 重连中
   reconnecting,
+}
+
+/// 消息发送状态（错误恢复体验）
+enum MessageSendStatus {
+  /// 已发送/已落库
+  sent,
+
+  /// 发送中（等待响应）
+  sending,
+
+  /// 发送失败（可重试）
+  failed,
+
+  /// 待发送（离线排队）
+  pending,
 }
 
 /// 文本实体类型（用于富文本渲染）
@@ -258,6 +308,30 @@ class ToolCallPart extends MessagePart {
   /// 错误信息（status 为 error 时）
   final String? errorMessage;
 
+  /// 执行进度（0.0 - 1.0，长时间运行工具使用）
+  ///
+  /// 参考 Claude Code 的 `████░░░░ 65%` 进度条设计，
+  /// 缓解长时间工具调用的等待焦虑。
+  final double? progress;
+
+  /// 错误恢复建议（status 为 error 时提供可操作建议）
+  ///
+  /// 参考 Claude Code 的错误建议化设计：
+  /// 错误卡片不只报错，还给出 "Check file path spelling" 等可操作建议。
+  final List<String>? recoverySuggestions;
+
+  /// Agent 对此次工具调用结果的信心评估
+  ///
+  /// 参考 Devin 的信心指示器：🟢🟡🔴 交通灯系统，
+  /// 低信心时建议暂停等待用户确认。
+  final ConfidenceLevel? confidence;
+
+  /// 是否停滞（超过阈值无更新时标记）
+  ///
+  /// 参考 Cursor 社区反馈的 "spinner 永不停转" 问题：
+  /// 30 秒无进展应显示 "仍在运行？" + 取消按钮。
+  final bool isStalled;
+
   ToolCallPart({
     String? id,
     required this.toolName,
@@ -267,6 +341,10 @@ class ToolCallPart extends MessagePart {
     this.duration,
     this.thinking,
     this.errorMessage,
+    this.progress,
+    this.recoverySuggestions,
+    this.confidence,
+    this.isStalled = false,
   }) : id = id ?? 'tool_${DateTime.now().microsecondsSinceEpoch}';
 
   /// 是否处于终态
@@ -281,6 +359,10 @@ class ToolCallPart extends MessagePart {
     Duration? duration,
     String? errorMessage,
     String? thinking,
+    double? progress,
+    List<String>? recoverySuggestions,
+    ConfidenceLevel? confidence,
+    bool? isStalled,
   }) {
     return ToolCallPart(
       id: id,
@@ -291,6 +373,10 @@ class ToolCallPart extends MessagePart {
       duration: duration ?? this.duration,
       thinking: thinking ?? this.thinking,
       errorMessage: errorMessage ?? this.errorMessage,
+      progress: progress ?? this.progress,
+      recoverySuggestions: recoverySuggestions ?? this.recoverySuggestions,
+      confidence: confidence ?? this.confidence,
+      isStalled: isStalled ?? this.isStalled,
     );
   }
 
@@ -305,6 +391,11 @@ class ToolCallPart extends MessagePart {
         if (duration != null) 'durationMs': duration!.inMilliseconds,
         if (thinking != null) 'thinking': thinking,
         if (errorMessage != null) 'errorMessage': errorMessage,
+        if (progress != null) 'progress': progress,
+        if (recoverySuggestions != null)
+          'recoverySuggestions': recoverySuggestions,
+        if (confidence != null) 'confidence': confidence!.name,
+        if (isStalled) 'isStalled': true,
       };
 
   factory ToolCallPart.fromJson(Map<String, dynamic> json) => ToolCallPart(
@@ -322,6 +413,17 @@ class ToolCallPart extends MessagePart {
             : null,
         thinking: json['thinking'] as String?,
         errorMessage: json['errorMessage'] as String?,
+        progress: (json['progress'] as num?)?.toDouble(),
+        recoverySuggestions: (json['recoverySuggestions'] as List?)
+            ?.map((e) => e.toString())
+            .toList(),
+        confidence: json['confidence'] != null
+            ? ConfidenceLevel.values.firstWhere(
+                (e) => e.name == json['confidence'],
+                orElse: () => ConfidenceLevel.high,
+              )
+            : null,
+        isStalled: json['isStalled'] as bool? ?? false,
       );
 }
 
@@ -470,20 +572,42 @@ class ApprovalPart extends MessagePart {
   /// 详细信息
   final Map<String, dynamic> details;
 
+  /// 拒绝原因（用户拒绝时填写，发送给模型作为反馈）
+  ///
+  /// 参考 Claude Code 的拒绝反馈通道：
+  /// 拒绝时用户输入的文本会作为原因发送给模型（如 "use rg instead"），
+  /// 比简单 y/n 更有引导价值。
+  final String? rejectReason;
+
+  /// 是否本会话始终允许此类操作
+  ///
+  /// 参考 Claude Code 的 `a`（本会话允许）选项：
+  /// 避免重复审批同类操作。
+  final bool allowSession;
+
   ApprovalPart({
     String? id,
     required this.action,
     required this.description,
     this.status = ApprovalStatus.pending,
     this.details = const {},
+    this.rejectReason,
+    this.allowSession = false,
   }) : id = id ?? 'approval_${DateTime.now().microsecondsSinceEpoch}';
 
-  ApprovalPart copyWith({ApprovalStatus? status}) => ApprovalPart(
+  ApprovalPart copyWith({
+    ApprovalStatus? status,
+    String? rejectReason,
+    bool? allowSession,
+  }) =>
+      ApprovalPart(
         id: id,
         action: action,
         description: description,
         status: status ?? this.status,
         details: details,
+        rejectReason: rejectReason ?? this.rejectReason,
+        allowSession: allowSession ?? this.allowSession,
       );
 
   @override
@@ -494,6 +618,8 @@ class ApprovalPart extends MessagePart {
         'description': description,
         'status': status.name,
         'details': details,
+        if (rejectReason != null) 'rejectReason': rejectReason,
+        if (allowSession) 'allowSession': true,
       };
 
   factory ApprovalPart.fromJson(Map<String, dynamic> json) => ApprovalPart(
@@ -506,6 +632,8 @@ class ApprovalPart extends MessagePart {
         ),
         details:
             (json['details'] as Map?)?.cast<String, dynamic>() ?? const {},
+        rejectReason: json['rejectReason'] as String?,
+        allowSession: json['allowSession'] as bool? ?? false,
       );
 }
 
@@ -556,6 +684,94 @@ class ArtifactPart extends MessagePart {
       );
 }
 
+/// 任务子项（Todo List）
+///
+/// 参考 Windsurf Cascade 的 Todo List 设计：
+/// 在对话流中嵌入可勾选的任务列表，每项 ⬜/⏳/☑/✗ 状态。
+/// 用户可直接对话修改列表。这是最轻量的任务分解可视化。
+///
+/// 用于 Agent 三层级样式的中间层：
+/// 第一层 = 总体目标，第二层 = 可勾选子任务列表，第三层 = 具体工具调用卡片。
+class TaskPart extends MessagePart {
+  @override
+  final String id;
+
+  /// 任务标题
+  final String title;
+
+  /// 任务描述（可选）
+  final String? description;
+
+  /// 任务状态
+  final TaskStatus status;
+
+  /// 关联的工具调用 ID 列表（此任务由哪些工具调用完成）
+  final List<String>? relatedToolCallIds;
+
+  /// 任务耗时
+  final Duration? duration;
+
+  TaskPart({
+    String? id,
+    required this.title,
+    this.description,
+    this.status = TaskStatus.pending,
+    this.relatedToolCallIds,
+    this.duration,
+  }) : id = id ?? 'task_${DateTime.now().microsecondsSinceEpoch}';
+
+  /// 是否完成
+  bool get isCompleted => status == TaskStatus.completed;
+
+  /// 是否进行中
+  bool get isInProgress => status == TaskStatus.inProgress;
+
+  TaskPart copyWith({
+    String? title,
+    String? description,
+    TaskStatus? status,
+    List<String>? relatedToolCallIds,
+    Duration? duration,
+  }) {
+    return TaskPart(
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      relatedToolCallIds: relatedToolCallIds ?? this.relatedToolCallIds,
+      duration: duration ?? this.duration,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': 'task',
+        'id': id,
+        'title': title,
+        if (description != null) 'description': description,
+        'status': status.name,
+        if (relatedToolCallIds != null)
+          'relatedToolCallIds': relatedToolCallIds,
+        if (duration != null) 'durationMs': duration!.inMilliseconds,
+      };
+
+  factory TaskPart.fromJson(Map<String, dynamic> json) => TaskPart(
+        id: json['id'] as String?,
+        title: json['title'] as String,
+        description: json['description'] as String?,
+        status: TaskStatus.values.firstWhere(
+          (e) => e.name == json['status'],
+          orElse: () => TaskStatus.pending,
+        ),
+        relatedToolCallIds: (json['relatedToolCallIds'] as List?)
+            ?.map((e) => e.toString())
+            .toList(),
+        duration: json['durationMs'] != null
+            ? Duration(milliseconds: json['durationMs'] as int)
+            : null,
+      );
+}
+
 /// 从 JSON 反序列化 MessagePart
 MessagePart messagePartFromJson(Map<String, dynamic> json) {
   final type = json['type'] as String;
@@ -576,6 +792,8 @@ MessagePart messagePartFromJson(Map<String, dynamic> json) {
       return ApprovalPart.fromJson(json);
     case 'artifact':
       return ArtifactPart.fromJson(json);
+    case 'task':
+      return TaskPart.fromJson(json);
     default:
       return TextPart(text: 'Unknown part type: $type');
   }

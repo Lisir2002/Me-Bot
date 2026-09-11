@@ -84,6 +84,8 @@ import '../../../utils/app_directories.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/logging/logger.dart';
 import '../../../core/services/logging/log_tags.dart';
+// 对话流样式系统（P0 渐进接入）
+import '../../conversation_style/conversation_style.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -135,6 +137,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _showJumpToBottom = false;
   bool _isUserScrolling = false;
   Timer? _userScrollTimer;
+
+  // ── 对话流样式系统（P0 渐进接入）─────────────────────────────
+  /// 样式渲染器注册表（9 种样式，lazy load，在 initState 注册）
+  final StyleRendererRegistry _styleRegistry = StyleRendererRegistry();
+  /// 样式设置持久化服务（全局/助手/会话三级覆盖 + autoMode）
+  final StyleSettingsService _styleSettingsService = StyleSettingsService();
+  /// 当前会话的样式数据源（桥接 ChatMessage 与样式 Message 模型）
+  /// 样式渲染器只读它，不直接碰 Hive/Provider。
+  HiveConversationDataSource? _conversationDataSource;
+  /// 当前生效的对话样式；classicBubble 走既有列表，其余样式走 ConversationView
+  ConversationStyle _currentStyle = ConversationStyle.classicBubble;
+  /// ConversationView 的全局 key（非经典样式下通过它切换，保留渲染状态）
+  final GlobalKey<ConversationViewState> _conversationViewKey = GlobalKey();
+  /// 当前被引用回复的消息（非经典样式长按"引用回复"时设置）
+  ChatMessage? _quotedMessage;
 
   // Sanitize/translate JSON Schema to each provider's accepted subset
   static Map<String, dynamic> _sanitizeToolParametersForProvider(Map<String, dynamic> schema, ProviderKind kind) {
@@ -753,6 +770,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _convoFadeController.value = 1.0;
     // Use the provided ChatService instance
     _chatService = context.read<ChatService>();
+    // 注册 9 种对话流样式（lazy load，首次用到才实例化渲染器）
+    registerAllStyles(_styleRegistry);
+    // 样式设置的 Hive box 在下方 _initChat 完成 Hive 初始化后再加载
     _initChat();
     _scrollController.addListener(_onScrollControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureInputBar());
@@ -924,8 +944,158 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
+  // ── 对话流样式系统辅助方法 ──────────────────────────────────
+
+  /// 把当前已折叠版本的消息全量同步到样式数据源。
+  ///
+  /// 在会话加载/切换、发送消息、流式结束、编辑删除等 _messages 结构性变更后调用。
+  /// 数据源始终桥接当前会话；切换会话时若 conversationId 变化则重建实例。
+  void _syncConversationDataSource() {
+    final cid = _currentConversation?.id;
+    if (cid == null) {
+      _conversationDataSource?.dispose();
+      _conversationDataSource = null;
+      return;
+    }
+    if (_conversationDataSource == null ||
+        _conversationDataSource!.conversationId != cid) {
+      _conversationDataSource?.dispose();
+      _conversationDataSource = HiveConversationDataSource(conversationId: cid);
+      // 解析当前会话应生效的样式：会话覆盖 > 全局默认
+      final resolved = _styleSettingsService.resolve(conversationId: cid);
+      if (_currentStyle != resolved) {
+        _currentStyle = resolved;
+      }
+    }
+    _conversationDataSource!
+      ..onMessageAction = _handleStyleMessageAction
+      ..onApprovalRequired = _handleApprovalRequired
+      ..syncFromMessages(_collapseVersions(_messages));
+  }
+
+  /// 非经典样式下，dataSource 检测到新审批请求时弹出审批对话框
+  void _handleApprovalRequired(ApprovalPart approval) {
+    if (!mounted) return;
+    // 复用项目既有审批弹窗（ToolApprovalDialog）
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(approval.description),
+        content: const Text('需要审批此操作'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _conversationDataSource?.approveAction(approval.id);
+            },
+            child: const Text('批准'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _conversationDataSource?.rejectAction(approval.id);
+            },
+            child: const Text('拒绝'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 非经典样式下，渲染器长按菜单动作的宿主处理
+  void _handleStyleMessageAction(Message m, MessageAction action) {
+    switch (action) {
+      case MessageAction.quote:
+        final orig = _messages.where((e) => e.id == m.id).toList();
+        if (orig.isNotEmpty) {
+          setState(() => _quotedMessage = orig.first);
+        }
+      case MessageAction.delete:
+        try {
+          _chatService.deleteMessage(m.id);
+        } catch (e, st) {
+          Logger.w(LogTags.home, 'deleteMessage failed', e, st);
+        }
+        setState(() => _messages.removeWhere((e) => e.id == m.id));
+        _syncConversationDataSource();
+      case MessageAction.retry:
+        final orig = _messages.where((e) => e.id == m.id).toList();
+        if (orig.isNotEmpty) {
+          _regenerateAtMessage(orig.first);
+        }
+      case MessageAction.share:
+      case MessageAction.copy:
+        // copy 已由渲染器自处理；share 暂不在宿主实现
+        break;
+    }
+  }
+
+  /// 输入框上方的引用回复块（摘要 + 关闭按钮）
+  Widget? _buildQuoteChip() {
+    final q = _quotedMessage;
+    if (q == null) return null;
+    final preview = q.content.length > 60
+        ? '${q.content.substring(0, 60)}…'
+        : q.content;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.format_quote, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              preview,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: () => setState(() => _quotedMessage = null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 对话页右上角样式切换回调：切换并持久化为当前会话覆盖
+  void _onStyleSelected(ConversationStyle style) {
+    final cid = _currentConversation?.id;
+    final oldStyle = _currentStyle;
+    if (cid != null) {
+      _styleSettingsService.setConversationOverride(cid, style);
+    }
+    // 记录用户切换行为（任务学习：A→B 说明 A 不够贴合，降 A 升 B）
+    if (oldStyle != style) {
+      _styleSettingsService.recordSwitch(oldStyle, style);
+    }
+    setState(() => _currentStyle = style);
+    // 非经典样式之间互切时，ConversationView 已挂载，通过 key 触发内部切换以保留状态
+    if (style != ConversationStyle.classicBubble &&
+        _conversationViewKey.currentState != null) {
+      _conversationViewKey.currentState?.switchStyle(style);
+    }
+    // 切换完成 toast（输入框草稿与滚动位置不受影响）
+    if (mounted) {
+      showAppSnackBar(
+        context,
+        message: '已切换为 ${StyleMetaRegistry.get(style).displayName}',
+        type: NotificationType.info,
+      );
+    }
+  }
+
   Future<void> _initChat() async {
     await _chatService.init();
+    // Hive 已由 ChatService 初始化，此时再加载持久化的样式设置
+    await _styleSettingsService.load();
     // Respect user preference: create new chat on launch
     final prefs = context.read<SettingsProvider>();
     if (prefs.newChatOnLaunch) {
@@ -943,6 +1113,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _loadVersionSelections();
           _restoreMessageUiState();
         });
+        _syncConversationDataSource();
         _scrollToBottomSoon();
       }
     }
@@ -971,6 +1142,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _loadVersionSelections();
           _restoreMessageUiState();
         });
+        _syncConversationDataSource();
         // Ensure list lays out, then jump to bottom while hidden
         try { await WidgetsBinding.instance.endOfFrame; } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: endOfFrame', e, st); }
         _scrollToBottom();
@@ -1282,6 +1454,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _toolParts.clear();
       _reasoningSegments.clear();
     });
+    _syncConversationDataSource();
     // Inject assistant preset messages into new conversation (ordered)
     try {
       final ap2 = context.read<AssistantProvider>();
@@ -1382,6 +1555,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     setState(() {
       _messages.add(userMessage);
+      _quotedMessage = null; // 发送后清除引用
     });
     _setConversationLoading(_currentConversation!.id, true);
 
@@ -1403,6 +1577,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     setState(() {
       _messages.add(assistantMessage);
     });
+    // 同步用户消息 + 空流式占位到样式数据源
+    _syncConversationDataSource();
 
     // Haptics on generate (if enabled)
     try {
@@ -1872,6 +2048,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             );
           }
         });
+        // 流式结束：关闭打字光标，并全量对齐样式数据源（含最终 token/版本）
+        _conversationDataSource?.finishStreaming(assistantMessage.id);
+        _syncConversationDataSource();
         _setConversationLoading(assistantMessage.conversationId, false);
         final r = _reasoning[assistantMessage.id];
         if (r != null) {
@@ -1920,6 +2099,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             if (streamOutput) {
               final r = _reasoning[assistantMessage.id] ?? _ReasoningData();
               r.text += chunk.reasoning!;
+              // 把推理增量推到样式数据源（非经典样式实时渲染思考过程）
+              _conversationDataSource?.updateStreamingMessage(
+                assistantMessage.id,
+                '',
+                reasoningDelta: chunk.reasoning!,
+              );
               r.startAt ??= DateTime.now();
               // keep finishedAt as-is; don't reset to null once set
               r.expanded = false; // default collapsed while generating
@@ -2006,6 +2191,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             final existing = List<ToolUIPart>.of(_toolParts[assistantMessage.id] ?? const []);
             for (final c in chunk.toolCalls!) {
               existing.add(ToolUIPart(id: c.id, toolName: c.name, arguments: c.arguments, loading: true));
+              // 新工具调用 → 推一个 running 卡片到样式数据源
+              _conversationDataSource?.updateToolCall(
+                assistantMessage.id,
+                ToolCallPart(
+                  id: c.id,
+                  toolName: c.name,
+                  arguments: Map<String, dynamic>.from(c.arguments),
+                  status: ToolCallStatus.running,
+                ),
+              );
             }
             if (mounted && _currentConversation?.id == _cidForStream) setState(() {
               _toolParts[assistantMessage.id] = _dedupeToolPartsList(existing);
@@ -2072,6 +2267,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   content: r.content,
                 );
               } catch (e, st) { Logger.w(LogTags.home, 'upsertToolEvent persist failed', e, st); }
+              // 工具结果返回 → 用同 id 的成功状态原地更新样式数据源卡片
+              final toolId = r.id.isNotEmpty ? r.id : r.name;
+              _conversationDataSource?.updateToolCall(
+                assistantMessage.id,
+                ToolCallPart(
+                  id: toolId,
+                  toolName: r.name,
+                  arguments: Map<String, dynamic>.from(r.arguments),
+                  status: ToolCallStatus.success,
+                  result: r.content,
+                ),
+              );
             }
             if (mounted && _currentConversation?.id == _cidForStream) setState(() {
               _toolParts[assistantMessage.id] = _dedupeToolPartsList(parts);
@@ -2203,6 +2410,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   }
                 });
               }
+              // 把正文增量推到样式数据源（非经典样式实时逐字渲染）
+              _conversationDataSource?.updateStreamingMessage(
+                assistantMessage.id,
+                chunk.content,
+              );
               // 滚动到底部显示新内容（仅在未处于用户滚动延迟阶段时）
               Future.delayed(const Duration(milliseconds: 50), () {
                 if (!_isUserScrolling) {
@@ -2235,6 +2447,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               );
             }
           });
+          // 出错也结束流式并对齐样式数据源
+          _conversationDataSource?.finishStreaming(assistantMessage.id);
+          _conversationDataSource?.markMessageFailed(
+              assistantMessage.id, displayContent);
+          _syncConversationDataSource();
           _setConversationLoading(assistantMessage.conversationId, false);
 
           // End reasoning on error
@@ -3768,6 +3985,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ],
         ),
         actions: [
+          // 对话流样式快捷切换（选中后持久化为当前会话覆盖）
+          StyleSwitcherButton(
+            currentStyle: _currentStyle,
+            onStyleSelected: _onStyleSelected,
+          ),
           // Mini map button (to the left of new conversation)
           IosIconButton(
             size: 20,
@@ -3875,6 +4097,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Expanded(
                 child: Builder(
                     builder: (context) {
+                      // 非经典样式：用 ConversationView 渲染，数据只读自样式数据源
+                      // classicBubble 走下方既有列表，保证现有功能零回归。
+                      if (_currentStyle != ConversationStyle.classicBubble) {
+                        final ds = _conversationDataSource;
+                        if (ds != null) {
+                          Widget view = ConversationView(
+                            key: _conversationViewKey,
+                            dataSource: ds,
+                            registry: _styleRegistry,
+                            initialStyle: _currentStyle,
+                            settings: _styleSettingsService.settings,
+                            inputBar: null,
+                          );
+                          if (defaultTargetPlatform != TargetPlatform.android) {
+                            view = FadeTransition(opacity: _convoFade, child: view);
+                          }
+                          return view;
+                        }
+                      }
                       final __content = KeyedSubtree(
                         key: ValueKey<String>(_currentConversation?.id ?? 'none'),
                         child: (() {
@@ -4355,7 +4596,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           builtinSearchActive = list.map((e) => e.toString().toLowerCase()).contains('search');
                         }
                       }
-                      return ChatInputBar(
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildQuoteChip() ?? const SizedBox.shrink(),
+                          ChatInputBar(
                         key: _inputBarKey,
                         onMore: _toggleTools,
                         // Highlight when app-level search enabled OR model built-in search enabled
@@ -4458,6 +4703,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             MaterialPageRoute(builder: (_) => const QuickPhrasesPage()),
                           );
                         },
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -5836,6 +6083,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
     _conversationStreams.clear();
     _userScrollTimer?.cancel();
+    // 释放对话流样式系统资源
+    _conversationDataSource?.dispose();
+    _styleRegistry.disposeAll();
+    _styleSettingsService.dispose();
     routeObserver.unsubscribe(this);
     super.dispose();
   }

@@ -18,6 +18,14 @@ class HiveConversationDataSource extends ChangeNotifier
   @override
   final String conversationId;
 
+  /// 长按菜单交互回调（宿主注入）
+  @override
+  void Function(Message message, MessageAction action)? onMessageAction;
+
+  /// 新审批请求出现时回调宿主（宿主注入）
+  @override
+  void Function(ApprovalPart approval)? onApprovalRequired;
+
   /// 内部消息列表（新模型）
   final List<Message> _messages = [];
 
@@ -54,10 +62,8 @@ class HiveConversationDataSource extends ChangeNotifier
       ));
     }
 
-    // 主内容 → TextPart
-    if (msg.content.isNotEmpty) {
-      parts.add(TextPart(text: msg.content));
-    }
+    // 主内容 → TextPart；同时解析内嵌的 [image:path] / [file:path|name|mime] 标记
+    parts.addAll(_splitContent(msg.content));
 
     return Message(
       id: msg.id,
@@ -70,6 +76,44 @@ class HiveConversationDataSource extends ChangeNotifier
       version: msg.version,
       totalTokens: msg.totalTokens,
     );
+  }
+
+  /// 把一段 content 文本切分为 TextPart / ImagePart / FilePart
+  ///
+  /// 现有消息把图片/文档以内联标记写入 content：
+  /// - `[image:/abs/path.png]` → ImagePart
+  /// - `[file:/abs/path|报告.pdf|application/pdf]` → FilePart
+  /// 标记之外的纯文本按出现顺序聚合成 TextPart。
+  List<MessagePart> _splitContent(String content) {
+    if (content.isEmpty) return const [];
+    // 单条组合正则：group1 = image 路径，group2 = file 内容
+    final markerRe = RegExp(r'\[(?:image:([^\]]+)|file:([^\]]+))\]');
+    final parts = <MessagePart>[];
+    var textStart = 0;
+    for (final m in markerRe.allMatches(content)) {
+      final between = content.substring(textStart, m.start);
+      if (between.isNotEmpty) parts.add(TextPart(text: between));
+
+      final img = m.group(1);
+      if (img != null) {
+        parts.add(ImagePart(url: img.trim()));
+      } else {
+        final segs = (m.group(2) ?? '').split('|');
+        final path = segs.isNotEmpty ? segs[0].trim() : '';
+        final name = (segs.length > 1 && segs[1].trim().isNotEmpty)
+            ? segs[1].trim()
+            : (path.isEmpty ? 'file' : path.split('/').last);
+        final mime = (segs.length > 2 && segs[2].trim().isNotEmpty)
+            ? segs[2].trim()
+            : 'application/octet-stream';
+        parts.add(FilePart(name: name, url: path, mimeType: mime, size: 0));
+      }
+      textStart = m.end;
+    }
+    final tail = content.substring(textStart);
+    if (tail.isNotEmpty) parts.add(TextPart(text: tail));
+    if (parts.isEmpty) parts.add(TextPart(text: ''));
+    return parts;
   }
 
   @override
@@ -150,6 +194,21 @@ class HiveConversationDataSource extends ChangeNotifier
 
     _state = _state.copyWith(isGenerating: true, currentPhase: '重新生成中...');
     _emitState();
+    // 通知宿主执行真实的重新生成（Hive + 流）
+    onMessageAction?.call(
+      _messages.firstWhere((m) => m.id == messageId),
+      MessageAction.retry,
+    );
+  }
+
+  @override
+  Future<void> deleteMessage(String messageId) async {
+    final before = _messages.length;
+    _messages.removeWhere((m) => m.id == messageId);
+    if (_messages.length != before) {
+      _emitMessages();
+    }
+    // 真实 Hive 删除由宿主通过 onMessageAction(delete) 持久化，此处只同步渲染层
   }
 
   @override
@@ -248,6 +307,155 @@ class HiveConversationDataSource extends ChangeNotifier
     final newParts = List<MessagePart>.from(msg.parts)..add(part);
     _messages[index] = msg.copyWith(parts: newParts);
     _emitMessages();
+  }
+
+  /// 全量同步：把现有 ChatMessage 列表整体重建为内部 _messages
+  ///
+  /// 用于会话初始加载、会话切换、以及任意结构性变更（编辑/删除/版本切换）。
+  /// 幂等且会清空旧状态，因此调用方在切换会话时应重建本实例或先调用本方法。
+  void syncFromMessages(List<hive.ChatMessage> messages) {
+    _messages
+      ..clear()
+      ..addAll(messages.map(_convertFromHive));
+    _emitMessages();
+  }
+
+  /// 流式增量更新：把 contentDelta 追加到最后一个 TextPart，
+  /// reasoningDelta 追加到 ThinkingPart。
+  ///
+  /// 由 home_page 的 SSE 流回调逐 chunk 调用，保证非经典样式下也能看到
+  /// 逐字流式输出。找不到消息时静默忽略。
+  void updateStreamingMessage(
+    String messageId,
+    String contentDelta, {
+    String? reasoningDelta,
+  }) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    final msg = _messages[index];
+    final newParts = List<MessagePart>.from(msg.parts);
+    var changed = false;
+
+    // 推理增量 → 追加到最后一个 ThinkingPart
+    if (reasoningDelta != null && reasoningDelta.isNotEmpty) {
+      final ti = newParts.lastIndexWhere((p) => p is ThinkingPart);
+      if (ti != -1) {
+        final t = newParts[ti] as ThinkingPart;
+        newParts[ti] = ThinkingPart(
+          id: t.id,
+          content: t.content + reasoningDelta,
+          tokenCount: t.tokenCount,
+          duration: t.duration,
+        );
+      } else {
+        newParts.insert(0, ThinkingPart(content: reasoningDelta));
+      }
+      changed = true;
+    }
+
+    // 正文增量 → 追加到最后一个 TextPart
+    if (contentDelta.isNotEmpty) {
+      final ti = newParts.lastIndexWhere((p) => p is TextPart);
+      if (ti != -1) {
+        final t = newParts[ti] as TextPart;
+        newParts[ti] =
+            TextPart(id: t.id, text: t.text + contentDelta, entities: t.entities);
+      } else {
+        newParts.add(TextPart(text: contentDelta));
+      }
+      changed = true;
+    }
+
+    if (!changed) return;
+    _messages[index] = msg.copyWith(parts: newParts, isStreaming: true);
+    _emitMessages();
+  }
+
+  /// 流式结束：标记该消息不再流式（样式渲染器据此关闭打字光标）
+  void finishStreaming(String messageId) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    _messages[index] = _messages[index].copyWith(isStreaming: false);
+    _emitMessages();
+  }
+
+  /// 更新/插入工具调用状态（按 ToolCallPart.id 匹配）
+  ///
+  /// 新工具调用到达时 append 一个 pending/running 卡片；
+  /// 工具结果返回时用同 id 的 completed 状态原地替换。
+  void updateToolCall(String messageId, ToolCallPart toolCall) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    final msg = _messages[index];
+    final newParts = List<MessagePart>.from(msg.parts);
+    final ti =
+        newParts.indexWhere((p) => p is ToolCallPart && p.id == toolCall.id);
+    if (ti != -1) {
+      newParts[ti] = toolCall;
+    } else {
+      newParts.add(toolCall);
+    }
+    _messages[index] = msg.copyWith(parts: newParts);
+    _emitMessages();
+  }
+
+  @override
+  void updateToolCallStatus(
+    String messageId,
+    String toolCallId,
+    ToolCallStatus status, {
+    dynamic result,
+    String? errorMessage,
+    Duration? duration,
+    List<String>? recoverySuggestions,
+  }) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    final msg = _messages[index];
+    final newParts = List<MessagePart>.from(msg.parts);
+    final ti = newParts.indexWhere(
+        (p) => p is ToolCallPart && p.id == toolCallId);
+    if (ti == -1) return;
+    final old = newParts[ti] as ToolCallPart;
+    newParts[ti] = old.copyWith(
+      status: status,
+      result: result ?? old.result,
+      duration: duration ?? old.duration,
+      errorMessage: errorMessage ?? old.errorMessage,
+      recoverySuggestions: recoverySuggestions ?? old.recoverySuggestions,
+    );
+    _messages[index] = msg.copyWith(parts: newParts);
+    _emitMessages();
+  }
+
+  @override
+  void markMessageFailed(String messageId, String error) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    _messages[index] = _messages[index].copyWith(
+      sendStatus: MessageSendStatus.failed,
+    );
+    // 失败原因以文本 part 追加，便于渲染层展示
+    _emitMessages();
+  }
+
+  @override
+  Future<void> retryFailedMessage(String messageId) async {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    _messages[index] = _messages[index].copyWith(
+      sendStatus: MessageSendStatus.sending,
+    );
+    _emitMessages();
+    // 真实重发由宿主通过 onMessageAction(retry) 触发
+    final msg = _messages[index];
+    onMessageAction?.call(msg, MessageAction.retry);
+  }
+
+  @override
+  Future<void> resumeGeneration() async {
+    _state = _state.copyWith(isGenerating: true, currentPhase: '继续生成中...');
+    _emitState();
   }
 
   /// 更新会话状态

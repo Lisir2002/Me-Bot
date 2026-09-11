@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
+import '../models/conversation_state.dart';
 import '../models/message_part.dart';
 import '../models/style_settings.dart';
+import '../widgets/agent_enhanced_widgets.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// Style 06：工具卡片流（ToolCardFlow）
@@ -70,21 +72,48 @@ class _ToolCardFlowViewState extends State<_ToolCardFlowView> {
         if (messages.isEmpty) {
           return const Center(child: Text('暂无消息'));
         }
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          itemCount: messages.length,
-          itemBuilder: (context, index) =>
-              _buildMessage(context, messages[index], messages, index),
+        return StreamBuilder<ConversationState>(
+          stream: widget.dataSource.stateStream,
+          initialData: widget.dataSource.currentState,
+          builder: (context, stateSnapshot) {
+            final state = stateSnapshot.data ?? ConversationState.idle;
+            return Column(
+              children: [
+                // 流水线进度指示器（LangGraph GenUI PipelineProgress）
+                if (state.totalSteps != null && state.totalSteps! > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: PipelineProgress(
+                      totalSteps: state.totalSteps!,
+                      completedSteps: state.completedSteps ?? 0,
+                      currentStepName: state.currentStepName,
+                      hasError: state.error != null,
+                    ),
+                  ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) =>
+                        _buildMessage(context, messages[index], messages, index, state),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildMessage(
-      BuildContext context, Message message, List<Message> all, int index) {
+      BuildContext context, Message message, List<Message> all, int index, ConversationState state) {
     // 用户消息：顶部简洁样式
     if (message.role == MessageRole.user) {
-      return _UserPromptBlock(message: message);
+      return _UserPromptBlock(
+        message: message,
+        onQuoteTap: message.referencedMessageId != null ? () {} : null,
+      );
     }
     // 系统消息
     if (message.role == MessageRole.system) {
@@ -98,15 +127,56 @@ class _ToolCardFlowViewState extends State<_ToolCardFlowView> {
         message: message,
         uiState: _uiState,
         onUIStateChanged: _update,
+        state: state,
       );
     }
 
     // 主分支：时间线穿插渲染各 part
+    // 使用 groupConsecutiveToolCalls 将连续工具调用聚合为组
     final children = <Widget>[];
     final parts = message.parts;
+    final groups = groupConsecutiveToolCalls(parts);
+    // 任务分组
+    final taskGroups = _groupConsecutiveTasks(parts);
+    var groupIdx = 0;
+    var taskGroupIdx = 0;
+    final isStreaming = message.isStreaming;
+
     for (var i = 0; i < parts.length; i++) {
       final part = parts[i];
       final isLast = i == parts.length - 1;
+
+      // 检查是否命中某个工具组
+      if (groupIdx < groups.length &&
+          part == groups[groupIdx].toolCalls.first) {
+        final group = groups[groupIdx];
+        children.add(_ToolGroupTimelineNode(
+          group: group,
+          isLast: isLast,
+          uiState: _uiState,
+          onUIStateChanged: _update,
+        ));
+        // 跳过组内所有 part
+        i += group.toolCalls.length - 1;
+        groupIdx++;
+        continue;
+      }
+
+      // 检查是否命中某个任务组
+      if (taskGroupIdx < taskGroups.length &&
+          part == taskGroups[taskGroupIdx].first) {
+        final taskGroup = taskGroups[taskGroupIdx];
+        children.add(_TaskTimelineNode(
+          tasks: taskGroup,
+          isLast: isLast,
+          uiState: _uiState,
+          onUIStateChanged: _update,
+        ));
+        i += taskGroup.length - 1;
+        taskGroupIdx++;
+        continue;
+      }
+
       switch (part) {
         case ToolCallPart():
           children.add(_ToolTimelineNode(
@@ -119,12 +189,20 @@ class _ToolCardFlowViewState extends State<_ToolCardFlowView> {
         case TextPart():
           // 文本回答穿插在工具流之间，用不同背景区分
           children.add(_InterleavedTextBlock(part: part));
+          // 流式光标附加在文本末尾
+          if (isStreaming && isLast) {
+            children.add(const Padding(
+              padding: EdgeInsets.only(left: 36, bottom: 6),
+              child: StreamingCursor(),
+            ));
+          }
         case ThinkingPart():
           children.add(_ThinkingTimelineNode(
             part: part,
             isLast: isLast,
             collapsed: _uiState.collapsedThinkingIds.contains(part.id),
             onToggle: () => _update(_uiState.toggleThinking(part.id)),
+            isStreaming: isStreaming,
           ));
         case ApprovalPart():
           children.add(Padding(
@@ -133,7 +211,16 @@ class _ToolCardFlowViewState extends State<_ToolCardFlowView> {
               part: part,
               onApprove: () => widget.dataSource.approveAction(part.id),
               onReject: () => widget.dataSource.rejectAction(part.id),
+              onAllowSession: () => widget.dataSource.approveAction(part.id),
             ),
+          ));
+        case TaskPart():
+          // 单个任务（未被分组的）
+          children.add(_TaskTimelineNode(
+            tasks: [part],
+            isLast: isLast,
+            uiState: _uiState,
+            onUIStateChanged: _update,
           ));
         default:
           children.add(Padding(
@@ -146,10 +233,40 @@ class _ToolCardFlowViewState extends State<_ToolCardFlowView> {
           ));
       }
     }
+
+    // 追问建议芯片（Perplexity Follow-up 模式）
+    if (!isStreaming && state.followUpSuggestions.isNotEmpty) {
+      children.add(Padding(
+        padding: const EdgeInsets.only(left: 36, top: 8),
+        child: FollowUpChips(suggestions: state.followUpSuggestions),
+      ));
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
+  }
+
+  /// 将连续的 TaskPart 分组
+  List<List<TaskPart>> _groupConsecutiveTasks(List<MessagePart> parts) {
+    final groups = <List<TaskPart>>[];
+    List<TaskPart>? currentGroup;
+    for (final part in parts) {
+      if (part is TaskPart) {
+        currentGroup ??= [];
+        currentGroup.add(part);
+      } else {
+        if (currentGroup != null && currentGroup.isNotEmpty) {
+          groups.add(List.unmodifiable(currentGroup));
+        }
+        currentGroup = null;
+      }
+    }
+    if (currentGroup != null && currentGroup.isNotEmpty) {
+      groups.add(List.unmodifiable(currentGroup));
+    }
+    return groups;
   }
 }
 
@@ -161,7 +278,8 @@ extension _PartTypeCheck on List<MessagePart> {
 /// 用户提问块（简洁样式）
 class _UserPromptBlock extends StatelessWidget {
   final Message message;
-  const _UserPromptBlock({required this.message});
+  final VoidCallback? onQuoteTap;
+  const _UserPromptBlock({required this.message, this.onQuoteTap});
 
   @override
   Widget build(BuildContext context) {
@@ -173,17 +291,31 @@ class _UserPromptBlock extends StatelessWidget {
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message.textContent.isEmpty ? '(空)' : message.textContent,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500),
+          // 引用回复
+          if (message.referencedMessageId != null)
+            QuoteRefWidget(
+              senderName: message.assistantName ?? '助手',
+              contentPreview: message.textContent,
+              timestamp: message.timestamp,
+              onTap: onQuoteTap,
             ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.person, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message.textContent.isEmpty ? '(空)' : message.textContent,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -237,6 +369,86 @@ class _InterleavedTextBlock extends StatelessWidget {
   }
 }
 
+/// 时间线节点：工具调用分组（连续工具聚合）
+class _ToolGroupTimelineNode extends StatelessWidget {
+  final ToolGroupInfo group;
+  final bool isLast;
+  final ConversationUIState uiState;
+  final void Function(ConversationUIState) onUIStateChanged;
+
+  const _ToolGroupTimelineNode({
+    required this.group,
+    required this.isLast,
+    required this.uiState,
+    required this.onUIStateChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isError = group.hasError;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 左侧 rail：状态点 + 连接线
+          SizedBox(
+            width: 28,
+            child: Column(
+              children: [
+                _buildDot(theme),
+                Expanded(
+                  child: isLast
+                      ? const SizedBox.shrink()
+                      : Container(width: 2, color: theme.colorScheme.outlineVariant),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // 右侧分组卡片
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isError ? theme.colorScheme.error : theme.colorScheme.outlineVariant,
+                  width: isError ? 1.5 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: ToolGroupCard(
+                toolCalls: group.toolCalls,
+                uiState: uiState,
+                onUIStateChanged: onUIStateChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(ThemeData theme) {
+    if (group.hasRunning) {
+      return const _PulsingDot(color: Colors.blue, size: 16);
+    }
+    if (group.hasError) {
+      return _StatusDot(color: theme.colorScheme.error, filled: true, size: 16);
+    }
+    return const _StatusDot(color: Colors.green, filled: true, size: 16);
+  }
+}
+
 /// 时间线节点：工具调用卡片
 class _ToolTimelineNode extends StatelessWidget {
   final ToolCallPart part;
@@ -257,6 +469,7 @@ class _ToolTimelineNode extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isError = part.status == ToolCallStatus.error;
+    final showProgress = part.status == ToolCallStatus.running && part.progress != null;
 
     return IntrinsicHeight(
       child: Row(
@@ -285,8 +498,10 @@ class _ToolTimelineNode extends StatelessWidget {
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isError ? theme.colorScheme.error : theme.colorScheme.outlineVariant,
-                  width: isError ? 1.5 : 1,
+                  color: part.isStalled
+                      ? Colors.orange
+                      : (isError ? theme.colorScheme.error : theme.colorScheme.outlineVariant),
+                  width: part.isStalled || isError ? 1.5 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -300,6 +515,21 @@ class _ToolTimelineNode extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(theme),
+                  // 执行进度条（Claude Code 风格）
+                  if (showProgress)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                      child: ToolProgressBar(progress: part.progress!),
+                    ),
+                  // 停滞警告（Cursor 教训）
+                  if (part.isStalled)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                      child: StalledToolWarning(
+                        stalledSeconds: 30,
+                        onCancel: onRetry,
+                      ),
+                    ),
                   if (expanded) _buildBody(theme),
                   if (isError) _buildErrorActions(theme),
                 ],
@@ -344,6 +574,11 @@ class _ToolTimelineNode extends StatelessWidget {
                 ),
               ),
             ),
+            // 信心徽章（Devin 风格交通灯）
+            if (part.confidence != null) ...[
+              ConfidenceBadge(level: part.confidence!),
+              const SizedBox(width: 8),
+            ],
             if (part.duration != null)
               Text(
                 '${part.duration!.inMilliseconds} ms',
@@ -413,23 +648,37 @@ class _ToolTimelineNode extends StatelessWidget {
   Widget _buildErrorActions(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('重试'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: theme.colorScheme.error,
+          // 错误恢复建议（Claude Code 风格：可操作建议 + 一键重试）
+          if (part.recoverySuggestions != null &&
+              part.recoverySuggestions!.isNotEmpty)
+            ErrorRecoverySuggestions(
+              suggestions: part.recoverySuggestions!,
+              onRetry: onRetry,
             ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.tonalIcon(
-            onPressed: () {}, // 跳过：由上层切换到下一个步骤
-            icon: const Icon(Icons.skip_next, size: 16),
-            label: const Text('跳过'),
-          ),
+          if (part.recoverySuggestions == null ||
+              part.recoverySuggestions!.isEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('重试'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonalIcon(
+                  onPressed: () {}, // 跳过：由上层切换到下一个步骤
+                  icon: const Icon(Icons.skip_next, size: 16),
+                  label: const Text('跳过'),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -442,12 +691,14 @@ class _ThinkingTimelineNode extends StatelessWidget {
   final bool isLast;
   final bool collapsed;
   final VoidCallback onToggle;
+  final bool isStreaming;
 
   const _ThinkingTimelineNode({
     required this.part,
     required this.isLast,
     required this.collapsed,
     required this.onToggle,
+    this.isStreaming = false,
   });
 
   @override
@@ -460,7 +711,11 @@ class _ThinkingTimelineNode extends StatelessWidget {
           SizedBox(
             width: 28,
             child: Column(children: [
-              const _StatusDot(color: Colors.purple, filled: true, size: 14),
+              // 流式中用脉冲点，完成后用静态点
+              if (isStreaming)
+                const _PulsingDot(color: Colors.purple, size: 14)
+              else
+                const _StatusDot(color: Colors.purple, filled: true, size: 14),
               Expanded(
                 child: isLast
                     ? const SizedBox.shrink()
@@ -481,7 +736,66 @@ class _ThinkingTimelineNode extends StatelessWidget {
                 part: part,
                 collapsed: collapsed,
                 onToggleCollapse: onToggle,
+                isStreaming: isStreaming,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 时间线节点：任务列表（Windsurf Todo List 模式）
+class _TaskTimelineNode extends StatelessWidget {
+  final List<TaskPart> tasks;
+  final bool isLast;
+  final ConversationUIState uiState;
+  final void Function(ConversationUIState) onUIStateChanged;
+
+  const _TaskTimelineNode({
+    required this.tasks,
+    required this.isLast,
+    required this.uiState,
+    required this.onUIStateChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasInProgress = tasks.any((t) => t.isInProgress);
+    final allCompleted = tasks.every((t) => t.isCompleted);
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 左侧 rail：状态点 + 连接线
+          SizedBox(
+            width: 28,
+            child: Column(
+              children: [
+                hasInProgress
+                    ? const _PulsingDot(color: Colors.blue, size: 16)
+                    : _StatusDot(
+                        color: allCompleted ? Colors.green : theme.colorScheme.primary,
+                        filled: allCompleted,
+                        size: 16,
+                      ),
+                Expanded(
+                  child: isLast
+                      ? const SizedBox.shrink()
+                      : Container(width: 2, color: theme.colorScheme.outlineVariant),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // 右侧任务列表卡片
+          Expanded(
+            child: TaskListRenderer(
+              tasks: tasks,
+              interactive: true,
             ),
           ),
         ],
@@ -495,11 +809,13 @@ class _SimpleAssistantBlock extends StatelessWidget {
   final Message message;
   final ConversationUIState uiState;
   final void Function(ConversationUIState) onUIStateChanged;
+  final ConversationState state;
 
   const _SimpleAssistantBlock({
     required this.message,
     required this.uiState,
     required this.onUIStateChanged,
+    this.state = ConversationState.idle,
   });
 
   @override
@@ -513,13 +829,17 @@ class _SimpleAssistantBlock extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: message.parts
-            .map((p) => MessagePartRenderer(
-                  part: p,
-                  uiState: uiState,
-                  onUIStateChanged: onUIStateChanged,
-                ))
-            .toList(),
+        children: [
+          ...message.parts
+              .map((p) => MessagePartRenderer(
+                    part: p,
+                    uiState: uiState,
+                    onUIStateChanged: onUIStateChanged,
+                  )),
+          // 追问建议芯片
+          if (!message.isStreaming && state.followUpSuggestions.isNotEmpty)
+            FollowUpChips(suggestions: state.followUpSuggestions),
+        ],
       ),
     );
   }

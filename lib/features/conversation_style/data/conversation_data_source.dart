@@ -1,6 +1,10 @@
 import 'dart:async';
 import '../models/conversation_style.dart';
 import '../models/conversation_state.dart';
+import '../models/message_part.dart';
+
+/// 长按消息的交互动作类型（渲染器只触发，业务由宿主处理）
+enum MessageAction { copy, quote, retry, share, delete }
 
 /// 附件数据（发送消息时使用）
 class Attachment {
@@ -63,6 +67,38 @@ abstract class ConversationDataSource {
 
   /// 重试某条消息（重新生成）
   Future<void> retryMessage(String messageId);
+
+  /// 删除某条消息（渲染层通知宿主，宿主负责真实 Hive 删除 + 同步）
+  Future<void> deleteMessage(String messageId);
+
+  /// 长按消息的交互回调（引用/分享/删除确认等），由宿主页注入，
+  /// 渲染器只负责在用户长按后触发，不实现具体业务。
+  void Function(Message message, MessageAction action)? get onMessageAction;
+  set onMessageAction(void Function(Message message, MessageAction action)? cb);
+
+  /// 新审批请求出现时回调宿主弹出审批对话框
+  void Function(ApprovalPart approval)? get onApprovalRequired;
+  set onApprovalRequired(void Function(ApprovalPart approval)? cb);
+
+  /// 重试失败的用户消息
+  Future<void> retryFailedMessage(String messageId);
+
+  /// 继续被中断的生成
+  Future<void> resumeGeneration();
+
+  /// 标记某条消息发送失败（渲染层显示错误态）
+  void markMessageFailed(String messageId, String error);
+
+  /// 更新工具调用状态流转（queued→running→success/error）
+  void updateToolCallStatus(
+    String messageId,
+    String toolCallId,
+    ToolCallStatus status, {
+    dynamic result,
+    String? errorMessage,
+    Duration? duration,
+    List<String>? recoverySuggestions,
+  });
 
   /// 停止当前生成
   Future<void> stopGeneration();

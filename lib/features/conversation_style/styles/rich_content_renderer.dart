@@ -20,8 +20,11 @@ import '../widgets/shared_message_part_renderers.dart';
 ///  - 数据表格：Markdown 表格用原生 DataTable 渲染
 ///  - 图片：圆角 + 点击放大
 ///  - 链接：可点击
-///  - 工具调用：紧凑 chip，可展开
-///  - 思考过程：折叠块
+///  - 连续工具调用：用 groupConsecutiveToolCalls 聚合为 ToolGroupCard
+///  - 思考过程：增强 ThinkingPartRenderer（流式自动展开）
+///  - 用户引用回复：QuoteRefWidget
+///  - 流式输出：末尾追加 StreamingCursor
+///  - 混合内容间距：不同类型 8px，同类型连续 4px
 class RichContentRenderer extends BaseStyleRenderer {
   @override
   ConversationStyle get style => ConversationStyle.richContent;
@@ -77,32 +80,43 @@ class _RichContentViewState extends State<_RichContentView> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           itemCount: messages.length,
           itemBuilder: (context, index) =>
-              _buildMessageCard(context, messages[index]),
+              _buildMessageCard(context, messages[index], messages),
         );
       },
     );
   }
 
   /// 消息卡片：消息间用卡片分隔
-  Widget _buildMessageCard(BuildContext context, Message message) {
+  Widget _buildMessageCard(
+      BuildContext context, Message message, List<Message> allMessages) {
     final theme = Theme.of(context);
     if (message.role == MessageRole.user) {
       return Align(
         alignment: Alignment.centerRight,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.all(12),
-          constraints: const BoxConstraints(maxWidth: 340),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: message.parts
-                .map((p) => _buildPart(p, overrideColor: Colors.white))
-                .toList(),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 用户引用回复：气泡上方显示 QuoteRefWidget
+            if (message.referencedMessageId != null)
+              _buildQuoteRef(message, allMessages) ??
+                  const SizedBox.shrink(),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.all(12),
+              constraints: const BoxConstraints(maxWidth: 340),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: message.parts
+                    .map((p) => _buildPart(p, overrideColor: Colors.white))
+                    .toList(),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -117,6 +131,7 @@ class _RichContentViewState extends State<_RichContentView> {
       );
     }
 
+    // 助手/工具消息：分组渲染各 part + 统一间距
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(12),
@@ -133,9 +148,145 @@ class _RichContentViewState extends State<_RichContentView> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: message.parts.map(_buildPart).toList(),
+        children: _buildAssistantParts(message),
       ),
     );
+  }
+
+  /// 构建用户引用回复组件：从 allMessages 查找被引用消息，取 textContent 前50字预览
+  Widget? _buildQuoteRef(Message message, List<Message> allMessages) {
+    Message? refMsg;
+    for (final m in allMessages) {
+      if (m.id == message.referencedMessageId) {
+        refMsg = m;
+        break;
+      }
+    }
+    if (refMsg == null) return null;
+    return QuoteRefWidget(
+      senderName: refMsg.role == MessageRole.user
+          ? '用户'
+          : (refMsg.assistantName ?? '助手'),
+      contentPreview: refMsg.textContent,
+      timestamp: refMsg.timestamp,
+    );
+  }
+
+  /// 构建助手消息的 parts：连续工具调用聚合为 ToolGroupCard，统一间距
+  ///
+  /// 间距规则：不同类型 part 之间 8px，同类型连续 part 之间 4px。
+  List<Widget> _buildAssistantParts(Message message) {
+    final out = <Widget>[];
+    final parts = message.parts;
+    final groups = groupConsecutiveToolCalls(parts);
+    var groupIdx = 0;
+    final isStreaming = message.isStreaming;
+    int? lastTextIndex;
+    String? prevType;
+
+    // 按类型插入间距：类型变化 8px，同类型 4px
+    void add(Widget w, String type) {
+      if (out.isNotEmpty) {
+        out.add(SizedBox(height: type == prevType ? 4 : 8));
+      }
+      prevType = type;
+      out.add(w);
+    }
+
+    for (var i = 0; i < parts.length; i++) {
+      final part = parts[i];
+
+      // 命中工具组：聚合为 ToolGroupCard
+      if (groupIdx < groups.length &&
+          identical(part, groups[groupIdx].toolCalls.first)) {
+        final group = groups[groupIdx];
+        add(
+          ToolGroupCard(
+            toolCalls: group.toolCalls,
+            uiState: _uiState,
+            onUIStateChanged: _update,
+          ),
+          'toolgroup',
+        );
+        i += group.toolCalls.length - 1;
+        groupIdx++;
+        continue;
+      }
+
+      switch (part) {
+        case TextPart():
+          add(_RichTextBlock(text: part.text), 'text');
+          lastTextIndex = out.length - 1;
+        case CodePart():
+          // 代码块：全宽 CodePartRenderer，带运行按钮
+          final isExpanded = _uiState.expandedCodeBlockIds.contains(part.id) ||
+              part.code.length < 500;
+          add(
+            CodePartRenderer(
+              part: part,
+              expanded: isExpanded,
+              showRunButton: true,
+              onToggleExpand: part.code.length >= 500
+                  ? () => _update(_uiState.toggleCodeBlock(part.id))
+                  : null,
+            ),
+            'code',
+          );
+        case ToolCallPart():
+          // 未被分组覆盖的单个工具调用（兜底）
+          add(
+            ToolCallPartRenderer(
+              part: part,
+              expanded: _uiState.expandedToolCallIds.contains(part.id),
+              onToggleExpand: () =>
+                  _update(_uiState.toggleToolCall(part.id)),
+            ),
+            'tool',
+          );
+        case ThinkingPart():
+          // 思考过程：增强渲染器，传入 isStreaming
+          add(
+            ThinkingPartRenderer(
+              part: part,
+              collapsed: true,
+              onToggleCollapse: () =>
+                  _update(_uiState.toggleThinking(part.id)),
+              isStreaming: isStreaming,
+            ),
+            'thinking',
+          );
+        case ImagePart():
+          // 图片：圆角 + 最大宽度约束 + 点击放大
+          add(_ZoomableImage(part: part), 'image');
+        case FilePart():
+          add(FilePartRenderer(part: part), 'file');
+        case ApprovalPart():
+          add(
+            ApprovalPartRenderer(
+              part: part,
+              onApprove: () => widget.dataSource.approveAction(part.id),
+              onReject: () => widget.dataSource.rejectAction(part.id),
+            ),
+            'approval',
+          );
+        case ArtifactPart():
+          add(ArtifactPartRenderer(part: part), 'artifact');
+        case TaskPart():
+          add(Text('📋 ${part.title}'), 'task');
+      }
+    }
+
+    // 流式中：在最后一个 TextPart 后追加闪烁光标
+    if (isStreaming && lastTextIndex != null) {
+      out.insert(
+        lastTextIndex + 1,
+        const Padding(
+          padding: EdgeInsets.only(top: 2),
+          child: StreamingCursor(),
+        ),
+      );
+    }
+    return out;
   }
 
   Widget _buildPart(MessagePart part, {Color? overrideColor}) {
@@ -184,6 +335,8 @@ class _RichContentViewState extends State<_RichContentView> {
         );
       case ArtifactPart():
         return ArtifactPartRenderer(part: part);
+      case TaskPart():
+        return Text('📋 ${part.title}');
     }
   }
 }
@@ -361,7 +514,7 @@ class _ClickableText extends StatelessWidget {
   }
 }
 
-/// 紧凑工具调用 chip，可展开
+/// 紧凑工具调用 chip，可展开（用户气泡内单工具调用兜底用）
 class _CompactToolChip extends StatelessWidget {
   final ToolCallPart part;
   final bool expanded;
@@ -456,7 +609,8 @@ class _ZoomableImage extends StatelessWidget {
       onTap: () => _openFullScreen(context),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
-        constraints: const BoxConstraints(maxHeight: 240),
+        // 最大宽度约束：图片不超出卡片
+        constraints: const BoxConstraints(maxHeight: 240, maxWidth: 420),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: image,

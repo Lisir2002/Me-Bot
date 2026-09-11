@@ -80,3 +80,59 @@ abstract class BaseStyleRenderer extends StyleRenderer {
     _subscriptions.clear();
   }
 }
+
+/// 智能滚动控制器 —— 封装"是否应自动滚到底部"的判断
+///
+/// - 用户停留在距底部 [nearBottomThreshold] 以内时视为"在底部"，新消息自动跟随
+/// - 用户上翻超过阈值时暂停自动滚动，并通过 [onUserScrolledAway] 通知显示跳转按钮
+/// - 不持有任何消息数据，只管滚动位置
+class SmartScrollController extends ScrollController {
+  /// 距底部多少 px 以内算"在底部"
+  final double nearBottomThreshold;
+
+  /// 用户上翻离开底部时回调（用于显示"跳转到底部"按钮）
+  void Function(bool away)? onUserScrolledAway;
+
+  bool _isNearBottom = true;
+
+  /// 当前是否应自动滚动到底部
+  bool get shouldAutoScroll => _isNearBottom;
+
+  SmartScrollController({
+    this.nearBottomThreshold = 100.0,
+  });
+
+  @override
+  void addListener(listener) {
+    super.addListener(listener);
+    // 内部监听：更新"是否在底部"
+    void inner() {
+      final wasAway = !_isNearBottom;
+      _isNearBottom = _computeNearBottom();
+      final nowAway = !_isNearBottom;
+      if (wasAway != nowAway) {
+        onUserScrolledAway?.call(nowAway);
+      }
+    }
+
+    super.addListener(inner);
+  }
+
+  bool _computeNearBottom() {
+    if (!hasClients) return true;
+    final pos = position;
+    if (!pos.hasContentDimensions) return true;
+    final remaining = pos.maxScrollExtent - pos.pixels;
+    return remaining <= nearBottomThreshold;
+  }
+
+  /// 平滑滚动到底部（仅当用户在底部附近时才跟随）
+  void smartJumpToBottom() {
+    if (!hasClients) return;
+    animateTo(
+      position.maxScrollExtent,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+}

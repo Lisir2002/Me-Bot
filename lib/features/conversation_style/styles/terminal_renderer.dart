@@ -14,9 +14,12 @@ import '../widgets/shared_message_part_renderers.dart';
 ///   用户输入  `>`  青色
 ///   助手输出  `~`  绿色
 ///   工具调用  `$ tool --args` + spinner + 输出
-///   思考      `[thinking]` 灰色
+///   连续工具  `$ tool_name ×3` 分组，展开后逐个显示命令与输出
+///   思考      `# thinking...` 灰色注释行（流式自动展开，完成后折叠为一行摘要）
 ///   系统      `[system]` 黄色
 ///   错误      红色
+///   流式光标  `▋` 块字符闪烁
+///   引用回复  `> reply to msg-xxx: ...`
 /// 不显示时间戳。
 class TerminalRenderer extends BaseStyleRenderer {
   @override
@@ -91,22 +94,18 @@ class _TerminalViewState extends State<_TerminalView> {
             padding: const EdgeInsets.all(16),
             itemCount: messages.length,
             itemBuilder: (context, index) =>
-                _buildMessage(context, messages[index]),
+                _buildMessage(context, messages[index], messages),
           );
         },
       ),
     );
   }
 
-  Widget _buildMessage(BuildContext context, Message message) {
+  Widget _buildMessage(
+      BuildContext context, Message message, List<Message> allMessages) {
     switch (message.role) {
       case MessageRole.user:
-        return _TerminalLine(
-          prefix: '> ',
-          prefixColor: TerminalRenderer._cyan,
-          text: message.textContent,
-          textColor: TerminalRenderer._cyan,
-        );
+        return _buildUserMessage(message, allMessages);
       case MessageRole.system:
         return _TerminalLine(
           prefix: '[system] ',
@@ -116,47 +115,123 @@ class _TerminalViewState extends State<_TerminalView> {
         );
       case MessageRole.tool:
       case MessageRole.assistant:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: message.parts.map(_buildPart).toList(),
-        );
+        return _buildAssistantMessage(message);
     }
   }
 
-  Widget _buildPart(MessagePart part) {
-    switch (part) {
-      case TextPart():
-        return _TerminalLine(
-          prefix: '~ ',
-          prefixColor: TerminalRenderer._green,
-          text: part.text,
-          textColor: TerminalRenderer._green,
-        );
-      case ThinkingPart():
-        return _TerminalLine(
-          prefix: '[thinking] ',
+  /// 用户消息：终端输入行 `> user input`
+  ///
+  /// 有 referencedMessageId 时在上方显示 `> reply to msg-xxx: ...`
+  Widget _buildUserMessage(Message message, List<Message> allMessages) {
+    final children = <Widget>[];
+
+    // 引用回复：查找被引用消息内容
+    if (message.referencedMessageId != null) {
+      Message? refMsg;
+      for (final m in allMessages) {
+        if (m.id == message.referencedMessageId) {
+          refMsg = m;
+          break;
+        }
+      }
+      if (refMsg != null) {
+        final preview = refMsg.textContent;
+        final truncated = preview.length > 50
+            ? '${preview.substring(0, 50)}…'
+            : preview;
+        children.add(_TerminalLine(
+          prefix: '> reply to ${message.referencedMessageId}: ',
           prefixColor: TerminalRenderer._gray,
-          text: part.content,
+          text: truncated,
           textColor: TerminalRenderer._gray,
-        );
-      case ToolCallPart():
-        return _TerminalToolBlock(part: part);
-      case CodePart():
-        return _TerminalCodeBlock(part: part);
-      case ApprovalPart():
-        return ApprovalPartRenderer(
-          part: part,
-          onApprove: () => widget.dataSource.approveAction(part.id),
-          onReject: () => widget.dataSource.rejectAction(part.id),
-        );
-      default:
-        // 图片/文件/产物等用共享组件兜底
-        return MessagePartRenderer(
-          part: part,
-          uiState: _uiState,
-          onUIStateChanged: _update,
-        );
+        ));
+      }
     }
+
+    children.add(_TerminalLine(
+      prefix: '> ',
+      prefixColor: TerminalRenderer._cyan,
+      text: message.textContent,
+      textColor: TerminalRenderer._cyan,
+    ));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  /// 助手/工具消息：按 part 渲染，连续工具调用分组
+  Widget _buildAssistantMessage(Message message) {
+    final parts = message.parts;
+    final groups = groupConsecutiveToolCalls(parts);
+    var groupIdx = 0;
+    final children = <Widget>[];
+    final isStreaming = message.isStreaming;
+    int? lastTextIndex;
+
+    for (var i = 0; i < parts.length; i++) {
+      final part = parts[i];
+
+      // 命中工具组：终端风格分组显示 `$ tool_name ×N`
+      if (groupIdx < groups.length &&
+          identical(part, groups[groupIdx].toolCalls.first)) {
+        final group = groups[groupIdx];
+        children.add(_TerminalToolGroup(toolCalls: group.toolCalls));
+        i += group.toolCalls.length - 1;
+        groupIdx++;
+        continue;
+      }
+
+      switch (part) {
+        case TextPart():
+          children.add(_TerminalLine(
+            prefix: '~ ',
+            prefixColor: TerminalRenderer._green,
+            text: part.text,
+            textColor: TerminalRenderer._green,
+          ));
+          lastTextIndex = children.length - 1;
+        case ThinkingPart():
+          // 终端风格思考：`# thinking...` 灰色注释行
+          children.add(_TerminalThinkingBlock(
+            part: part,
+            isStreaming: isStreaming,
+          ));
+        case ToolCallPart():
+          children.add(_TerminalToolBlock(part: part));
+        case CodePart():
+          children.add(_TerminalCodeBlock(part: part));
+        case ApprovalPart():
+          children.add(ApprovalPartRenderer(
+            part: part,
+            onApprove: () => widget.dataSource.approveAction(part.id),
+            onReject: () => widget.dataSource.rejectAction(part.id),
+          ));
+        default:
+          // 图片/文件/产物等用共享组件兜底
+          children.add(MessagePartRenderer(
+            part: part,
+            uiState: _uiState,
+            onUIStateChanged: _update,
+          ));
+      }
+    }
+
+    // 流式中：在最后一个文本行后追加块字符光标
+    if (isStreaming && lastTextIndex != null) {
+      children.insert(
+        lastTextIndex + 1,
+        const Padding(
+          padding: EdgeInsets.only(left: 12, bottom: 2),
+          child: _TerminalBlockCursor(),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
   }
 }
 
@@ -188,6 +263,116 @@ class _TerminalLine extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 工具调用分组：终端风格 `$ tool_name ×N`
+///
+/// 折叠态：`$ tool_name ×N` + 状态指示（绿勾 / 红叉 / 运行中）
+/// 展开态：逐个列出每个命令及其输出
+/// 自动行为：有运行中工具自动展开，全部完成后自动折叠（与 ToolGroupCard 逻辑一致）
+class _TerminalToolGroup extends StatefulWidget {
+  final List<ToolCallPart> toolCalls;
+  const _TerminalToolGroup({required this.toolCalls});
+
+  @override
+  State<_TerminalToolGroup> createState() => _TerminalToolGroupState();
+}
+
+class _TerminalToolGroupState extends State<_TerminalToolGroup> {
+  bool _userToggled = false;
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = _shouldAutoExpand();
+  }
+
+  @override
+  void didUpdateWidget(_TerminalToolGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_userToggled) {
+      _expanded = _shouldAutoExpand();
+    }
+  }
+
+  bool _shouldAutoExpand() => widget.toolCalls.any((t) =>
+      t.status == ToolCallStatus.running || t.status == ToolCallStatus.pending);
+
+  bool get _hasError =>
+      widget.toolCalls.any((t) => t.status == ToolCallStatus.error);
+
+  bool get _hasRunning => widget.toolCalls.any((t) =>
+      t.status == ToolCallStatus.running || t.status == ToolCallStatus.pending);
+
+  void _handleTap() {
+    setState(() {
+      _userToggled = true;
+      _expanded = !_expanded;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final toolName =
+        widget.toolCalls.isEmpty ? 'tool' : widget.toolCalls.first.toolName;
+    final count = widget.toolCalls.length;
+
+    // 状态符号：成功 `✓` 绿色 / 失败 `✗` 红色 / 运行中 `…` 绿色
+    final String statusSymbol;
+    final Color statusColor;
+    if (_hasError) {
+      statusSymbol = '✗';
+      statusColor = TerminalRenderer._red;
+    } else if (_hasRunning) {
+      statusSymbol = '…';
+      statusColor = TerminalRenderer._green;
+    } else {
+      statusSymbol = '✓';
+      statusColor = TerminalRenderer._green;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 分组头部：`$ tool_name ×N   [状态]`
+        InkWell(
+          onTap: _handleTap,
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                  fontFamily: 'monospace', fontSize: 13, height: 1.5),
+              children: [
+                const TextSpan(
+                    text: '\$ ',
+                    style: TextStyle(color: TerminalRenderer._green)),
+                TextSpan(
+                    text: '$toolName ×$count',
+                    style: const TextStyle(color: Colors.white)),
+                TextSpan(
+                    text: '   $statusSymbol',
+                    style: TextStyle(color: statusColor)),
+                TextSpan(
+                    text: _expanded ? '  ▾' : '  ▸',
+                    style: const TextStyle(color: TerminalRenderer._gray)),
+              ],
+            ),
+          ),
+        ),
+        // 展开后逐个显示命令与输出
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children:
+                  widget.toolCalls.map((t) => _TerminalToolBlock(part: t)).toList(),
+            ),
+          ),
+        const SizedBox(height: 4),
+      ],
     );
   }
 }
@@ -254,6 +439,192 @@ class _TerminalToolBlock extends StatelessWidget {
           ),
         const SizedBox(height: 4),
       ],
+    );
+  }
+}
+
+/// 终端思考块：`# thinking...` 灰色注释行
+///
+/// 与增强 ThinkingPartRenderer 逻辑一致：
+/// - 流式中（isStreaming=true）：自动展开，显示 `# thinking...` + 脉冲点 + 正文
+/// - 完成后：自动折叠为一行 `# thinking` + 摘要（前30字）
+/// - 保留手动点击切换
+class _TerminalThinkingBlock extends StatefulWidget {
+  final ThinkingPart part;
+  final bool isStreaming;
+  const _TerminalThinkingBlock({
+    required this.part,
+    required this.isStreaming,
+  });
+
+  @override
+  State<_TerminalThinkingBlock> createState() => _TerminalThinkingBlockState();
+}
+
+class _TerminalThinkingBlockState extends State<_TerminalThinkingBlock> {
+  bool _userToggled = false;
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.isStreaming;
+  }
+
+  @override
+  void didUpdateWidget(_TerminalThinkingBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_userToggled) {
+      _expanded = widget.isStreaming;
+    }
+  }
+
+  void _handleTap() {
+    setState(() {
+      _userToggled = true;
+      _expanded = !_expanded;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = widget.part.content.trim();
+    final preview =
+        summary.length > 30 ? '${summary.substring(0, 30)}…' : summary;
+    final gray = TerminalRenderer._gray;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _handleTap,
+          child: Row(
+            children: [
+              // 流式中脉冲点，完成后静态 `#` 符号
+              if (widget.isStreaming)
+                const _TerminalPulseDot(color: TerminalRenderer._gray, size: 8)
+              else
+                const Text('#',
+                    style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        color: TerminalRenderer._gray)),
+              const SizedBox(width: 6),
+              Text(
+                widget.isStreaming ? 'thinking...' : 'thinking',
+                style: const TextStyle(
+                    fontFamily: 'monospace', fontSize: 13, color: TerminalRenderer._gray),
+              ),
+              // 折叠态右侧显示摘要
+              if (!_expanded && preview.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(preview,
+                    style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        color: TerminalRenderer._gray)),
+              ],
+            ],
+          ),
+        ),
+        // 展开后显示思考正文
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 2),
+            child: Text(
+              widget.part.content,
+              style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  height: 1.5,
+                  color: gray),
+            ),
+          ),
+        const SizedBox(height: 2),
+      ],
+    );
+  }
+}
+
+/// 终端脉冲点 —— 透明度 0.3↔1 循环
+class _TerminalPulseDot extends StatefulWidget {
+  final Color color;
+  final double size;
+  const _TerminalPulseDot({required this.color, required this.size});
+
+  @override
+  State<_TerminalPulseDot> createState() => _TerminalPulseDotState();
+}
+
+class _TerminalPulseDotState extends State<_TerminalPulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) {
+        return Opacity(
+          opacity: 0.3 + 0.7 * _c.value,
+          child: Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              color: widget.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// 终端流式块字符光标 `▋` 闪烁
+class _TerminalBlockCursor extends StatefulWidget {
+  const _TerminalBlockCursor();
+
+  @override
+  State<_TerminalBlockCursor> createState() => _TerminalBlockCursorState();
+}
+
+class _TerminalBlockCursorState extends State<_TerminalBlockCursor>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) {
+        return Opacity(
+          opacity: _c.value,
+          child: Container(
+            width: 8,
+            height: 15,
+            color: TerminalRenderer._green,
+          ),
+        );
+      },
     );
   }
 }

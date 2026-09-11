@@ -153,13 +153,7 @@ class _StyleErrorBoundaryState extends State<StyleErrorBoundary> {
       ConversationStyle.toolCardFlow: '工具卡片流',
       ConversationStyle.thinkActObserve: '思考行动观察',
       ConversationStyle.terminal: '终端风格',
-      ConversationStyle.multiAssistant: '多助手协作',
       ConversationStyle.richContent: '富内容渲染',
-      ConversationStyle.generativeUi: '生成式UI',
-      ConversationStyle.threadBranching: '对话分支',
-      ConversationStyle.contextPanel: '上下文面板',
-      ConversationStyle.planSurface: '执行计划面板',
-      ConversationStyle.canvasArtifact: '画布产物',
     };
     return names[style] ?? style.name;
   }

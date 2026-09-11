@@ -1,6 +1,6 @@
 /// 对话流样式系统 —— 统一导出
 ///
-/// 提供 15 种对话流样式的完整实现，支持样式切换、自动推荐、
+/// 提供 9 种对话流样式的完整实现，支持样式切换、自动推荐、
 /// 错误降级等功能。
 library;
 
@@ -13,6 +13,7 @@ export 'models/style_settings.dart';
 // 数据层
 export 'data/conversation_data_source.dart';
 export 'data/hive_conversation_data_source.dart';
+export 'data/style_settings_service.dart';
 
 // 框架
 export 'framework/style_renderer.dart';
@@ -34,13 +35,7 @@ export 'styles/agent_three_tier_renderer.dart';
 export 'styles/tool_card_flow_renderer.dart';
 export 'styles/think_act_observe_renderer.dart';
 export 'styles/terminal_renderer.dart';
-export 'styles/multi_assistant_renderer.dart';
 export 'styles/rich_content_renderer.dart';
-export 'styles/generative_ui_renderer.dart';
-export 'styles/thread_branching_renderer.dart';
-export 'styles/context_panel_renderer.dart';
-export 'styles/plan_surface_renderer.dart';
-export 'styles/canvas_artifact_renderer.dart';
 
 // 样式注册
 export 'styles/style_registry.dart';

@@ -112,20 +112,7 @@ void main() {
       );
     });
 
-    test('自动模式：多助手推荐多助手协作样式', () {
-      final settings = const StyleSettings(autoModeEnabled: true);
-      final intent = const ConversationIntent(
-        hasMultipleAssistants: true,
-        hasToolCalls: true,
-        toolCallCount: 2,
-      );
-
-      final result = resolver.resolve(settings: settings, intent: intent);
-      // 多助手协作应该有较高分数
-      expect(result, isNotNull);
-    });
-
-    test('自动模式：高风险操作推荐执行计划面板或思考行动观察', () {
+    test('自动模式：高风险操作推荐思考行动观察或 Agent 三层级', () {
       final settings = const StyleSettings(autoModeEnabled: true);
       final intent = const ConversationIntent(
         hasHighRiskActions: true,
@@ -136,7 +123,6 @@ void main() {
       final result = resolver.resolve(settings: settings, intent: intent);
       expect(
         [
-          ConversationStyle.planSurface,
           ConversationStyle.thinkActObserve,
           ConversationStyle.agentThreeTier,
         ].contains(result),
@@ -144,7 +130,7 @@ void main() {
       );
     });
 
-    test('自动模式：创意任务推荐对话分支或画布产物', () {
+    test('自动模式：创意任务推荐全宽文档、富内容或卡片堆叠', () {
       final settings = const StyleSettings(autoModeEnabled: true);
       final intent = const ConversationIntent(
         isCreativeTask: true,
@@ -155,9 +141,9 @@ void main() {
       final result = resolver.resolve(settings: settings, intent: intent);
       expect(
         [
-          ConversationStyle.threadBranching,
-          ConversationStyle.canvasArtifact,
           ConversationStyle.fullWidthDocument,
+          ConversationStyle.richContent,
+          ConversationStyle.cardStack,
         ].contains(result),
         isTrue,
       );
@@ -241,12 +227,10 @@ void main() {
     test('copyWith 保留其他字段', () {
       const original = ConversationUIState(
         expandedToolCallIds: {'tool-1'},
-        planConfirmed: true,
       );
-      final copied = original.copyWith(activeBranchId: 'branch-1');
+      final copied = original.copyWith(expandedMessageIds: {'msg-1'});
       expect(copied.expandedToolCallIds, equals({'tool-1'}));
-      expect(copied.planConfirmed, isTrue);
-      expect(copied.activeBranchId, equals('branch-1'));
+      expect(copied.expandedMessageIds, equals({'msg-1'}));
     });
   });
 

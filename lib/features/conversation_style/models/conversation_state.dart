@@ -1,5 +1,22 @@
 import 'message_part.dart';
 
+/// 任务执行模式
+///
+/// 参考 Cline 的 Plan/Act 双模式设计：
+/// - plan：只讨论规划，不执行副作用
+/// - act：执行工具调用和副作用操作
+/// - auto：自动判断（简单任务直接执行，复杂任务先规划）
+enum TaskExecutionMode {
+  /// 规划模式：只讨论，不执行
+  plan,
+
+  /// 执行模式：执行工具调用
+  act,
+
+  /// 自动模式：自动判断
+  auto,
+}
+
 /// 会话运行时状态 —— 切换样式时完整保留
 ///
 /// 此状态独立于样式层，由 ConversationDataSource 维护。
@@ -31,6 +48,27 @@ class ConversationState {
   /// 未读消息数
   final int unreadCount;
 
+  /// 任务执行模式（Plan/Act/Auto）
+  ///
+  /// 参考 Cline 的 Plan/Act 双模式：
+  /// 对话流顶部加模式切换，Plan 只讨论，Act 才执行副作用。
+  final TaskExecutionMode taskMode;
+
+  /// 当前任务的总步骤数（用于流水线进度指示）
+  ///
+  /// 参考 LangGraph GenUI 的 PipelineProgress：
+  /// 顶部横向步骤徽章，灰/蓝pulse/绿/红四色态。
+  final int? totalSteps;
+
+  /// 当前已完成的步骤数
+  final int? completedSteps;
+
+  /// 当前正在执行的步骤名称
+  final String? currentStepName;
+
+  /// 追问建议（Perplexity 风格，答案后给出 2-4 个上下文相关的追问芯片）
+  final List<String> followUpSuggestions;
+
   const ConversationState({
     this.isGenerating = false,
     this.generatingMessageId,
@@ -41,6 +79,11 @@ class ConversationState {
     this.connectionStatus = ConnectionStatus.connected,
     this.lastMessageAt,
     this.unreadCount = 0,
+    this.taskMode = TaskExecutionMode.auto,
+    this.totalSteps,
+    this.completedSteps,
+    this.currentStepName,
+    this.followUpSuggestions = const [],
   });
 
   ConversationState copyWith({
@@ -53,6 +96,11 @@ class ConversationState {
     ConnectionStatus? connectionStatus,
     DateTime? lastMessageAt,
     int? unreadCount,
+    TaskExecutionMode? taskMode,
+    int? totalSteps,
+    int? completedSteps,
+    String? currentStepName,
+    List<String>? followUpSuggestions,
   }) {
     return ConversationState(
       isGenerating: isGenerating ?? this.isGenerating,
@@ -64,11 +112,22 @@ class ConversationState {
       connectionStatus: connectionStatus ?? this.connectionStatus,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       unreadCount: unreadCount ?? this.unreadCount,
+      taskMode: taskMode ?? this.taskMode,
+      totalSteps: totalSteps ?? this.totalSteps,
+      completedSteps: completedSteps ?? this.completedSteps,
+      currentStepName: currentStepName ?? this.currentStepName,
+      followUpSuggestions: followUpSuggestions ?? this.followUpSuggestions,
     );
   }
 
   /// 空闲状态
   static const ConversationState idle = ConversationState();
+
+  /// 流水线进度百分比（0.0 - 1.0），无步骤时为 null
+  double? get pipelineProgress {
+    if (totalSteps == null || totalSteps == 0) return null;
+    return (completedSteps ?? 0) / totalSteps!;
+  }
 }
 
 /// 对话错误信息

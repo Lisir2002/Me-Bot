@@ -50,10 +50,15 @@ class ConversationView extends StatefulWidget {
   });
 
   @override
-  State<ConversationView> createState() => _ConversationViewState();
+  ConversationViewState createState() => ConversationViewState();
 }
 
-class _ConversationViewState extends State<ConversationView> {
+/// ConversationView 的公开 State 类型
+///
+/// 外部（如主对话页）可通过 `GlobalKey<ConversationViewState>` 持有实例，
+/// 调用 [switchStyle] 在不重建 widget 树的前提下切换样式，
+/// 从而保留数据、流式状态与渲染器内部状态。
+class ConversationViewState extends State<ConversationView> {
   late final StyleSwitcher _switcher;
 
   @override
@@ -93,13 +98,34 @@ class _ConversationViewState extends State<ConversationView> {
         if (_switcher.isSwitching)
           const LinearProgressIndicator(minHeight: 2),
 
-        // 消息列表区域（随样式切换）
+        // 消息列表区域（随样式切换；AnimatedSwitcher 做 250ms 淡入+轻微缩放过渡）
         Expanded(
-          child: StyleErrorBoundary(
-            style: _switcher.currentStyle,
-            onFallback: () =>
-                _switcher.recordFallback(_switcher.currentStyle),
-            builder: (context) => _switcher.buildCurrent(context),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            // 对称缩放：新样式淡入并由 0.98 放大到 1.04，旧样式反向淡出并缩小
+            transitionBuilder: (child, animation) {
+              final curved = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              );
+              return FadeTransition(
+                opacity: curved,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.98, end: 1.04).animate(curved),
+                  child: child,
+                ),
+              );
+            },
+            child: KeyedSubtree(
+              // key 绑定当前样式，AnimatedSwitcher 据此识别新旧并播放过渡
+              key: ValueKey<ConversationStyle>(_switcher.currentStyle),
+              child: StyleErrorBoundary(
+                style: _switcher.currentStyle,
+                onFallback: () =>
+                    _switcher.recordFallback(_switcher.currentStyle),
+                builder: (context) => _switcher.buildCurrent(context),
+              ),
+            ),
           ),
         ),
 

@@ -1,7 +1,7 @@
 // ignore_for_file: hardcoded_ui_string
 import 'message_part.dart';
 
-/// 对话样式枚举 —— 定义 15 种样式 + 自动模式
+/// 对话样式枚举 —— 定义 9 种样式 + 自动模式
 ///
 /// 每种样式对应一个 StyleRenderer 实现，通过 StyleRendererRegistry 注册。
 enum ConversationStyle {
@@ -29,26 +29,8 @@ enum ConversationStyle {
   /// 08 终端风格
   terminal,
 
-  /// 09 多助手协作
-  multiAssistant,
-
   /// 10 富内容渲染
   richContent,
-
-  /// 11 生成式 UI
-  generativeUi,
-
-  /// 12 对话分支
-  threadBranching,
-
-  /// 13 上下文面板
-  contextPanel,
-
-  /// 14 执行计划面板
-  planSurface,
-
-  /// 15 画布产物
-  canvasArtifact,
 
   /// 自动模式（特殊值，由 StyleResolver 决定具体样式）
   auto,
@@ -65,7 +47,7 @@ class StyleMeta {
   /// 一句话描述
   final String description;
 
-  /// 编号（01-15）
+  /// 编号（01-10，跳过已淘汰编号）
   final String number;
 
   /// 信息密度等级
@@ -152,60 +134,12 @@ class StyleMetaRegistry {
       useCases: ['开发者', '代码执行', 'CLI 集成'],
     ),
     StyleMeta(
-      style: ConversationStyle.multiAssistant,
-      displayName: '多助手协作',
-      description: '不同助手用颜色编码和名称标签，任务交接动画',
-      number: '09',
-      infoDensity: '中',
-      useCases: ['多 Agent 协作', '团队讨论', '角色分工'],
-    ),
-    StyleMeta(
       style: ConversationStyle.richContent,
       displayName: '富内容渲染',
       description: '综合渲染，按内容类型自适应，代码/文件/表格原生渲染',
       number: '10',
       infoDensity: '中高',
       useCases: ['内容类型多样', '综合展示', '富媒体'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.generativeUi,
-      displayName: '生成式 UI',
-      description: '模型返回交互式组件而非纯文本，图表/表格/KPI 卡片',
-      number: '11',
-      infoDensity: '高（结构化）',
-      useCases: ['数据分析', '报表生成', '表单填充'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.threadBranching,
-      displayName: '对话分支',
-      description: '从某条消息分叉出多个路径，分支对比和合并',
-      number: '12',
-      infoDensity: '中',
-      useCases: ['创意写作', '方案对比', '头脑风暴'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.contextPanel,
-      displayName: '上下文面板',
-      description: '对话 + 右侧固定上下文面板，文件/工具/引用来源一览',
-      number: '13',
-      infoDensity: '高',
-      useCases: ['多文档任务', '研究', '复杂上下文'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.planSurface,
-      displayName: '执行计划面板',
-      description: 'Agent 先展示执行计划，用户审核后执行，实时进度更新',
-      number: '14',
-      infoDensity: '高',
-      useCases: ['复杂任务', '高风险操作', '需要用户确认'],
-    ),
-    StyleMeta(
-      style: ConversationStyle.canvasArtifact,
-      displayName: '画布产物',
-      description: '对话 + 画布并排，代码预览/文档渲染/设计稿实时编辑',
-      number: '15',
-      infoDensity: '高（双区）',
-      useCases: ['代码生成', '文档写作', '设计创作'],
     ),
   ];
 
@@ -269,6 +203,9 @@ class Message {
   /// Token 使用量
   final int? totalTokens;
 
+  /// 发送状态（错误恢复：sending/failed/pending/sent）
+  final MessageSendStatus sendStatus;
+
   Message({
     String? id,
     required this.role,
@@ -284,6 +221,7 @@ class Message {
     this.parentId,
     this.referencedMessageId,
     this.totalTokens,
+    this.sendStatus = MessageSendStatus.sent,
   })  : id = id ?? 'msg_${DateTime.now().microsecondsSinceEpoch}',
         parts = parts ?? [],
         timestamp = timestamp ?? DateTime.now();
@@ -307,6 +245,9 @@ class Message {
   /// 获取所有审批部分
   List<ApprovalPart> get approvals =>
       parts.whereType<ApprovalPart>().toList();
+
+  /// 获取所有任务子项（Todo List）
+  List<TaskPart> get tasks => parts.whereType<TaskPart>().toList();
 
   /// 获取所有产物部分
   List<ArtifactPart> get artifacts =>
@@ -333,6 +274,7 @@ class Message {
     String? parentId,
     String? referencedMessageId,
     int? totalTokens,
+    MessageSendStatus? sendStatus,
   }) {
     return Message(
       id: id ?? this.id,
@@ -349,6 +291,7 @@ class Message {
       parentId: parentId ?? this.parentId,
       referencedMessageId: referencedMessageId ?? this.referencedMessageId,
       totalTokens: totalTokens ?? this.totalTokens,
+      sendStatus: sendStatus ?? this.sendStatus,
     );
   }
 

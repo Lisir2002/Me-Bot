@@ -73,6 +73,9 @@ class StyleSwitcher extends ChangeNotifier {
     // 通知数据源样式即将切换
     await _dataSource.onStyleWillChange(newStyle);
 
+    // 给旧样式留出淡出窗口（~150ms），期间 dataSource 流照常广播，不阻塞数据
+    await Future.delayed(const Duration(milliseconds: 150));
+
     // detach 旧渲染器
     _currentRenderer?.onDetach();
 

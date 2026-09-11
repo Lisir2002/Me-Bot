@@ -4,6 +4,7 @@ import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/conversation_state.dart';
 import '../models/message_part.dart';
+import '../widgets/agent_enhanced_widgets.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
 /// Style 05: Agent 三层级渲染器（⭐ 重点样式）
@@ -37,11 +38,42 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
           initialData: dataSource.currentState,
           builder: (context, stateSnapshot) {
             final state = stateSnapshot.data ?? ConversationState.idle;
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: messages.length,
-              itemBuilder: (context, index) =>
-                  _buildMessage(context, messages[index], state),
+            return Column(
+              children: [
+                // 任务模式切换栏（Cline Plan/Act 双模式）
+                if (state.taskMode != TaskExecutionMode.auto ||
+                    state.totalSteps != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Row(
+                      children: [
+                        TaskModeSwitcher(
+                          currentMode: state.taskMode,
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
+                  ),
+                // 流水线进度指示器（LangGraph GenUI PipelineProgress）
+                if (state.totalSteps != null && state.totalSteps! > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: PipelineProgress(
+                      totalSteps: state.totalSteps!,
+                      completedSteps: state.completedSteps ?? 0,
+                      currentStepName: state.currentStepName,
+                      hasError: state.error != null,
+                    ),
+                  ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) =>
+                        _buildMessage(context, messages[index], state),
+                  ),
+                ),
+              ],
             );
           },
         );
@@ -137,20 +169,75 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
           ),
           const SizedBox(height: 12),
           // 一级消息正文（大字体）
-          ..._buildPrimaryParts(context, message),
+          ..._buildPrimaryParts(context, message, isGenerating && state.isGenerating, state),
           // 流式生成进度条
           if (isGenerating && state.isGenerating)
             _buildProgressIndicator(context, state),
+          // 追问建议芯片（Perplexity Follow-up 模式）
+          if (!isGenerating && state.followUpSuggestions.isNotEmpty)
+            FollowUpChips(suggestions: state.followUpSuggestions),
         ],
       ),
     );
   }
 
   /// 一级消息的 parts —— 文本用大字体，工具调用/思考降级为三级内联
-  List<Widget> _buildPrimaryParts(BuildContext context, Message message) {
+  /// 连续 TaskPart 聚合为 TaskListRenderer（Windsurf Todo List 模式）
+  List<Widget> _buildPrimaryParts(
+      BuildContext context, Message message, bool isStreaming, ConversationState state) {
     final children = <Widget>[];
 
-    for (final part in message.parts) {
+    // 用户引用回复
+    if (message.role == MessageRole.user &&
+        message.referencedMessageId != null) {
+      children.add(QuoteRefWidget(
+        senderName: message.assistantName ?? '助手',
+        contentPreview: message.textContent,
+        timestamp: message.timestamp,
+      ));
+    }
+
+    // 扫描 parts，将连续 ToolCallPart 分组为 ToolGroupCard
+    final groups = groupConsecutiveToolCalls(message.parts);
+    // 扫描 parts，将连续 TaskPart 分组为 TaskListRenderer
+    final taskGroups = _groupConsecutiveTasks(message.parts);
+    var groupIdx = 0;
+    var taskGroupIdx = 0;
+
+    for (var i = 0; i < message.parts.length; i++) {
+      // 检查是否命中某个工具组
+      if (groupIdx < groups.length &&
+          i == message.parts.indexOf(groups[groupIdx].toolCalls.first)) {
+        final group = groups[groupIdx];
+        children.add(ToolGroupCard(
+          toolCalls: group.toolCalls,
+          uiState: uiState,
+          onUIStateChanged: updateUIState,
+        ));
+        // 跳过组内所有 part
+        i += group.toolCalls.length - 1;
+        groupIdx++;
+        continue;
+      }
+
+      // 检查是否命中某个任务组
+      if (taskGroupIdx < taskGroups.length &&
+          i == message.parts.indexOf(taskGroups[taskGroupIdx].first)) {
+        final taskGroup = taskGroups[taskGroupIdx];
+        children.add(TaskListRenderer(
+          tasks: taskGroup,
+          interactive: true,
+          onStatusChanged: (task, newStatus) {
+            // 任务状态切换：更新数据源中的任务状态
+            // 实际项目中通过 dataSource 更新，此处为 UI 交互占位
+          },
+        ));
+        i += taskGroup.length - 1;
+        taskGroupIdx++;
+        continue;
+      }
+
+      final part = message.parts[i];
       switch (part) {
         case TextPart():
           children.add(TextPartRenderer(
@@ -162,16 +249,23 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
         case CodePart():
           children.add(CodePartRenderer(part: part));
         case ToolCallPart():
-          // 工具调用在一级消息中降级为三级 chip 样式
+          // 单个工具调用（未被分组覆盖的）也降级为三级 chip
           children.add(_buildTertiaryToolChip(context, part));
         case ThinkingPart():
-          // 思考过程在一级消息中为三级可折叠块
-          children.add(_buildTertiaryThinking(context, part));
+          // 思考过程使用增强渲染器，传入流式状态
+          children.add(ThinkingPartRenderer(
+            part: part,
+            collapsed: uiState.collapsedThinkingIds.contains(part.id),
+            onToggleCollapse: () =>
+                updateUIState(uiState.toggleThinking(part.id)),
+            isStreaming: isStreaming,
+          ));
         case ApprovalPart():
           children.add(ApprovalPartRenderer(
             part: part,
             onApprove: () => dataSource.approveAction(part.id),
             onReject: () => dataSource.rejectAction(part.id),
+            onAllowSession: () => dataSource.approveAction(part.id),
           ));
         case ImagePart():
           children.add(ImagePartRenderer(part: part));
@@ -179,9 +273,39 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
           children.add(FilePartRenderer(part: part));
         case ArtifactPart():
           children.add(ArtifactPartRenderer(part: part));
+        case TaskPart():
+          // 单个任务（未被分组覆盖的）也渲染为任务列表
+          children.add(TaskListRenderer(tasks: [part]));
       }
     }
+
+    // 流式光标
+    if (isStreaming) {
+      children.add(const StreamingCursor());
+    }
     return children;
+  }
+
+  /// 将连续的 TaskPart 分组，返回分组列表（不修改原列表）
+  List<List<TaskPart>> _groupConsecutiveTasks(List<MessagePart> parts) {
+    final groups = <List<TaskPart>>[];
+    List<TaskPart>? currentGroup;
+
+    for (final part in parts) {
+      if (part is TaskPart) {
+        currentGroup ??= [];
+        currentGroup.add(part);
+      } else {
+        if (currentGroup != null && currentGroup.isNotEmpty) {
+          groups.add(List.unmodifiable(currentGroup));
+        }
+        currentGroup = null;
+      }
+    }
+    if (currentGroup != null && currentGroup.isNotEmpty) {
+      groups.add(List.unmodifiable(currentGroup));
+    }
+    return groups;
   }
 
   /// 流式生成进度条
@@ -292,6 +416,7 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
             onToggleCollapse: () => updateUIState(
               uiState.toggleThinking(part.id),
             ),
+            isStreaming: message.isStreaming,
           ));
         case ApprovalPart():
           children.add(ApprovalPartRenderer(
@@ -305,6 +430,8 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
           children.add(FilePartRenderer(part: part));
         case ArtifactPart():
           children.add(ArtifactPartRenderer(part: part));
+        case TaskPart():
+          children.add(TaskListRenderer(tasks: [part]));
       }
     }
     return children;
@@ -315,24 +442,48 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
   // 左边缩进 48px，chip 样式，最小字体，默认折叠
   // ==========================================================================
   Widget _buildTertiaryTier(BuildContext context, Message message) {
+    final children = <Widget>[];
+
+    // 扫描 parts，将连续 ToolCallPart 分组为 ToolGroupCard
+    final groups = groupConsecutiveToolCalls(message.parts);
+    var groupIdx = 0;
+
+    for (var i = 0; i < message.parts.length; i++) {
+      // 检查是否命中某个工具组
+      if (groupIdx < groups.length &&
+          message.parts[i] == groups[groupIdx].toolCalls.first) {
+        final group = groups[groupIdx];
+        children.add(ToolGroupCard(
+          toolCalls: group.toolCalls,
+          uiState: uiState,
+          onUIStateChanged: updateUIState,
+        ));
+        i += group.toolCalls.length - 1;
+        groupIdx++;
+        continue;
+      }
+
+      final part = message.parts[i];
+      children.add(_buildTertiaryPart(context, part, message.isStreaming));
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: message.parts
-            .map((part) => _buildTertiaryPart(context, part))
-            .toList(),
+        children: children,
       ),
     );
   }
 
-  Widget _buildTertiaryPart(BuildContext context, MessagePart part) {
+  Widget _buildTertiaryPart(BuildContext context, MessagePart part,
+      [bool isStreaming = false]) {
     switch (part) {
       case ToolCallPart():
         return _buildTertiaryToolChip(context, part);
       case ThinkingPart():
-        return _buildTertiaryThinking(context, part);
+        return _buildTertiaryThinking(context, part, isStreaming);
       case TextPart():
         // 三级中的文本也用最小字体
         return Padding(
@@ -392,13 +543,15 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: statusColor.withValues(alpha: 0.3),
-          width: 1,
+          color: part.isStalled
+              ? Colors.orange
+              : statusColor.withValues(alpha: 0.3),
+          width: part.isStalled ? 1.5 : 1,
         ),
       ),
       child: Column(
         children: [
-          // chip 头部：工具名 + 状态 + 耗时
+          // chip 头部：工具名 + 状态 + 耗时 + 信心徽章
           InkWell(
             onTap: () =>
                 updateUIState(uiState.toggleToolCall(part.id)),
@@ -426,6 +579,11 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
                       color: statusColor,
                     ),
                   ),
+                  // 信心徽章（Devin 风格交通灯）
+                  if (part.confidence != null) ...[
+                    const SizedBox(width: 4),
+                    ConfidenceBadge(level: part.confidence!),
+                  ],
                   if (part.duration != null) ...[
                     const SizedBox(width: 4),
                     Text(
@@ -445,6 +603,18 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
               ),
             ),
           ),
+          // 执行进度条（Claude Code 风格）
+          if (part.status == ToolCallStatus.running && part.progress != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+              child: ToolProgressBar(progress: part.progress!),
+            ),
+          // 停滞警告（Cursor 教训）
+          if (part.isStalled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+              child: StalledToolWarning(stalledSeconds: 30),
+            ),
           // 展开内容：参数 + 结果摘要
           if (isExpanded)
             Padding(
@@ -484,6 +654,12 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
                         color: theme.colorScheme.error,
                       ),
                     ),
+                    // 错误恢复建议
+                    if (part.recoverySuggestions != null &&
+                        part.recoverySuggestions!.isNotEmpty)
+                      ErrorRecoverySuggestions(
+                        suggestions: part.recoverySuggestions!,
+                      ),
                   ],
                 ],
               ),
@@ -493,76 +669,14 @@ class AgentThreeTierRenderer extends BaseStyleRenderer {
     );
   }
 
-  /// 三级思考块 —— 可折叠，显示 token 消耗
+  /// 三级思考块 —— 使用增强版 ThinkingPartRenderer，支持流式脉冲点
   Widget _buildTertiaryThinking(
-      BuildContext context, ThinkingPart part) {
-    final theme = Theme.of(context);
-    final isCollapsed = uiState.collapsedThinkingIds.contains(part.id);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: theme.colorScheme.secondary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () =>
-                updateUIState(uiState.toggleThinking(part.id)),
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.psychology,
-                      size: 12, color: theme.colorScheme.secondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '思考',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontSize: 11,
-                      color: theme.colorScheme.secondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (part.tokenCount != null) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      '${part.tokenCount} tok',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 10,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  Icon(
-                    isCollapsed ? Icons.expand_more : Icons.expand_less,
-                    size: 14,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (!isCollapsed)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
-              child: Text(
-                part.content,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontSize: 10,
-                  fontStyle: FontStyle.italic,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-        ],
-      ),
+      BuildContext context, ThinkingPart part, bool isStreaming) {
+    return ThinkingPartRenderer(
+      part: part,
+      collapsed: uiState.collapsedThinkingIds.contains(part.id),
+      onToggleCollapse: () => updateUIState(uiState.toggleThinking(part.id)),
+      isStreaming: isStreaming,
     );
   }
 

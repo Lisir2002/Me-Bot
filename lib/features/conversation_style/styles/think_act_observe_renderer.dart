@@ -78,17 +78,23 @@ class _TaoViewState extends State<_TaoView> {
 
   Widget _buildMessage(BuildContext context, Message message) {
     if (message.role == MessageRole.user) {
-      return _UserRow(message: message);
+      return _UserRow(
+        message: message,
+        onQuoteTap: message.referencedMessageId != null ? () {} : null,
+      );
     }
     if (message.role == MessageRole.system) {
       return _SystemRow(text: message.textContent);
     }
 
+    final isStreaming = message.isStreaming;
+
     // 按类型把 parts 分组到三阶段
     final think = message.parts.whereType<ThinkingPart>().toList();
-    final act = message.parts
-        .where((p) => p is ToolCallPart || p is ApprovalPart)
-        .toList();
+    // 行动阶段：使用 groupConsecutiveToolCalls 聚合连续工具调用
+    final toolGroups = groupConsecutiveToolCalls(message.parts);
+    final approvals =
+        message.parts.whereType<ApprovalPart>().toList();
     // 观察阶段：从已完成的工具结果派生结果分析
     final observeResults = message.parts
         .whereType<ToolCallPart>()
@@ -114,35 +120,38 @@ class _TaoViewState extends State<_TaoView> {
                     part: t,
                     collapsed: _uiState.collapsedThinkingIds.contains(t.id),
                     onToggleCollapse: () => _update(_uiState.toggleThinking(t.id)),
+                    isStreaming: isStreaming,
                   ))
               .toList(),
         ),
       ));
     }
 
-    if (act.isNotEmpty) {
+    if (toolGroups.isNotEmpty || approvals.isNotEmpty) {
+      final actChildren = <Widget>[];
+      // 工具组聚合
+      for (final group in toolGroups) {
+        actChildren.add(ToolGroupCard(
+          toolCalls: group.toolCalls,
+          uiState: _uiState,
+          onUIStateChanged: _update,
+        ));
+      }
+      // 审批部分
+      for (final approval in approvals) {
+        actChildren.add(ApprovalPartRenderer(
+          part: approval,
+          onApprove: () => widget.dataSource.approveAction(approval.id),
+          onReject: () => widget.dataSource.rejectAction(approval.id),
+        ));
+      }
       stages.add(_StageRail(
         color: Colors.blue,
         icon: Icons.build,
         label: '行动 Act',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: act.map((p) {
-            if (p is ToolCallPart) {
-              return _ActToolCard(
-                part: p,
-                expanded: _uiState.expandedToolCallIds.contains(p.id),
-                onToggle: () => _update(_uiState.toggleToolCall(p.id)),
-              );
-            } else if (p is ApprovalPart) {
-              return ApprovalPartRenderer(
-                part: p,
-                onApprove: () => widget.dataSource.approveAction(p.id),
-                onReject: () => widget.dataSource.rejectAction(p.id),
-              );
-            }
-            return const SizedBox.shrink();
-          }).toList(),
+          children: actChildren,
         ),
       ));
     }
@@ -173,13 +182,16 @@ class _TaoViewState extends State<_TaoView> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: conclusion
-              .map((p) => MessagePartRenderer(
-                    part: p,
-                    uiState: _uiState,
-                    onUIStateChanged: _update,
-                  ))
-              .toList(),
+          children: [
+            ...conclusion
+                .map((p) => MessagePartRenderer(
+                      part: p,
+                      uiState: _uiState,
+                      onUIStateChanged: _update,
+                    )),
+            // 流式光标
+            if (isStreaming) const StreamingCursor(),
+          ],
         ),
       ));
     }
@@ -260,91 +272,6 @@ class _StageRail extends StatelessWidget {
   }
 }
 
-/// 行动阶段工具卡片：显示参数校验状态（参数数量、类型）
-class _ActToolCard extends StatelessWidget {
-  final ToolCallPart part;
-  final bool expanded;
-  final VoidCallback onToggle;
-
-  const _ActToolCard({
-    required this.part,
-    required this.expanded,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final argCount = part.arguments.length;
-    // 简单参数校验：统计各参数值的类型
-    final typeCounts = <String, int>{};
-    part.arguments.forEach((k, v) {
-      final t = v.runtimeType.toString();
-      typeCounts[t] = (typeCounts[t] ?? 0) + 1;
-    });
-    final summary = typeCounts.entries
-        .map((e) => '${e.value}× ${e.key}')
-        .join(' · ');
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Icon(Icons.terminal, size: 14, color: Colors.blue),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(part.toolName,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontWeight: FontWeight.w600)),
-                  ),
-                  Text('$argCount 参数',
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                  Icon(expanded ? Icons.expand_less : Icons.expand_more, size: 18),
-                ],
-              ),
-            ),
-          ),
-          if (expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      Chip(
-                        visualDensity: VisualDensity.compact,
-                        label: Text(summary.isEmpty ? '无参数' : summary,
-                            style: const TextStyle(fontSize: 11)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text('校验：通过 $argCount 个参数类型',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.green, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 /// 观察阶段结果卡片：结果摘要 + 质量评分（如果有）
 class _ObserveCard extends StatelessWidget {
   final ToolCallPart part;
@@ -410,7 +337,8 @@ class _ObserveCard extends StatelessWidget {
 
 class _UserRow extends StatelessWidget {
   final Message message;
-  const _UserRow({required this.message});
+  final VoidCallback? onQuoteTap;
+  const _UserRow({required this.message, this.onQuoteTap});
 
   @override
   Widget build(BuildContext context) {
@@ -428,8 +356,22 @@ class _UserRow extends StatelessWidget {
             bottomRight: Radius.circular(4),
           ),
         ),
-        child: Text(message.textContent,
-            style: TextStyle(color: theme.colorScheme.onPrimary)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 引用回复
+            if (message.referencedMessageId != null)
+              QuoteRefWidget(
+                senderName: message.assistantName ?? '助手',
+                contentPreview: message.textContent,
+                timestamp: message.timestamp,
+                onTap: onQuoteTap,
+              ),
+            Text(message.textContent,
+                style: TextStyle(color: theme.colorScheme.onPrimary)),
+          ],
+        ),
       ),
     );
   }

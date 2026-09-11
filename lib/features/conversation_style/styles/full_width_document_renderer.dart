@@ -11,8 +11,11 @@ import '../widgets/shared_message_part_renderers.dart';
 /// - 消息占满宽度，无气泡边框，用 Divider 分隔线区分消息
 /// - 不显示头像，用角色标签（"用户"/"助手"）代替
 /// - 不显示时间戳
-/// - 工具调用用可展开的 ExpansionTile 折叠引用
-/// - 文本使用 1.8 行高，适合长文本阅读
+/// - 连续工具调用聚合为全宽 ToolGroupCard
+/// - 思考过程接入流式状态（isStreaming）
+/// - 用户消息带引用时渲染 QuoteRefWidget
+/// - 流式助手消息在最后一个文本后附加 StreamingCursor
+/// - 排版节奏：段间距 8px，代码块前后 12px
 /// - 用户消息用引用块样式（左边框 + 斜体）区分
 ///
 /// 适用场景：长文本、代码密集、文档生成
@@ -32,16 +35,21 @@ class FullWidthDocumentRenderer extends BaseStyleRenderer {
           itemCount: messages.length,
           separatorBuilder: (context, index) => const Divider(height: 32),
           itemBuilder: (context, index) =>
-              _buildMessage(context, messages[index]),
+              _buildMessage(context, messages, index),
         );
       },
     );
   }
 
   /// 构建单条消息 —— 全宽布局，角色标签 + 内容
-  Widget _buildMessage(BuildContext context, Message message) {
+  Widget _buildMessage(
+      BuildContext context, List<Message> messages, int index) {
+    final message = messages[index];
     final isUser = message.role == MessageRole.user;
     final theme = Theme.of(context);
+
+    // 用户消息引用回复预览
+    final quoteRef = _buildQuoteRef(context, messages, message);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,63 +87,166 @@ class FullWidthDocumentRenderer extends BaseStyleRenderer {
           ],
         ),
         const SizedBox(height: 12),
+        // 引用回复组件（如存在）
+        if (quoteRef != null) quoteRef,
+        if (quoteRef != null) const SizedBox(height: 8),
         // 消息内容
         _buildParts(context, message, isUser),
       ],
     );
   }
 
+  /// 构建用户消息的引用回复组件
+  Widget? _buildQuoteRef(
+      BuildContext context, List<Message> messages, Message message) {
+    final refId = message.referencedMessageId;
+    if (refId == null) return null;
+
+    Message? ref;
+    for (final m in messages) {
+      if (m.id == refId) {
+        ref = m;
+        break;
+      }
+    }
+    if (ref == null) return null;
+
+    final preview = ref.textContent.trim();
+    if (preview.isEmpty) return null;
+
+    final senderName =
+        ref.assistantName ?? (ref.role == MessageRole.user ? '你' : '助手');
+    return QuoteRefWidget(
+      senderName: senderName,
+      contentPreview: preview,
+      timestamp: ref.timestamp,
+    );
+  }
+
   /// 构建消息内部的所有 part
+  ///
+  /// 连续 ToolCallPart 聚合为 ToolGroupCard；
+  /// 流式助手消息在最后一个 TextPart 后附加 StreamingCursor；
+  /// 排版节奏：文本段落间 8px，代码块前后 12px。
   Widget _buildParts(BuildContext context, Message message, bool isUser) {
     final children = <Widget>[];
 
-    for (final part in message.parts) {
-      switch (part) {
-        case TextPart():
-          // 用户消息用引用块样式，助手消息用大行距正文
-          if (isUser) {
-            children.add(_buildQuoteText(context, part));
-          } else {
-            children.add(TextPartRenderer(
-              part: part,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    height: 1.8,
-                  ),
-            ));
-          }
-        case CodePart():
-          // 代码块显示运行按钮
-          children.add(CodePartRenderer(
-            part: part,
-            showRunButton: true,
-          ));
-        case ToolCallPart():
-          // 工具调用用 ExpansionTile 折叠引用
-          children.add(_buildToolCallExpansion(context, part));
-        case ThinkingPart():
-          final isCollapsed =
-              uiState.collapsedThinkingIds.contains(part.id);
-          children.add(ThinkingPartRenderer(
-            part: part,
-            collapsed: isCollapsed,
-            onToggleCollapse: () => updateUIState(
-              uiState.toggleThinking(part.id),
-            ),
-          ));
-        case ApprovalPart():
-          children.add(ApprovalPartRenderer(
-            part: part,
-            onApprove: () => dataSource.approveAction(part.id),
-            onReject: () => dataSource.rejectAction(part.id),
-          ));
-        case ImagePart():
-          children.add(ImagePartRenderer(part: part));
-        case FilePart():
-          children.add(FilePartRenderer(part: part));
-        case ArtifactPart():
-          children.add(ArtifactPartRenderer(part: part));
+    // 最后一个 TextPart 的下标（用于在其后附加流式光标）
+    var lastTextIndex = -1;
+    for (var i = 0; i < message.parts.length; i++) {
+      if (message.parts[i] is TextPart) lastTextIndex = i;
+    }
+
+    // 上一个内容的类型，用于计算间距
+    String? prevKind;
+
+    /// 按排版节奏把 [child] 加入 children
+    void addChild(Widget child, String kind) {
+      if (children.isNotEmpty) {
+        double gap;
+        if (kind == 'code' || prevKind == 'code') {
+          gap = 12; // 代码块前后 12px
+        } else if (kind == 'text' && prevKind == 'text') {
+          gap = 8; // 文本段落间距 8px
+        } else {
+          gap = 8; // 其他元素之间默认 8px
+        }
+        children.add(SizedBox(height: gap));
+      }
+      children.add(child);
+      prevKind = kind;
+    }
+
+    // 连续工具调用聚合缓冲
+    final pendingTools = <ToolCallPart>[];
+    void flushTools() {
+      if (pendingTools.isNotEmpty) {
+        addChild(
+          ToolGroupCard(
+            toolCalls: List.of(pendingTools),
+            uiState: uiState,
+            onUIStateChanged: updateUIState,
+          ),
+          'tool',
+        );
+        pendingTools.clear();
       }
     }
+
+    for (var i = 0; i < message.parts.length; i++) {
+      final part = message.parts[i];
+      switch (part) {
+        case TextPart():
+          flushTools();
+          // 用户消息用引用块样式，助手消息用大行距正文
+          if (isUser) {
+            addChild(_buildQuoteText(context, part), 'text');
+          } else {
+            addChild(
+              TextPartRenderer(
+                part: part,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      height: 1.8,
+                    ),
+              ),
+              'text',
+            );
+          }
+          // 流式助手消息：最后一个 TextPart 后附加光标（紧跟文本，不另起间距行）
+          if (message.isStreaming && !isUser && i == lastTextIndex) {
+            children.add(const StreamingCursor());
+          }
+        case CodePart():
+          flushTools();
+          // 代码块显示运行按钮
+          addChild(
+            CodePartRenderer(part: part, showRunButton: true),
+            'code',
+          );
+        case ToolCallPart():
+          // 累积连续工具调用，稍后聚合为 ToolGroupCard
+          pendingTools.add(part);
+        case ThinkingPart():
+          flushTools();
+          final isCollapsed =
+              uiState.collapsedThinkingIds.contains(part.id);
+          addChild(
+            ThinkingPartRenderer(
+              part: part,
+              collapsed: isCollapsed,
+              // 传入流式状态：流式中自动展开 + 脉冲点
+              isStreaming: message.isStreaming,
+              onToggleCollapse: () => updateUIState(
+                uiState.toggleThinking(part.id),
+              ),
+            ),
+            'think',
+          );
+        case ApprovalPart():
+          flushTools();
+          addChild(
+            ApprovalPartRenderer(
+              part: part,
+              onApprove: () => dataSource.approveAction(part.id),
+              onReject: () => dataSource.rejectAction(part.id),
+            ),
+            'other',
+          );
+        case ImagePart():
+          flushTools();
+          addChild(ImagePartRenderer(part: part), 'other');
+        case FilePart():
+          flushTools();
+          addChild(FilePartRenderer(part: part), 'other');
+        case ArtifactPart():
+          flushTools();
+          addChild(ArtifactPartRenderer(part: part), 'other');
+        case TaskPart():
+          flushTools();
+          addChild(Text('📋 ${part.title}'), 'other');
+      }
+    }
+    flushTools();
 
     if (children.isEmpty) {
       return const SizedBox.shrink();
@@ -170,182 +281,6 @@ class FullWidthDocumentRenderer extends BaseStyleRenderer {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-      ),
-    );
-  }
-
-  /// 工具调用折叠引用 —— 用 ExpansionTile 包裹
-  Widget _buildToolCallExpansion(
-      BuildContext context, ToolCallPart part) {
-    final theme = Theme.of(context);
-    final isExpanded = uiState.expandedToolCallIds.contains(part.id);
-
-    Color statusColor;
-    IconData statusIcon;
-    String statusLabel;
-    switch (part.status) {
-      case ToolCallStatus.pending:
-        statusColor = theme.colorScheme.onSurfaceVariant;
-        statusIcon = Icons.hourglass_empty;
-        statusLabel = '等待中';
-      case ToolCallStatus.running:
-        statusColor = Colors.blue;
-        statusIcon = Icons.autorenew;
-        statusLabel = '执行中';
-      case ToolCallStatus.success:
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-        statusLabel = '成功';
-      case ToolCallStatus.error:
-        statusColor = theme.colorScheme.error;
-        statusIcon = Icons.error;
-        statusLabel = '失败';
-      case ToolCallStatus.cancelled:
-        statusColor = Colors.grey;
-        statusIcon = Icons.cancel;
-        statusLabel = '已取消';
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: () =>
-                updateUIState(uiState.toggleToolCall(part.id)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  Icon(statusIcon, size: 18, color: statusColor),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          part.toolName,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '$statusLabel'
-                          '${part.duration != null ? ' · ${part.duration!.inMilliseconds}ms' : ''}',
-                          style: theme.textTheme.labelSmall?.copyWith(color: statusColor),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (isExpanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 参数
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '参数',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      part.arguments.isEmpty
-                          ? '{}'
-                          : part.arguments.entries
-                              .map((e) => '  "${e.key}": ${e.value}')
-                              .join('\n'),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  // 结果
-                  if (part.result != null) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '结果',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        part.result.toString(),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                        ),
-                        maxLines: 10,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                  // 错误信息
-                  if (part.status == ToolCallStatus.error &&
-                      part.errorMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        part.errorMessage!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onErrorContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

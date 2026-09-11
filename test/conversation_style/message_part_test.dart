@@ -214,16 +214,16 @@ void main() {
   });
 
   group('ConversationStyle 枚举测试', () {
-    test('所有 15 种样式 + auto 都存在', () {
-      expect(ConversationStyle.values.length, equals(16));
+    test('所有 9 种样式 + auto 都存在', () {
+      expect(ConversationStyle.values.length, equals(10));
       expect(ConversationStyle.classicBubble.index, equals(0));
-      expect(ConversationStyle.canvasArtifact.index, equals(14));
-      expect(ConversationStyle.auto.index, equals(15));
+      expect(ConversationStyle.richContent.index, equals(8));
+      expect(ConversationStyle.auto.index, equals(9));
     });
 
     test('StyleMetaRegistry 包含所有样式元信息', () {
-      expect(StyleMetaRegistry.all.length, equals(15));
-      expect(StyleMetaRegistry.concreteStyles.length, equals(15));
+      expect(StyleMetaRegistry.all.length, equals(9));
+      expect(StyleMetaRegistry.concreteStyles.length, equals(9));
 
       for (final style in ConversationStyle.values) {
         if (style != ConversationStyle.auto) {

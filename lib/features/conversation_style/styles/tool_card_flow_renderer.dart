@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -106,7 +107,6 @@ class _ToolCardFlowViewState extends State<_ToolCardFlowView> {
         });
         if (messages.isEmpty) {
           return const Center(
-            // ignore: hardcoded_ui_string —— 空态暂无 l10n 键，保留原文案
             child: Text('暂无消息'),
           );
         }
@@ -434,7 +434,6 @@ class _UserPromptBlock extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  // ignore: hardcoded_ui_string —— 空消息占位暂无 l10n 键，保留原文案
                   message.textContent.isEmpty ? '(空)' : message.textContent,
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(fontWeight: FontWeight.w500),
@@ -748,7 +747,6 @@ class _ToolTimelineNode extends StatelessWidget {
           // 结果摘要
           if (part.result != null) ...[
             const SizedBox(height: 10),
-            // ignore: hardcoded_ui_string —— 工具结果摘要标签暂无 l10n 键，保留原文案
             Text('结果摘要',
                 style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -803,7 +801,6 @@ class _ToolTimelineNode extends StatelessWidget {
                 FilledButton.tonalIcon(
                   onPressed: () {}, // 跳过：由上层切换到下一个步骤
                   icon: const Icon(Icons.skip_next, size: 16),
-                  // ignore: hardcoded_ui_string —— 跳过按钮暂无 l10n 键，保留原文案
                   label: const Text('跳过'),
                 ),
               ],

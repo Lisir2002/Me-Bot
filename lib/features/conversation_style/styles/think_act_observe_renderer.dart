@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -102,7 +103,6 @@ class _TaoViewState extends State<_TaoView> {
         });
         if (messages.isEmpty) {
           return const Center(
-            // ignore: hardcoded_ui_string —— 空态暂无 l10n 键，保留原文案
             child: Text('暂无消息'),
           );
         }
@@ -196,7 +196,6 @@ class _TaoViewState extends State<_TaoView> {
       stages.add(_StageRail(
         color: const Color(0xFF8E44AD),
         icon: Icons.psychology,
-        // ignore: hardcoded_ui_string —— 三阶段设计规范标签（中英混排）暂无 l10n 键，保留原文案
         label: '思考 Think',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +232,6 @@ class _TaoViewState extends State<_TaoView> {
       stages.add(_StageRail(
         color: Colors.blue,
         icon: Icons.build,
-        // ignore: hardcoded_ui_string —— 三阶段设计规范标签（中英混排）暂无 l10n 键，保留原文案
         label: '行动 Act',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +244,6 @@ class _TaoViewState extends State<_TaoView> {
       stages.add(_StageRail(
         color: Colors.green,
         icon: Icons.visibility,
-        // ignore: hardcoded_ui_string —— 三阶段设计规范标签（中英混排）暂无 l10n 键，保留原文案
         label: '观察 Observe',
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,7 +430,6 @@ class _ObserveCard extends StatelessWidget {
               const Icon(Icons.insights, size: 14, color: Colors.green),
               const SizedBox(width: 6),
               Expanded(
-                // ignore: hardcoded_ui_string —— 观察阶段结果标题暂无 l10n 键，保留原文案
                 child: Text('结果分析 · ${part.toolName}',
                     style: theme.textTheme.labelMedium
                         ?.copyWith(fontWeight: FontWeight.w600)),
@@ -445,7 +441,6 @@ class _ObserveCard extends StatelessWidget {
                     color: Colors.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  // ignore: hardcoded_ui_string —— 质量评分标签暂无 l10n 键，保留原文案
                   child: Text('评分 ${score.toStringAsFixed(1)}',
                       style: const TextStyle(
                           color: Colors.green,

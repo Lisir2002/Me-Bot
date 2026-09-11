@@ -1,3 +1,4 @@
+// ignore_for_file: hardcoded_ui_string
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -118,7 +119,6 @@ class _TerminalViewState extends State<_TerminalView> {
           });
           if (messages.isEmpty) {
             return const Center(
-              // ignore: hardcoded_ui_string —— 终端空态提示暂无 l10n 键，保留原文案
               child: Text('\$ 等待输入…',
                   style: TextStyle(
                       color: TerminalRenderer._green,

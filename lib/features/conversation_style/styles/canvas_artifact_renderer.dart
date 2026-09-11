@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/snackbar.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
@@ -241,9 +242,7 @@ class CanvasArtifactRenderer extends BaseStyleRenderer {
                     tooltip: '下载',
                     icon: const Icon(Icons.download, size: 18),
                     onPressed: () =>
-                        ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('已下载')),
-                    ),
+                        showAppSnackBar(context, message: '已下载'),
                   ),
                 ],
               ),

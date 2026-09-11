@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/snackbar.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
@@ -157,8 +158,8 @@ class PlanSurfaceRenderer extends BaseStyleRenderer {
                   updateUIState(uiState.copyWith(planConfirmed: true));
                   _startExecution();
                 },
-                onEdit: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('修改计划功能占位'))),
+                onEdit: () =>
+                    showAppSnackBar(context, message: '修改计划功能占位'),
                 onPauseResume: () {
                   setStateLocal(() => _paused = !_paused);
                 },
@@ -340,7 +341,7 @@ class _PlanPanel extends StatelessWidget {
 }
 
 /// 单个步骤折叠项
-class _StepTile extends StatelessWidget {
+class _StepTile extends StatefulWidget {
   final int index;
   final _PlanStep step;
   final _StepStatus status;
@@ -352,46 +353,79 @@ class _StepTile extends StatelessWidget {
   });
 
   @override
+  State<_StepTile> createState() => _StepTileState();
+}
+
+class _StepTileState extends State<_StepTile> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final (icon, color) = switch (status) {
+    final (icon, color) = switch (widget.status) {
       _StepStatus.pending => (Icons.radio_button_unchecked, Colors.grey),
       _StepStatus.running => (Icons.autorenew, Colors.blue),
       _StepStatus.done => (Icons.check_circle, Colors.green),
       _StepStatus.failed => (Icons.error, theme.colorScheme.error),
     };
-    return Theme(
-      data: theme.copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        dense: true,
-        tilePadding: EdgeInsets.zero,
-        leading: Icon(icon, size: 18, color: color),
-        title: Text('步骤 ${index + 1}：${step.title}',
-            style: theme.textTheme.bodyMedium),
-        subtitle: Text('预估 ${step.estimatedTime}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        childrenPadding: const EdgeInsets.only(left: 28, bottom: 8),
-        children: step.subtasks.isEmpty
-            ? [
-                Text('（无子任务）',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant)),
-              ]
-            : step.subtasks
-                .map((s) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.circle,
-                              size: 6, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(s)),
-                        ],
-                      ),
-                    ))
-                .toList(),
-      ),
+    final step = widget.step;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('步骤 ${widget.index + 1}：${step.title}',
+                          style: theme.textTheme.bodyMedium),
+                      Text('预估 ${step.estimatedTime}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 28, bottom: 8),
+            child: step.subtasks.isEmpty
+                ? Text('（无子任务）',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: step.subtasks
+                        .map((s) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.circle,
+                                      size: 6, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(s)),
+                                ],
+                              ),
+                            ))
+                        .toList(),
+                  ),
+          ),
+      ],
     );
   }
 }

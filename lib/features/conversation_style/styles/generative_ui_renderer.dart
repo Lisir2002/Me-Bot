@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/snackbar.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
@@ -117,9 +118,7 @@ class GenerativeUiRenderer extends BaseStyleRenderer {
           return _GenForm(
             part: part,
             controllers: _formControllers,
-            onSubmit: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('表单已提交')),
-            ),
+            onSubmit: () => showAppSnackBar(context, message: '表单已提交'),
           );
         case _GenComponentType.diff:
           return _DiffView(part: part);

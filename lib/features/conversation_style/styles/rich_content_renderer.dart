@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/snackbar.dart';
 import '../data/conversation_data_source.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
@@ -8,6 +9,8 @@ import '../models/message_part.dart';
 import '../models/style_settings.dart';
 import '../widgets/shared_message_part_renderers.dart';
 
+/// no_raw_alert_dialog 白名单：全屏看图用黑底 Dialog + InteractiveViewer（非卡片式居中弹窗，AppDialog 语义不符）。
+///
 /// Style 10：富内容渲染（RichContent）
 ///
 /// 综合渲染、按内容类型自适应，消息间用卡片分隔。
@@ -340,9 +343,7 @@ class _ClickableText extends StatelessWidget {
         recognizer: TapGestureRecognizer()
           ..onTap = () {
             // 简单打开：实际项目可用 url_launcher
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('打开链接: $url')),
-            );
+            showAppSnackBar(context, message: '打开链接: $url');
           },
       ));
       last = match.end;

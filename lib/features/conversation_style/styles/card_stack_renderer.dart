@@ -85,37 +85,50 @@ class CardStackRenderer extends BaseStyleRenderer {
   Widget _buildCardHeader(
       BuildContext context, Message message, bool isUser, ThemeData theme) {
     final accentColor = isUser ? Colors.blue : Colors.green;
-    return ListTile(
-      dense: true,
-      leading: CircleAvatar(
-        radius: 16,
-        backgroundColor: accentColor.withValues(alpha: 0.15),
-        child: Icon(
-          isUser ? Icons.person : Icons.smart_toy,
-          size: 18,
-          color: accentColor,
-        ),
-      ),
-      title: Text(
-        isUser ? '用户' : (message.assistantName ?? '助手'),
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        _formatDateTime(message.timestamp),
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontSize: 11,
-        ),
-      ),
-      trailing: message.isStreaming
-          ? const SizedBox(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: accentColor.withValues(alpha: 0.15),
+            child: Icon(
+              isUser ? Icons.person : Icons.smart_toy,
+              size: 18,
+              color: accentColor,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isUser ? '用户' : (message.assistantName ?? '助手'),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  _formatDateTime(message.timestamp),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (message.isStreaming)
+            const SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
+            ),
+        ],
+      ),
     );
   }
 

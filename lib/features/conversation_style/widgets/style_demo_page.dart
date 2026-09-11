@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../conversation_style.dart';
 
+/// no_raw_scaffold 白名单：对话流样式内部调试演示页（带自定义 AppBar + 横向 chip 切换栏，非用户设置页）。
+/// no_manual_listview_padding 白名单：样式快速切换栏为横向滚动 chip（Axis.horizontal），非页面垂直列表。
+
 /// 对话流样式演示页面
 ///
 /// 展示所有 15 种样式对同一份 Golden 测试数据的渲染效果。

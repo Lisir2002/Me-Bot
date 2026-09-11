@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/snackbar.dart';
 import '../framework/style_renderer.dart';
 import '../models/conversation_style.dart';
 import '../models/message_part.dart';
 import '../models/style_settings.dart';
 import '../widgets/shared_message_part_renderers.dart';
+
+/// no_raw_alert_dialog 白名单：分支对比弹窗为分支消息 diff 内容（非确认/输入类，AppDialog 语义不符）。
 
 /// 分支标签模型
 class _Branch {
@@ -53,9 +56,8 @@ class ThreadBranchingRenderer extends BaseStyleRenderer {
                   updateUIState(uiState.copyWith(activeBranchId: id)),
               onCompare: (branch) =>
                   _showCompare(context, messages, branch),
-              onMerge: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('合并主干功能占位：已请求合并')),
-              ),
+              onMerge: () =>
+                  showAppSnackBar(context, message: '合并主干功能占位：已请求合并'),
             ),
             Expanded(
               child: hasBranches

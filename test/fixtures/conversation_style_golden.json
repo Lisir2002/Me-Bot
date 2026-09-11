@@ -1,0 +1,98 @@
+{
+  "conversationId": "golden-demo-conversation",
+  "title": "样式系统演示对话",
+  "messages": [
+    {
+      "id": "msg-001",
+      "role": "user",
+      "timestamp": "2026-09-11T10:00:00.000Z",
+      "parts": [
+        {"type": "text", "id": "text-001", "text": "请帮我分析一下这份季度财报，并生成一份可视化报告。"},
+        {"type": "file", "id": "file-001", "name": "Q3_financial_report.pdf", "url": "/documents/Q3_financial_report.pdf", "size": 2457600, "mimeType": "application/pdf"}
+      ]
+    },
+    {
+      "id": "msg-002",
+      "role": "assistant",
+      "timestamp": "2026-09-11T10:00:05.000Z",
+      "modelId": "gpt-4o",
+      "assistantName": "分析师",
+      "assistantColor": "blue",
+      "parts": [
+        {"type": "thinking", "id": "think-001", "content": "用户上传了一份季度财报PDF，需要分析并生成可视化报告。我需要先提取PDF内容，然后进行数据分析，最后生成图表和报告。让我规划一下步骤：1. 提取PDF文本 2. 分析财务数据 3. 生成图表 4. 撰写报告摘要", "tokenCount": 256, "durationMs": 3200},
+        {"type": "tool_call", "id": "tool-001", "toolName": "pdf_extract", "arguments": {"file_path": "/documents/Q3_financial_report.pdf", "pages": "all"}, "status": "running", "thinking": "需要先提取PDF中的文本和表格数据"}
+      ],
+      "isStreaming": false
+    },
+    {
+      "id": "msg-003",
+      "role": "assistant",
+      "timestamp": "2026-09-11T10:00:12.000Z",
+      "modelId": "gpt-4o",
+      "assistantName": "分析师",
+      "assistantColor": "blue",
+      "parts": [
+        {"type": "tool_call", "id": "tool-001", "toolName": "pdf_extract", "arguments": {"file_path": "/documents/Q3_financial_report.pdf", "pages": "all"}, "status": "success", "result": "提取完成：共45页，包含3张财务报表和12个数据表格", "durationMs": 6500},
+        {"type": "tool_call", "id": "tool-002", "toolName": "data_analyze", "arguments": {"data_source": "extracted_text", "analysis_type": "financial_trends"}, "status": "success", "result": "营收同比增长23%，净利润增长18%，毛利率提升2.1个百分点", "durationMs": 4200},
+        {"type": "text", "id": "text-002", "text": "已完成财报分析。以下是关键发现：\n\n**营收增长强劲**：Q3总营收达到12.5亿元，同比增长23%。\n**盈利能力提升**：净利润2.8亿元，同比增长18%，毛利率从42.3%提升至44.4%。\n**现金流健康**：经营活动现金流3.5亿元，环比增长15%。\n\n下面是详细的代码分析和可视化图表："}
+      ]
+    },
+    {
+      "id": "msg-004",
+      "role": "user",
+      "timestamp": "2026-09-11T10:01:00.000Z",
+      "parts": [
+        {"type": "text", "id": "text-003", "text": "能把营收增长的趋势用 Python 代码画出来吗？我想看看具体的实现。"}
+      ],
+      "referencedMessageId": "msg-003"
+    },
+    {
+      "id": "msg-005",
+      "role": "assistant",
+      "timestamp": "2026-09-11T10:01:10.000Z",
+      "modelId": "gpt-4o",
+      "assistantName": "编码员",
+      "assistantColor": "yellow",
+      "parts": [
+        {"type": "tool_call", "id": "tool-003", "toolName": "code_executor", "arguments": {"language": "python", "timeout": 30}, "status": "success", "result": "图表已生成，保存为 revenue_trend.png", "durationMs": 2800},
+        {"type": "code", "id": "code-001", "code": "import matplotlib.pyplot as plt\nimport numpy as np\n\n# 季度营收数据（亿元）\nquarters = ['Q1', 'Q2', 'Q3', 'Q4']\nrevenue_2025 = [8.2, 9.5, 10.2, 11.8]\nrevenue_2026 = [9.8, 11.2, 12.5, None]  # Q4 待发布\n\nfig, ax = plt.subplots(figsize=(10, 6))\nax.plot(quarters, revenue_2025, marker='o', label='2025', linewidth=2)\nax.plot(quarters[:3], revenue_2026[:3], marker='s', label='2026', linewidth=2)\n\nax.set_title('季度营收趋势对比', fontsize=14, fontweight='bold')\nax.set_xlabel('季度')\nax.set_ylabel('营收（亿元）')\nax.legend()\nax.grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.savefig('revenue_trend.png', dpi=150)\nprint('图表已生成')", "language": "python", "filename": "revenue_trend.py"},
+        {"type": "image", "id": "image-001", "url": "https://example.com/charts/revenue_trend.png", "caption": "季度营收趋势对比图（2025 vs 2026）", "width": 800, "height": 480}
+      ]
+    },
+    {
+      "id": "msg-006",
+      "role": "assistant",
+      "timestamp": "2026-09-11T10:02:00.000Z",
+      "modelId": "gpt-4o",
+      "assistantName": "评审员",
+      "assistantColor": "red",
+      "parts": [
+        {"type": "code", "id": "code-002", "code": "// 财务数据模型\nclass FinancialData {\n  final String quarter;\n  final double revenue;\n  final double netProfit;\n  final double grossMargin;\n\n  const FinancialData({\n    required this.quarter,\n    required this.revenue,\n    required this.netProfit,\n    required this.grossMargin,\n  });\n\n  double get netProfitMargin => netProfit / revenue;\n\n  Map<String, dynamic> toJson() => {\n    'quarter': quarter,\n    'revenue': revenue,\n    'netProfit': netProfit,\n    'grossMargin': grossMargin,\n  };\n}", "language": "dart", "filename": "financial_data.dart"},
+        {"type": "approval", "id": "approval-001", "action": "export_report", "description": "将分析报告导出为 PDF 并发送到用户邮箱（包含敏感财务数据）", "status": "pending", "details": {"format": "pdf", "include_charts": true, "recipient": "user@example.com"}}
+      ]
+    },
+    {
+      "id": "msg-007",
+      "role": "user",
+      "timestamp": "2026-09-11T10:02:30.000Z",
+      "parts": [
+        {"type": "text", "id": "text-004", "text": "批准导出报告。"},
+        {"type": "approval", "id": "approval-001", "action": "export_report", "description": "将分析报告导出为 PDF 并发送到用户邮箱", "status": "approved", "details": {"format": "pdf"}}
+      ]
+    },
+    {
+      "id": "msg-008",
+      "role": "assistant",
+      "timestamp": "2026-09-11T10:03:00.000Z",
+      "modelId": "gpt-4o",
+      "assistantName": "分析师",
+      "assistantColor": "blue",
+      "parts": [
+        {"type": "text", "id": "text-005", "text": "报告已生成并发送到您的邮箱。以下是报告的核心结论摘要：\n\n1. **营收增长23%**，主要得益于新产品线的贡献\n2. **毛利率提升2.1pp**，规模效应开始显现\n3. **建议关注**：Q4销售费用率上升，需监控ROI\n\n完整报告包含12张图表和详细的财务分析。"},
+        {"type": "artifact", "id": "artifact-001", "artifactId": "report-q3-2026", "type": "document", "title": "Q3 2026 财务分析报告", "preview": "# Q3 2026 财务分析报告\n\n## 执行摘要\n\n本季度公司营收达到12.5亿元..."},
+        {"type": "artifact", "id": "artifact-002", "artifactId": "dashboard-q3", "type": "chart", "title": "财务数据看板", "preview": "包含营收趋势、利润分析、现金流等6个交互式图表"},
+        {"type": "image", "id": "image-002", "url": "https://example.com/charts/profit_analysis.png", "caption": "利润分析图表", "width": 800, "height": 500}
+      ]
+    }
+  ]
+}

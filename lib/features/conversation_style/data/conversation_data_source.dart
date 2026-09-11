@@ -1,0 +1,86 @@
+import 'dart:async';
+import '../models/conversation_style.dart';
+import '../models/conversation_state.dart';
+
+/// 附件数据（发送消息时使用）
+class Attachment {
+  final String name;
+  final String path;
+  final String mimeType;
+  final int size;
+
+  const Attachment({
+    required this.name,
+    required this.path,
+    required this.mimeType,
+    this.size = 0,
+  });
+}
+
+/// 对话数据源 —— 样式渲染器的唯一数据入口
+///
+/// 所有样式必须通过此接口获取数据和发送操作，
+/// 禁止直接访问 Hive、Provider、数据库或 API。
+/// 切换样式时，此实例保持不变，中间状态完整保留。
+abstract class ConversationDataSource {
+  /// 当前会话 ID
+  String get conversationId;
+
+  /// 消息流 —— 所有样式订阅同一个流
+  ///
+  /// 这是一个广播流（BehaviorSubject 语义），
+  /// 新样式订阅时立即收到当前完整消息列表，
+  /// 不会丢失任何已生成的内容（包括流式输出中的部分内容）。
+  Stream<List<Message>> get messageStream;
+
+  /// 会话状态流
+  Stream<ConversationState> get stateStream;
+
+  /// 当前状态（同步获取，避免异步 gap）
+  ConversationState get currentState;
+
+  /// 当前消息列表（同步获取，用于首次渲染）
+  List<Message> get currentMessages;
+
+  /// 按 ID 获取单条消息
+  Future<Message?> getMessage(String messageId);
+
+  /// 分页获取历史消息
+  Future<List<Message>> getMessages({
+    DateTime? before,
+    int limit = 50,
+  });
+
+  /// 发送用户消息
+  ///
+  /// 返回后，消息会立即出现在 messageStream 中（pending 状态），
+  /// 随后流式更新。所有样式都能看到完整的状态变更过程。
+  Future<void> sendMessage({
+    required String content,
+    List<Attachment>? attachments,
+    String? referencedMessageId,
+  });
+
+  /// 重试某条消息（重新生成）
+  Future<void> retryMessage(String messageId);
+
+  /// 停止当前生成
+  Future<void> stopGeneration();
+
+  /// 审批通过（高风险操作）
+  Future<void> approveAction(String approvalId);
+
+  /// 审批拒绝
+  Future<void> rejectAction(String approvalId, {String? reason});
+
+  /// 切换样式（由 StyleSwitcher 调用，数据源本身不关心样式）
+  /// 此方法只通知数据源"样式即将切换"，用于暂停/恢复流式渲染优化，
+  /// 不改变任何数据状态。
+  Future<void> onStyleWillChange(ConversationStyle newStyle);
+
+  /// 样式切换完成
+  Future<void> onStyleDidChange(ConversationStyle style);
+
+  /// 释放资源（会话关闭时调用）
+  void dispose();
+}

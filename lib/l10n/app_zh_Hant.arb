@@ -1681,5 +1681,30 @@
       }
     }
   },
-  "commonRetry": "重試"
+  "commonRetry": "重試",
+  "connectionInterruptedRetry": "連線中斷·重試",
+  "statusSending": "傳送中",
+  "statusSent": "已傳送",
+  "statusDelivered": "已送達",
+  "statusRead": "已讀",
+  "statusFailedTapRetry": "傳送失敗，點擊重發",
+  "verbositySimple": "精簡",
+  "verbosityThinking": "思考",
+  "verbosityVerbose": "詳細",
+  "verbosityModeTitle": "詳細度",
+  "replyLabelYou": "你",
+  "replyLabelAssistant": "助手",
+  "replyPreviewCancel": "取消引用",
+  "swipeToReplyLabel": "滑動以回覆",
+  "dateLabelToday": "今天",
+  "dateLabelYesterday": "昨天",
+  "newMessagesCount": "{count} 則新訊息",
+  "@newMessagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scrollToBottomLabel": "回到底部"
 }

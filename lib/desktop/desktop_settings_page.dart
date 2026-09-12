@@ -9,6 +9,7 @@ import '../l10n/build_context_l10n.dart';
 import '../theme/palettes.dart';
 import '../theme/design_tokens.dart';
 import '../core/providers/settings_provider.dart';
+import '../core/models/message_ui_enums.dart';
 import '../core/providers/model_provider.dart';
 import 'model_fetch_dialog.dart' show showModelFetchDialog;
 import '../shared/widgets/app_dialog.dart';
@@ -3298,10 +3299,12 @@ class _DisplaySettingsBody extends StatelessWidget {
               const SizedBox(height: 16),
               _SettingsCard(
                 title: l10n.displaySettingsPageBehaviorStartupTitle,
-                children: const [
+                children: [
                   _ToggleRowAutoSwitchTopicsDesktop(),
                   _RowDivider(),
                   _ToggleRowAutoCollapseThinking(),
+                  _RowDivider(),
+                  _RowVerbosityMode(),
                   _RowDivider(),
                   _ToggleRowShowUpdates(),
                   _RowDivider(),
@@ -5232,6 +5235,46 @@ class _ToggleRowReasoningMarkdown extends StatelessWidget {
       label: l10n.displaySettingsPageEnableReasoningMarkdownTitle,
       value: sp.enableReasoningMarkdown,
       onChanged: (v) => context.read<SettingsProvider>().setEnableReasoningMarkdown(v),
+    );
+  }
+}
+
+class _RowVerbosityMode extends StatelessWidget {
+  const _RowVerbosityMode();
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final sp = context.watch<SettingsProvider>();
+    final options = <VerbosityMode, String>{
+      VerbosityMode.simple: l10n.verbositySimple,
+      VerbosityMode.thinking: l10n.verbosityThinking,
+      VerbosityMode.verbose: l10n.verbosityVerbose,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.verbosityModeTitle,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9)),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: options.entries.map((e) {
+              final selected = sp.verbosityMode == e.key;
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: ChoiceChip(
+                  label: Text(e.value),
+                  selected: selected,
+                  onSelected: (_) => context.read<SettingsProvider>().setVerbosityMode(e.key),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }

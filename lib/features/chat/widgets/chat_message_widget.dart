@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/physics.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import '../../../core/services/haptics.dart';
@@ -32,6 +33,7 @@ import '../../../shared/widgets/ios_tactile.dart';
 import '../../../desktop/desktop_context_menu.dart';
 import '../../../desktop/menu_anchor.dart';
 import '../../../shared/widgets/emoji_text.dart';
+import '../../../core/models/message_ui_enums.dart';
 
 class ChatMessageWidget extends StatefulWidget {
   final ChatMessage message;
@@ -71,6 +73,21 @@ class ChatMessageWidget extends StatefulWidget {
   // MCP tool calls/results mixed-in cards
   final List<ToolUIPart>? toolParts;
 
+  /// Position within a consecutive same-sender message cluster (grouping).
+  final MessageClusterPosition clusterPosition;
+
+  /// User-message send state machine; null = no status icon drawn.
+  final MessageSendStatus? sendStatus;
+
+  /// True when generation was interrupted -> show inline warm retry banner.
+  final bool generationInterrupted;
+
+  /// Retry callback for the interrupted-generation banner (produces a new message).
+  final VoidCallback? onGenerationRetry;
+
+  /// Right-drag release callback -> enters reply/quote mode.
+  final VoidCallback? onSwipeReply;
+
   const ChatMessageWidget({
     super.key,
     required this.message,
@@ -103,13 +120,18 @@ class ChatMessageWidget extends StatefulWidget {
     this.translationExpanded = true,
     this.onToggleTranslation,
     this.toolParts,
+    this.clusterPosition = MessageClusterPosition.single,
+    this.sendStatus,
+    this.generationInterrupted = false,
+    this.onGenerationRetry,
+    this.onSwipeReply,
   });
 
   @override
   State<ChatMessageWidget> createState() => _ChatMessageWidgetState();
 }
 
-class _ChatMessageWidgetState extends State<ChatMessageWidget> {
+class _ChatMessageWidgetState extends State<ChatMessageWidget> with SingleTickerProviderStateMixin {
   // Match vendor inline thinking blocks: <think>...</think> (or until end)
   static final RegExp THINKING_REGEX = RegExp(r"<think>([\s\S]*?)(?:</think>|$)", dotAll: true);
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
@@ -120,6 +142,19 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   bool _inlineThinkManuallyToggled = false;
   // ignore: unused_field
   bool _inlineThinkWasLoading = false;
+  // Desktop anchored menus for bottom action buttons
+  final GlobalKey _moreBtnKey1 = GlobalKey();
+  final GlobalKey _moreBtnKey2 = GlobalKey();
+  final GlobalKey _translateBtnKey2 = GlobalKey();
+
+  // #9 iMessage elastic appear animation (scale + offset only, never width)
+  late final AnimationController _appearController;
+  bool _appearStarted = false;
+
+  // #7 swipe-to-reply drag state (drag right)
+  double _swipeOffset = 0;
+  bool _swipeHapticFired = false;
+
   // User message context menu state
   final GlobalKey _userBubbleKey = GlobalKey();
   // Assistant message context menu anchor（包裹气泡+操作按钮整块区域）
@@ -128,10 +163,6 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
 // for bubble highlight/scale（§9a：用户菜单激活态待接入）
 // ignore: unused_field
 bool _userMenuActive = false;
-  // Desktop anchored menus for bottom action buttons
-  final GlobalKey _moreBtnKey1 = GlobalKey();
-  final GlobalKey _moreBtnKey2 = GlobalKey();
-  final GlobalKey _translateBtnKey2 = GlobalKey();
 
   /// 是否桌面端（macOS / Windows / Linux）。
   bool get _isDesktop =>
@@ -164,9 +195,11 @@ bool _userMenuActive = false;
       _inlineThinkWasLoading = loading;
 
       if (usingInlineThink && _inlineThinkExpanded == null) {
-        final autoCollapse = context.read<SettingsProvider>().autoCollapseThinking;
-        // While loading we default to expanded; once finished honor auto-collapse.
-        _inlineThinkExpanded = loading ? true : !autoCollapse ? true : false;
+        // #12 verbosity drives the thinking block default: simple folds,
+        // thinking/verbose expand it. Live loading always shows it expanded.
+        final verbosity = context.read<SettingsProvider>().verbosityMode;
+        final defaultExpanded = verbosity != VerbosityMode.simple;
+        _inlineThinkExpanded = loading ? true : defaultExpanded;
       }
     } catch (_) {
       // If anything fails here, fall back to later update logic.
@@ -206,23 +239,25 @@ bool _userMenuActive = false;
     // Persist last loading to assist other checks
     _inlineThinkWasLoading = loadingNew;
 
-    final autoCollapse = context.read<SettingsProvider>().autoCollapseThinking;
+    // #12: folding/collapsing the thinking block is driven by verbosity == simple.
+    final shouldCollapse =
+        context.read<SettingsProvider>().verbosityMode == VerbosityMode.simple;
 
-    // If finished now (not loading), inline think is used, and auto-collapse is on
+    // If finished now (not loading), inline think is used, and folding is on.
     // Only collapse when user hasn't manually toggled; also if we don't yet have a chosen state.
     final finishedNow = usingInlineThinkNew && !loadingNew;
     final justFinished = oldWidget != null ? (loadingOld && finishedNow) : finishedNow;
 
-    if (autoCollapse && finishedNow && justFinished) {
+    if (shouldCollapse && finishedNow && justFinished) {
       if (!_inlineThinkManuallyToggled || _inlineThinkExpanded == null) {
         if (mounted) setState(() => _inlineThinkExpanded = false);
         return;
       }
     }
 
-    // On first mount where already finished and no user choice yet, honor autoCollapse
+    // On first mount where already finished and no user choice yet, honor verbosity
     if (oldWidget == null && usingInlineThinkNew && !loadingNew && _inlineThinkExpanded == null) {
-      if (autoCollapse) {
+      if (shouldCollapse) {
         if (mounted) setState(() => _inlineThinkExpanded = false);
       } else {
         if (mounted) setState(() => _inlineThinkExpanded = true);
@@ -286,8 +321,35 @@ bool _userMenuActive = false;
     try { _userMenuOverlay?.remove(); } catch (_) {}
     _userMenuOverlay = null;
     _ticker.dispose();
+    _appearController.dispose();
     _reasoningScroll.dispose();
     super.dispose();
+  }
+
+  /// Start the iMessage elastic appear animation once (safe place for MediaQuery).
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_appearStarted) {
+      _appearStarted = true;
+      _appearController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 520),
+      );
+      final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+      if (reduce) {
+        _appearController.value = 1.0;
+      } else {
+        // response ~0.35s -> stiffness = (2pi/0.35)^2; damping ratio 0.7 (elastic overshoot)
+        final spring = SpringSimulation(
+          SpringDescription.withDampingRatio(mass: 1, stiffness: 322, ratio: 0.7),
+          0,
+          1,
+          0,
+        );
+        _appearController.animateWith(spring);
+      }
+    }
   }
 
   /// 复制当前消息内容（优先用外部 onCopy 回调，否则复制原文并提示）。
@@ -627,12 +689,33 @@ bool _userMenuActive = false;
     final showUserActions = settings.showUserMessageActions;
     final showVersionSwitcher = (widget.versionCount ?? 1) > 1;
 
+    // #1/#3 cluster layout: middle/tail hide the header row and tighten spacing.
+    final pos = widget.clusterPosition;
+    final bool hideHeader =
+        pos == MessageClusterPosition.middle || pos == MessageClusterPosition.tail;
+    final double padTop, padBottom;
+    switch (pos) {
+      case MessageClusterPosition.head:
+        padTop = 12; padBottom = 3;
+        break;
+      case MessageClusterPosition.middle:
+        padTop = 3; padBottom = 3;
+        break;
+      case MessageClusterPosition.tail:
+        padTop = 3; padBottom = 12;
+        break;
+      case MessageClusterPosition.single:
+        padTop = 12; padBottom = 12;
+    }
+    final double headerGap = hideHeader ? 0.0 : (pos == MessageClusterPosition.head ? 4.0 : 8.0);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.only(left: 16, right: 16, top: padTop, bottom: padBottom),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Header: User info and avatar
+          // Header: User info and avatar (hidden inside a cluster)
+          if (!hideHeader)
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -665,7 +748,7 @@ bool _userMenuActive = false;
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: headerGap),
           // Message content (context menu: long-press on mobile, right-click on desktop)
           GestureDetector(
             onLongPressStart: (_) {
@@ -851,6 +934,11 @@ bool _userMenuActive = false;
               )),
             ),
           ),
+          // #5 send status indicator (left-aligned, below the bubble)
+          if (_buildUserSendStatus() != null) ...[
+            const SizedBox(height: 4),
+            Align(alignment: Alignment.centerLeft, child: _buildUserSendStatus()!),
+          ],
           if (showUserActions || showVersionSwitcher) ...[
             SizedBox(height: showUserActions ? 8 : 6),
             Align(
@@ -970,11 +1058,106 @@ bool _userMenuActive = false;
     } catch (_) {}
   }
 
+  /// #5 Render the user-message send-state icon (null when no state known yet).
+  Widget? _buildUserSendStatus() {
+    final status = widget.sendStatus;
+    if (status == null) return null;
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    const double size = 14;
+    switch (status) {
+      case MessageSendStatus.sending:
+        return Semantics(
+          label: l10n.statusSending,
+          child: Opacity(
+            opacity: 0.7,
+            child: Icon(Lucide.Clock, size: size, color: cs.onSurface.withValues(alpha: 0.7)),
+          ),
+        );
+      case MessageSendStatus.sent:
+        return Semantics(
+          label: l10n.statusSent,
+          child: Icon(Lucide.Check, size: size, color: cs.onSurface.withValues(alpha: 0.6)),
+        );
+      case MessageSendStatus.delivered:
+        return Semantics(
+          label: l10n.statusDelivered,
+          child: Icon(Lucide.checkCheck, size: size, color: cs.onSurface.withValues(alpha: 0.6)),
+        );
+      case MessageSendStatus.read:
+        return Semantics(
+          label: l10n.statusRead,
+          child: Icon(Lucide.checkCheck, size: size, color: cs.primary),
+        );
+      case MessageSendStatus.failed:
+        return Semantics(
+          label: l10n.statusFailedTapRetry,
+          button: true,
+          child: GestureDetector(
+            onTap: widget.onResend,
+            child: Icon(Lucide.CircleX, size: size, color: Colors.red.shade400),
+          ),
+        );
+    }
+  }
+
+  /// #4 While streaming, balance unclosed markdown so partial syntax does not
+  /// cause layout flicker: drop a trailing unclosed ``` fence or unmatched ** pair.
+  String _balanceStreamingMarkdown(String text) {
+    if (!widget.message.isStreaming) return text;
+    var t = text;
+    if (RegExp(r'```').allMatches(t).length.isOdd) {
+      final i = t.lastIndexOf('```');
+      if (i >= 0) t = t.substring(0, i);
+    }
+    if (RegExp(r'\*\*').allMatches(t).length.isOdd) {
+      final i = t.lastIndexOf('**');
+      if (i >= 0) t = t.substring(0, i);
+    }
+    return t;
+  }
+
+  /// #2 Bubble corner radius. Base 18; the "tail" corner near the sender
+  /// (user bottom-right / assistant bottom-left) is 6. Inside a cluster the
+  /// connection-side corners that touch a neighbour above/below also shrink to 6.
+  /// No triangle tail is drawn.
+  BorderRadius _computeBubbleRadius({required bool isUser}) {
+    const double base = 18;
+    const double small = 6;
+    double tl = base, tr = base, bl = base, br = base;
+    final pos = widget.clusterPosition;
+    final clustered = pos != MessageClusterPosition.single;
+    if (isUser) {
+      br = small; // tail corner nearest sender
+      if (clustered) {
+        // connection side = right. Bottom connects to below (head/middle);
+        // top connects to above (middle/tail).
+        if (pos == MessageClusterPosition.middle || pos == MessageClusterPosition.tail) {
+          tr = small;
+        }
+      }
+    } else {
+      bl = small; // tail corner nearest sender
+      if (clustered) {
+        // connection side = left.
+        if (pos == MessageClusterPosition.middle || pos == MessageClusterPosition.tail) {
+          tl = small;
+        }
+      }
+    }
+    return BorderRadius.only(
+      topLeft: Radius.circular(tl),
+      topRight: Radius.circular(tr),
+      bottomLeft: Radius.circular(bl),
+      bottomRight: Radius.circular(br),
+    );
+  }
+
   Widget _buildBubbleContainer({required BuildContext context, required bool isUser, required Widget child}) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final style = context.watch<SettingsProvider>().chatMessageBackgroundStyle;
-    BorderRadius radius = BorderRadius.circular(16);
+    final BorderRadius radius = _computeBubbleRadius(isUser: isUser);
     switch (style) {
       case ChatMessageBackgroundStyle.frosted:
         return ClipRRect(
@@ -1063,6 +1246,26 @@ bool _userMenuActive = false;
     final l10n = context.l10n;
     final settings = context.watch<SettingsProvider>();
 
+    // #1/#3 cluster layout: middle/tail hide the header row and tighten spacing.
+    final aPos = widget.clusterPosition;
+    final bool aHideHeader =
+        aPos == MessageClusterPosition.middle || aPos == MessageClusterPosition.tail;
+    final double aPadTop, aPadBottom;
+    switch (aPos) {
+      case MessageClusterPosition.head:
+        aPadTop = 12; aPadBottom = 3;
+        break;
+      case MessageClusterPosition.middle:
+        aPadTop = 3; aPadBottom = 3;
+        break;
+      case MessageClusterPosition.tail:
+        aPadTop = 3; aPadBottom = 12;
+        break;
+      case MessageClusterPosition.single:
+        aPadTop = 12; aPadBottom = 12;
+    }
+    final double aHeaderGap = aHideHeader ? 0.0 : (aPos == MessageClusterPosition.head ? 4.0 : 8.0);
+
     // Extract vendor inline <think>...</think> content (if present)
     final extractedThinking = THINKING_REGEX
         .allMatches(widget.message.content)
@@ -1073,6 +1276,8 @@ bool _userMenuActive = false;
     final contentWithoutThink = extractedThinking.isNotEmpty
         ? widget.message.content.replaceAll(THINKING_REGEX, '').trim()
         : widget.message.content;
+    // #4 balance unclosed markdown fences/asterisks while streaming to avoid flicker
+    final balancedContent = _balanceStreamingMarkdown(contentWithoutThink);
 
     // 助手消息整块（气泡+操作按钮）支持长按/右键弹出快捷菜单。
     // behavior 用 translucent，内部按钮自身的 GestureDetector 会优先响应，互不影响。
@@ -1089,11 +1294,12 @@ bool _userMenuActive = false;
       behavior: HitTestBehavior.translucent,
       child: Padding(
         key: _assistantBubbleKey,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.only(left: 16, right: 16, top: aPadTop, bottom: aPadBottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Header: Model info and time
+          // Header: Model info and time (hidden inside a cluster)
+          if (!aHideHeader)
           Row(
             children: [
               if (widget.useAssistantAvatar) ...[
@@ -1154,7 +1360,7 @@ bool _userMenuActive = false;
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: aHeaderGap),
           // Mixed reasoning and tool sections
           if (widget.reasoningSegments != null && widget.reasoningSegments!.isNotEmpty) ...[
             // Build mixed content using tool index ranges carried by segments
@@ -1289,19 +1495,30 @@ bool _userMenuActive = false;
                     child: DefaultTextStyle.merge(
                       style: TextStyle(fontSize: baseAssistant, height: 1.5),
                       child: MarkdownWithCodeHighlight(
-                        text: contentWithoutThink,
+                        text: balancedContent,
                         onCitationTap: (id) => _handleCitationTap(id),
                         baseStyle: TextStyle(fontSize: baseAssistant, height: 1.5),
                       ),
                     ),
                   );
                 }),
-                // Inline sources removed; show a summary card at bottom instead
+                // #4 blinking streaming cursor at end of the streaming text
                 if (widget.message.isStreaming)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: _LoadingIndicator(),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 3),
+                      child: _StreamingCursor(),
+                    ),
                   ),
+                // #6 interrupted-generation inline warm banner (keeps generated content)
+                if (widget.generationInterrupted && widget.onGenerationRetry != null) ...[
+                  const SizedBox(height: 8),
+                  _InterruptedBanner(
+                    label: l10n.connectionInterruptedRetry,
+                    onTap: widget.onGenerationRetry!,
+                  ),
+                ],
                 // Translation section (collapsible)
                 if (widget.message.translation != null && widget.message.translation!.isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -1850,9 +2067,100 @@ bool _userMenuActive = false;
 
   @override
   Widget build(BuildContext context) {
-    if (widget.message.role == 'user') return _buildUserMessage();
-    if (widget.message.role == 'tool') return _buildToolMessage();
-    return _buildAssistantMessage();
+    Widget child;
+    if (widget.message.role == 'user') {
+      child = _buildUserMessage();
+    } else if (widget.message.role == 'tool') {
+      child = _buildToolMessage();
+    } else {
+      child = _buildAssistantMessage();
+    }
+    child = _wrapSwipeToReply(child);
+    child = _wrapAppearAnimation(child);
+    return child;
+  }
+
+  /// #7 drag the message right to reveal a reply affordance; release past the
+  /// threshold to enter reply/quote mode.
+  Widget _wrapSwipeToReply(Widget child) {
+    if (widget.onSwipeReply == null) return child;
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    const double showIconAt = 40;
+    const double hapticAt = 80;
+    const double commitAt = 80;
+    return Semantics(
+      label: l10n.swipeToReplyLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragUpdate: (d) {
+          setState(() {
+            _swipeOffset += d.delta.dx;
+            if (_swipeOffset < 0) _swipeOffset = 0;
+            if (_swipeOffset > hapticAt && !_swipeHapticFired) {
+              _swipeHapticFired = true;
+              try {
+                Haptics.medium();
+              } catch (_) {
+                // intentionally ignored: 部分平台不支持触觉反馈，安全跳过。
+              }
+            }
+          });
+        },
+        onHorizontalDragEnd: (_) {
+          final reached = _swipeOffset >= commitAt;
+          setState(() {
+            _swipeOffset = 0;
+            _swipeHapticFired = false;
+          });
+          if (reached) widget.onSwipeReply?.call();
+        },
+        onHorizontalDragCancel: () {
+          setState(() {
+            _swipeOffset = 0;
+            _swipeHapticFired = false;
+          });
+        },
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            Opacity(
+              opacity: (_swipeOffset / showIconAt).clamp(0.0, 1.0),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14),
+                child: Icon(Lucide.ArrowLeft, size: 20, color: cs.primary),
+              ),
+            ),
+            Transform.translate(
+              offset: Offset(_swipeOffset, 0),
+              child: child,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// #9 iMessage-style elastic appear: user bubble rises from the input area,
+  /// assistant fades in + slight upward slide. Only scale + offset (never width).
+  /// Honors system "reduce motion" (disableAnimations) by showing directly.
+  Widget _wrapAppearAnimation(Widget child) {
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduce) return child;
+    final isUser = widget.message.role == 'user';
+    final Animation<double> a = _appearController;
+    final Offset beginOffset = isUser ? const Offset(0, 0.12) : const Offset(0, -0.04);
+    final double beginScale = isUser ? 0.96 : 0.98;
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(a),
+      child: SlideTransition(
+        position: Tween<Offset>(begin: beginOffset, end: Offset.zero).animate(a),
+        child: ScaleTransition(
+          scale: Tween<double>(begin: beginScale, end: 1.0).animate(a),
+          child: child,
+        ),
+      ),
+    );
   }
 }
 
@@ -2066,6 +2374,87 @@ class _LoadingIndicatorState extends State<_LoadingIndicator>
   }
 }
 
+/// #4 blinking theme-colored vertical bar shown at the end of streaming content.
+class _StreamingCursor extends StatefulWidget {
+  const _StreamingCursor();
+
+  @override
+  State<_StreamingCursor> createState() => _StreamingCursorState();
+}
+
+class _StreamingCursorState extends State<_StreamingCursor>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1000),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) => Opacity(
+        opacity: 0.3 + 0.7 * _c.value,
+        child: Container(width: 2, height: 16, color: cs.primary),
+      ),
+    );
+  }
+}
+
+/// #6 warm-toned inline banner shown when generation was interrupted.
+class _InterruptedBanner extends StatelessWidget {
+  const _InterruptedBanner({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final bg = Colors.amber.withValues(alpha: 0.14);
+    return Semantics(
+      label: label,
+      button: true,
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Lucide.RefreshCw, size: 14, color: Colors.amber.shade800),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: cs.brightness == Brightness.dark
+                          ? Colors.amber.shade200
+                          : Colors.amber.shade900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ParsedUserContent {
   final String text;
   final List<String> images;
@@ -2118,9 +2507,24 @@ class ReasoningSegment {
   });
 }
 
-class _ToolCallItem extends StatelessWidget {
+class _ToolCallItem extends StatefulWidget {
   const _ToolCallItem({required this.part});
   final ToolUIPart part;
+
+  @override
+  State<_ToolCallItem> createState() => _ToolCallItemState();
+}
+
+class _ToolCallItemState extends State<_ToolCallItem> {
+  // #12 manual override; null until the user manually expands/collapses.
+  bool? _manualExpanded;
+
+  /// Tool block default expand: verbose -> expanded, otherwise folded.
+  bool get _expanded {
+    if (_manualExpanded != null) return _manualExpanded!;
+    final v = context.watch<SettingsProvider>().verbosityMode;
+    return v == VerbosityMode.verbose;
+  }
 
   IconData _iconFor(String name) {
     switch (name) {
@@ -2164,17 +2568,22 @@ class _ToolCallItem extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = cs.primaryContainer.withOpacity(isDark ? 0.25 : 0.30);
+    final part = widget.part;
+    final canExpand = (part.content ?? '').isNotEmpty;
 
-    return IosCardPress(
-      borderRadius: BorderRadius.circular(16),
-      baseColor: bg,
-      pressedScale: 1.0,
-      duration: const Duration(milliseconds: 260),
-      onTap: () => _showDetail(context),
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosCardPress(
+          borderRadius: BorderRadius.circular(16),
+          baseColor: bg,
+          pressedScale: 1.0,
+          duration: const Duration(milliseconds: 260),
+          onTap: () => _showDetail(context),
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
           part.loading
               ? SizedBox(
                   width: 18,
@@ -2193,22 +2602,54 @@ class _ToolCallItem extends StatelessWidget {
                 ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _titleFor(context, part.toolName, part.arguments, isResult: !part.loading),
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.secondary),
-                ),
-              ],
+            child: Text(
+              _titleFor(context, part.toolName, part.arguments, isResult: !part.loading),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.secondary),
             ),
           ),
-        ],
-      ),
+          // #12 inline expand/collapse chevron (manual override of verbosity default)
+          if (canExpand)
+            GestureDetector(
+              onTap: () => setState(() => _manualExpanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  _expanded ? Lucide.ChevronUp : Lucide.ChevronDown,
+                  size: 16,
+                  color: cs.secondary,
+                ),
+              ),
+            ),
+            ],
+          ),
+        ),
+        // #12 inline tool result preview when expanded (verbose / manual)
+        if (canExpand && _expanded)
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: const Cubic(0.2, 0.8, 0.2, 1),
+            alignment: Alignment.topCenter,
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white10 : const Color(0xFFF7F7F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SelectableText(
+                part.content!,
+                style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.85)),
+                maxLines: 8,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   void _showDetail(BuildContext context) {
+    final part = widget.part;
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final argsPretty = const JsonEncoder.withIndent('  ').convert(part.arguments);

@@ -1695,5 +1695,30 @@
       }
     }
   },
-  "commonRetry": "重试"
+  "commonRetry": "重试",
+  "connectionInterruptedRetry": "连接中断·重试",
+  "statusSending": "发送中",
+  "statusSent": "已发送",
+  "statusDelivered": "已送达",
+  "statusRead": "已读",
+  "statusFailedTapRetry": "发送失败，点击重发",
+  "verbositySimple": "简洁",
+  "verbosityThinking": "思考",
+  "verbosityVerbose": "详细",
+  "verbosityModeTitle": "详细度",
+  "replyLabelYou": "你",
+  "replyLabelAssistant": "助手",
+  "replyPreviewCancel": "取消引用",
+  "swipeToReplyLabel": "滑动以回复",
+  "dateLabelToday": "今天",
+  "dateLabelYesterday": "昨天",
+  "newMessagesCount": "{count} 条新消息",
+  "@newMessagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scrollToBottomLabel": "回到底部"
 }

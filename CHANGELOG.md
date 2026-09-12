@@ -5,6 +5,46 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning: `0.
 
 > 每个版本三档受众：**📣 For Users**（人话讲收益）/ **🔧 For Developers**（工程细节与迁移）/ **🤖 For Agents**（符号级变更 + 行为语义 + 坑位预警）。发布时同步 GitHub Release（用户档扩充版）与本文件（开发者档 + 模型档）。
 
+## [0.0.58] - 2026-09-12
+
+### 📣 For Users
+- **对话气泡颜值与节奏大升级（13 项增强）**：同一发送者连发的消息现在自动归成一簇、紧挨排列，簇首/簇尾自动切气泡尾巴角，时间戳只在簇首显示一次，不再每条都刷屏；
+- **流式输出更有"正在打字"感**：AI 回复边生成边在末尾跳动的光标提示，被你手动打断或中途出错时，顶部会弹出醒目的中断/错误横幅，一眼看清发生了什么；
+- **消息状态机看得见**：你发出去的消息依次显示发送中（半透明+时钟）→ 已发送（单勾）→ 已送达（双勾）→ 已读（双勾主题色），失败自动变红，点一下即可重发；
+- **想聊得细还是聊得快，三档自己调**：新增"回复详细度"——简单（思考/工具块全折叠）/ 平衡（思考展开、工具折叠，默认）/ 详细（全展开），在显示设置里随时切换；
+- **左滑消息即可引用回复**：在任意消息上左滑，输入框正上方会出现引用预览条（显示对方是谁 + 最多 2 行摘要），再发的消息就带上引用，点 × 可取消；
+- **新消息 iMessage 式弹性进场**：消息现在像 iMessage 那样带着轻微弹性缩放/滑入动画出现，不再生硬地瞬间蹦出来；
+- **跨天有日期分隔条、往上翻会吸顶**：同一天的消息自动按天分组，跨天处插入日期条，滚动到顶部时日期条会吸住不消失；
+- **智能"回到底部"悬浮按钮**：你往上翻历史或来了新消息时，右下角自动冒出圆形 FAB，点一下平滑滚回最新一条；
+- **桌面端长文不再拉满屏**：桌面宽屏下对话行宽限制为 780 并居中，长段落阅读更舒服；
+- **无障碍补齐**：消息簇、发送状态、引用回复等新组件都补了语义标签与朗读描述，TalkBack/VoiceOver 用户也能用（本版暂不做表情回应 Reaction）。
+
+### 🔧 For Developers
+- **Added**：
+  - `lib/core/models/message_ui_enums.dart`：三个 UI 状态枚举——`MessageClusterPosition`（single/head/middle/tail，驱动簇圆角与尾巴切角）、`MessageSendStatus`（sending/sent/delivered/read/failed 五态发送状态机）、`VerbosityMode`（simple/thinking/verbose 回复详细度三档）；
+  - `lib/features/home/widgets/reply_preview_bar.dart`：`ReplyPreviewBar` 滑动引用回复预览条（被引用方名称 + 最多 2 行摘要 + 关闭按钮，挂在 ChatInputBar 正上方）；
+  - 连续消息分组簇（按发送者 + 时间窗归簇，簇内相邻气泡间距收紧）、气泡尾巴切角（仅簇首/簇尾保留尾巴）、时间戳仅簇首渲染；
+  - 流式输出光标（streaming 末尾跳动光标）、中断/错误横幅（流式被取消或出错时顶部横幅）；
+  - 发送状态机接线（消息列表按 `MessageSendStatus` 渲染对应图标，failed 点击重发）；
+  - 详细度三档 UI：`display_settings_page` + `desktop_settings_page` 各加一档选择，经 `settings_provider` 持久化；
+  - 滑动引用回复手势 + `ReplyPreviewBar` 接线；iMessage 风格弹性进场动画；
+  - 日期吸顶分隔条（跨天插入，滚动吸顶）；智能回底 FAB（监听滚动位置与新消息）；
+  - 桌面端对话行宽 780 居中约束；无障碍语义标签补全（本版不含表情回应）。
+- **Changed**：
+  - `chat_message_widget.dart` +537 行（气泡切角/簇分组/时间戳/光标/动画/横幅）；`home_page.dart` +375 行（FAB/日期分隔/滑动回复/发送状态机）；
+  - l10n 三语 ARB（app_en / app_zh / app_zh_Hant）各同步 27 键新增文案；
+  - 版本号 `0.0.57+57` → `0.0.58+58`。
+
+### 🤖 For Agents
+- **新增枚举位置**：`MessageClusterPosition` / `MessageSendStatus` / `VerbosityMode` 统一落在 `lib/core/models/message_ui_enums.dart`，不要在 widget 里另造字符串枚举；
+- **簇判定**：气泡尾巴切角与时间戳显隐完全由 `MessageClusterPosition` 决定——single 全圆角带尾巴、head 仅下侧收角、middle 全圆角无尾巴、tail 仅上侧收角；新增气泡样式时按此四态取值；
+- **发送状态机**：五态图标映射集中在消息 widget 内，failed 必须可点击触发重发，不要在 UI 层散落 if-else；
+- **引用回复**：一律走 `ReplyPreviewBar` + 滑动手势，不要自己在输入框旁另写预览条；被引用方命名 user→「你」、assistant→「助手」，文案走 l10n；
+- **详细度持久化**：`VerbosityMode` 经 `settings_provider` 持久化，默认 `thinking`；新增"思考块/工具块默认折叠"行为必须先查当前 mode，不要写死；
+- **桌面行宽**：桌面端对话行宽常量 780 居中，不要为桌面单独写一套列表布局；
+- **lint 坑**：`hardcoded_ui_string` 对行内 `// ignore:` 不生效，涉及文件顶部必须加 `// ignore_for_file: hardcoded_ui_string`；本版新增/改动文件如含内置样式名/占位文案已按此处理；
+- **本版不做表情回应（emoji reaction）**：不要在消息上挂 Reaction 入口，该能力留待后续版本。
+
 ## [0.0.57] - 2026-09-12
 
 ### 📣 For Users

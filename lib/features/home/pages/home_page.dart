@@ -11,6 +11,7 @@ import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/responsive/breakpoints.dart';
 
 import '../widgets/chat_input_bar.dart';
+import '../widgets/reply_preview_bar.dart';
 import '../../../core/models/chat_input_data.dart';
 import '../../chat/widgets/bottom_tools_sheet.dart';
 import '../../../shared/widgets/tool_approval_dialog.dart';
@@ -36,6 +37,8 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/tts_provider.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/conversation.dart';
+import '../../../core/models/message_ui_enums.dart';
+import 'package:intl/intl.dart';
 import '../../model/widgets/model_select_sheet.dart';
 import '../../settings/widgets/language_select_sheet.dart';
 import '../../chat/widgets/message_more_sheet.dart';
@@ -135,6 +138,196 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _showJumpToBottom = false;
   bool _isUserScrolling = false;
   Timer? _userScrollTimer;
+
+  // --- 对话流增强：列表层状态 ---
+  // 被滑动引用的消息（右拖进入引用态）。
+  ChatMessage? _replyToMessage;
+  // 发送状态机的运行时覆盖（user 消息 id -> 状态）。历史消息无状态，不回补。
+  // 受文件边界约束（不改 chat_service），此处为会话内运行时跟踪；重启后归零、
+  // 与“历史消息不显示状态勾”的语义一致。
+  final Map<String, MessageSendStatus> _liveSendStatus = <String, MessageSendStatus>{};
+  // 生成被中断的助手消息 id（会话内运行时标记）。
+  final Set<String> _interruptedAssistantIds = <String>{};
+  // 用户上翻离开底部时记录的消息总数基线，用于计算「↓ N」未读新增条数。
+  int _awayBaselineCount = -1;
+  // 当前 sticky 日期分隔条显示的日期标签（随顶部可见项变化）。
+  String? _stickyDateLabel;
+
+  // 同一发送者相邻消息分簇：role 相同且时间差 <=5 分钟视为同簇；role 变或 >5 分钟断簇。
+  MessageClusterPosition _clusterPositionFor(List<ChatMessage> messages, int index) {
+    final cur = messages[index];
+    bool connectsPrev = false;
+    if (index > 0) {
+      final prev = messages[index - 1];
+      final gap = cur.timestamp.difference(prev.timestamp).abs();
+      connectsPrev = prev.role == cur.role && gap <= const Duration(minutes: 5);
+    }
+    bool connectsNext = false;
+    if (index + 1 < messages.length) {
+      final next = messages[index + 1];
+      final gap = next.timestamp.difference(cur.timestamp).abs();
+      connectsNext = next.role == cur.role && gap <= const Duration(minutes: 5);
+    }
+    if (!connectsPrev && !connectsNext) return MessageClusterPosition.single;
+    if (connectsPrev && !connectsNext) return MessageClusterPosition.tail;
+    if (!connectsPrev && connectsNext) return MessageClusterPosition.head;
+    return MessageClusterPosition.middle;
+  }
+
+  // 两条消息是否跨自然日（用于插入日期分隔条）。
+  bool _isDifferentDay(DateTime a, DateTime b) =>
+      a.year != b.year || a.month != b.month || a.day != b.day;
+
+  // 日期胶囊标签：今天/昨天用 l10n，其余按 locale 用 intl 格式化。
+  String _dateLabelFor(BuildContext context, DateTime day) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final that = DateTime(day.year, day.month, day.day);
+    final diff = today.difference(that).inDays;
+    if (diff == 0) return context.l10n.dateLabelToday;
+    if (diff == 1) return context.l10n.dateLabelYesterday;
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).add_E().format(day);
+  }
+
+  // 计算当前应吸顶显示的日期标签：取视口内最靠上的可见消息的日期。
+  void _updateStickyDate() {
+    if (!_scrollController.hasClients) {
+      if (_stickyDateLabel != null) setState(() => _stickyDateLabel = null);
+      return;
+    }
+    try {
+      final pos = _scrollController.position;
+      final listCtx = pos.context.notificationContext;
+      if (listCtx == null) {
+        if (_stickyDateLabel != null) setState(() => _stickyDateLabel = null);
+        return;
+      }
+      final listBox = listCtx.findRenderObject() as RenderBox;
+      final listTopGlobal = listBox.localToGlobal(Offset.zero).dy;
+      final messages = _collapseVersions(_messages);
+      String? best;
+      double bestTop = double.infinity;
+      for (final m in messages) {
+        final key = _messageKeys[m.id];
+        final ctx = key?.currentContext;
+        if (ctx == null) continue;
+        final box = ctx.findRenderObject() as RenderBox?;
+        if (box == null || !box.attached) continue;
+        final top = box.localToGlobal(Offset.zero).dy - listTopGlobal;
+        final height = box.size.height;
+        // 仍在视口内（底部高于视口顶），取最靠上者
+        if (top + height > 0 && top < bestTop) {
+          bestTop = top;
+          best = _dateLabelFor(context, m.timestamp);
+        }
+      }
+      if (best != _stickyDateLabel) {
+        setState(() => _stickyDateLabel = best);
+      }
+    } catch (e) {
+      // intentionally ignored: 视口测量异常时保留上一次标签。
+    }
+  }
+
+  // 回底 FAB 的未读新增数（上翻期间新增消息条数）。
+  int get _unreadCountWhileAway =>
+      _awayBaselineCount >= 0 ? (_messages.length - _awayBaselineCount).clamp(0, 1 << 30) : 0;
+
+  // 平滑回底（FAB 点击）：animateTo 而非硬 jumpTo。
+  void _smoothScrollToBottom() {
+    _isUserScrolling = false;
+    _userScrollTimer?.cancel();
+    _lastJumpUserMessageId = null;
+    try {
+      if (!_scrollController.hasClients) return;
+      if (_scrollController.positions.length != 1) return;
+      final max = _scrollController.position.maxScrollExtent;
+      _scrollController.animateTo(
+        max,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    } catch (_) {
+      // intentionally ignored: 无滚动 client 时安全跳过回底动画。
+    }
+    if (_showJumpToBottom || _awayBaselineCount >= 0) {
+      setState(() {
+        _showJumpToBottom = false;
+        _awayBaselineCount = -1;
+      });
+    }
+  }
+
+  // 吸顶日期胶囊：位于列表顶部，毛玻璃背景，标签随顶部可见项变化。
+  Widget _buildStickyDateOverlay(BuildContext context) {
+    if (_stickyDateLabel == null) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: cs.surface.withOpacity(0.72),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: cs.outlineVariant.withOpacity(0.3), width: 0.6),
+                  ),
+                  child: Text(
+                    _stickyDateLabel!,
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withOpacity(0.9)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 记录某用户消息的发送状态（会话内运行时）。
+  void _markSendStatus(String messageId, MessageSendStatus status) {
+    _liveSendStatus[messageId] = status;
+    if (mounted) setState(() {});
+  }
+
+  // 相邻跨自然日时，在消息上方插入的居中日期胶囊。
+  Widget _buildDateDivider(BuildContext context, DateTime timestamp) {
+    final cs = Theme.of(context).colorScheme;
+    final label = _dateLabelFor(context, timestamp);
+    return Semantics(
+      header: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 4),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: cs.onSurfaceVariant.withOpacity(0.8),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   // Sanitize/translate JSON Schema to each provider's accepted subset
   static Map<String, dynamic> _sanitizeToolParametersForProvider(Map<String, dynamic> schema, ProviderKind kind) {
@@ -919,8 +1112,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final atBottom = pos.pixels >= (pos.maxScrollExtent - 24);
       final shouldShow = !atBottom;
       if (_showJumpToBottom != shouldShow) {
-        setState(() => _showJumpToBottom = shouldShow);
+        setState(() {
+          _showJumpToBottom = shouldShow;
+          // 用户上翻离开底部时记录消息总数基线，用于「↓ N」未读数；
+          // 回到底部时清零。
+          if (shouldShow && _awayBaselineCount < 0) {
+            _awayBaselineCount = _messages.length;
+          } else if (!shouldShow) {
+            _awayBaselineCount = -1;
+          }
+        });
       }
+      // 吸顶日期随滚动刷新（异步到帧后读取渲染位置）。
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateStickyDate());
     } catch (e, st) { Logger.d(LogTags.home, 'intentionally ignored: scroll/UI measurement', e, st); }
   }
 
@@ -1349,8 +1553,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _sendMessage(ChatInputData input) async {
-    final content = input.text.trim();
+    var content = input.text.trim();
     if (content.isEmpty && input.imagePaths.isEmpty && input.documents.isEmpty) return;
+    // #7：发送时把被引用消息以 markdown 引用块前缀拼到正文最前，随后清空引用态。
+    final replyTarget = _replyToMessage;
+    if (replyTarget != null && content.isNotEmpty) {
+      final quoteName = replyTarget.role == 'user'
+          ? context.l10n.replyLabelYou
+          : context.l10n.replyLabelAssistant;
+      var quoteText = replyTarget.content
+          .replaceAll(RegExp(r'\[image:.*?\]'), '')
+          .replaceAll(RegExp(r'\[file:.*?\]'), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (quoteText.length > 80) quoteText = '${quoteText.substring(0, 80)}…';
+      content = '> $quoteName：$quoteText\n\n$content';
+      _replyToMessage = null;
+    }
     if (_currentConversation == null) await _createNewConversation();
 
     final settings = context.read<SettingsProvider>();
@@ -1382,6 +1601,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     setState(() {
       _messages.add(userMessage);
+      // 发送状态机：先显示「发送中」时钟。
+      _liveSendStatus[userMessage.id] = MessageSendStatus.sending;
     });
     _setConversationLoading(_currentConversation!.id, true);
 
@@ -1402,6 +1623,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     setState(() {
       _messages.add(assistantMessage);
+      // 请求已送达服务端：用户消息 -> 已送达（双勾中性色）。
+      _liveSendStatus[userMessage.id] = MessageSendStatus.delivered;
+      // 新轮次清掉该助手消息的中断标记。
+      _interruptedAssistantIds.remove(assistantMessage.id);
     });
 
     // Haptics on generate (if enabled)
@@ -1652,6 +1877,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     DateTime? _reasoningStartAt;
     bool _finishHandled = false;
     bool _titleQueued = false;
+    bool _userMsgMarkedRead = false;
     bool _turnLogged = false;
 
     // 记录本轮对话日志（只写一次，避免重复）
@@ -2137,6 +2363,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             }
           } else {
             fullContent += chunk.content;
+            // 助手开始出正文 -> 对应用户消息置为「已读」（双勾主题色），仅一次。
+            if (!_userMsgMarkedRead && chunk.content.isNotEmpty) {
+              _userMsgMarkedRead = true;
+              _markSendStatus(userMessage.id, MessageSendStatus.read);
+            }
             if (chunk.totalTokens > 0) {
               totalTokens = chunk.totalTokens;
             }
@@ -2217,6 +2448,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           final errText = '${context.l10n.generationInterrupted}: $e';
           final displayContent = fullContent.isNotEmpty ? fullContent : errText;
           _logTurn(fullContent, error: '$e');
+          // #6：标记该助手消息生成中断（内联横幅）；#5：对应用户消息置失败。
+          _interruptedAssistantIds.add(assistantMessage.id);
+          _liveSendStatus[userMessage.id] = MessageSendStatus.failed;
           await _chatService.updateMessage(
             assistantMessage.id,
             content: displayContent,
@@ -2305,6 +2539,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final errText = '${context.l10n.generationInterrupted}: $e';
       final displayContent = fullContent.isNotEmpty ? fullContent : errText;
       _logTurn(fullContent, error: '$e');
+      // #6/#5：标记助手中断、对应用户消息失败。
+      _interruptedAssistantIds.add(assistantMessage.id);
+      _liveSendStatus[userMessage.id] = MessageSendStatus.failed;
       await _chatService.updateMessage(
         assistantMessage.id,
         content: displayContent,
@@ -3058,6 +3295,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       // When regenerate fails, persist error text into this assistant bubble
       final errText = '${context.l10n.generationInterrupted}: $e';
       final displayContent = fullContent.isNotEmpty ? fullContent : errText;
+      // #6：标记该助手消息生成中断（内联横幅，保留已生成内容）。
+      _interruptedAssistantIds.add(assistantMessage.id);
       await _chatService.updateMessage(
         assistantMessage.id,
         content: displayContent,
@@ -3215,14 +3454,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     } catch (_) {
       // Ignore transient attachment errors
     }
-  }
-
-  void _forceScrollToBottom() {
-    // Force scroll to bottom when user explicitly clicks the button
-    _isUserScrolling = false;
-    _userScrollTimer?.cancel();
-    _lastJumpUserMessageId = null;
-    _scrollToBottom();
   }
 
   // Force scroll after rebuilds when switching topics/conversations
@@ -3941,6 +4172,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             key: _keyForMessage(message.id),
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              if (index == 0 || _isDifferentDay(messages[index - 1].timestamp, message.timestamp))
+                                _buildDateDivider(context, message.timestamp),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -3967,6 +4200,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       ),
                                       child: ChatMessageWidget(
                                   message: message,
+                                  clusterPosition: _clusterPositionFor(messages, index),
+                                  sendStatus: message.sendStatus ?? _liveSendStatus[message.id],
+                                  generationInterrupted: _interruptedAssistantIds.contains(message.id),
+                                  onGenerationRetry: message.role == 'assistant'
+                                      ? () => _regenerateAtMessage(message)
+                                      : null,
+                                  onSwipeReply: () => setState(() => _replyToMessage = message),
                                   versionIndex: effectiveIndex,
                                   versionCount: effectiveTotal,
                                   onPrevVersion: (showMsgNav && selectedIdx > 0) ? () async {
@@ -4294,10 +4534,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             // .slideY(begin: 0.02, end: 0, duration: 240.ms, curve: Curves.easeOutCubic);
                         w = FadeTransition(opacity: _convoFade, child: w);
                       }
-                      return w;
+                      return Semantics(
+                        liveRegion: true,
+                        child: Stack(
+                          children: [
+                            w,
+                            _buildStickyDateOverlay(context),
+                          ],
+                        ),
+                      );
                     },
                   ),
               ),
+              // Reply preview bar (above input bar)
+              if (_replyToMessage != null)
+                ReplyPreviewBar(
+                  message: _replyToMessage!,
+                  onCancel: () => setState(() => _replyToMessage = null),
+                ),
               // Input bar
               NotificationListener<SizeChangedLayoutNotification>(
                 onNotification: (n) {
@@ -4582,13 +4836,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                 shape: const CircleBorder(),
                                 child: InkWell(
                                   customBorder: const CircleBorder(),
-                                  onTap: _forceScrollToBottom,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(6),
-                                    child: Icon(
-                                      Lucide.ChevronDown,
-                                      size: 16,
-                                      color: isDark ? Colors.white : Colors.black87,
+                                  onTap: _smoothScrollToBottom,
+                                  child: Semantics(
+                                    button: true,
+                                    label: _unreadCountWhileAway > 0
+                                        ? context.l10n.newMessagesCount(_unreadCountWhileAway)
+                                        : context.l10n.scrollToBottomLabel,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Lucide.ChevronDown,
+                                            size: 16,
+                                            color: isDark ? Colors.white : Colors.black87,
+                                          ),
+                                          if (_unreadCountWhileAway > 0)
+                                            Text(
+                                              '${_unreadCountWhileAway}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                height: 1.0,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark ? Colors.white : Colors.black87,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -4932,7 +5208,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 860),
+                      constraints: const BoxConstraints(maxWidth: 780),
                       child: Column(
                         children: [
                           // Message list (add subtle animate on conversation switch)
@@ -4961,7 +5237,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     }
                                     truncCollapsed = count - 1;
                                   }
-                                  return ListView.builder(
+                                  return Semantics(
+                                    liveRegion: true,
+                                    child: Stack(
+                                      children: [
+                                        ListView.builder(
                                     controller: _scrollController,
                                     padding: const EdgeInsets.only(bottom: 16, top: 8),
                                     itemCount: messages.length,
@@ -5002,6 +5282,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                         key: _keyForMessage(message.id),
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
+                                          if (index == 0 || _isDifferentDay(messages[index - 1].timestamp, message.timestamp))
+                                            _buildDateDivider(context, message.timestamp),
                                           Row(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
@@ -5028,6 +5310,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                   ),
                                                   child: ChatMessageWidget(
                                                     message: message,
+                                                    clusterPosition: _clusterPositionFor(messages, index),
+                                                    sendStatus: message.sendStatus ?? _liveSendStatus[message.id],
+                                                    generationInterrupted: _interruptedAssistantIds.contains(message.id),
+                                                    onGenerationRetry: message.role == 'assistant'
+                                                        ? () => _regenerateAtMessage(message)
+                                                        : null,
+                                                    onSwipeReply: () => setState(() => _replyToMessage = message),
                                                     versionIndex: effectiveIndex,
                                                     versionCount: effectiveTotal,
                                                     onPrevVersion: (showMsgNav && selectedIdx > 0)
@@ -5349,6 +5638,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                         ],
                                       );
                                     },
+                                        ),
+                                        _buildStickyDateOverlay(context),
+                                      ],
+                                    ),
                                   );
                                 })(),
                               ).animate(key: ValueKey('tab_body_'+(_currentConversation?.id ?? 'none')))
@@ -5357,6 +5650,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             ),
                           ),
 
+                          // Reply preview bar (above input bar)
+                          if (_replyToMessage != null)
+                            ReplyPreviewBar(
+                              message: _replyToMessage!,
+                              onCancel: () => setState(() => _replyToMessage = null),
+                            ),
                           // Input bar with max width
                           NotificationListener<SizeChangedLayoutNotification>(
                             onNotification: (n) {
@@ -5649,13 +5948,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       shape: const CircleBorder(),
                                       child: InkWell(
                                         customBorder: const CircleBorder(),
-                                        onTap: _forceScrollToBottom,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Icon(
-                                            Lucide.ChevronDown,
-                                            size: 18,
-                                            color: isDark ? Colors.white : Colors.black87,
+                                        onTap: _smoothScrollToBottom,
+                                        child: Semantics(
+                                          button: true,
+                                          label: _unreadCountWhileAway > 0
+                                              ? context.l10n.newMessagesCount(_unreadCountWhileAway)
+                                              : context.l10n.scrollToBottomLabel,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Lucide.ChevronDown,
+                                                  size: 18,
+                                                  color: isDark ? Colors.white : Colors.black87,
+                                                ),
+                                                if (_unreadCountWhileAway > 0)
+                                                  Text(
+                                                    '${_unreadCountWhileAway}',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      height: 1.0,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: isDark ? Colors.white : Colors.black87,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),

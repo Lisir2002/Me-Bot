@@ -7,6 +7,7 @@ import '../../../icons/lucide_adapter.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/models/message_ui_enums.dart';
 import 'theme_settings_page.dart';
 import '../../../theme/palettes.dart';
 import '../../../l10n/build_context_l10n.dart';
@@ -807,7 +808,57 @@ class BehaviorStartupSettingsPage extends StatelessWidget {
           const SettingsDivider(),
           AppSwitchRow( icon: Lucide.MessageCirclePlus, label: l10n.displaySettingsPageNewChatOnLaunchTitle, value: sp.newChatOnLaunch, onChanged: (v) => context.read<SettingsProvider>().setNewChatOnLaunch(v)),
         ]),
+        SettingsSectionCard(children: [
+          _VerbosityModeSelector(),
+        ]),
       ]),
+    );
+  }
+}
+
+/// 详细度（思考/工具块默认展开折叠）三档选择，实时生效。
+class _VerbosityModeSelector extends StatelessWidget {
+  const _VerbosityModeSelector();
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    final sp = context.watch<SettingsProvider>();
+    final options = <VerbosityMode, String>{
+      VerbosityMode.simple: l10n.verbositySimple,
+      VerbosityMode.thinking: l10n.verbosityThinking,
+      VerbosityMode.verbose: l10n.verbosityVerbose,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            child: Text(
+              l10n.verbosityModeTitle,
+              style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.9)),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: options.entries.map((e) {
+              final selected = sp.verbosityMode == e.key;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Center(child: Text(e.value, textAlign: TextAlign.center)),
+                    selected: selected,
+                    onSelected: (_) => context.read<SettingsProvider>().setVerbosityMode(e.key),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }

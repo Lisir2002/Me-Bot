@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+import 'message_ui_enums.dart';
 
 part 'chat_message.g.dart';
 
@@ -70,6 +71,20 @@ class ChatMessage extends HiveObject {
   @HiveField(18)
   final int? cachedTokens;
 
+  // Send status of a user message. Stores [MessageSendStatus.index];
+  // null for legacy messages (no status chevrons drawn, never backfilled).
+  @HiveField(19)
+  final int? sendStatusIndex;
+
+  /// Derived send status (not persisted): sends [sendStatusIndex] back to the
+  /// enum, clamped so unknown/legacy indices never throw.
+  MessageSendStatus? get sendStatus {
+    final i = sendStatusIndex;
+    if (i == null) return null;
+    return MessageSendStatus
+        .values[i.clamp(0, MessageSendStatus.values.length - 1)];
+  }
+
   ChatMessage({
     String? id,
     required this.role,
@@ -90,6 +105,7 @@ class ChatMessage extends HiveObject {
     this.promptTokens,
     this.completionTokens,
     this.cachedTokens,
+    this.sendStatusIndex,
   })  : id = id ?? const Uuid().v4(),
         timestamp = timestamp ?? DateTime.now(),
         groupId = groupId ?? id,
@@ -115,6 +131,7 @@ class ChatMessage extends HiveObject {
     int? promptTokens,
     int? completionTokens,
     int? cachedTokens,
+    int? sendStatusIndex,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -136,6 +153,7 @@ class ChatMessage extends HiveObject {
       promptTokens: promptTokens ?? this.promptTokens,
       completionTokens: completionTokens ?? this.completionTokens,
       cachedTokens: cachedTokens ?? this.cachedTokens,
+      sendStatusIndex: sendStatusIndex ?? this.sendStatusIndex,
     );
   }
 
@@ -160,6 +178,7 @@ class ChatMessage extends HiveObject {
       'promptTokens': promptTokens,
       'completionTokens': completionTokens,
       'cachedTokens': cachedTokens,
+      'sendStatusIndex': sendStatusIndex,
     };
   }
 
@@ -188,6 +207,7 @@ class ChatMessage extends HiveObject {
       promptTokens: json['promptTokens'] as int?,
       completionTokens: json['completionTokens'] as int?,
       cachedTokens: json['cachedTokens'] as int?,
+      sendStatusIndex: json['sendStatusIndex'] as int?,
     );
   }
 }

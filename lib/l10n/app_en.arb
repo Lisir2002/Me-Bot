@@ -1961,5 +1961,30 @@
       }
     }
   },
-  "commonRetry": "Retry"
+  "commonRetry": "Retry",
+  "connectionInterruptedRetry": "Connection interrupted · Retry",
+  "statusSending": "Sending",
+  "statusSent": "Sent",
+  "statusDelivered": "Delivered",
+  "statusRead": "Read",
+  "statusFailedTapRetry": "Failed to send, tap to retry",
+  "verbositySimple": "Simple",
+  "verbosityThinking": "Thinking",
+  "verbosityVerbose": "Verbose",
+  "verbosityModeTitle": "Detail level",
+  "replyLabelYou": "You",
+  "replyLabelAssistant": "Assistant",
+  "replyPreviewCancel": "Cancel reply",
+  "swipeToReplyLabel": "Swipe to reply",
+  "dateLabelToday": "Today",
+  "dateLabelYesterday": "Yesterday",
+  "newMessagesCount": "{count} new message(s)",
+  "@newMessagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scrollToBottomLabel": "Scroll to bottom"
 }

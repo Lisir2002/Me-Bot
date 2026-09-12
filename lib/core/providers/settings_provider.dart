@@ -10,6 +10,7 @@ import '../services/search/search_service.dart';
 import '../services/tts/network_tts.dart';
 import '../models/api_keys.dart';
 import '../models/backup.dart';
+import '../models/message_ui_enums.dart';
 import '../models/provider_credentials.dart';
 import '../models/service_credentials.dart';
 import '../services/haptics.dart';
@@ -52,6 +53,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _displayShowUserNameTimestampKey = 'display_show_user_name_timestamp_v1';
   static const String _displayShowUserMessageActionsKey = 'display_show_user_message_actions_v1';
   static const String _displayAutoCollapseThinkingKey = 'display_auto_collapse_thinking_v1';
+  static const String _displayVerbosityModeKey = 'display_verbosity_mode';
   static const String _displayShowMessageNavKey = 'display_show_message_nav_v1';
   static const String _displayShowProviderInModelCapsuleKey = 'display_show_provider_in_model_capsule_v1';
   static const String _displayHapticsOnGenerateKey = 'display_haptics_on_generate_v1';
@@ -494,6 +496,9 @@ class SettingsProvider extends ChangeNotifier {
     _showUserNameTimestamp = prefs.getBool(_displayShowUserNameTimestampKey) ?? true;
     _showUserMessageActions = prefs.getBool(_displayShowUserMessageActionsKey) ?? true;
     _autoCollapseThinking = prefs.getBool(_displayAutoCollapseThinkingKey) ?? true;
+    _verbosityMode = VerbosityMode.values[(prefs.getInt(_displayVerbosityModeKey) ??
+            VerbosityMode.thinking.index)
+        .clamp(0, VerbosityMode.values.length - 1)];
     _showMessageNavButtons = prefs.getBool(_displayShowMessageNavKey) ?? true;
     _showProviderInModelCapsule = prefs.getBool(_displayShowProviderInModelCapsuleKey) ?? true;
     _hapticsOnGenerate = prefs.getBool(_displayHapticsOnGenerateKey) ?? false;
@@ -1510,6 +1515,18 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     await prefs.setBool(_displayAutoCollapseThinkingKey, v);
   }
 
+  // Display: assistant reply verbosity (controls default expansion of
+  // thinking/tool blocks). Persisted via its enum index.
+  VerbosityMode _verbosityMode = VerbosityMode.thinking;
+  VerbosityMode get verbosityMode => _verbosityMode;
+  Future<void> setVerbosityMode(VerbosityMode v) async {
+    if (_verbosityMode == v) return;
+    _verbosityMode = v;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_displayVerbosityModeKey, v.index);
+    notifyListeners();
+  }
+
   // Display: show message navigation button
   bool _showMessageNavButtons = true;
   bool get showMessageNavButtons => _showMessageNavButtons;
@@ -1842,6 +1859,7 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     copy._showUserNameTimestamp = _showUserNameTimestamp;
     copy._showUserMessageActions = _showUserMessageActions;
     copy._autoCollapseThinking = _autoCollapseThinking;
+    copy._verbosityMode = _verbosityMode;
     copy._showMessageNavButtons = _showMessageNavButtons;
     copy._showProviderInModelCapsule = _showProviderInModelCapsule;
     copy._hapticsOnGenerate = _hapticsOnGenerate;
